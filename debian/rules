@@ -4,5 +4,44 @@
 # Uncomment this to turn on verbose mode.
 export DH_VERBOSE=1
 
+PLUGINS := $(shell find $(CURDIR) -mindepth 1 -maxdepth 1 -name .git -prune -o -name debian -prune -o -type d -printf '%f\n')
+
 %:
-	dh $@ 
+	dh $@
+
+
+# macro we call to do the right thing (TM) in the
+# plugin directories.
+# Currently
+# - if a Makefile exists in the plugin directory
+#   we run dh_auto_$(1) with -O--sourcedirectory="$$plugin"
+# - if $${plugin}/src exists, we run dh_auto_$(1) on that directory
+# - else: fail :)
+#
+dh_auto_macro = $$( set -e ;\
+	for plugin in $(PLUGINS); do \
+		if [ -f $(CURDIR)/$$plugin/Makefile ]; then \
+			dh_auto_$(1) -O--sourcedirectory="$${plugin}" ; \
+		elif [ -d $(CURDIR)/$$plugin/src ]; then \
+			dh_auto_$(1) -O--sourcedirectory="$${plugin}/src" ; \
+		else \
+			exit 255 ; \
+		fi ;\
+	done \
+)
+
+override_dh_auto_build:
+	$(call dh_auto_macro,build)
+
+override_dh_auto_clean:
+	$(call dh_auto_macro,clean)
+
+override_dh_auto_configure:
+	$(call dh_auto_macro,configure)
+
+override_dh_auto_install:
+	$(call dh_auto_macro,install)
+
+override_dh_auto_test:
+	$(call dh_auto_macro,test)
+
