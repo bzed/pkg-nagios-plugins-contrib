@@ -1,0 +1,5 @@
+pkg-nagios-plugins-contrib (1.20120201) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Bernd Zeimetz <bzed@debian.org>  Wed, 01 Feb 2012 21:49:55 +0100

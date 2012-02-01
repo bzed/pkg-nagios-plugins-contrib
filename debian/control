@@ -1,0 +1,15 @@
+Source: pkg-nagios-plugins-contrib
+Section: net
+Priority: extra
+Maintainer: Debian Nagios Maintainer Group <pkg-nagios-devel@lists.alioth.debian.org>
+Uploaders: Bernd Zeimetz <bzed@debian.org>
+Build-Depends: debhelper (>= 8.0.0)
+Standards-Version: 3.9.2
+Vcs-Git: git://git.debian.org/pkg-nagios/pkg-nagios-plugins-contrib.git
+Vcs-Browser: http://git.debian.org/?p=pkg-nagios/pkg-nagios-plugins-contrib.git;a=summary
+
+Package: pkg-nagios-plugins-contrib
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: <insert up to 60 chars description>
+ <insert long description, indented with spaces>
