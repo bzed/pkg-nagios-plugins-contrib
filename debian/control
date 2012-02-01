@@ -5,8 +5,8 @@ Maintainer: Debian Nagios Maintainer Group <pkg-nagios-devel@lists.alioth.debian
 Uploaders: Bernd Zeimetz <bzed@debian.org>
 Build-Depends: debhelper (>= 8.0.0)
 Standards-Version: 3.9.2
-Vcs-Git: git://git.debian.org/pkg-nagios/pkg-nagios-plugins-contrib.git
-Vcs-Browser: http://git.debian.org/?p=pkg-nagios/pkg-nagios-plugins-contrib.git;a=summary
+Vcs-Git: git://git.debian.org/pkg-nagios/pkg-nagios-plugins-contrib
+Vcs-Browser: http://git.debian.org/?p=pkg-nagios/pkg-nagios-plugins-contrib;a=summary
 
 Package: pkg-nagios-plugins-contrib
 Architecture: any
