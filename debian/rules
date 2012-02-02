@@ -32,6 +32,9 @@ dh_auto_macro = $$( set -e ;\
 	done \
 )
 
+clean: debian/copyright debian/control
+	dh $@
+
 override_dh_auto_build:
 	$(call dh_auto_macro,build)
 
@@ -47,3 +50,9 @@ override_dh_auto_install:
 override_dh_auto_test:
 	$(call dh_auto_macro,test)
 
+
+debian/copyright: debian/copyright.in
+	debian/update-debian-files.py --copyright
+
+debian/control: debian/control.in
+	debian/update-debian-files.py --control
