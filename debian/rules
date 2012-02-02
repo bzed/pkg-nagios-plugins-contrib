@@ -18,14 +18,16 @@ PLUGINS := $(shell find $(CURDIR) -mindepth 1 -maxdepth 1 -name .git -prune -o -
 # - if $${plugin}/src exists, we run dh_auto_$(1) on that directory
 # - else: fail :)
 #
+# REMEMBER: the marco needs to print a command to execute.
+#
 dh_auto_macro = $$( set -e ;\
 	for plugin in $(PLUGINS); do \
 		if [ -f $(CURDIR)/$$plugin/Makefile ]; then \
-			dh_auto_$(1) -O--sourcedirectory="$${plugin}" ; \
+			echo dh_auto_$(1) -O--sourcedirectory="$${plugin}" ; \
 		elif [ -d $(CURDIR)/$$plugin/src ]; then \
-			dh_auto_$(1) -O--sourcedirectory="$${plugin}/src" ; \
+			echo dh_auto_$(1) -O--sourcedirectory="$${plugin}/src" ; \
 		else \
-			exit 255 ; \
+			echo exit 255 ; \
 		fi ;\
 	done \
 )
