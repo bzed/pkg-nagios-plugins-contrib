@@ -1,0 +1,52 @@
+This README.source should give a short instruction about the
+way the pkg-nagios-plugins-contrib repository is structured
+and defines basic policies.
+
+* build-system: git-buildpackage. As we build a Debian native
+  package pristine-tar is not necessary.
+
+* debian/changelog:
+  - preferable generated using git-dch
+  - versioning schema: X.$(date '+%Y%m%d'). X will be
+    increased by one with each release. In case there are
+    bugfixes in stable releases necessary, use
+    X.$(date '+%Y%m%d').Y
+    See http://kitenet.net/~joey/blog/entry/version_numbers/
+    for details.
+
+* debian/copyright.in, debian/control.in:
+  Base files we fill automatically with information from
+  all plugins to generate the full files.
+  This is done in the clean target.
+
+* nagios plugins:
+  - one directory per plugin
+  - required files:
+    * $plugin/control: file format similar to debian/control.
+      Required is the Description part.
+      Add Build-Depends, Depends, Recommends, Suggests
+      and Homepage to have their content added to debian/control/
+      debian/copyright.
+      Add Version to be able to track an upstream version of
+      the plugin.
+    * $plugin/copyright: copyright information for the files
+      in $plugin. Will be added to debian/copyright
+      automatically, properly indented and with a header which
+      describes that the coming block is for the files in $plugin.
+      ** DEP-5 IS NOT SUPPORTED **
+  - what you should have:
+    Currently there are two options on how to build and install
+    plugins:
+    * you have a single script or file or need some hand-made
+      build system anyway:
+      add $plugin/Makefile and implement the all / install / clean
+      targets. include ../common.mk is there for common tasks.
+      If $plugin/Makefile exists the way described below *will not*
+      be built.
+    * your plugin comes with a fancy build system already:
+      extract the source in $plugin and let a symlink called 'src'
+      point to the subdirectory of $plugin.
+      If dh_auto_* is not able to build the plugin, please use
+      the Makefile way as described above.
+    Please ensure that a proper .cfg file will be installed.
+
