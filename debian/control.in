@@ -15,8 +15,10 @@ Recommends: ${shlibs:Depends}, #AUTO_UPDATE_Recommends#
 Suggests: #AUTO_UPDATE_Suggests#
 Description: Plugins for nagios compatible monitoring systems
  This package provides various plugins for Nagios compatible monitoring
- systems like Nagios and Icinga. Some scripts needs more packages installed
- to work, which is implemented as recommands.
+ systems like Nagios and Icinga.
  It contains the following plugins:
  .
 #AUTO_UPDATE_Description#
+ .
+ Some scripts and binaries need more packages installed to work, which is
+ implemented as recommands.
