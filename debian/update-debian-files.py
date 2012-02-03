@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 import sys
 import os
@@ -44,7 +45,7 @@ def update_control():
 
     for k, v in control_data.iteritems():
         if k == 'Description':
-            control_in = control_in.replace('#AUTO_UPDATE_Description#', '\n'.join(v))
+            control_in = control_in.replace('#AUTO_UPDATE_Description#', u'\n'.join(v))
         else:
             control_in = control_in.replace('#AUTO_UPDATE_%s#' %(k, ), deb822.PkgRelation.str(v))
 
@@ -65,17 +66,17 @@ def update_copyright():
             _p_copyright = '%sThe plugin was downloaded from: \n%s\n\n' %(_p_copyright, _control['Homepage'])
 
         with open(__basedir__ + os.path.sep + plugin + os.path.sep + 'copyright', 'r') as f:
-            _p_copyright = '%s  %s' %(_p_copyright, f.read().replace('\n','\n  '))
+            _p_copyright = '%s  %s' %(_p_copyright, f.read().decode('utf-8').replace('\n','\n  '))
 
         copyrights.append(_p_copyright)
 
     with open(__basedir__ + os.path.sep + 'debian' + os.path.sep + 'copyright.in', 'r') as f:
-        copyright_in = f.read()
+        copyright_in = f.read().decode('utf-8')
 
-    copyright_in = copyright_in.replace('#AUTO_UPDATE_Copyright#', '\n\n---------------------------------\n\n'.join(copyrights))
+    copyright_in = copyright_in.replace('#AUTO_UPDATE_Copyright#', u'\n\n---------------------------------\n\n'.join(copyrights))
 
     with open(__basedir__ + os.path.sep + 'debian' + os.path.sep + 'copyright', 'w') as f:
-        f.write(copyright_in)
+        f.write(copyright_in.encode('utf-8'))
 
 if __name__ == '__main__':
     from optparse import OptionParser
