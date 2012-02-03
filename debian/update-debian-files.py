@@ -73,7 +73,7 @@ def update_copyright():
     with open(__basedir__ + os.path.sep + 'debian' + os.path.sep + 'copyright.in', 'r') as f:
         copyright_in = f.read().decode('utf-8')
 
-    copyright_in = copyright_in.replace('#AUTO_UPDATE_Copyright#', u'\n\n---------------------------------\n\n'.join(copyrights))
+    copyright_in = copyright_in.replace('#AUTO_UPDATE_Copyright#', u'\n\n------------------------------------------------------------------------------\n\n'.join(copyrights))
 
     with open(__basedir__ + os.path.sep + 'debian' + os.path.sep + 'copyright', 'w') as f:
         f.write(copyright_in.encode('utf-8'))
