@@ -1,0 +1,7 @@
+Recommends: freeipmi-tools
+Version: 2.3
+Homepage: http://www.thomas-krenn.com/en/oss/ipmi-plugin.html
+Description: IPMI Sensor Monitoring Plugin
+ Plugin to monitor the hardware status (fan speed, temperaturs,
+ voltages, power usage, ...) of a server using IPMI.
+
