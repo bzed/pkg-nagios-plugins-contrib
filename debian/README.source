@@ -24,7 +24,7 @@ and defines basic policies.
   - one directory per plugin
   - required files:
     * $plugin/control: file format similar to debian/control.
-      Required is the Description part.
+      Required is the Description and Uploaders part.
       Add Build-Depends, Depends, Recommends, Suggests
       and Homepage to have their content added to debian/control/
       debian/copyright.

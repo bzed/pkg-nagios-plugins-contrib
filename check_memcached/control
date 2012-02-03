@@ -1,6 +1,7 @@
 Build-Depends: flex, libmemcached-dev
 Homepage: http://exchange.nagios.org/directory/Plugins/Websites,-Forms-and-Transactions/check_memcached-IV/details
 Version: 1.2
+Uploaders: Bernd Zeimetz <bzed@debian.org>
 Description: plugin to check memcached instances
  It will give a critical message if a partiular memcached host is
  inaccessible and generate a warning if the hit/miss ratio falls

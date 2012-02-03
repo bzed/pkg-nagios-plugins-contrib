@@ -1,5 +1,6 @@
 Recommends: freeipmi-tools
 Version: 2.3
+Uploaders: Bernd Zeimetz <bzed@debian.org>
 Homepage: http://www.thomas-krenn.com/en/oss/ipmi-plugin.html
 Description: IPMI Sensor Monitoring Plugin
  Plugin to monitor the hardware status (fan speed, temperaturs,

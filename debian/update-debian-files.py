@@ -3,6 +3,7 @@
 
 import sys
 import os
+import re
 from debian import deb822
 
 # find all plugins
@@ -11,13 +12,17 @@ __plugins__ = [p for p in os.listdir(__basedir__)
                    if (os.path.isdir(__basedir__ + os.path.sep + p) and p!='debian' and p!='.git')]
 __plugins__.sort()
 
+
+__uploaders_re__ = re.compile(', *')
+
 def update_control():
     control_data = {
         'Depends' : [],
         'Suggests' : [],
         'Recommends' : [],
         'Build-Depends' : [],
-        'Description' : []
+        'Description' : [],
+        'Uploaders' : []
     }
 
     for plugin in __plugins__:
@@ -33,6 +38,10 @@ def update_control():
             description = '%s (%s)' %(description, _control['Version'])
         description = '%s: %s' %(description, _control['Description'].replace('\n','\n    '))
 
+        for uploader in __uploaders_re__.split(_control['Uploaders']):
+            if uploader not in control_data['Uploaders']:
+                control_data['Uploaders'].append(uploader)
+
 # disables right now. do we want to have the homepage in the description?
 #        if _control.has_key('Homepage'):
 #            description = '%s\n     Homepage: %s' %(description, _control['Homepage'])
@@ -46,6 +55,8 @@ def update_control():
     for k, v in control_data.iteritems():
         if k == 'Description':
             control_in = control_in.replace('#AUTO_UPDATE_Description#', u'\n'.join(v))
+        elif k == 'Uploaders':
+            control_in = control_in.replace('#AUTO_UPDATE_Uploaders#', u', '.join(v))
         else:
             control_in = control_in.replace('#AUTO_UPDATE_%s#' %(k, ), deb822.PkgRelation.str(v))
 

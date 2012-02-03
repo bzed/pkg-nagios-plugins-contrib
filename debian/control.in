@@ -2,7 +2,7 @@ Source: pkg-nagios-plugins-contrib
 Section: net
 Priority: extra
 Maintainer: Debian Nagios Maintainer Group <pkg-nagios-devel@lists.alioth.debian.org>
-Uploaders: Bernd Zeimetz <bzed@debian.org>
+Uploaders: #AUTO_UPDATE_Uploaders#
 Build-Depends: debhelper (>= 8.0.0), python, python-debian, #AUTO_UPDATE_Build-Depends#
 Standards-Version: 3.9.2
 Vcs-Git: git://git.debian.org/pkg-nagios/pkg-nagios-plugins-contrib
