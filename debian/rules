@@ -9,46 +9,40 @@ PLUGINS := $(shell find $(CURDIR) -mindepth 1 -maxdepth 1 -name .git -prune -o -
 %:
 	dh $@
 
-
-# macro we call to do the right thing (TM) in the
-# plugin directories.
+# Here follows a small shell snipped to call dh_auto_* for all plugins
 # Currently
 # - if a Makefile exists in the plugin directory
 #   we run dh_auto_$(1) with -O--sourcedirectory="$$plugin"
 # - if $${plugin}/src exists, we run dh_auto_$(1) on that directory
 # - else: fail :)
-#
-# REMEMBER: the marco needs to print a command to execute.
-#
-dh_auto_macro = $$( set -e ;\
-	for plugin in $(PLUGINS); do \
-		if [ -f $(CURDIR)/$$plugin/Makefile ]; then \
-			echo dh_auto_$(1) -O--sourcedirectory="$${plugin}" ; \
-		elif [ -d $(CURDIR)/$$plugin/src ]; then \
-			echo dh_auto_$(1) -O--sourcedirectory="$${plugin}/src" ; \
-		else \
-			echo exit 255 ; \
-		fi ;\
-	done \
-)
+DH_AUTO_CALL = set -e; for plugin in $(PLUGINS); do \
+		  if [ -f $(CURDIR)/$$plugin/Makefile ]; then \
+			$$auto_command -O--sourcedirectory="$${plugin}"; \
+		  elif [ -d $(CURDIR)/$$plugin/src ]; then \
+			$$auto_command -O--sourcedirectory="$${plugin}/src" ; \
+		  else \
+			echo failed to build $$plugin; exit 255 ; \
+		  fi ;\
+		done
+
 
 clean: debian/copyright debian/control
 	dh $@
 
 override_dh_auto_build:
-	$(call dh_auto_macro,build)
+	export auto_command=`echo $@ | sed 's,override_,,'`; $(DH_AUTO_CALL)
 
 override_dh_auto_clean:
-	$(call dh_auto_macro,clean)
+	export auto_command=`echo $@ | sed 's,override_,,'`; $(DH_AUTO_CALL)
 
 override_dh_auto_configure:
-	$(call dh_auto_macro,configure)
+	export auto_command=`echo $@ | sed 's,override_,,'`; $(DH_AUTO_CALL)
 
 override_dh_auto_install:
-	$(call dh_auto_macro,install)
+	export auto_command=`echo $@ | sed 's,override_,,'`; $(DH_AUTO_CALL)
 
 override_dh_auto_test:
-	$(call dh_auto_macro,test)
+	-export auto_command=`echo $@ | sed 's,override_,,'`; $(DH_AUTO_CALL)
 
 
 CONTROL_FILES := $(shell set -x; find $(CURDIR) -mindepth 2 -maxdepth 2 -path '$(CURDIR)/debian/*' -prune -o -type f -name control -print)
