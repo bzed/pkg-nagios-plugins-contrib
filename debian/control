@@ -1,0 +1,23 @@
+Source: pkg-nagios-plugins-contrib
+Section: net
+Priority: extra
+Maintainer: Debian Nagios Maintainer Group <pkg-nagios-devel@lists.alioth.debian.org>
+Uploaders: Bernd Zeimetz <bzed@debian.org>
+Build-Depends: debhelper (>= 8.0.0), flex, libmemcached-dev
+Standards-Version: 3.9.2
+Vcs-Git: git://git.debian.org/pkg-nagios/pkg-nagios-plugins-contrib
+Vcs-Browser: http://git.debian.org/?p=pkg-nagios/pkg-nagios-plugins-contrib;a=summary
+
+Package: pkg-nagios-plugins-contrib
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, 
+Recommends: 
+Suggests: 
+Description: <insert up to 60 chars description>
+   * check_memcached (1.2): plugin to check memcached instances
+     It will give a critical message if a partiular memcached host is
+     inaccessible and generate a warning if the hit/miss ratio falls
+     below a given threshold or the number of evictions exceeds a given
+     limit.
+     Hit/miss and evictions are measured over a 30 minute interval,
+     using a memcached object to store the earlier statistics.
