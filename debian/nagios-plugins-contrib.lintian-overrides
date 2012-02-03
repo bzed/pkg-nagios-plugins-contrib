@@ -1,0 +1,3 @@
+# as mentioned in the description people need to
+# install whats mentioned in recommends.
+nagios-plugins-contrib: missing-depends-line
