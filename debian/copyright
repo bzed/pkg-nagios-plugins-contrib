@@ -1,17 +1,9 @@
-Format: http://dep.debian.net/deps/dep5
-Upstream-Name: pkg-nagios-plugins-contrib
-Source: <url://example.com>
 
-Files: *
-Copyright: <years> <put author's name and email here>
-           <years> <likewise for another author>
-License: GPL-3.0+
+The Debian packaging is (C) 2012 Bernd Zeimetz <bzed@debian.org> and
+is licensed under der GPL, either version 3 of the License, or
+(at your option) any later version.
 
-Files: debian/*
-Copyright: 2012 Bernd Zeimetz <bzed@debian.org>
-License: GPL-3.0+
 
-License: GPL-3.0+
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
@@ -28,5 +20,16 @@ License: GPL-3.0+
  On Debian systems, the complete text of the GNU General
  Public License version 3 can be found in "/usr/share/common-licenses/GPL-3".
 
-# Please also look if there are files or directories which have a
-# different copyright/license attached and list them here.
+
+Part of the Debian packaging is the content of the debian directory,
+and the following files:
+  common*.mk
+  */control
+  */copyright
+  */Makefile
+
+
+The copyright information for the included plugins is listed below:
+
+
+#AUTO_UPDATE_Copyright#
