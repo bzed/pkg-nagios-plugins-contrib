@@ -18,6 +18,7 @@ and defines basic policies.
   Base files we fill automatically with information from
   all plugins to generate the full files.
   This is done in the clean target.
+  DO NOT MODIFY debian/control or debian/copyright!
 
 * nagios plugins:
   - one directory per plugin
