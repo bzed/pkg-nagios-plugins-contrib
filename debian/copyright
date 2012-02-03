@@ -32,4 +32,25 @@ and the following files:
 The copyright information for the included plugins is listed below:
 
 
-#AUTO_UPDATE_Copyright#
+check_memcached:
+
+The plugin was downloaded from: 
+http://exchange.nagios.org/directory/Plugins/Websites,-Forms-and-Transactions/check_memcached-IV/details
+
+  This program was initially developed by Lonely Planet for internal use
+  and has kindly been made available to the Open Source community for
+  redistribution and further development under the terms of the
+  GNU General Public License v3: http://www.gnu.org/licenses/gpl.html
+  
+  This program is supplied 'as-is', in the hope that it will be useful, but
+  neither Lonely Planet nor the authors make any warranties or guarantees
+  as to its correct operation, including its intended function.
+  
+  Or in other words:
+  Test it yourself, and make sure it works for YOU.
+  
+  Author: George Hansper       e-mail:  George.Hansper@lonelyplanet.com.au
+  
+  On Debian systems, the complete text of the GNU General
+  Public License version 3 can be found in "/usr/share/common-licenses/GPL-3".
+  
