@@ -1,3 +1,5 @@
 debian/files
-debian/nagios-plugins-contrib.*
 debian/nagios-plugins-contrib/*
+debian/nagios-plugins-contrib.debhelper.log
+debian/nagios-plugins-contrib.substvars
+
