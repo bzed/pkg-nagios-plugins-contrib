@@ -31,7 +31,13 @@ def update_control():
         if _control.has_key('Version'):
             description = '%s (%s)' %(description, _control['Version'])
         description = '%s: %s' %(description, _control['Description'].replace('\n','\n    '))
+
+# disables right now. do we want to have the homepage in the description?
+#        if _control.has_key('Homepage'):
+#            description = '%s\n     Homepage: %s' %(description, _control['Homepage'])
+
         control_data['Description'].append(description)
+
 
     with open(__basedir__ + os.path.sep + 'debian' + os.path.sep + 'control.in', 'r') as f:
         control_in = f.read()
@@ -49,8 +55,24 @@ def update_control():
 
 
 def update_copyright():
+
+    copyrights = []
+    for plugin in __plugins__:
+        _p_copyright = '%s:\n\n' %(plugin,)
+        # We look at the first paragraph only!
+        _control = [x for x in deb822.Packages.iter_paragraphs(file(__basedir__ + os.path.sep+ plugin + os.path.sep + 'control'))][0]
+        if _control.has_key('Homepage'):
+            _p_copyright = '%sThe plugin was downloaded from: \n%s\n\n' %(_p_copyright, _control['Homepage'])
+
+        with open(__basedir__ + os.path.sep + plugin + os.path.sep + 'copyright', 'r') as f:
+            _p_copyright = '%s  %s' %(_p_copyright, f.read().replace('\n','\n  '))
+
+        copyrights.append(_p_copyright)
+
     with open(__basedir__ + os.path.sep + 'debian' + os.path.sep + 'copyright.in', 'r') as f:
         copyright_in = f.read()
+
+    copyright_in = copyright_in.replace('#AUTO_UPDATE_Copyright#', '\n\n---------------------------------\n\n'.join(copyrights))
 
     with open(__basedir__ + os.path.sep + 'debian' + os.path.sep + 'copyright', 'w') as f:
         f.write(copyright_in)

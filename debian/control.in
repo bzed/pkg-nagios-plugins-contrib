@@ -8,10 +8,15 @@ Standards-Version: 3.9.2
 Vcs-Git: git://git.debian.org/pkg-nagios/pkg-nagios-plugins-contrib
 Vcs-Browser: http://git.debian.org/?p=pkg-nagios/pkg-nagios-plugins-contrib;a=summary
 
-Package: pkg-nagios-plugins-contrib
+Package: nagios-plugins-contrib
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, #AUTO_UPDATE_Depends#
-Recommends: #AUTO_UPDATE_Recommends#
+Depends: ${misc:Depends}, #AUTO_UPDATE_Depends#
+Recommends: ${shlibs:Depends}, #AUTO_UPDATE_Recommends#
 Suggests: #AUTO_UPDATE_Suggests#
-Description: <insert up to 60 chars description>
+Description: Plugins for nagios compatible monitoring systems
+ This package provides various plugins for Nagios compatible monitoring
+ systems like Nagios and Icinga. Some scripts needs more packages installed
+ to work, which is implemented as recommands.
+ It contains the following plugins:
+ .
 #AUTO_UPDATE_Description#
