@@ -1,5 +1,5 @@
 
-The Debian packaging is (C) 2012 Bernd Zeimetz <bzed@debian.org> and
+The Debian packaging is Copyright © 2012 Bernd Zeimetz <bzed@debian.org> and
 is licensed under der GPL, either version 3 of the License, or
 (at your option) any later version.
 
@@ -73,7 +73,7 @@ http://www.thomas-krenn.com/en/oss/ipmi-plugin.html
   
   
 
----------------------------------
+------------------------------------------------------------------------------
 
 check_memcached:
 
