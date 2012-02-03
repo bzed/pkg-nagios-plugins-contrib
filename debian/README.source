@@ -29,6 +29,8 @@ and defines basic policies.
       debian/copyright.
       Add Version to be able to track an upstream version of
       the plugin.
+      Don't add empty lines - only the first paragraph will be
+      handled.
     * $plugin/copyright: copyright information for the files
       in $plugin. Will be added to debian/copyright
       automatically, properly indented and with a header which
