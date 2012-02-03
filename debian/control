@@ -11,14 +11,16 @@ Vcs-Browser: http://git.debian.org/?p=pkg-nagios/pkg-nagios-plugins-contrib;a=su
 Package: nagios-plugins-contrib
 Architecture: any
 Depends: ${misc:Depends}, 
-Recommends: ${shlibs:Depends}, 
+Recommends: ${shlibs:Depends}, freeipmi-tools
 Suggests: 
 Description: Plugins for nagios compatible monitoring systems
  This package provides various plugins for Nagios compatible monitoring
- systems like Nagios and Icinga. Some scripts needs more packages installed
- to work, which is implemented as recommands.
+ systems like Nagios and Icinga.
  It contains the following plugins:
  .
+   * check_ipmi_sensor (2.3): IPMI Sensor Monitoring Plugin
+     Plugin to monitor the hardware status (fan speed, temperaturs,
+     voltages, power usage, ...) of a server using IPMI.
    * check_memcached (1.2): plugin to check memcached instances
      It will give a critical message if a partiular memcached host is
      inaccessible and generate a warning if the hit/miss ratio falls
@@ -26,3 +28,6 @@ Description: Plugins for nagios compatible monitoring systems
      limit.
      Hit/miss and evictions are measured over a 30 minute interval,
      using a memcached object to store the earlier statistics.
+ .
+ Some scripts and binaries need more packages installed to work, which is
+ implemented as recommands.
