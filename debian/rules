@@ -25,7 +25,7 @@ DH_AUTO_CALL = set -e; for plugin in $(PLUGINS); do \
 		  fi ;\
 		done
 
-UPDATE_DEBIAN_FILES = /usr/bin/python $(CURDIR)/debian/update-debian-files.py
+UPDATE_DEBIAN_FILES = /usr/bin/python $(CURDIR)/debian/packaging-helper.py
 
 
 clean: debian/copyright debian/control
@@ -49,10 +49,10 @@ override_dh_auto_test:
 
 CONTROL_FILES := $(shell set -x; find $(CURDIR) -mindepth 2 -maxdepth 2 -path '$(CURDIR)/debian/*' -prune -o -type f -name control -print)
 COPYRIGHT_FILES := $(shell set -x; find $(CURDIR) -mindepth 2 -maxdepth 2 -path '$(CURDIR)/debian/*' -prune -o -type f -name copyright -print)
-debian/copyright: debian/copyright.in debian/update-debian-files.py $(CONTROL_FILES) $(COPYRIGHT_FILES)
+debian/copyright: debian/copyright.in debian/packaging-helper.py $(CONTROL_FILES) $(COPYRIGHT_FILES)
 	$(UPDATE_DEBIAN_FILES) --copyright
 	-if [ -d .git ]; then git add $@; git commit -m 'Auto update of $@' $@; fi
 
-debian/control: debian/control.in debian/update-debian-files.py $(CONTROL_FILES)
+debian/control: debian/control.in debian/packaging-helper.py $(CONTROL_FILES)
 	$(UPDATE_DEBIAN_FILES) --control
 	-if [ -d .git ]; then git add $@; git commit -m 'Auto update of $@' $@; fi
