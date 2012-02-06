@@ -13,7 +13,14 @@ __plugins__ = [p for p in os.listdir(__basedir__)
 __plugins__.sort()
 
 
-__uploaders_re__ = re.compile(', *')
+__uploaders_re__ = re.compile(r', *')
+
+def __get_control_data__():
+    # returns (plug, parsed control field data)
+    # We look at the first paragraph only!
+    for plugin in __plugins__:
+        yield (plugin, [x for x in deb822.Packages.iter_paragraphs(file(__basedir__ + os.path.sep+ plugin + os.path.sep + 'control'))][0])
+
 
 def update_control():
     control_data = {
@@ -25,9 +32,7 @@ def update_control():
         'Uploaders' : []
     }
 
-    for plugin in __plugins__:
-        # We look at the first paragraph only!
-        _control = [x for x in deb822.Packages.iter_paragraphs(file(__basedir__ + os.path.sep+ plugin + os.path.sep + 'control'))][0]
+    for plugin, _control in __get_control_data__():
         # look trough keys we might want to merge
         for key in ['Depends', 'Build-Depends', 'Suggests', 'Recommends']:
             if _control.has_key(key):
@@ -69,10 +74,8 @@ def update_control():
 def update_copyright():
 
     copyrights = []
-    for plugin in __plugins__:
+    for plugin, _control in __get_control_data__():
         _p_copyright = '%s:\n\n' %(plugin,)
-        # We look at the first paragraph only!
-        _control = [x for x in deb822.Packages.iter_paragraphs(file(__basedir__ + os.path.sep+ plugin + os.path.sep + 'control'))][0]
         if _control.has_key('Homepage'):
             _p_copyright = '%sThe plugin was downloaded from: \n%s\n\n' %(_p_copyright, _control['Homepage'])
 
@@ -89,10 +92,43 @@ def update_copyright():
     with open(__basedir__ + os.path.sep + 'debian' + os.path.sep + 'copyright', 'w') as f:
         f.write(copyright_in.encode('utf-8'))
 
+
+def watch():
+
+    import apt_pkg
+    apt_pkg.init_system()
+
+    import urllib2
+    url_opener = urllib2.build_opener()
+    url_opener.addheaders = [('User-agent', 'Debian nagios-plugins-contrib 1.0')]
+
+    watch_re = re.compile(r'([^ ]+) (.+)')
+    for plugin, _control in __get_control_data__():
+        if not _control.has_key('Watch'):
+            print 'WARNING: %s - missing watch information!' %(plugin,)
+            continue
+        if not _control.has_key('Version'):
+            print 'WARNING: %s - missing current version information!' %(plugin,)
+            continue
+        try:
+            url, regex = watch_re.findall(a)[0]
+        except IndexError:
+            print 'WARNING: %s - failed to parse Watch line!' %(plugin,)
+            continue
+        try:
+            with url_opener.open(url) as f:
+                content = f.read()
+        except IOError:
+            print 'WARNING: %s - failed to retrieve %s !' %(plugin,url)
+            continue
+
+
+
+
 if __name__ == '__main__':
     from optparse import OptionParser
     prog = os.path.basename(sys.argv[0])
-    usage = ('%s [--copyright] [--control] [-h|--help]') %(prog,)
+    usage = ('%s [--copyright] [--control] [--watch] [-h|--help]') %(prog,)
     parser = OptionParser(usage=usage)
 
     parser.add_option(
@@ -111,15 +147,24 @@ if __name__ == '__main__':
         help='Update debian/control'
     )
 
+    parser.add_option(
+        '--watch',
+        dest='watch',
+        action='store_true',
+        default=False,
+        help='Search for updates'
+    )
     (options, args) = parser.parse_args()
 
-    if not (options.control or options.copyright):
+    if not (options.control or options.copyright or options.watch):
         parser.print_help()
         sys.exit(1)
 
     if options.control:
         update_control()
+
     if options.copyright:
         update_copyright()
 
-
+    if options.watch:
+        watch()
