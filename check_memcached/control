@@ -9,3 +9,4 @@ Description: plugin to check memcached instances
  limit.
  Hit/miss and evictions are measured over a 30 minute interval,
  using a memcached object to store the earlier statistics.
+Watch: http://exchange.nagios.org/directory/Plugins/Websites,-Forms-and-Transactions/check_memcached-IV/details Current Version</div><div class="data">([0-9.]+)</div>
