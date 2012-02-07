@@ -98,30 +98,64 @@ def watch():
     import apt_pkg
     apt_pkg.init_system()
 
+    import hashlib
+
     import urllib2
     url_opener = urllib2.build_opener()
     url_opener.addheaders = [('User-agent', 'Debian nagios-plugins-contrib 1.0')]
 
     watch_re = re.compile(r'([^ ]+) (.+)')
+    whitespace_re = re.compile(r'\s')
     for plugin, _control in __get_control_data__():
         if not _control.has_key('Watch'):
             print 'WARNING: %s - missing watch information!' %(plugin,)
             continue
-        if not _control.has_key('Version'):
-            print 'WARNING: %s - missing current version information!' %(plugin,)
-            continue
         try:
-            url, regex = watch_re.findall(a)[0]
+            url, check = watch_re.findall(_control['Watch'])[0]
         except IndexError:
             print 'WARNING: %s - failed to parse Watch line!' %(plugin,)
             continue
         try:
-            with url_opener.open(url) as f:
-                content = f.read()
+            f=url_opener.open(url)
+            content = f.read()
+            f.close()
         except IOError:
             print 'WARNING: %s - failed to retrieve %s !' %(plugin,url)
             continue
+        check=check.strip()
+        if check.startswith('SHA1:'):
+            check=check.recplace('SHA1:','')
+            new_sha=hashlib.sha1(content).hexdigest()
+            if check != new_sha:
+                print 'UPDATE NECESSARY: %s - SHA1 checksum does not match! New checksum: %s' %(plugin,new_sha)
+            else:
+                print 'OK: %s' %(plugin,)
+        else:
+            if not _control.has_key('Version'):
+                print 'WARNING: %s - missing current version information!' %(plugin,)
+                continue
+            check_re=re.compile(check)
+            # check for simple matches
+            found_versions=check_re.findall(content)
+            # now also see if the regexp author added too many .* parts and the match is a bit buggy
+            # we replace all whitespaces with \n and try again.
+            for v in check_re.findall(whitespace_re.sub('\n',content)):
+                if not v in found_versions:
+                    found_versions.append(v)
+            if not found_versions:
+                print "WARNING: %s - regex does not match!" %(plugin)
+                continue
 
+            new_version = found_versions[0]
+            for v in found_versions:
+                if (apt_pkg.version_compare(v, found_versions[0]) > 0):
+                    new_version = v
+            if (apt_pkg.version_compare(new_version, _control['Version'].strip()) > 0):
+                print 'UPDATE NECESSARY: %s - found new version %s' %(plugin, new_version)
+            elif (apt_pkg.version_compare(new_version, _control['Version'].strip()) < 0):
+                print 'WARNING: %s - could not find the current version (found: %s, control says: %s)!' %(plugin, new_version, _control['Version'])
+            else:
+                print 'OK: %s' %(plugin,)
 
 
 
