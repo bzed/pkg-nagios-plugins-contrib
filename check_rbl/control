@@ -1,0 +1,4 @@
+Uploaders: Bernd Zeimetz <bzed@debian.org>
+Homepage: https://svn.id.ethz.ch/projects/nagios_plugins/wiki/check_rbl
+Watch: https://svn.id.ethz.ch/projects/nagios_plugins/wiki/check_rbl check_rbl-([0-9.]+)\.tar\.gz
+Description: FIXME
