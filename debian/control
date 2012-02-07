@@ -28,6 +28,7 @@ Description: Plugins for nagios compatible monitoring systems
      limit.
      Hit/miss and evictions are measured over a 30 minute interval,
      using a memcached object to store the earlier statistics.
+   * check_rbl: FIXME
  .
  Some scripts and binaries need more packages installed to work, which is
  implemented as recommands.
