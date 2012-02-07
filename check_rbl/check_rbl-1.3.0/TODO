@@ -1,0 +1,8 @@
+* refactor mdns to reduce code complexity
+* unit tests
+
+# File version information:
+# $Id: TODO 1230 2011-03-22 06:41:47Z corti $
+# $Revision: 1230 $
+# $HeadURL: https://svn.id.ethz.ch/nagios_plugins/check_rbl/TODO $
+# $Date: 2011-03-22 07:41:47 +0100 (Tue, 22 Mar 2011) $

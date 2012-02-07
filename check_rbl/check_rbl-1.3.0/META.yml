@@ -1,0 +1,30 @@
+---
+abstract: ~
+author:
+  - 'Matteo Corti <matteo.corti@id.ethz.ch>'
+build_requires:
+  ExtUtils::MakeMaker: 6.42
+configure_requires:
+  ExtUtils::MakeMaker: 6.42
+distribution_type: module
+generated_by: 'Module::Install version 1.01'
+license: gpl
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: check_rbl
+no_index:
+  directory:
+    - inc
+    - t
+requires:
+  IO::Select: 0
+  Nagios::Plugin: 0.31
+  Nagios::Plugin::Getopt: 0
+  Nagios::Plugin::Threshold: 0
+  Net::DNS: 0
+  Readonly: 0
+  perl: 5.8.0
+resources:
+  license: http://opensource.org/licenses/gpl-license.php
+version: 1.3.0
