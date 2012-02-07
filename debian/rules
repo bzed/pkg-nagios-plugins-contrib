@@ -47,8 +47,8 @@ override_dh_auto_test:
 	-export auto_command=`echo $@ | sed 's,override_,,'`; $(DH_AUTO_CALL)
 
 
-CONTROL_FILES := $(shell set -x; find $(CURDIR) -mindepth 2 -maxdepth 2 -path '$(CURDIR)/debian/*' -prune -o -type f -name control -print)
-COPYRIGHT_FILES := $(shell set -x; find $(CURDIR) -mindepth 2 -maxdepth 2 -path '$(CURDIR)/debian/*' -prune -o -type f -name copyright -print)
+CONTROL_FILES := $(shell find $(CURDIR) -mindepth 2 -maxdepth 2 -path '$(CURDIR)/debian/*' -prune -o -type f -name control -print)
+COPYRIGHT_FILES := $(shell find $(CURDIR) -mindepth 2 -maxdepth 2 -path '$(CURDIR)/debian/*' -prune -o -type f -name copyright -print)
 debian/copyright: debian/copyright.in debian/packaging-helper.py $(CONTROL_FILES) $(COPYRIGHT_FILES)
 	$(PACKAGING_HELPER) --copyright
 	-if [ -d .git ]; then git add $@; git commit -m 'Auto update of $@' $@; fi
