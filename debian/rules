@@ -58,6 +58,6 @@ debian/control: debian/control.in debian/packaging-helper.py $(CONTROL_FILES)
 	-if [ -d .git ]; then git add $@; git commit -m 'Auto update of $@' $@; fi
 
 watch:
-	$(PACKAGING_HELPER) --watch
+	@$(PACKAGING_HELPER) --watch
 
 .PHONY: watch override_dh_auto_build override_dh_auto_clean override_dh_auto_configure override_dh_auto_install override_dh_auto_test
