@@ -24,14 +24,19 @@ and defines basic policies.
   - one directory per plugin
   - required files:
     * $plugin/control: file format similar to debian/control.
-      Required is the Description and Uploaders part.
-      Add Build-Depends, Depends, Recommends, Suggests
-      and Homepage to have their content added to debian/control/
-      debian/copyright.
-      Add Version to be able to track an upstream version of
-      the plugin.
-      Don't add empty lines - only the first paragraph will be
-      handled.
+      - Required is the Description and Uploaders part.
+        Add Build-Depends, Depends, Recommends, Suggests
+        and Homepage to have their content added to debian/control/
+        debian/copyright.
+      - Add Version to be able to track an upstream version of
+        the plugin.
+      - Add Watch to check for new versions using
+        ./debian/packaging-helper.py
+        Format:
+        Watch URL python-regex
+        Watch URL SHA1:sha1sum
+      - Don't add empty lines - only the first paragraph will be
+        handled.
     * $plugin/copyright: copyright information for the files
       in $plugin. Will be added to debian/copyright
       automatically, properly indented and with a header which
