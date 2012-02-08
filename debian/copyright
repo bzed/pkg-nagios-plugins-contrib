@@ -1,4 +1,3 @@
-
 The Debian packaging is Copyright © 2012 Bernd Zeimetz <bzed@debian.org> and
 is licensed under der GPL, either version 3 of the License, or
 (at your option) any later version.
@@ -109,6 +108,10 @@ http://cvs.pld-linux.org/cgi-bin/viewvc.cgi/cvs/packages/nagios-plugin-check_rai
   2009-2012 Elan Ruusamäe <glen@pld-linux.org>
   
   License: GPL v2
+  
+    On Debian systems, the complete text of the GNU General
+    Public License version 2 can be found in "/usr/share/common-licenses/GPL-2".
+  
   
   
 
