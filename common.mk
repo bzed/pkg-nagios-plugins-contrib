@@ -38,7 +38,7 @@ ifdef MANPAGES
 		section=`echo $$m | sed 's,\.gz$$,,;s,.*\.,,'` ;\
 		mandir="/usr/share/man/man$${section}" ;\
 		install -d $(DESTDIR)$${mandir} ;\
-		install -m 6ff -o root -g root $${m} $(DESTDIR)$${mandir} ;\
+		install -m 644 -o root -g root $${m} $(DESTDIR)$${mandir} ;\
 	done
 endif
 ifdef INIFILES
