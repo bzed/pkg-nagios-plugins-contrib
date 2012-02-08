@@ -10,8 +10,8 @@ Vcs-Browser: http://git.debian.org/?p=pkg-nagios/pkg-nagios-plugins-contrib;a=su
 
 Package: nagios-plugins-contrib
 Architecture: any
-Depends: ${misc:Depends}, libnagios-plugin-perl (>= 0.31), libreadonly-perl
-Recommends: ${shlibs:Depends}, freeipmi-tools
+Depends: ${misc:Depends}, 
+Recommends: ${shlibs:Depends}, freeipmi-tools, libnagios-plugin-perl (>= 0.31), libreadonly-perl, libnet-dns-perl
 Suggests: 
 Description: Plugins for nagios compatible monitoring systems
  This package provides various plugins for Nagios compatible monitoring
