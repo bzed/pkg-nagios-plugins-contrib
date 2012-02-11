@@ -1,0 +1,40 @@
+2008-10-17  Matteo Corti  <matteo.corti@id.ethz.ch>
+
+	* check_lm_sensors: added 0.2s pause before reading the output of 'sensors'
+
+2007-12-13  Matteo Corti  <matteo.corti@id.ethz.ch>
+
+	* check_lm_sensors: removed all the reference to the (no more existing) unknown subroutine
+
+2007-10-04  Matteo Corti  <matteo.corti@id.ethz.ch>
+
+	* check_lm_sensors: fixed a problem in the variable initialization which
+			    created a nagios plugin object with the wrong name
+
+2007-10-03  Matteo Corti  <matteo.corti@id.ethz.ch>
+
+	* check_lm_sensors: several changes to make the plugin compatible with ePN
+
+2007-07-10  Matteo Corti  <matteo.corti@id.ethz.ch>
+
+	* check_lm_sensors: deprecated the --check option and added separated
+	                    --low, --high and --range options
+	* check_lm_sensors: added the sensor(s) output to the status string
+
+2007-06-20  Matteo Corti  <matteo.corti@id.ethz.ch>
+
+	* check_lm_sensors: added the --nosensors and --nodrives options
+	* check_lm_sensors: the path for hddtemp and sensors is dynamic (retrieved with 'which')
+	* check_lm_sensors: fixed a bug that make the checker ignore the --sensors_bin and --hddtemp_bin options
+
+2007-06-19  Matteo Corti  <matteo.corti@id.ethz.ch>
+
+	* check_lm_sensors: added the --rename option to rename sensors
+	* check_lm_sensors: fixed the program name in --version ouput
+
+2007-06-18  Matteo Corti  <matteo.corti@id.ethz.ch>
+
+	* check_lm_sensors: output only the checked values
+	* check_lm_sensors: added the --sanitize option to remove spaces in sensor names
+	* check_lm_sensors: initial release
+

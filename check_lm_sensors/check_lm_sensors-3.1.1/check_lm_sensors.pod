@@ -1,0 +1,129 @@
+=pod
+
+=head1 NAME
+
+C<check_lm_sensors> is a Nagios plugin to monitor the values of on
+board sensors and hard disk temperatures on Linux systems
+
+=head1 DESCRIPTION
+
+check_lm_sensors is a Nagios plugin to monitor the values of on board
+sensors and hard disk temperatures on Linux systems
+
+=head1 VERSION
+
+Version 3.1.1
+
+=head1 SYNOPSIS
+
+ check_lm_sensors [--help] [--verbose] [--version] [OPTIONS]
+
+ Options
+  -?, --help      help
+  -l, --low       specifies a check for a sensor value which is too low.
+  -h, --high      specifies a check for a sensor value which is too high.
+  -r, --range     specifies a check for a sensor value which should stay
+                  in a given range.
+  --rename        renames a sensor in the performance output (useful if you
+                  want to have common names for similar sensors across different
+                  machines)
+  --sanitize      sanitize sensor names (e.g., removing spaces)
+  --nosensors     disable checks on check lm_sensors
+  --nodrives      disable checks on drive temperatures
+  -d, --drives    enable checks on drive temperature
+  --hddtemp_bin   manually specifies the location of the hddtemp binary
+  --sensors_bin   manually specified the location of the sensors binary
+  -v, --verbose   verbose output
+  --version       prints $prog_name's version and exits
+
+=head1 REQUIRED ARGUMENTS
+
+=head1 OPTIONS
+
+=head1 EXAMPLE
+
+=head1 DIAGNOSTICS
+
+You can specify multiple --verbose options to increase the program
+verbosity.
+
+=head1 EXIT STATUS
+
+0 if OK, 1 in case of a warning, 2 in case of a critical status and 3
+in case of an unkown problem
+
+=head1 DEPENDENCIES
+
+check_updates depends on
+
+=over 4
+
+=item * Carp
+
+=item * English
+
+=item * Getopt::Long
+
+=item * Nagios::Plugin
+
+=item * Nagios::Plugin::Threshold
+
+=item * version
+
+=back
+
+=head1 CONFIGURATION
+
+=head1 INCOMPATIBILITIES
+
+None reported.
+
+=head1 SEE ALSO
+
+Nagios documentation
+
+=head1 BUGS AND LIMITATIONS
+
+No bugs have been reported.
+
+Please report any bugs or feature requests to matteo.corti@id.ethz.ch,
+or through the web interface at
+https://svn.id.ethz.ch/trac/nagios_plugins/newticket
+
+=head1 AUTHOR
+
+Matteo Corti <matteo.corti@id.ethz.ch>
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (c) 2007, ETH Zurich.
+
+This module is free software; you can redistribute it and/or modify it
+under the terms of GNU general public license (gpl) version 3.
+See the LICENSE file for details.
+
+=head1 DISCLAIMER OF WARRANTY
+
+BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT
+WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER
+PARTIES PROVIDE THE SOFTWARE "AS IS" WITHOUT WARRANTY OF ANY KIND,
+EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE
+SOFTWARE IS WITH YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME
+THE COST OF ALL NECESSARY SERVICING, REPAIR, OR CORRECTION.
+
+IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE LIABLE
+TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL, OR
+CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE
+SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGES.
+
+=head1 ACKNOWLEDGMENTS
+

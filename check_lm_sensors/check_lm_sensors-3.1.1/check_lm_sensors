@@ -1,0 +1,668 @@
+#!perl
+
+# check_lm_sensors is a Nagios plugin to monitor the values of on board sensors and hard
+# disk temperatures on Linux systems
+#
+# See  the INSTALL file for installation instructions
+#
+# Copyright (c) 2007, ETH Zurich.
+#
+# This module is free software; you can redistribute it and/or modify it
+# under the terms of GNU general public license (gpl) version 3.
+# See the LICENSE file for details.
+#
+
+# RCS information (required by Perl::Critic)
+#   $Id: check_lm_sensors 1030 2008-10-17 15:45:06Z corti $
+#   $Revision: 1030 $
+#   $HeadURL: https://svn.id.ethz.ch/nagios_plugins/check_lm_sensors/check_lm_sensors $
+#   $Date: 2008-10-17 17:45:06 +0200 (Fri, 17 Oct 2008) $
+
+use strict;
+use warnings;
+
+use Getopt::Long;
+use Carp;
+use English qw(-no_match_vars);
+
+use Nagios::Plugin;
+
+use version; our $VERSION = '3.1.1';
+
+# IMPORTANT: Nagios plugins could be executed using embedded perl in this case
+#            the main routine would be executed as a subroutine and all the
+#            declared subroutines would therefore be inner subroutines
+#            This will cause all the global lexical variables not to stay
+#            shared in the subroutines!
+#
+# All variables are therefore declared as package variables...
+#
+use vars qw(
+  $verbosity
+  $prog_name
+  $plugin
+  $hddtemp_bin
+  $sensors_bin
+  $drives
+  $help
+  $list
+  $result
+  $sanitize
+  $sensors
+  %rename
+  %sensor_values
+  @drives
+  %highs
+  %lows
+  %ranges
+  $space
+  $status
+  $desc
+  $criticals
+  $warnings
+  $unknowns
+  $name
+  $limits
+  $converted_name
+  %checks
+);
+
+# initialization
+$criticals = q{};
+$desc      = q{};
+$drives    = 1;
+$help      = q{};
+$prog_name = 'LM_SENSORS';
+$plugin    = Nagios::Plugin->new( shortname => $prog_name );
+$sensors   = 1;
+$space     = q{};
+$status    = q{};
+$unknowns  = q{};
+$verbosity = 0;
+$warnings  = q{};
+
+##############################################################################
+# subroutines
+
+##############################################################################
+# Usage     : verbose("some message string", $optional_verbosity_level);
+# Purpose   : write a message if the verbosity level is high enough
+# Returns   : n/a
+# Arguments : message : message string
+#             level   : options verbosity level
+# Throws    : n/a
+# Comments  : n/a
+# See also  : n/a
+sub verbose {
+
+    # arguments
+    my $message = shift;
+    my $level   = shift;
+
+    if ( !defined $message ) {
+        $plugin->nagios_exit( UNKNOWN,
+            q{Internal error: not enough parameters for 'verbose'} );
+    }
+
+    if ( !defined $level ) {
+        $level = 0;
+    }
+
+    if ( $level < $verbosity ) {
+        print $message;
+    }
+
+    return;
+
+}
+
+##############################################################################
+# Usage     : usage() or usage("error message");
+# Purpose   : prints the usage of the plugin and exits with unknown status
+# Returns   : n/a
+# Arguments : message : message string
+# Throws    : n/a
+# Comments  : n/a
+# See also  : n/a
+sub usage {
+    my $msg = shift;
+
+    if ( defined $msg ) {
+        print "$msg\n";
+    }
+
+    print << 'EOT';
+
+check_lm_sensors [--help] [--verbose] [--version] [OPTIONS]
+
+Options:
+
+  -?, --help      help
+
+  --check, -c     specifies a check for a sensor
+
+  -l, --low       specifies a check for a sensor value which is too low.
+                  Example:
+                    --low fan1=2000,1000
+                  will give a warning if the value of the fan1 sensor drops
+                  below 2000 RPMs and a critical status if it drops below
+                  1000 RPMs
+
+  -h, --high      specifies a check for a sensor value which is too high.
+                  Example:
+                    --high temp1=50,60
+                  will give a warning if the value of the temp1 sensor reaches
+                  50 degrees and a critical status if it reaches 60 degrees
+
+  -r, --range     specifies a check for a sensor value which should stay
+                  in a given range.
+                  Example:
+                    --range v1=1,2,12
+                  will give a warning if the value of the sensor gets outside
+                  the 11-13 range (12+-1) and a critical status if the value is
+                  outside the 10-14 range (12+-2)
+
+  --rename        renames a sensor in the performance output (useful if you
+                  want to have common names for similar sensors across
+                  different machines)
+                  Example:
+                    --rename cputemp=temp1
+
+  --sanitize      sanitize sensor names (e.g., removing spaces)
+
+  --list          list all available sensors
+
+  --nosensors     disable checks on check lm_sensors
+
+  --nodrives      disable checks on drive temperatures
+
+  -d, --drives    enable checks on drive temperature
+
+  --hddtemp_bin   manually specifies the location of the hddtemp binary
+
+  --sensors_bin   manually specified the location of the sensors binary
+
+  -v, --verbose   verbose output
+
+  --version       prints the version and exits
+
+Deprecated options:
+
+  -c, --check     specifies a check on a sensor. This options accepts two or
+                  three numerical values:
+                  * with two arguments works similarly to the --high option
+                  * with three arguments works similarly to the --range option
+
+Sensors with a space in the name can be specified
+* by escaping the space:                        --high sda\ Temp=50,60
+* by quoting the name:                          --high 'sda Temp'=50,60
+* by substituting the space with an underscore: --high sda_Temp=50,60
+* by using the --sanitize option to remove the space
+    --sanitize --high sdaTemp=50,60
+
+EOT
+
+    $plugin->nagios_exit( UNKNOWN, 'Invalid arguments' );
+
+    return;
+
+}
+
+##############################################################################
+# Usage     : get_path('program_name');
+# Purpose   : retrieves the path of an executable file using the
+#             'which' utility
+# Returns   : the path of the program (if found)
+# Arguments : the program name
+# Throws    : n/a
+# Comments  : n/a
+# See also  : n/a
+sub get_path {
+
+    my $prog    = shift;
+    my $command = "which $prog";
+    my $output;
+    my $path;
+
+    my $pid = open $output, q{-|}, "$command 2>&1"
+      or $plugin->nagios_exit( UNKNOWN, "Cannot execute $command: $OS_ERROR" );
+
+    while (<$output>) {
+        chomp;
+        if ( !/^which:/mx ) {
+            $path = $_;
+        }
+    }
+
+    if (  !( close $output )
+        && ( $OS_ERROR != 0 ) )
+    {
+
+        # close to a piped open return false if the command with non-zero
+        # status. In this case $! is set to 0
+        $plugin->nagios_exit( UNKNOWN,
+            "Error while closing pipe to $command: $OS_ERROR\n" );
+    }
+
+    return $path;
+
+}
+
+##############################################################################
+# Usage     : parse_drives()
+# Purpose   : parses /proc/partitions to find available drives and tries to
+#             get their temperature
+# Returns   : n/a
+# Arguments : n/a
+# Throws    : n/a
+# Comments  : n/a
+# See also  : n/a
+sub parse_drives {
+
+    my $IN;
+
+    if ( -x $hddtemp_bin ) {
+
+        verbose "Looking for drives in /proc/partitions\n";
+
+        open $IN, '<', '/proc/partitions'
+          or $plugin->nagios_exit( UNKNOWN, 'Cannot open /proc/partitions' );
+
+        while (<$IN>) {
+
+            chomp;
+
+            my ( $major, $minor, $blocs, $name ) = split;
+
+            if ( !defined $major || $major eq 'major' || $major eq q{} ) {
+                next;
+            }
+
+            if ( $name =~ /[0-9]$/mx ) {
+                next;
+            }
+
+            verbose "  checking disk /dev/$name\n", 1;
+
+            my $command = "$hddtemp_bin -n /dev/$name";
+
+            my $output;
+
+            my $pid = open $output, q{-|}, "$command 2>&1"
+              or $plugin->nagios_exit( UNKNOWN,
+                "Cannot execute $command: $OS_ERROR" );
+
+            while (<$output>) {
+                chomp;
+
+                if ( $_ =~ /^[0-9]+$/mx ) {
+
+                    if ($sanitize) {
+                        $name = $name . 'Temp';
+                    }
+                    else {
+                        $name = "$name Temp";
+                    }
+
+                    # check if the sensor has to be renamed
+                    if ( $rename{$name} ) {
+                        $name = $rename{$name};
+                    }
+
+                    $sensor_values{$name} = $_;
+
+                    if ( $verbosity || $list ) {
+                        print
+                          "found temperature for drive $name ($name = $_)\n";
+                    }
+
+                }
+                else {
+                    verbose
+                      "warning: temperature for /dev/$name not available\n";
+                }
+
+            }
+
+            close $output
+              or $plugin->nagios_exit( UNKNOWN,
+                "Error while executing $command: $OS_ERROR\n" );
+
+        }
+
+        close $IN
+          or $plugin->nagios_exit( UNKNOWN, "Cannot close input: $OS_ERROR\n" );
+
+    }
+    else {
+        verbose
+          "warning: $hddtemp_bin not found: HDD temperatures not checked\n";
+    }
+
+    return;
+
+}
+
+##############################################################################
+# Usage     : parse_sensors()
+# Purpose   : retrieves the values of the available sensors
+# Returns   : n/a
+# Arguments : n/a
+# Throws    : n/a
+# Comments  : n/a
+# See also  : n/a
+sub parse_sensors {
+
+    if ( -x $sensors_bin ) {
+
+        # check if there are configured sensors
+
+        my $command = "$sensors_bin";
+        my $output;
+
+        my $pid = open $output, q{-|}, "$command 2>&1"
+          or
+          $plugin->nagios_exit( UNKNOWN, "Cannot execute $command: $OS_ERROR" );
+
+        select(undef, undef, undef, .2);
+        
+        while (<$output>) {
+            chomp;
+            if (   /^No\ sensors\ found/mx
+                || /^Can\'t/mx )
+            {
+                verbose "warning: no sensors found\n";
+                return;
+            }
+            last;
+        }
+
+        close $output
+          or $plugin->nagios_exit( UNKNOWN,
+            "Error while executing $command: $OS_ERROR\n" );
+
+        $command = "$sensors_bin -A | grep \:";
+
+        $pid = open $output, q{-|}, "$command 2>&1"
+          or
+          $plugin->nagios_exit( UNKNOWN, "Cannot execute $command: $OS_ERROR" );
+
+        while (<$output>) {
+            chomp;
+
+            if (/(.*):\s+\+?([0-9\-\.]*)\ ?([^\ ]*)\ /mx) {
+
+                my $name  = $1;
+                my $value = $2;
+
+                if ($sanitize) {
+                    $name =~ s/\ //gmx;
+                }
+
+                if ( $rename{$name} ) {
+                    $name = $rename{$name};
+                }
+
+                $sensor_values{$name} = $value;
+
+                if ( $verbosity || $list ) {
+                    print "found sensor $name ($value)\n";
+                }
+
+            }
+
+        }
+
+        close $output
+          or $plugin->nagios_exit( UNKNOWN,
+            "Error while executing $command: $OS_ERROR\n" );
+
+    }
+    else {
+        verbose
+          "warning: $sensors_bin not found: HDD temperatures not checked\n";
+    }
+
+    return;
+
+}
+
+##############################################################################
+# main
+#
+
+########################
+# Command line arguments
+
+Getopt::Long::Configure( 'bundling', 'no_ignore_case' );
+$result = GetOptions(
+    'check|c=s'     => \%checks,
+    'drives!'       => \$drives,
+    'hddtemp_bin=s' => \$hddtemp_bin,
+    'help|?'        => sub { usage() },
+    'high|h=s'      => \%highs,
+    'list'          => \$list,
+    'low|l=s'       => \%lows,
+    'range|r=s'     => \%ranges,
+    'rename=s'      => \%rename,
+    'sanitize'      => \$sanitize,
+    'sensors!'      => \$sensors,
+    'sensors_bin=s' => \$sensors_bin,
+    'verbose|v+'    => \$verbosity,
+    'version' => sub { print "check_lm_sensors version $VERSION\n"; exit 3; }
+);
+
+if ( !$result ) {
+    usage();
+}
+
+if (   !( defined $list )
+    && !(%checks)
+    && !(%highs)
+    && !(%ranges)
+    && !(%lows) )
+{
+    $plugin->nagios_exit( UNKNOWN, 'at least one check has to be specified' );
+}
+
+# convert old options
+if (%checks) {
+    verbose
+"warning: the --checks options is deprecated, use the --low, --high and --range options instead\n";
+}
+
+if ($drives) {
+    if ( !$hddtemp_bin ) {
+        $hddtemp_bin = get_path('hddtemp');
+    }
+    if ( !$hddtemp_bin ) {
+        verbose "warning: hddtemp not found: HDD temperatures not checked\n";
+    }
+    else {
+        verbose "hddtemp found at $hddtemp_bin\n";
+        parse_drives();
+    }
+}
+
+if ($sensors) {
+    if ( !$sensors_bin ) {
+        $sensors_bin = get_path('sensors');
+    }
+    if ( !$sensors_bin ) {
+        verbose "warning: sensors not found: lm_sensors not checked\n";
+    }
+    else {
+        verbose "sensors found at $sensors_bin\n";
+        parse_sensors();
+    }
+}
+
+################
+# perform checks
+
+# old style checks
+while ( ( $name, $limits ) = each %checks ) {
+
+    $converted_name = $name;
+    $converted_name =~ s/_/\ /gmx;
+
+    if ( !$sensor_values{$name} && $sensor_values{$converted_name} ) {
+        $name = $converted_name;
+    }
+    if ( !$sensor_values{$name} ) {
+        $unknowns = $unknowns . " $name";
+        next;
+    }
+
+    my ( $warn, $crit, $ref ) = split /,/mx, $limits;
+
+    my $value = $sensor_values{$name};
+    my $diff  = $value;
+
+    if ($ref) {
+        $diff = abs( $value - $ref );
+    }
+
+    if ( $diff > $crit ) {
+        $criticals = $criticals . " $name=" . $sensor_values{$name};
+    }
+    elsif ( $diff > $warn ) {
+        $warnings = $warnings . " $name=" . $sensor_values{$name};
+    }
+
+    if ($space) {
+        $status = $status . q{ };
+        $desc   = $desc . q{ };
+    }
+    $status = $status . "$name=$value;$warn;$crit;;";
+    $desc   = $desc . "$name=$value";
+    $space  = 1;
+
+}
+
+# lows
+while ( ( $name, $limits ) = each %lows ) {
+
+    $converted_name = $name;
+    $converted_name =~ s/_/\ /gmx;
+
+    if ( !$sensor_values{$name} && $sensor_values{$converted_name} ) {
+        $name = $converted_name;
+    }
+    if ( !$sensor_values{$name} ) {
+        $unknowns = $unknowns . " $name";
+        next;
+    }
+
+    my ( $warn, $crit ) = split /,/mx, $limits;
+
+    my $value = $sensor_values{$name};
+
+    if ( $value < $crit ) {
+        $criticals = $criticals . " $name=" . $sensor_values{$name};
+    }
+    elsif ( $value < $warn ) {
+        $warnings = $warnings . " $name=" . $sensor_values{$name};
+    }
+
+    if ($space) {
+        $status = $status . q{ };
+    }
+    $status = $status . "$name=$value;$warn;$crit;;";
+    $desc   = $desc . "$name=$value";
+    $space  = 1;
+
+}
+
+# highs
+while ( ( $name, $limits ) = each %highs ) {
+
+    $converted_name = $name;
+    $converted_name =~ s/_/\ /gmx;
+
+    if ( !$sensor_values{$name} && $sensor_values{$converted_name} ) {
+        $name = $converted_name;
+    }
+    if ( !$sensor_values{$name} ) {
+        $unknowns = $unknowns . " $name";
+        next;
+    }
+
+    my ( $warn, $crit ) = split /,/mx, $limits;
+
+    my $value = $sensor_values{$name};
+
+    if ( $value > $crit ) {
+        $criticals = $criticals . " $name=" . $sensor_values{$name};
+    }
+    elsif ( $value > $warn ) {
+        $warnings = $warnings . " $name=" . $sensor_values{$name};
+    }
+
+    if ($space) {
+        $status = $status . q{ };
+        $desc   = $desc . q{ };
+    }
+    $status = $status . "$name=$value;$warn;$crit;;";
+    $desc   = $desc . "$name=$value";
+    $space  = 1;
+
+}
+
+# ranges
+while ( ( $name, $limits ) = each %ranges ) {
+
+    $converted_name = $name;
+    $converted_name =~ s/_/\ /gmx;
+
+    if ( !$sensor_values{$name} && $sensor_values{$converted_name} ) {
+        $name = $converted_name;
+    }
+    if ( !$sensor_values{$name} ) {
+        $unknowns = $unknowns . " $name";
+        next;
+    }
+
+    my ( $warn, $crit, $ref ) = split /,/mx, $limits;
+
+    my $value = $sensor_values{$name};
+    my $diff  = $value;
+
+    $diff = abs( $value - $ref );
+
+    if ( $diff > $crit ) {
+        $criticals = $criticals . " $name=" . $sensor_values{$name};
+    }
+    elsif ( $diff > $warn ) {
+        $warnings = $warnings . " $name=" . $sensor_values{$name};
+    }
+
+    if ($space) {
+        $status = $status . q{ };
+        $desc   = $desc . q{ };
+    }
+    $status = $status . "$name=$value;$warn;$crit;;";
+    $desc   = $desc . "$name=$value";
+    $space  = 1;
+
+}
+
+#########################
+# build the status string
+
+if ( $criticals ne q{} ) {
+    $plugin->nagios_exit( CRITICAL, "$desc|$status" );
+}
+
+if ( $warnings ne q{} ) {
+    $plugin->nagios_exit( WARNING, "$desc|$status" );
+}
+
+if ( $unknowns ne q{} ) {
+    $plugin->nagios_exit( UNKNOWN, "$desc|$status" );
+}
+
+$plugin->nagios_exit( OK, "$desc|$status" );
+
+1;
+

@@ -1,0 +1,82 @@
+check_lm_sensors is a Nagios plugin to monitor the values of on board sensors and hard
+disk temperatures on Linux systems
+
+usage:
+
+  -?, --help      help
+
+  -l, --low       specifies a check for a sensor value which is too low.
+                  Example:
+                    --low fan1=2000,1000
+                  will give a warning if the value of the fan1 sensor drops
+                  below 2000 RPMs and a critical status if it drops below
+                  1000 RPMs
+
+  -h, --high      specifies a check for a sensor value which is too high.
+                  Example:
+                    --high temp1=50,60
+                  will give a warning if the value of the temp1 sensor reaches
+                  50 degrees and a critical status if it reaches 60 degrees
+
+  -r, --range     specifies a check for a sensor value which should stay
+                  in a given range.
+                  Example:
+                    --range v1=1,2,12
+                  will give a warning if the value of the sensor gets outside
+                  the 11-13 range (12+-1) and a critical status if the value is
+                  outside the 10-14 range (12+-2)
+
+  --rename        renames a sensor in the performance output (useful if you
+                  want to have common names for similar sensors across different
+                  machines)
+                  Example:
+                    --rename cputemp=temp1
+
+  --sanitize      sanitize sensor names (e.g., removing spaces)
+
+  --list          list all available sensors
+
+  --nosensors     disable checks on check lm_sensors
+
+  --nodrives      disable checks on drive temperatures
+
+  -d, --drives    enable checks on drive temperature
+
+  --hddtemp_bin   manually specifies the location of the hddtemp binary
+
+  --sensors_bin   manually specified the location of the sensors binary
+
+  -v, --verbose   verbose output
+
+  --version       prints $prog_name's version and exits
+
+Deprecated options:
+
+  -c, --check     specifies a check on a sensor. This options accepts two or
+                  three numerical values:
+                  * with two arguments works similarly to the --high option
+                  * with three arguments works similarly to the --range option
+
+Sensors with a space in the name can be specified
+* by escaping the space:                        --high sda\ Temp=50,60
+* by quoting the name:                          --high 'sda Temp'=50,60
+* by substituting the space with an underscore: --high sda_Temp=50,60
+* by using the --sanitize option to remove the space
+    --sanitize --high sdaTemp=50,60
+    
+Example:
+
+$ ./check_lm_sensors -v --high 'sda Temp'=30,5,10 --range '+2.5V'=0.2,0.3,2.5
+found sensor +3.3V (3.39)
+found sensor +2.5V (2.39)
+found sensor VCore (1.19)
+found sensor +5V (4.61)
+found sensor +12V (11.96)
+found sensor +3.3V (3.23)
+found sensor Case Fan (0)
+found sensor CPU Fan (0)
+found sensor CPU Temp (62.1)
+found sensor Int Temp (66.0)
+found sensor vid (1.250)
+found temperature for drive sda (51)
+LM_SENSORS CRITICAL  sda Temp=51|'Case Fan'=0;;;; 'vid'=1.250;;;; '+5V'=4.61;;;; '+2.5V'=2.39;;;; 'Int Temp'=66.0;;;; '+12V'=11.96;;;; '+3.3V'=3.23;;;; 'VCore'=1.19;;;; 'CPU Temp'=62.1;;;; 'CPU Fan'=0;;;; 'sda Temp'=51;;;;
