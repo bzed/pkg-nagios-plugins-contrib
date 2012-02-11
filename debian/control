@@ -21,7 +21,8 @@ Description: Plugins for nagios compatible monitoring systems
    * check_ipmi_sensor (2.3): IPMI Sensor Monitoring Plugin
      Plugin to monitor the hardware status (fan speed, temperaturs,
      voltages, power usage, ...) of a server using IPMI.
-   * check_lm_sensors (3.1.1): plugin to monitor hardware sensors and disk temperatures
+   * check_lm_sensors (3.1.1): plugin to monitor hardware sensors
+     and disk temperatures
    * check_memcached (1.2): plugin to check memcached instances
      It will give a critical message if a partiular memcached host is
      inaccessible and generate a warning if the hit/miss ratio falls
@@ -37,7 +38,7 @@ Description: Plugins for nagios compatible monitoring systems
      - Adaptec AAC RAID via aaccli or afacli or arcconf
      - AIX software RAID via lsvg
      - HP/Compaq Smart Array via cciss_vol_status (hpsa supported too)
-     - HP Smart Array Controllers and MSA Controllers via hpacucli (see hapacucli readme)
+     - HP Smart Array Controllers and MSA Controllers via hpacucli
      - HP Smart Array (MSA1500) via serial line
      - Linux 3ware SATA RAID via tw_cli
      - Linux DPT/I2O hardware RAID controllers via /proc/scsi/dpt_i2o
