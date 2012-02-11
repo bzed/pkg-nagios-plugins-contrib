@@ -1,0 +1,12 @@
+--- a/check_lm_sensors/src/check_lm_sensors.pod
++++ b/check_lm_sensors/src/check_lm_sensors.pod
+@@ -2,8 +2,7 @@
+ 
+ =head1 NAME
+ 
+-C<check_lm_sensors> is a Nagios plugin to monitor the values of on
+-board sensors and hard disk temperatures on Linux systems
++C<check_lm_sensors> is a Nagios plugin to monitor hardware sensors and disk temperatures
+ 
+ =head1 DESCRIPTION
+ 

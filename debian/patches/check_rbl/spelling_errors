@@ -1,6 +1,6 @@
---- a/check_lm_sensors/src/check_lm_sensors.pod
-+++ b/check_lm_sensors/src/check_lm_sensors.pod
-@@ -49,7 +49,7 @@ verbosity.
+--- a/check_rbl/src/check_rbl.pod
++++ b/check_rbl/src/check_rbl.pod
+@@ -58,7 +58,7 @@ the querying mechanism.
  =head1 EXIT STATUS
  
  0 if OK, 1 in case of a warning, 2 in case of a critical status and 3

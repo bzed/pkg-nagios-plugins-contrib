@@ -1,3 +1,5 @@
+check_lm_sensors/manpage_whatis_fix
 check_lm_sensors/spelling_errors
 check_rbl/interpreter
 check_lm_sensors/interpreter
+check_rbl/spelling_errors
