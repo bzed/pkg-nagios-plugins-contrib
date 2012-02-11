@@ -1,3 +1,4 @@
+
 The Debian packaging is Copyright © 2012 Bernd Zeimetz <bzed@debian.org> and
 is licensed under der GPL, either version 3 of the License, or
 (at your option) any later version.
@@ -70,6 +71,21 @@ http://www.thomas-krenn.com/en/oss/ipmi-plugin.html
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   
+  
+
+------------------------------------------------------------------------------
+
+check_lm_sensors:
+
+The plugin was downloaded from: 
+https://trac.id.ethz.ch/projects/nagios_plugins/wiki/check_lm_sensors
+
+  Copyright (c) 2007, ETH Zurich.
+  
+  Author: Matteo Corti <matteo.corti@id.ethz.ch>
+  
+  This module is free software; you can redistribute it and/or modify it
+  under the terms of GNU general public license (gpl) version 3.
   
 
 ------------------------------------------------------------------------------
