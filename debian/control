@@ -12,7 +12,7 @@ Package: nagios-plugins-contrib
 Architecture: any
 Depends: ${misc:Depends}, 
 Recommends: ${shlibs:Depends}, freeipmi-tools, libnagios-plugin-perl (>= 0.31), libnagios-plugin-perl (>= 0.31), libreadonly-perl, libnet-dns-perl
-Suggests: cciss_vol_status, mpt-status
+Suggests: cciss-vol-status, mpt-status
 Description: Plugins for nagios compatible monitoring systems
  This package provides various plugins for Nagios compatible monitoring
  systems like Nagios and Icinga.
