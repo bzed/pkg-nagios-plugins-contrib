@@ -1,0 +1,8 @@
+--- a/check_lm_sensors/src/check_lm_sensors
++++ b/check_lm_sensors/src/check_lm_sensors
+@@ -1,4 +1,4 @@
+-#!perl
++#!/usr/bin/perl
+ 
+ # check_lm_sensors is a Nagios plugin to monitor the values of on board sensors and hard
+ # disk temperatures on Linux systems
