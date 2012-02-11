@@ -11,7 +11,7 @@ Vcs-Browser: http://git.debian.org/?p=pkg-nagios/pkg-nagios-plugins-contrib;a=su
 Package: nagios-plugins-contrib
 Architecture: any
 Depends: ${misc:Depends}, 
-Recommends: ${shlibs:Depends}, freeipmi-tools, libnagios-plugin-perl (>= 0.31), libreadonly-perl, libnet-dns-perl
+Recommends: ${shlibs:Depends}, freeipmi-tools, libnagios-plugin-perl (>= 0.31), libnagios-plugin-perl (>= 0.31), libreadonly-perl, libnet-dns-perl
 Suggests: cciss_vol_status, mpt-status
 Description: Plugins for nagios compatible monitoring systems
  This package provides various plugins for Nagios compatible monitoring
@@ -21,6 +21,7 @@ Description: Plugins for nagios compatible monitoring systems
    * check_ipmi_sensor (2.3): IPMI Sensor Monitoring Plugin
      Plugin to monitor the hardware status (fan speed, temperaturs,
      voltages, power usage, ...) of a server using IPMI.
+   * check_lm_sensors (3.1.1): plugin to monitor hardware sensors and disk temperatures
    * check_memcached (1.2): plugin to check memcached instances
      It will give a critical message if a partiular memcached host is
      inaccessible and generate a warning if the hit/miss ratio falls
