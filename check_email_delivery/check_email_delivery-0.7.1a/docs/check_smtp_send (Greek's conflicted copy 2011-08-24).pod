@@ -1,0 +1,289 @@
+
+
+=pod
+
+=head1 NAME
+
+check_smtp_send - connects to an SMTP server and sends a message
+
+=head1 SYNOPSIS
+
+ check_smtp_send -vV
+ check_smtp_send -?
+ check_smtp_send --help
+
+=head1 OPTIONS
+
+=over
+
+=item --warning <seconds>
+
+Warn if it takes longer than <seconds> to connect to the SMTP server. Default is 15 seconds.
+Also known as: -w <seconds>
+
+=item --critical <seconds>
+
+Return a critical status if it takes longer than <seconds> to connect to the SMTP server. Default is 30 seconds.
+Also known as: -c <seconds> 
+
+=item --timeout <seconds>
+
+Abort with critical status if it takes longer than <seconds> to connect to the SMTP server. Default is 60 seconds.
+The difference between timeout and critical is that, with the default settings, if it takes 45 seconds to 
+connect to the server then the connection will succeed but the plugin will return CRITICAL because it took longer
+than 30 seconds.
+Also known as: -t <seconds> 
+
+=item --hostname <server>
+
+Address or name of the SMTP server. Examples: mail.server.com, localhost, 192.168.1.100
+Also known as: -H <server>
+
+=item --port <number>
+
+Service port on the SMTP server. Default is 25 for regular SMTP, 465 for SSL, and 587 for TLS.
+Also known as: -p <number>
+
+=item --tls
+
+=item --notls
+
+Enable TLS/AUTH protocol. Requires Net::SMTP::TLS, availble on CPAN.
+
+When using this option, the default port is 587.
+You can specify a port from the command line using the --port option.
+
+Use the notls option to turn off the tls option.
+
+=item --ssl
+
+=item --nossl
+
+Enable SSL protocol. Requires Net::SMTP::SSL and Authen::SASL, availble on CPAN.
+
+When using this option, the default port is 465. You can override with the --port option.
+
+Use the nossl option to turn off the ssl option.
+
+=item --auth <method>
+
+Enable authentication with Net::SMTP_auth (sold separately).
+For example, try using --auth PLAIN or --auth CRAM-MD5.
+
+=item --username <username>
+
+=item --password <password>
+
+Username and password to use when connecting to IMAP server.
+Also known as: -U <username> -P <password>
+
+=item --body <message>
+
+Use this option to specify the body of the email message. If you need newlines in your message,
+you might need to use the --stdin option instead.
+
+=item --header <header>
+
+Use this option to set an arbitrary header in the message. You can use it multiple times.
+
+=item --stdin
+
+Grab the body of the email message from stdin.
+
+=item --mailto recipient@your.net
+
+You can send a message to multiple recipients by repeating this option or by separating
+the email addresses with commas (no whitespace allowed): 
+
+$ check_smtp_send -H mail.server.net --mailto recipient@your.net,recipient2@your.net --mailfrom sender@your.net 
+
+SMTP SEND OK - 1 seconds
+
+=item --mailfrom sender@your.net
+
+Use this option to set the "from" address in the email. 
+
+=item --template
+
+=item --notemplate
+
+Enable (or disable) processing of message body and headers. Requires Text::Template.
+
+Use this option to apply special processing to your message body and headers that allows you to use the
+results of arbitrary computations in the text. For example, you can use this feature to send a message
+containing the hostname of the machine that sent the message without customizing the plugin configuration
+on each machine.
+
+When you enable the --template option, the message body and headers are parsed by
+Text::Template. Even a message body provided using the --stdin option will be parsed.
+See the Text::Template manual for more information, but in general any expression
+written in Perl will work. 
+
+There is one convenience function provided to you, trim, which will remove leading and trailing whitespace
+from its parameter. Here's an example:
+
+ check_smtp_send -H mail.server.net --mailto recipient@your.net --mailfrom sender@your.net 
+ --template --body 'hello, this message is from {use Sys::Hostname; hostname}' 
+ --header 'Subject: test message from {trim(`whoami`)}'
+
+
+=item --expect-response <code>
+
+Use this option to specify which SMTP response code should be expected from the server
+after the SMTP dialog is complete. The default is 250 (message accepted).
+
+Also known as: -E <code>
+
+=item --verbose
+
+Display additional information. Useful for troubleshooting.
+
+One --verbose will show extra information for OK, WARNING, and CRITICAL status.
+
+Use one --verbose together with --version to see the default warning and critical timeout values.
+
+Three --verbose (or -vvv) will show debug information, unless you're using --tls because Net::SMTP::TLS
+does not have a Debug feature.
+
+Also known as: -v
+
+=item --version
+
+Display plugin version and exit.
+Also known as: -V
+
+=item --help
+
+Display this documentation and exit. Does not work in the ePN version. 
+Also known as: -h
+
+=item --usage
+
+Display a short usage instruction and exit. 
+
+=back
+
+=head1 EXAMPLES
+
+=head2 Send a message with custom headers
+
+$ check_smtp_send -H mail.server.net --mailto recipient@your.net --mailfrom sender@your.net 
+--body 'Homeruns 5' --header 'Subject: Hello, world!' --header 'X-Your-Header: Yes'
+
+SMTP SEND OK - 1 seconds
+
+=head1 EXIT CODES
+
+Complies with the Nagios plug-in specification:
+ 0		OK			The plugin was able to check the service and it appeared to be functioning properly
+ 1		Warning		The plugin was able to check the service, but it appeared to be above some "warning" threshold or did not appear to be working properly
+ 2		Critical	The plugin detected that either the service was not running or it was above some "critical" threshold
+ 3		Unknown		Invalid command line arguments were supplied to the plugin or the plugin was unable to check the status of the given hosts/service
+
+=head1 NAGIOS PLUGIN NOTES
+
+Nagios plugin reference: http://nagiosplug.sourceforge.net/developer-guidelines.html
+
+This plugin does NOT use Nagios DEFAULT_SOCKET_TIMEOUT (provided by utils.pm as $TIMEOUT) because
+the path to utils.pm must be specified completely in this program and forces users to edit the source
+code if their install location is different (if they realize this is the problem). You can view
+the default timeout for this module by using the --verbose and --version options together.  The
+short form is -vV.
+
+Other than that, it attempts to follow published guidelines for Nagios plugins.
+
+=head1 CHANGES
+
+ Wed Oct 29 14:05:00 PST 2005
+ + version 0.1
+
+ Wed Nov  9 15:01:48 PST 2005
+ + now using an inline PluginReport package to generate the report
+ + added stdin option
+ + copyright notice and GNU GPL
+ + version 0.2
+
+ Thu Apr 20 16:00:00 PST 2006 (by Geoff Crompton <geoff.crompton@strategicdata.com.au>)
+ + added bailing if the $smtp->to() call fails
+ + added support for mailto recipients separated by commas
+ + version 0.2.1
+
+ Tue Apr 24 21:17:53 PDT 2007
+ + moved POD text to separate file in order to accomodate the new embedded-perl Nagios feature
+ + version 0.2.3
+
+ Fri Apr 27 20:26:42 PDT 2007
+ + documentation now mentions every command-line option accepted by the plugin, including abbreviations
+ + version 0.3
+ 
+ Sun Oct 21 10:34:14 PDT 2007
+ + added support for TLS and authentication via the Net::SMTP::TLS module. see --tls option.
+ + version 0.4
+
+ Sun Oct 21 13:54:26 PDT 2007
+ + added support for SSL via the Net::SMTP::SSL module. see --ssl option.
+ + port is no longer a required option. defaults to 25 for regular smtp, 465 for ssl, and 587 for tls.
+ + added port info to the "could not connect" error message
+ + version 0.4.1
+
+ Tue Dec  4 07:42:32 PST 2007
+ + added --usage option because the official nagios plugins have both --help and --usage
+ + added --timeout option to match the official nagios plugins
+ + fixed some minor pod formatting issues for perldoc
+ + version 0.4.2
+
+ Mon Feb 11 19:09:37 PST 2008
+ + fixed a bug for embedded perl version, variable "%status" will not stay shared in load_modules
+ + version 0.4.3
+
+ Mon May 26 09:12:14 PDT 2008
+ + fixed warning and critical messages to use "more than" or "less than" instead of the angle brackets, to make them more web friendly
+ + version 0.4.4
+ 
+ Wed Jul  2 07:12:35 PDT 2008
+ + added --expect-response option submitted by Christian Kauhaus <kc@gocept.com>
+ + added support for authentication via Net::SMTP_auth. see --auth option.
+ + version 0.4.5
+
+ Sun Oct  5 15:18:23 PDT 2008
+ + added error handling for smtp server disconnects ungracefully during QUIT (gmail.com does)
+ + version 0.4.6
+
+ Thu Oct  1 12:09:35 PDT 2009
+ + added --template option to allow arbitrary substitutions for body and headers, and provided one convenience function for trimming strings
+ + added performance data for use with PNP4Nagios!
+ + version 0.5.0
+
+ Thu Oct  8 11:17:04 PDT 2009
+ + added more detailed error messages when using --verbose
+ + version 0.5.1
+
+ Tue Feb  9 12:14:49 PST 2010
+ + added support for combining --auth with --tls using a subclass of Net::SMTP::TLS submitted by Brad Guillory; please note that to use the "PLAIN" authentication type you need to patch your Net::SMTP:TLS because it has a bug in sub auth_PLAIN (sprintf %S instead of %s)
+ + version 0.5.2
+
+=head1 AUTHOR
+
+Jonathan Buhacoff <jonathan@buhacoff.net>
+
+=head1 COPYRIGHT AND LICENSE
+
+ Copyright (C) 2005-2010 Jonathan Buhacoff
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+ http://www.gnu.org/licenses/gpl.txt
+
+=cut
+

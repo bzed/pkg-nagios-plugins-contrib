@@ -1,0 +1,254 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>check_imap_quota - connects to an IMAP account and checks the quota</title>
+<link rel="stylesheet" href="plainwhite.css" type="text/css" />
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:jonathan@inca.local" />
+</head>
+
+<body>
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+<!--
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#options">OPTIONS</a></li>
+	<li><a href="#examples">EXAMPLES</a></li>
+	<ul>
+
+		<li><a href="#report_how_many_emails_are_in_the_mailbox">Report how many emails are in the mailbox</a></li>
+		<li><a href="#report_the_email_with_the_highest_value">Report the email with the highest value</a></li>
+		<li><a href="#troubleshoot_your_search_parameters">Troubleshoot your search parameters</a></li>
+	</ul>
+
+	<li><a href="#exit_codes">EXIT CODES</a></li>
+	<li><a href="#nagios_plugin_notes">NAGIOS PLUGIN NOTES</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#changes">CHANGES</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#copyright_and_license">COPYRIGHT AND LICENSE</a></li>
+</ul>
+
+-->
+
+
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<hr />
+<h1><a name="name">NAME</a></h1>
+<p>check_imap_quota - connects to an IMAP account and checks the quota</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ check_imap_quota -vV
+ check_imap_quota -?
+ check_imap_quota --help</pre>
+<p>
+</p>
+<hr />
+<h1><a name="options">OPTIONS</a></h1>
+<dl>
+<dt><strong><a name="warning_seconds" class="item">--warning &lt;seconds&gt;</a></strong></dt>
+
+<dd>
+<p>Warn if it takes longer than &lt;seconds&gt; to connect to the IMAP server. Default is 15 seconds.
+Also known as: -w &lt;seconds&gt;</p>
+</dd>
+<dt><strong><a name="critical_seconds" class="item">--critical &lt;seconds&gt;</a></strong></dt>
+
+<dd>
+<p>Return a critical status if it takes longer than &lt;seconds&gt; to connect to the IMAP server. Default is 30 seconds.
+See also: --capture-critical &lt;messages&gt;
+Also known as: -c &lt;seconds&gt;</p>
+</dd>
+<dt><strong><a name="timeout_seconds" class="item">--timeout &lt;seconds&gt;</a></strong></dt>
+
+<dd>
+<p>Abort with critical status if it takes longer than &lt;seconds&gt; to connect to the IMAP server. Default is 60 seconds.
+The difference between timeout and critical is that, with the default settings, if it takes 45 seconds to 
+connect to the server then the connection will succeed but the plugin will return CRITICAL because it took longer
+than 30 seconds.
+Also known as: -t &lt;seconds&gt;</p>
+</dd>
+<dt><strong><a name="hostname_server" class="item">--hostname &lt;server&gt;</a></strong></dt>
+
+<dd>
+<p>Address or name of the IMAP server. Examples: mail.server.com, localhost, 192.168.1.100
+Also known as: -H &lt;server&gt;</p>
+</dd>
+<dt><strong><a name="port_number" class="item">--port &lt;number&gt;</a></strong></dt>
+
+<dd>
+<p>Service port on the IMAP server. Default is 143. If you use SSL, default is 993.
+Also known as: -p &lt;number&gt;</p>
+</dd>
+<dt><strong><a name="username_username" class="item">--username &lt;username&gt;</a></strong></dt>
+
+<dt><strong><a name="password_password" class="item">--password &lt;password&gt;</a></strong></dt>
+
+<dd>
+<p>Username and password to use when connecting to IMAP server. 
+Also known as: -U &lt;username&gt; -P &lt;password&gt;</p>
+</dd>
+<dt><strong><a name="mailbox_mailbox" class="item">--mailbox &lt;mailbox&gt;</a></strong></dt>
+
+<dd>
+<p>Use this option to specify the mailbox to search for messages. Default is INBOX. 
+Also known as: -m &lt;mailbox&gt;</p>
+</dd>
+<dt><strong><a name="ssl" class="item">--ssl</a></strong></dt>
+
+<dt><strong><a name="nossl" class="item">--nossl</a></strong></dt>
+
+<dd>
+<p>Enable SSL protocol. Requires IO::Socket::SSL.</p>
+<p>Using this option automatically changes the default port from 143 to 993. You can still
+override this from the command line using the --port option.</p>
+<p>Use the nossl option to turn off the ssl option.</p>
+</dd>
+<dt><strong><a name="hires" class="item">--hires</a></strong></dt>
+
+<dd>
+<p>Use the Time::HiRes module to measure time, if available.</p>
+</dd>
+<dt><strong><a name="verbose" class="item">--verbose</a></strong></dt>
+
+<dd>
+<p>Display additional information. Useful for troubleshooting. Use together with --version to see the default
+warning and critical timeout values.</p>
+<p>If the selected mailbox was not found, you can use verbosity level 3 (-vvv) to display a list of all
+available mailboxes on the server.</p>
+<p>Also known as: -v</p>
+</dd>
+<dt><strong><a name="version" class="item">--version</a></strong></dt>
+
+<dd>
+<p>Display plugin version and exit.
+Also known as: -V</p>
+</dd>
+<dt><strong><a name="help" class="item">--help</a></strong></dt>
+
+<dd>
+<p>Display this documentation and exit. Does not work in the ePN version. 
+Also known as: -h</p>
+</dd>
+<dt><strong><a name="usage" class="item">--usage</a></strong></dt>
+
+<dd>
+<p>Display a short usage instruction and exit.</p>
+</dd>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="examples">EXAMPLES</a></h1>
+<p>
+</p>
+<h2><a name="report_how_many_emails_are_in_the_mailbox">Report how many emails are in the mailbox</a></h2>
+<pre>
+ $ check_imap_receive -H mail.server.net --username mailuser --password mailpass
+ -s ALL --nodelete</pre>
+<pre>
+ IMAP RECEIVE OK - 1 seconds, 7 found</pre>
+<p>
+</p>
+<h2><a name="report_the_email_with_the_highest_value">Report the email with the highest value</a></h2>
+<p>Suppose your mailbox has some emails from an automated script and that a message
+from this script typically looks like this (abbreviated):</p>
+<pre>
+ To: mailuser@server.net
+ From: autoscript@server.net
+ Subject: Results of Autoscript
+ Date: Wed, 09 Nov 2005 08:30:40 -0800
+ Message-ID: &lt;auto-000000992528@server.net&gt;</pre>
+<pre>
+ Homeruns 5</pre>
+<p>And further suppose that you are interested in reporting the message that has the
+highest number of home runs, and also to leave this message in the mailbox for future
+checks, but remove the other matching messages with lesser values:</p>
+<pre>
+ $ check_imap_receive -H mail.server.net --username mailuser --password mailpass
+ -s SUBJECT -s &quot;Results of Autoscript&quot; --capture-max &quot;Homeruns (\d+)&quot;  --nodelete-captured</pre>
+<pre>
+ IMAP RECEIVE OK - 1 seconds, 3 found, 1 captured, 5 max, 2 deleted</pre>
+<p>
+</p>
+<h2><a name="troubleshoot_your_search_parameters">Troubleshoot your search parameters</a></h2>
+<p>Add the --nodelete and --imap-retries=1 parameters to your command line.</p>
+<p>
+</p>
+<hr />
+<h1><a name="exit_codes">EXIT CODES</a></h1>
+<p><table cellspacing="0" cellpadding="0"><tr><td>Complies with the Nagios plug-in specification:
+<tr><td> 0<td>OK<td>The plugin was able to check the service and it appeared to be functioning properly
+<tr><td> 1<td>Warning<td>The plugin was able to check the service, but it appeared to be above some &quot;warning&quot; threshold or did not appear to be working properly
+<tr><td> 2<td>Critical<td>The plugin detected that either the service was not running or it was above some &quot;critical&quot; threshold
+<tr><td> 3<td>Unknown<td>Invalid command line arguments were supplied to the plugin or the plugin was unable to check the status of the given hosts/service</table></p>
+<p>
+</p>
+<hr />
+<h1><a name="nagios_plugin_notes">NAGIOS PLUGIN NOTES</a></h1>
+<p>Nagios plugin reference: <a href="http://nagiosplug.sourceforge.net/developer-guidelines.html">http://nagiosplug.sourceforge.net/developer-guidelines.html</a></p>
+<p>This plugin does NOT use Nagios DEFAULT_SOCKET_TIMEOUT (provided by utils.pm as $TIMEOUT) because
+the path to utils.pm must be specified completely in this program and forces users to edit the source
+code if their install location is different (if they realize this is the problem). You can view
+the default timeout for this module by using the --verbose and --version options together.  The
+short form is -vV.</p>
+<p>Other than that, it attempts to follow published guidelines for Nagios plugins.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="http://nagios.org/">http://nagios.org/</a>
+<a href="http://search.cpan.org/~djkernen/Mail-IMAPClient-2.2.9/IMAPClient.pod">http://search.cpan.org/~djkernen/Mail-IMAPClient-2.2.9/IMAPClient.pod</a>
+<a href="http://search.cpan.org/~markov/Mail-IMAPClient-3.00/lib/Mail/IMAPClient.pod">http://search.cpan.org/~markov/Mail-IMAPClient-3.00/lib/Mail/IMAPClient.pod</a></p>
+<p>
+</p>
+<hr />
+<h1><a name="changes">CHANGES</a></h1>
+<pre>
+ Fri Nov 11 04:53:09 AST 2011
+ + version 0.1 created with quota code contributed by Johan Romme</pre>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Jonathan Buhacoff &lt;<a href="mailto:jonathan@buhacoff.net">jonathan@buhacoff.net</a>&gt;</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright_and_license">COPYRIGHT AND LICENSE</a></h1>
+<pre>
+ Copyright (C) 2011 Jonathan Buhacoff</pre>
+<pre>
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 3 of the License, or
+ (at your option) any later version.</pre>
+<pre>
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.</pre>
+<pre>
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see &lt;<a href="http://www.gnu.org/licenses/&gt">http://www.gnu.org/licenses/&gt</a>;.</pre>
+<pre>
+ <a href="http://www.gnu.org/licenses/gpl.txt">http://www.gnu.org/licenses/gpl.txt</a></pre>
+
+</body>
+
+</html>

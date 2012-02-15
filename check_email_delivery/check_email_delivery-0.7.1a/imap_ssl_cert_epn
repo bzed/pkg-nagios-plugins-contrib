@@ -1,0 +1,114 @@
+#!/usr/bin/perl
+use strict;
+my $VERSION = '0.1';
+my $COPYRIGHT = 'Copyright (C) 2005-2011 Jonathan Buhacoff <jonathan@buhacoff.net>';
+my $LICENSE = 'http://www.gnu.org/licenses/gpl.txt';
+my %status = ( 'OK' => 0, 'WARNING' => 1, 'CRITICAL' => 2, 'UNKNOWN' => 3 );
+
+use Getopt::Long;
+use Mail::IMAPClient;
+use IO::Socket::SSL;
+use Net::SSLeay;
+
+# get options from command line
+Getopt::Long::Configure("bundling");
+my $verbose = 0;
+my $help = "";
+my $help_usage = "";
+my $show_version = "";
+my $imap_server = "";
+my $default_imap_port = "143";
+my $default_imap_ssl_port = "993";
+my $imap_port = "";
+my $timeout = 60;
+my $ok;
+$ok = Getopt::Long::GetOptions(
+	"V|version"=>\$show_version,
+	"v|verbose+"=>\$verbose,"h|help"=>\$help,"usage"=>\$help_usage,
+	# imap settings
+	"H|hostname=s"=>\$imap_server,"p|port=i"=>\$imap_port,
+	# time
+	"t|timeout=i"=>\$timeout
+	);
+
+if( $show_version ) {
+	print "$VERSION\n";
+	exit $status{UNKNOWN};
+}
+
+if( $help ) {
+	exec "perldoc", $0 or print "Try `perldoc $0`\n";
+	exit $status{UNKNOWN};
+}
+
+if( $help_usage
+	||
+	( $imap_server eq ""  ) 
+  ) {
+	print "Usage: $0 -H host [-p port]\n";
+	exit $status{UNKNOWN};
+}
+
+my @certs = (); # we have to store the certs we get Net::SSLeay here so that we can output them in REVERSE order (server cert first, root cert last)
+
+# connect to IMAP server
+print "connecting to server $imap_server\n" if $verbose > 2;
+my $imap;
+eval {
+	local $SIG{ALRM} = sub { die "exceeded timeout $timeout seconds\n" }; # NB: \n required, see `perldoc -f alarm`
+	alarm $timeout;
+	
+	$imap_port = $default_imap_ssl_port unless $imap_port;
+	my $socket = IO::Socket::SSL->new(
+		PeerAddr => "$imap_server:$imap_port",
+		SSL_verify_mode => 1,
+		SSL_ca_file => undef,
+		SSL_verifycn_scheme => 'imap',
+		SSL_verifycn_name => $imap_server,
+		SSL_verify_callback => \&ssl_printer
+	);
+	die IO::Socket::SSL::errstr() unless $socket;
+	$socket->autoflush(1);
+	$imap = Mail::IMAPClient->new(Socket=>$socket, Debug => 0 );
+	$imap->State(Mail::IMAPClient->Connected);
+	$imap->_read_line() if "$Mail::IMAPClient::VERSION" le "2.2.9"; # necessary to remove the server's "ready" line from the input buffer for old versions of Mail::IMAPClient. Using string comparison for the version check because the numeric didn't work on Darwin and for Mail::IMAPClient the next version is 2.3.0 and then 3.00 so string comparison works
+#	$imap->User($username);
+#	$imap->Password($password);
+#	$imap->login() or die "Cannot login: $@";
+
+	print join("\n",reverse(@certs));
+	alarm 0;
+};
+if( $@ ) {
+	chomp $@;
+	print "Could not connect to $imap_server port $imap_port: $@\n";
+	exit $status{CRITICAL};	
+}
+unless( $imap ) {
+	print "Could not connect to $imap_server port $imap_port: $@\n";
+	exit $status{CRITICAL};
+}
+
+# deselect the mailbox
+$imap->close();
+
+# disconnect from IMAP server
+print "disconnecting from server\n" if $verbose > 2;
+$imap->logout();
+
+
+exit $status{OK};
+
+# see IO::Socket::SSL documentation for SSL_verify_callback:
+sub ssl_printer {
+	my ($boolOpenSSLResult, $cmemCertificateStore, $strCertIssuerOwnerAttr, $strError, $cmemPeerCertificate) = @_;
+	warn "OpenSSL says certificate is " . ( $boolOpenSSLResult ? "valid" : "invalid" ) if $verbose > 0;
+	warn "Peer certificate: $strCertIssuerOwnerAttr" if $verbose > 0;
+	warn "Errors: $strError" if $verbose > 0;
+	#print Net::SSLeay::PEM_get_string_X509($cmemPeerCertificate);
+	push @certs, $strCertIssuerOwnerAttr . "\n" . Net::SSLeay::PEM_get_string_X509($cmemPeerCertificate);
+}
+
+package main;
+1;
+

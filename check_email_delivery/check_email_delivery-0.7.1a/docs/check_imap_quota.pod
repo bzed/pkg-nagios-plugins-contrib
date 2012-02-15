@@ -1,0 +1,192 @@
+
+
+
+=pod
+
+=head1 NAME
+
+check_imap_quota - connects to an IMAP account and checks the quota
+
+=head1 SYNOPSIS
+
+ check_imap_quota -vV
+ check_imap_quota -?
+ check_imap_quota --help
+
+=head1 OPTIONS
+
+=over
+
+=item --warning <seconds>
+
+Warn if it takes longer than <seconds> to connect to the IMAP server. Default is 15 seconds.
+Also known as: -w <seconds>
+
+=item --critical <seconds>
+
+Return a critical status if it takes longer than <seconds> to connect to the IMAP server. Default is 30 seconds.
+See also: --capture-critical <messages>
+Also known as: -c <seconds>
+
+=item --timeout <seconds>
+
+Abort with critical status if it takes longer than <seconds> to connect to the IMAP server. Default is 60 seconds.
+The difference between timeout and critical is that, with the default settings, if it takes 45 seconds to 
+connect to the server then the connection will succeed but the plugin will return CRITICAL because it took longer
+than 30 seconds.
+Also known as: -t <seconds> 
+
+=item --hostname <server>
+
+Address or name of the IMAP server. Examples: mail.server.com, localhost, 192.168.1.100
+Also known as: -H <server>
+
+=item --port <number>
+
+Service port on the IMAP server. Default is 143. If you use SSL, default is 993.
+Also known as: -p <number>
+
+=item --username <username>
+
+=item --password <password>
+
+Username and password to use when connecting to IMAP server. 
+Also known as: -U <username> -P <password>
+
+=item --mailbox <mailbox>
+
+Use this option to specify the mailbox to search for messages. Default is INBOX. 
+Also known as: -m <mailbox>
+
+=item --ssl
+
+=item --nossl
+
+Enable SSL protocol. Requires IO::Socket::SSL. 
+
+Using this option automatically changes the default port from 143 to 993. You can still
+override this from the command line using the --port option.
+
+Use the nossl option to turn off the ssl option.
+
+=item --hires
+
+Use the Time::HiRes module to measure time, if available.
+
+=item --verbose
+
+Display additional information. Useful for troubleshooting. Use together with --version to see the default
+warning and critical timeout values.
+
+If the selected mailbox was not found, you can use verbosity level 3 (-vvv) to display a list of all
+available mailboxes on the server.
+
+Also known as: -v
+
+=item --version
+
+Display plugin version and exit.
+Also known as: -V
+
+=item --help
+
+Display this documentation and exit. Does not work in the ePN version. 
+Also known as: -h
+
+=item --usage
+
+Display a short usage instruction and exit. 
+
+=back
+
+=head1 EXAMPLES
+
+=head2 Report how many emails are in the mailbox
+
+ $ check_imap_receive -H mail.server.net --username mailuser --password mailpass
+ -s ALL --nodelete
+
+ IMAP RECEIVE OK - 1 seconds, 7 found
+
+=head2 Report the email with the highest value
+
+Suppose your mailbox has some emails from an automated script and that a message
+from this script typically looks like this (abbreviated):
+
+ To: mailuser@server.net
+ From: autoscript@server.net
+ Subject: Results of Autoscript
+ Date: Wed, 09 Nov 2005 08:30:40 -0800
+ Message-ID: <auto-000000992528@server.net>
+
+ Homeruns 5
+
+And further suppose that you are interested in reporting the message that has the
+highest number of home runs, and also to leave this message in the mailbox for future
+checks, but remove the other matching messages with lesser values:
+
+ $ check_imap_receive -H mail.server.net --username mailuser --password mailpass
+ -s SUBJECT -s "Results of Autoscript" --capture-max "Homeruns (\d+)"  --nodelete-captured
+
+ IMAP RECEIVE OK - 1 seconds, 3 found, 1 captured, 5 max, 2 deleted
+
+=head2 Troubleshoot your search parameters
+
+Add the --nodelete and --imap-retries=1 parameters to your command line.
+
+=head1 EXIT CODES
+
+Complies with the Nagios plug-in specification:
+ 0		OK			The plugin was able to check the service and it appeared to be functioning properly
+ 1		Warning		The plugin was able to check the service, but it appeared to be above some "warning" threshold or did not appear to be working properly
+ 2		Critical	The plugin detected that either the service was not running or it was above some "critical" threshold
+ 3		Unknown		Invalid command line arguments were supplied to the plugin or the plugin was unable to check the status of the given hosts/service
+
+=head1 NAGIOS PLUGIN NOTES
+
+Nagios plugin reference: http://nagiosplug.sourceforge.net/developer-guidelines.html
+
+This plugin does NOT use Nagios DEFAULT_SOCKET_TIMEOUT (provided by utils.pm as $TIMEOUT) because
+the path to utils.pm must be specified completely in this program and forces users to edit the source
+code if their install location is different (if they realize this is the problem). You can view
+the default timeout for this module by using the --verbose and --version options together.  The
+short form is -vV.
+
+Other than that, it attempts to follow published guidelines for Nagios plugins.
+
+=head1 SEE ALSO
+
+http://nagios.org/
+http://search.cpan.org/~djkernen/Mail-IMAPClient-2.2.9/IMAPClient.pod
+http://search.cpan.org/~markov/Mail-IMAPClient-3.00/lib/Mail/IMAPClient.pod
+
+=head1 CHANGES
+
+ Fri Nov 11 04:53:09 AST 2011
+ + version 0.1 created with quota code contributed by Johan Romme
+
+=head1 AUTHOR
+
+Jonathan Buhacoff <jonathan@buhacoff.net>
+
+=head1 COPYRIGHT AND LICENSE
+
+ Copyright (C) 2011 Jonathan Buhacoff
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+ http://www.gnu.org/licenses/gpl.txt
+
+=cut
+

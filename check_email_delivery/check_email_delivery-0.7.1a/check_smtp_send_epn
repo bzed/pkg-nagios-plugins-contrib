@@ -1,0 +1,458 @@
+#!/usr/bin/perl
+use strict;
+use POSIX qw(strftime);
+my $VERSION = '0.7.3';
+my $COPYRIGHT = 'Copyright (C) 2005-2011 Jonathan Buhacoff <jonathan@buhacoff.net>';
+my $LICENSE = 'http://www.gnu.org/licenses/gpl.txt';
+my %status = ( 'OK' => 0, 'WARNING' => 1, 'CRITICAL' => 2, 'UNKNOWN' => 3 );
+
+# look for required modules
+exit $status{UNKNOWN} unless load_modules(qw/Getopt::Long Net::SMTP/);
+
+BEGIN {
+	if( grep { /^--hires$/ } @ARGV ) {
+		eval "use Time::HiRes qw(time);";
+		warn "Time::HiRes not installed\n" if $@;
+	}
+}
+
+Getopt::Long::Configure("bundling");
+my $verbose = 0;
+my $help = "";
+my $help_usage = "";
+my $show_version = "";
+my $smtp_server = "";
+my $default_smtp_port = "25";
+my $default_smtp_ssl_port = "465";
+my $default_smtp_tls_port = "587";
+my $smtp_port = "";
+my @mailto = ();
+my $mailfrom = "";
+my @header = ();
+my $body = "";
+my $stdin = "";
+my $template = "";
+my $expect_response = "250";
+my $warntime = 15;
+my $criticaltime = 30;
+my $timeout = 60;
+my $tls = 0;
+my $ssl = 0;
+my $auth_method = undef;
+my $username = "";
+my $password = "";
+my $time_hires = "";
+my $mx_lookup = 0;
+my $ok;
+$ok = Getopt::Long::GetOptions(
+	"V|version"=>\$show_version,
+	"v|verbose+"=>\$verbose,"h|help"=>\$help,"usage"=>\$help_usage,
+	"w|warning=i"=>\$warntime,"c|critical=i"=>\$criticaltime,"t|timeout=i"=>\$timeout,
+	# smtp settings
+	"H|hostname=s"=>\$smtp_server,"p|port=i"=>\$smtp_port,
+	"mailto=s"=>\@mailto, "mailfrom=s",\$mailfrom,
+	"header=s"=>\@header, "body=s"=>\$body,	"stdin"=>\$stdin,
+	"template!"=>\$template,
+	# SSL/TLS/auth options
+	"tls!"=>\$tls, "ssl!"=>\$ssl, "auth=s"=>\$auth_method,
+	"U|username=s"=>\$username,"P|password=s"=>\$password,
+	# Server response
+	"E|expect-response=s"=>\$expect_response,
+	# Time
+	"hires"=>\$time_hires,
+	);
+
+if( $show_version ) {
+	print "$VERSION\n";
+	if( $verbose ) {
+		print "Default warning threshold: $warntime seconds\n";
+		print "Default critical threshold: $criticaltime seconds\n";
+		print "Default timeout: $timeout seconds\n";
+	}
+	exit $status{UNKNOWN};
+}
+
+if( $help ) {
+	exec "perldoc", $0 or print "Try `perldoc $0`\n";
+	exit $status{UNKNOWN};
+}
+
+if( $smtp_server eq "" && scalar(@mailto) == 1 ) {
+	# no SMTP server specified but one mailto address given means we can look up the MX record
+	$mx_lookup = 1;
+}
+
+my @required_module = ();
+push @required_module, 'Net::SMTP::SSL' if $ssl;
+push @required_module, ('MIME::Base64','Authen::SASL') if $ssl && $username;
+push @required_module, 'Net::SMTP::TLS' if $tls;
+push @required_module, 'Net::SMTP_auth' if $auth_method and not $tls; # whereas if auth_method and tls we use TLS_auth, which is included in this script!
+push @required_module, 'Text::Template' if $template;
+push @required_module, 'Net::DNS' if $mx_lookup;
+push @required_module, 'Email::Address' if $mx_lookup;
+exit $status{UNKNOWN} unless load_modules(@required_module);
+
+
+# split up @mailto if commas were used instead of multiple options
+@mailto = split(/,/,join(',',@mailto));
+
+if( $help_usage ||
+	(
+	($smtp_server eq "" && !$mx_lookup) || scalar(@mailto)==0 || $mailfrom eq ""
+	) 
+  ) {
+	print "Usage: $0 [-H host [-p port]] --mailto recipient\@your.net [--mailto recipient2\@your.net ...] --mailfrom sender\@your.net --body 'some text' [-w <seconds>] [-c <seconds>]\n";
+	exit $status{UNKNOWN};
+}
+
+# initialize
+my $report = new PluginReport;
+my $time_start = time;
+my $actual_response = undef;
+my @warning = ();
+my @critical = ();
+
+my $smtp_debug = 0;
+$smtp_debug = 1 if $verbose >= 3;
+
+# default date and message id headers
+push @header, default_date_header() unless find_header("Date",@header);
+push @header, default_messageid_header() unless find_header("Message-ID",@header);
+
+# look up MX server if necessary
+if( $mx_lookup ) {
+	my $addr = Email::Address->new( undef, $mailto[0] );
+	my $mx_domain = $addr->host;
+	print "MX lookup " . $mx_domain . "\n" if $verbose > 1;
+	my $res = Net::DNS::Resolver->new;
+	my @mx = Net::DNS::mx($res, $mx_domain);
+	if( @mx ) {
+		# use the first server
+		foreach my $rr (@mx) {
+			print "pref : " . $rr->preference . " exchange: " . $rr->exchange . "\n" if $verbose > 2;			
+		}
+		$smtp_server = $mx[0]->exchange;
+		print "smtp server: $smtp_server\n" if $verbose;
+	}
+	else {
+		print "SMTP SEND CRITICAL - Cannot find MX records for $mx_domain\n";
+		exit $status{CRITICAL};			
+	}
+}
+
+# connect to SMTP server
+# create the smtp handle using Net::SMTP, Net::SMTP::SSL, Net::SMTP::TLS, or an authentication variant
+my $smtp; 
+eval {
+	if( $tls and $auth_method ) {
+		$smtp_port = $default_smtp_tls_port unless $smtp_port;
+		$smtp = TLS_auth->new($smtp_server, Timeout=>$timeout, Port=>$smtp_port, User=>$username, Password=>$password, Auth_Method=>$auth_method);
+		if( $smtp ) {
+			my $message = oneline($smtp->message());
+			die "cannot connect with TLS/$auth_method: $message" if $smtp->code() =~ m/53\d/;
+		}
+	}
+	elsif( $tls ) {
+		$smtp_port = $default_smtp_tls_port unless $smtp_port;
+		$smtp = Net::SMTP::TLS->new($smtp_server, Timeout=>$timeout, Port=>$smtp_port, User=>$username, Password=>$password);
+		if( $smtp ) {
+			my $message = oneline($smtp->message());
+			die "cannot connect with TLS: $message" if $smtp->code() =~ m/53\d/;
+		}
+	}
+	elsif( $ssl ) {
+		$smtp_port = $default_smtp_ssl_port unless $smtp_port;
+		$smtp = Net::SMTP::SSL->new($smtp_server, Port => $smtp_port, Timeout=>$timeout,Debug=>$smtp_debug);
+		if( $smtp && $username )  {
+			$smtp->auth($username, $password);
+			my $message = oneline($smtp->message());
+			die "cannot connect with SSL/password: $message" if $smtp->code() =~ m/53\d/;
+		}	
+	}
+	elsif( $auth_method ) {
+		$smtp_port = $default_smtp_port unless $smtp_port;
+		$smtp = Net::SMTP_auth->new($smtp_server, Port=>$smtp_port, Timeout=>$timeout,Debug=>$smtp_debug);	
+		if( $smtp ) {
+			$smtp->auth($auth_method, $username, $password);
+			my $message = oneline($smtp->message());
+			die "cannot connect with SSL/$auth_method: $message" if $smtp->code() =~ m/53\d/;
+		}			
+	}
+	else {
+		$smtp_port = $default_smtp_port unless $smtp_port;
+		$smtp = Net::SMTP->new($smtp_server, Port=>$smtp_port, Timeout=>$timeout,Debug=>$smtp_debug);	
+		if( $smtp && $username ) {
+			$smtp->auth($username, $password);
+			my $message = oneline($smtp->message());
+			die "cannot connect with password: $message" if $smtp->code() =~ m/53\d/;
+		}	
+	}
+};
+if( $@ ) {
+	$@ =~ s/\n/ /g; # the error message can be multiline but we want our output to be just one line
+	print "SMTP SEND CRITICAL - $@\n";
+	exit $status{CRITICAL};	
+}
+unless( $smtp ) {
+	print "SMTP SEND CRITICAL - Could not connect to $smtp_server port $smtp_port\n";
+	exit $status{CRITICAL};
+}
+my $time_connected = time;
+
+# add the monitored server's banner to the report
+if( $tls ) {
+	$report->{banner} = "";	
+}
+elsif( $ssl ) {
+	$report->{banner} = $smtp->banner || "";
+	chomp $report->{banner};		
+}
+else {
+	$report->{banner} = $smtp->banner || "";
+	chomp $report->{banner};	
+}
+
+
+# send email
+if( $stdin ) {
+	$body = "";
+	while(<STDIN>) {
+		$body .= $_;
+	}
+}
+
+# if user wants to use template substitutions, this is the place to process body and headers
+if( $template ) {
+	foreach my $item (@header,$body) {
+		my $t = Text::Template->new(TYPE=>'STRING',SOURCE=>$item,PACKAGE=>'SmtpMessageTemplate');
+		$item = $t->fill_in(PREPEND=>q{package SmtpMessageTemplate;});
+#		print "item: $item\n";
+	}
+}
+
+
+$smtp->mail($mailfrom);
+foreach( @mailto ) {
+	# the two SMTP modules have different error reporting mechanisms:
+	if( $tls ) {
+		# Net::SMTP::TLS croaks when the recipient is rejected
+		eval {
+			$smtp->to($_);			
+		};
+		if( $@ ) {
+			print "SMTP SEND CRITICAL - Could not send to $_\n";
+			print "Reason: $@\n" if $verbose;
+			exit $status{CRITICAL};			
+		}
+	}
+	else {
+		# Net::SMTP returns false when the recipient is rejected
+		my $to_returned = $smtp->to($_);
+		if( !$to_returned ) { 
+			print "SMTP SEND CRITICAL - Could not send to $_\n";
+			print "Reason: Recipient rejected or authentication failed\n" if $verbose;
+			exit $status{CRITICAL};
+		}
+	}
+}
+
+# Net::SMTP::TLS doesn't implement code() so we need to wrap calls in eval to get our error messages
+
+	# start data transfer (expect response 354)
+	$smtp->data();
+	
+	# send data
+	$smtp->datasend("To: ".join(", ",@mailto)."\n");
+	$smtp->datasend("From: $mailfrom\n");
+	foreach( @header ) {
+		$smtp->datasend("$_\n");
+	}
+	$smtp->datasend("\n");
+	$smtp->datasend($body);
+	$smtp->datasend("\n");
+	
+eval {
+	# end data transfer (expect response 250)
+	$smtp->dataend();	
+};
+if( $@ ) {
+	$actual_response = $tls ? get_tls_error($@) : $smtp->code();
+}
+else {
+	$actual_response = $tls ? "250" : $smtp->code();	# no error means we got 250		
+}
+
+eval {
+	# disconnect from SMTP server (expect response 221)
+	$smtp->quit();
+};
+if( $@ ) {
+	push @warning, "Error while disconnecting from $smtp_server";
+}
+
+# calculate elapsed time and issue warnings
+my $time_end = time;
+my $elapsedtime = $time_end - $time_start;
+$report->{seconds} = $elapsedtime;
+
+push @warning, "connection time more than $warntime" if( $time_connected - $time_start > $warntime );
+push @critical, "connection time more than $criticaltime" if( $time_connected - $time_start > $criticaltime );
+push @critical, "response was $actual_response but expected $expect_response" if ( $actual_response ne $expect_response );
+
+# print report and exit with known status
+my $perf_data = "elapsed=".$report->{seconds}."s;$warntime;$criticaltime"; # TODO: need a component for safely generating valid perf data format. for notes on the format, see http://www.perfparse.de/tiki-view_faq.php?faqId=6 and http://nagiosplug.sourceforge.net/developer-guidelines.html#AEN185
+my $short_report = $report->text(qw/seconds/) . " | $perf_data";
+my $long_report = join("", map { "$_: $report->{$_}\n" } qw/banner/ );
+if( scalar @critical ) {
+	my $crit_alerts = join(", ", @critical);
+	print "SMTP SEND CRITICAL - $crit_alerts; $short_report\n";
+	print $long_report if $verbose;
+	exit $status{CRITICAL};
+}
+if( scalar @warning ) {
+	my $warn_alerts = join(", ", @warning);
+	print "SMTP SEND WARNING - $warn_alerts; $short_report\n";
+	print $long_report if $verbose;
+	exit $status{WARNING};
+}
+print "SMTP SEND OK - $short_report\n";
+print $long_report if $verbose;
+exit $status{OK};
+
+
+# utility to load required modules. exits if unable to load one or more of the modules.
+sub load_modules {
+	my @missing_modules = ();
+	foreach( @_ ) {
+		eval "require $_";
+		push @missing_modules, $_ if $@;	
+	}
+	if( @missing_modules ) {
+		print "Missing perl modules: @missing_modules\n";
+		return 0;
+	}
+	return 1;
+}
+
+# utility to extract error codes out of Net::SMTP::TLS croak messages
+sub get_tls_error {
+	my ($errormsg) = @_;
+	$errormsg =~ m/: (\d+) (.+)/;
+	my $code = $1;		
+	return $code;
+}
+
+# looks for a specific header in a list of headers; returns true if found
+sub find_header {
+	my ($name, @list) = @_;
+	return scalar grep { m/^$name: /i } @list;
+}
+
+# RFC 2822 date header
+sub default_date_header {
+	return strftime "Date: %a, %e %b %Y %H:%M:%S %z (%Z)", gmtime;
+}
+
+# RFC 2822 message id header
+sub default_messageid_header {
+	my $random = randomstring(16,qw/0 1 2 3 4 5 6 7 8 9 a b c d e f g h i j k l m n o p q r s t u v w x y z/);
+	my $hostname = `hostname`;
+	chomp $hostname;
+	return "Message-ID: <".time.".".$random.".checksmtpsend@".$hostname.">";
+}
+
+# returns a random string of specified length using characters from specified set
+sub randomstring {
+	my ($length,@set) = @_;
+	my $size = scalar @set;
+	my $string = "";
+	while($length--) {
+		$string .= $set[int(rand($size))];
+	}
+	return $string;
+}
+
+# replaces all newlines in the input string with spaces
+sub oneline {
+	my ($input) = @_;
+	$input =~ s/[\r\n]+/ /g;
+	return $input;
+}
+
+# NAME
+#	PluginReport
+# SYNOPSIS
+#	$report = new PluginReport;
+#   $report->{label1} = "value1";
+#   $report->{label2} = "value2";
+#	print $report->text(qw/label1 label2/);
+package PluginReport;
+
+sub new {
+	my ($proto,%p) = @_;
+	my $class = ref($proto) || $proto;
+	my $self  = bless {}, $class;
+	$self->{$_} = $p{$_} foreach keys %p;
+	return $self;
+}
+
+sub text {
+	my ($self,@labels) = @_;
+	my @report = map { "$self->{$_} $_" } grep { defined $self->{$_} } @labels;
+	my $text = join(", ", @report);
+	return $text;
+}
+
+package SmtpMessageTemplate;
+
+sub trim {
+	my ($text) = @_;
+	$text =~ s/^\s*//;
+	$text =~ s/\s*$//;
+	return $text;
+}
+
+# NAME
+#   TLS_auth
+# SYNOPSYS
+#   
+# Based on contribution by Brad Guillory
+package TLS_auth;
+#use Net::SMTP::TLS;
+our @ISA = qw(Net::SMTP::TLS);
+use Carp;
+sub new {
+	my ($proto,$server,%p) = @_;
+	my $class = ref($proto) || $proto;
+	#my $self = bless {}, $class;
+	no strict 'refs';
+	no warnings 'once';
+	*Net::SMTP::TLS::login = *TLS_auth::login;  # override parent's login with ours so when it's called in the constructor, our overriden version will be used
+	my $self = Net::SMTP::TLS->new($server,%p);
+	return $self;
+}
+
+
+sub login {
+	my ($self) = @_;
+	my $type = $self->{features}->{AUTH};
+	if(not $type){
+		die "Server did not return AUTH in capabilities\n"; # croak
+	}
+#	print "Feature: $type\nAuth Method: $self->{Auth_Method}\n";
+	if($type =~ /CRAM\-MD5/ and $self->{Auth_Method} =~ /CRAM\-MD5/i){
+		$self->auth_MD5();
+	}elsif($type =~ /LOGIN/ and $self->{Auth_Method} =~ /LOGIN/i){
+		$self->auth_LOGIN();
+	}elsif($type =~ /PLAIN/ and $self->{Auth_Method} =~ /PLAIN/i){
+		#print "Calling auth_PLAIN\n";
+		$self->auth_PLAIN();
+	}else{
+		die "Unsupported Authentication mechanism: $self->{Auth_Method}\n"; # croak
+	}
+}
+
+    
+package main;
+1;
+

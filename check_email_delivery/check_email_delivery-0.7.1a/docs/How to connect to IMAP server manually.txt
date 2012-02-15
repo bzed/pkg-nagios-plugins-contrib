@@ -1,0 +1,69 @@
+HOW TO CONNECT TO IMAP SERVER MANUALLY
+
+This how-to borrowed from: http://www.bincimap.org/bincimap-faq.html
+
+
+1) Connection
+Using telnet, connect to your service on port 143. Replace "server" with your server's name. If the server is set up correctly, you will see this greeting:
+  # telnet server 143
+  * OK IMAP Server ready
+      
+If you have SSL enabled (most likely you do), connect to port 993 with the openssl tool. If the server is set up correctly, you will see this greeting:
+  # openssl s_client -connect server:993 -crlf
+  * OK IMAP Server ready
+      
+2) Logging in / authenticating
+Firstly, check your bincimap.conf file, in the "Authentication" section, for this setting:
+allow plain auth in non ssl = "no"
+      
+If you want users to be able to connect without using SSL, set this to "yes".
+Using either the telnet (in case of "yes" in the above example) or openssl tool, try the LOGIN command, replacing "username" with one username on your server, and "password" with that user's password. You should get the reply on the second line.
+1 LOGIN username password
+1 LOGIN completed
+      
+Note that you should try logging in with at least two users to check that this feature is working properly.
+3) Listing, creating, renaming and deleting mailboxes
+Enter the following command to list the user's first level mailboxes. You should get at least one line of response (starting with "* LIST") before you get the "2 OK LIST" reponse.
+2 LIST "" "%"
+* LIST (\UnMarked) "/" "INBOX"
+2 OK LIST completed
+      
+Check your bincimap.conf file, under the Mailbox section, and check the "depot" setting. Try creating a mailbox with the following command, replacing mailbox with a name of your choice. Note that if you are using the Maildir++ depot setting, you must use "INBOX/mailbox" instead:
+3 CREATE mailbox
+3 OK CREATE completed
+      
+Rename the mailbox with this command. Note the "INBOX/" prefix when using a Maildir++ depot. (After that, rerunning the LIST command from above will give you a slightly different result than before):
+4 RENAME mailbox newmailbox
+4 OK RENAME completed
+      
+Now delete the mailbox with this command:
+5 DELETE newmailbox
+5 OK DELETE completed
+      
+4) Selecting a mailbox and looking inside
+Select your INBOX with this command. Note that the response may be slightly different from in this example:
+6 SELECT INBOX
+* 146 EXISTS
+* OK [UIDVALIDITY 1047992537]
+* OK [UIDNEXT 2683] 2683 is the next UID
+* FLAGS (\Answered \Flagged \Deleted \Recent \Seen \Draft)
+* OK [PERMANENTFLAGS (\Answered \Flagged \Deleted \Seen \Draft)] Limited
+6 OK [READ-WRITE]
+      
+Fetch the flags of all your messages with this command. Note that the "..." is for editorial clarity, many lines of output have been omitted in this example:
+7 FETCH 1:* FLAGS
+* 1 FETCH (FLAGS (\Seen \Answered))
+* 2 FETCH (FLAGS (\Seen \Answered))
+...
+* 146 FETCH (FLAGS (\Seen \Answered))
+7 OK FETCH completed
+      
+Set a flag with this command:
+8 STORE 1 +FLAGS \Flagged
+* FETCH (FLAGS (\Seen \Flagged))
+8 OK STORE completed
+
+5) Logging out
+9 LOGOUT
+* BYE Server logging out
+9 OK LOGOUT finished.

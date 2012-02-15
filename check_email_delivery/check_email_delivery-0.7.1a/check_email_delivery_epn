@@ -1,0 +1,498 @@
+#!/usr/bin/perl
+use strict;
+my $VERSION = '0.7.1';
+my $COPYRIGHT = 'Copyright (C) 2005-2011 Jonathan Buhacoff <jonathan@buhacoff.net>';
+my $LICENSE = 'http://www.gnu.org/licenses/gpl.txt';
+my %status = ( 'OK' => 0, 'WARNING' => 1, 'CRITICAL' => 2, 'UNKNOWN' => 3 );
+
+# look for required modules
+exit $status{UNKNOWN} unless load_modules(qw/Getopt::Long/);
+
+BEGIN {
+	if( grep { /^--hires$/ } @ARGV ) {
+		eval "use Time::HiRes qw(time);";
+		warn "Time::HiRes not installed\n" if $@;
+	}
+}
+
+# get options from command line
+Getopt::Long::Configure("bundling");
+my $verbose = 0;
+my $help = "";
+my $help_usage = "";
+my $show_version = "";
+my $host = "";
+my $smtp_server = "";
+my $smtp_port = "";
+my $imap_server = "";
+my $smtp_username = "";
+my $smtp_password = "";
+my $smtp_tls = "";
+my $imap_port = "";
+my $imap_username = "";
+my $imap_password = "";
+my $imap_mailbox = "";
+my $username = "";
+my $password = "";
+my $ssl = "";
+my $imap_ssl = "";
+my $mailto = "";
+my $mailfrom = "";
+my @header = ();
+my $body = "";
+my $warnstr = "";
+my $critstr = "";
+my $waitstr = "";
+my $delay_warn = 95;
+my $delay_crit = 300;
+my $smtp_warn = 15;
+my $smtp_crit = 30;
+my $imap_warn = 15;
+my $imap_crit = 30;
+my $timeout = "";
+my @alert_plugins = ();
+my $imap_interval = 5;
+my $imap_retries = 5;
+my @plugins = ();
+my @token_formats = ();
+my $tokenfile = "";
+my $default_crit = 30;
+my $default_warn = 15;
+my $default_wait = 5;
+my $default_timeout = 60;
+my $time_hires = "";
+my $libexec = "/usr/local/nagios/libexec";
+my $ok;
+$ok = Getopt::Long::GetOptions(
+	"V|version"=>\$show_version,
+	"v|verbose+"=>\$verbose,"h|help"=>\$help,"usage"=>\$help_usage,
+	"w|warning=s"=>\$warnstr,"c|critical=s"=>\$critstr, "t|timeout=s"=>\$timeout,
+	"libexec=s"=>\$libexec,
+	# plugin settings
+	"p|plugin=s"=>\@plugins, "T|token=s"=>\@token_formats,
+	"A|alert=i"=>\@alert_plugins,
+	"F|file=s"=>\$tokenfile,
+	# common settings
+	"H|hostname=s"=>\$host,
+	"U|username=s"=>\$username,"P|password=s"=>\$password,
+	"ssl!"=>\$ssl,
+	# smtp settings
+	"smtp-server=s"=>\$smtp_server,"smtp-port=i"=>\$smtp_port,
+	"mailto=s"=>\$mailto, "mailfrom=s",\$mailfrom,
+	"header=s"=>\@header, "body=s"=>\$body,
+	# smtp-tls settings
+	"smtptls!"=>\$smtp_tls,
+	"smtp-username=s"=>\$smtp_username,"smtp-password=s"=>\$smtp_password,
+	# delay settings
+	"wait=s"=>\$waitstr,
+	# imap settings
+	"imap-server=s"=>\$imap_server,"imap-port=i"=>\$imap_port,
+	"imap-username=s"=>\$imap_username,"imap-password=s"=>\$imap_password,
+	"imap-mailbox=s"=>\$imap_mailbox,
+	"imap-check-interval=i"=>\$imap_interval,"imap-retries=i"=>\$imap_retries,
+	"imapssl!"=>\$imap_ssl,
+	# Time
+	"hires"=>\$time_hires,
+	);
+
+if( $show_version ) {
+	print "$VERSION\n";
+	if( $verbose ) {
+		print "Warning threshold: $delay_warn seconds\n";
+		print "Critical threshold: $delay_crit seconds\n";
+		print "Default wait: $default_wait seconds\n";
+		print "Default timeout: $default_timeout seconds\n";
+	}
+	exit $status{UNKNOWN};
+}
+
+if( $help ) {
+	exec "perldoc", $0 or print "Try `perldoc $0`\n";
+	exit $status{UNKNOWN};
+}
+
+if( $host ) {
+	$smtp_server = $host if $smtp_server eq "";
+	$imap_server = $host if $imap_server eq "";
+}
+
+if( $username ) {
+	$smtp_username = $username if $smtp_username eq "";
+	$imap_username = $username if $imap_username eq "";
+}
+
+if( $password ) {
+	$smtp_password = $password if $smtp_password eq "";
+	$imap_password = $password if $imap_password eq "";
+}
+
+if( $ssl ) {
+	$imap_ssl = $ssl if $imap_ssl eq "";
+	$smtp_tls = $ssl if $smtp_tls eq "";
+}
+
+if( $help_usage
+	||
+	(
+		scalar(@plugins) == 0
+		&&
+		(
+			$smtp_server eq "" || $mailto eq "" || $mailfrom eq "" 
+			|| $imap_server eq "" || $username eq "" || $password eq ""
+		)
+	)
+	) {
+	print "Usage 1: $0 -H host \n\t".
+			"--mailto recipient\@your.net --mailfrom sender\@your.net --body 'message' \n\t".
+			"--username username --password password \n\t".
+			"[-w <seconds>] [-c <seconds>]\n\t" .
+			"[--imap-check-interval <seconds> ] [--imap-retries <times> ]\n";
+	print "Usage 2: $0 \n\t".
+			"-p 'first plugin command with %TOKEN1% embedded' \n\t".
+			"-p 'second plugin command with %TOKEN1% embedded' \n\t".
+			"[-w <seconds1>,<seconds2>] [-c <seconds1>,<seconds2>] \n";
+	exit $status{UNKNOWN};
+}
+
+# determine thresholds
+my @warning_times = split(",", $warnstr);
+my @critical_times = split(",", $critstr);
+my @alarm_times = split(",", $timeout);
+my @wait_times = split(",", $waitstr);
+my ($dw,$sw,$rw) = split(",", $warnstr);
+my ($dc,$sc,$rc) = split(",", $critstr);
+my ($wait) = split(",", $waitstr);
+$delay_warn = $dw if defined $dw and $dw ne "";
+$smtp_warn = $sw if defined $sw and $sw ne "";
+$imap_warn = $rw if defined $rw and $rw ne "";
+$delay_crit = $dc if defined $dc and $dc ne "";
+$smtp_crit = $sc if defined $sc and $sc ne "";
+$imap_crit = $rc if defined $rc and $rc ne "";
+my $smtp_thresholds = "";
+$smtp_thresholds .= "-w $smtp_warn " if defined $smtp_warn and $smtp_warn ne "";
+$smtp_thresholds .= "-c $smtp_crit " if defined $smtp_crit and $smtp_crit ne "";
+my $imap_thresholds = "";
+$imap_thresholds .= "-w $imap_warn " if defined $imap_warn and $imap_warn ne "";
+$imap_thresholds .= "-c $imap_crit " if defined $imap_crit and $imap_crit ne "";
+$imap_thresholds .= "--imap-check-interval $imap_interval " if defined $imap_interval and $imap_interval ne "";
+$imap_thresholds .= "--imap-retries $imap_retries " if defined $imap_retries and $imap_retries ne "";
+if( scalar(@alarm_times) == 1 ) {
+	$default_timeout = shift(@alarm_times);
+}
+
+# determine which other options to include
+my $smtp_options = "";
+$smtp_options .= "-H $smtp_server " if defined $smtp_server and $smtp_server ne "";
+$smtp_options .= "-p $smtp_port " if defined $smtp_port and $smtp_port ne "";
+$smtp_options .= "--tls " if defined $smtp_tls and $smtp_tls;
+$smtp_options .= "-U ".shellquote($smtp_username)." " if defined $smtp_username and $smtp_username ne "";
+$smtp_options .= "-P ".shellquote($smtp_password)." " if defined $smtp_password and $smtp_password ne "";
+$smtp_options .= "--mailto ".shellquote($mailto)." " if defined $mailto and $mailto ne "";
+$smtp_options .= "--mailfrom ".shellquote($mailfrom)." " if defined $mailfrom and $mailfrom ne "";
+foreach my $h( @header ) {
+	$smtp_options .= "--header ".shellquote($h)." ";
+}
+my $imap_options = "";
+$imap_options .= "-H $imap_server " if defined $imap_server and $imap_server ne "";
+$imap_options .= "-p $imap_port " if defined $imap_port and $imap_port ne "";
+$imap_options .= "-U ".shellquote($imap_username)." " if defined $imap_username and $imap_username ne "";
+$imap_options .= "-P ".shellquote($imap_password)." " if defined $imap_password and $imap_password ne "";
+$imap_options .= "--mailbox ".shellquote($imap_mailbox)." " if defined $imap_mailbox and $imap_mailbox ne "";
+$imap_options .= "--ssl " if defined $imap_ssl and $imap_ssl;
+
+
+# create the report object
+my $report = new PluginReport;
+my @report_plugins = (); # populated later with either (smtp,imap) or (plugin1,plugin2,...)
+my $time_start; # initialized later with time the work actually starts
+
+# create token formats for use with the plugins
+my @alpha = qw/a b c d e f g h i j k l m n o p q r s t u v w x y z/;
+my @numeric = qw/0 1 2 3 4 5 6 7 8 9/;
+my @hex = qw/0 1 2 3 4 5 6 7 8 9 a b c d e f/;
+my @pgp_even = qw/aardvark absurd accrue acme adrift adult afflict ahead aimless Algol allow alone ammo ancient apple artist assume Athens atlas Aztec baboon backfield backward banjo beaming bedlamp beehive beeswax befriend Belfast berserk billiard bison blackjack blockade blowtorch bluebird bombast bookshelf brackish breadline breakup brickyard briefcase Burbank button buzzard cement chairlift chatter checkup chisel choking chopper Christmas clamshell classic classroom cleanup clockwork cobra commence concert cowbell crackdown cranky crowfoot crucial crumpled crusade cubic dashboard deadbolt deckhand dogsled dragnet drainage dreadful drifter dropper drumbeat drunken Dupont dwelling eating edict egghead eightball endorse endow enlist erase escape exceed eyeglass eyetooth facial fallout flagpole flatfoot flytrap fracture framework freedom frighten gazelle Geiger glitter glucose goggles goldfish gremlin guidance hamlet highchair hockey indoors indulge inverse involve island jawbone keyboard kickoff kiwi klaxon locale lockup merit minnow miser Mohawk mural music necklace Neptune newborn nightbird Oakland obtuse offload optic orca payday peachy pheasant physique playhouse Pluto preclude prefer preshrunk printer prowler pupil puppy python quadrant quiver quota ragtime ratchet rebirth reform regain reindeer rematch repay retouch revenge reward rhythm ribcage ringbolt robust rocker ruffled sailboat sawdust scallion scenic scorecard Scotland seabird select sentence shadow shamrock showgirl skullcap skydive slingshot slowdown snapline snapshot snowcap snowslide solo southward soybean spaniel spearhead spellbind spheroid spigot spindle spyglass stagehand stagnate stairway standard stapler steamship sterling stockman stopwatch stormy sugar surmount suspense sweatband swelter tactics talon tapeworm tempest tiger tissue tonic topmost tracker transit trauma treadmill Trojan trouble tumor tunnel tycoon uncut unearth unwind uproot upset upshot vapor village virus Vulcan waffle wallet watchword wayside willow woodlark Zulu/;
+my @pgp_odd = qw/adroitness adviser aftermath aggregate alkali almighty amulet amusement antenna applicant Apollo armistice article asteroid Atlantic atmosphere autopsy Babylon backwater barbecue belowground bifocals bodyguard bookseller borderline bottomless Bradbury bravado Brazilian breakaway Burlington businessman butterfat Camelot candidate cannonball Capricorn caravan caretaker celebrate cellulose certify chambermaid Cherokee Chicago clergyman coherence combustion commando company component concurrent confidence conformist congregate consensus consulting corporate corrosion councilman crossover crucifix cumbersome customer Dakota decadence December decimal designing detector detergent determine dictator dinosaur direction disable disbelief disruptive distortion document embezzle enchanting enrollment enterprise equation equipment escapade Eskimo everyday examine existence exodus fascinate filament finicky forever fortitude frequency gadgetry Galveston getaway glossary gossamer graduate gravity guitarist hamburger Hamilton handiwork hazardous headwaters hemisphere hesitate hideaway holiness hurricane hydraulic impartial impetus inception indigo inertia infancy inferno informant insincere insurgent integrate intention inventive Istanbul Jamaica Jupiter leprosy letterhead liberty maritime matchmaker maverick Medusa megaton microscope microwave midsummer millionaire miracle misnomer molasses molecule Montana monument mosquito narrative nebula newsletter Norwegian October Ohio onlooker opulent Orlando outfielder Pacific pandemic Pandora paperweight paragon paragraph paramount passenger pedigree Pegasus penetrate perceptive performance pharmacy phonetic photograph pioneer pocketful politeness positive potato processor provincial proximate puberty publisher pyramid quantity racketeer rebellion recipe recover repellent replica reproduce resistor responsive retraction retrieval retrospect revenue revival revolver sandalwood sardonic Saturday savagery scavenger sensation sociable souvenir specialist speculate stethoscope stupendous supportive surrender suspicious sympathy tambourine telephone therapist tobacco tolerance tomorrow torpedo tradition travesty trombonist truncated typewriter ultimate undaunted underfoot unicorn unify universe unravel upcoming vacancy vagabond vertigo Virginia visitor vocalist voyager warranty Waterloo whimsical Wichita Wilmington Wyoming yesteryear Yucatan/;
+my %formats = (
+	'a' => sub { pick_random(@alpha) },
+	'n' => sub { pick_random(@numeric) },
+	'c' => sub { pick_random(@alpha,@numeric) },
+	'h' => sub { pick_random(@hex) },
+	'U' => sub { time },
+	'X' => sub { pick_random(@pgp_even) },
+	'Y' => sub { pick_random(@pgp_odd) },	
+);
+if( scalar(@plugins) ) {
+	# scan the plugin commands for use of tokens to count how many we need
+	my $token_count = 0;
+	foreach my $p (@plugins) {
+		my @matches = sort ($p =~ m/%TOKEN(\d+)%/g);
+		my $max = pop @matches;
+		$token_count = $max if defined($max) && $max > $token_count;
+	}
+	# create the tokens
+	my @tokens = ();
+	foreach my $t (1..$token_count) {
+		my $format = shift @token_formats;
+		$format = "U-X-Y" unless $format;
+		my @format_characters = split(//, $format);
+		my $token = "";
+		foreach my $c (@format_characters) {
+			if( defined $formats{$c} ) {
+				$token .= &{$formats{$c}};
+			}
+			else {
+				$token .= $c;
+			}			
+		}
+		push @tokens, $token;
+	}
+	# substitute the tokens into each plugin command
+	foreach my $p (@plugins) {
+		foreach my $t (1..$token_count) {
+			my $token = $tokens[$t-1];
+			$p =~ s/%TOKEN$t%/$token/g;
+		}
+	}
+	# mark plugins that are allowed to generate alerts. default behavior is to alert for all plugins.
+	my %alert_plugins = ();
+	if( scalar(@alert_plugins) > 0 ) {
+		%alert_plugins = map { $_ => 1 } @alert_plugins;
+	}
+	else {
+		%alert_plugins = map { $_ => 1 } (1..scalar(@plugins));
+	}
+	# run each plugin and store its output in a report
+	$time_start = time;
+	my $i = 0;
+	foreach my $p( @plugins ) {
+		$i++;
+		my $plugin_timeout = shift(@alarm_times) || $default_timeout;
+		# run the plugin
+		eval {
+			local $SIG{ALRM} = sub { die "exceeded timeout $plugin_timeout seconds\n" }; # NB: \n required, see `perldoc -f alarm`
+			alarm $plugin_timeout;
+			my $output = `$p`;
+			chomp $output;
+			if( $output !~ m/OK|WARNING|CRITICAL/ ) {
+				print "EMAIL DELIVERY UNKNOWN - plugin $i error: $output\n";
+				print "Plugin $i: $p\n" if $verbose;
+				# record tokens in a file if option is enabled
+				record_tokens($tokenfile,\@tokens,$time_start,undef,'UNKNOWN',$i,$output) if $tokenfile;
+				exit $status{UNKNOWN};
+			}
+			if( $output =~ m/CRITICAL/ && $alert_plugins{$i} ) {
+				print "EMAIL DELIVERY CRITICAL - plugin $i failed: $output\n";
+				print "Plugin $i: $p" if $verbose;
+				# record tokens in a file if option is enabled
+				record_tokens($tokenfile,\@tokens,$time_start,undef,'CRITICAL',$i,$output) if $tokenfile;
+				exit $status{CRITICAL};
+			}
+			if( $output =~ m/WARNING/ && $alert_plugins{$i} ) {
+				print "EMAIL DELIVERY WARNING - plugin $i warning: $output\n";
+				print "Plugin $i: $p\n" if $verbose;
+				# record tokens in a file if option is enabled
+				record_tokens($tokenfile,\@tokens,$time_start,undef,'WARNING',$i,$output) if $tokenfile;
+				exit $status{WARNING};
+			}
+			$report->{"plugin".$i} = $output;
+			alarm 0;
+		};
+		if( $@ && $alert_plugins{$i} ) {
+			print "EMAIL DELIVERY CRITICAL - Could not run plugin $i: $@\n";
+			print "Plugin $i: $p\n" if $verbose;
+			exit $status{CRITICAL};	
+		}
+		# if this wasn't the last plugin, wait before continuing
+		if( $i < scalar(@plugins) ) {
+			my $wait = shift(@wait_times) || $default_wait;
+			sleep $wait;			
+		}
+		# compatibility with the "not using plugins" method... pretend to calculate the total round trip time (the delay) using data from the plugins ... 
+		$report->{max} = 0;
+		$report->{delay} = 0;		
+	}
+	# register the list of reports
+	foreach my $r ( 1..scalar(@plugins)) {
+		push @report_plugins, "plugin".$r;		
+	} 
+	# record tokens in a file if option is enabled
+	my $tmp_long_report = join(", ", map { "$_: $report->{$_}" } @report_plugins ) if $tokenfile;
+	record_tokens($tokenfile,\@tokens,$time_start,time,'OK',scalar(@plugins),$tmp_long_report) if $tokenfile;
+}
+else {
+	# not using plugins.
+	$time_start = time;
+	
+	# send email via SMTP	
+	my $id = $time_start; # XXX should include localhost name maybe or some random number in case the same mailbox is used for multiple delivery tests
+	
+	my $smtp_plugin = "$libexec/check_smtp_send";
+	$smtp_plugin = "$libexec/check_smtp_send.pl" unless -e $smtp_plugin;
+	my $smtp_timeout = shift(@alarm_times) || $default_timeout;
+	eval {
+		local $SIG{ALRM} = sub { die "exceeded timeout $smtp_timeout seconds\n" }; # NB: \n required, see `perldoc -f alarm`
+		alarm $smtp_timeout;
+		my $smtp = `$smtp_plugin $smtp_options --header 'Subject: Nagios Message SMTP $smtp_server ID $id.' --body 'Nagios Email Delivery Plugin\n$body' $smtp_thresholds`;
+		if( $smtp !~ m/OK|WARNING|CRITICAL/ ) {
+			print "EMAIL DELIVERY UNKNOWN - smtp unknown: $smtp\n";
+			exit $status{UNKNOWN};
+		}
+		if( $smtp =~ m/CRITICAL/ ) {
+			print "EMAIL DELIVERY CRITICAL - smtp failed: $smtp\n";
+			exit $status{CRITICAL};
+		}
+		chomp $smtp;
+		$report->{smtp} = $smtp;
+		alarm 0;
+	};
+	if( $@ ) {
+		print "EMAIL DELIVERY CRITICAL - Could not connect to SMTP server $smtp_server: $@\n";
+		exit $status{CRITICAL};	
+	}
+	
+	# wait before checking the delivery
+	$wait = shift(@wait_times) || $default_wait;
+	sleep $wait;
+	
+	# check email via IMAP
+	my $imap_plugin = "$libexec/check_imap_receive";
+	$imap_plugin = "$libexec/check_imap_receive.pl" unless -e $imap_plugin;
+	my $imap_timeout = shift(@alarm_times) || $default_timeout;
+	eval {
+		local $SIG{ALRM} = sub { die "exceeded timeout $imap_timeout seconds\n" }; # NB: \n required, see `perldoc -f alarm`
+		alarm $imap_timeout;
+		my $imap = `$imap_plugin $imap_options -s SUBJECT -s 'Nagios Message SMTP $smtp_server ID' --capture-max 'Nagios Message SMTP $smtp_server ID (\\d+)' --nodelete-captured $imap_thresholds`;
+		if( $imap !~ m/OK|WARNING|CRITICAL/ ) {
+			print "EMAIL DELIVERY UNKNOWN - imap unknown: $imap\n";
+			exit $status{UNKNOWN};
+		}
+		if( $imap =~ m/CRITICAL/ ) {
+			print "EMAIL DELIVERY CRITICAL - imap failed: $imap\n";
+			exit $status{CRITICAL};
+		}
+		if( $imap =~ m/ (\d+) max/ ) {
+			my $last_received = $1;
+			$report->{max} = $1;
+			my $delay = time - $last_received;
+			$report->{delay} = $delay;
+		}
+		chomp $imap;
+		$report->{imap} = $imap;
+		alarm 0;
+	};
+	if( $@ ) {
+		print "EMAIL DELIVERY CRITICAL - Could not connect to IMAP server $imap_server: $@\n";
+		exit $status{CRITICAL};
+	}
+	# register the list of reports
+	push @report_plugins, ("smtp","imap");
+}
+
+
+# calculate elapsed time and issue warnings
+my $time_end = time;
+my $elapsedtime = $time_end - $time_start;
+$report->{seconds} = $elapsedtime;
+
+my @warning = ();
+my @critical = ();
+
+push @warning, "most recent received $report->{delay} seconds ago" if( defined($report->{delay}) && $report->{delay} > $delay_warn );
+push @critical, "most recent received $report->{delay} seconds ago" if( defined($report->{delay}) && $report->{delay} > $delay_crit );
+push @warning, "no emails found" if( !defined($report->{delay}) );
+
+# print report and exit with known status
+my $perf_data = "delay=".$report->{delay}."s;$delay_warn;$delay_crit;0 elapsed=".$report->{seconds}."s"; # TODO: need a component for safely generating valid perf data format. for notes on the format, see http://www.perfparse.de/tiki-view_faq.php?faqId=6
+my $short_report = $report->text(qw/seconds delay/) . " | $perf_data";
+my $long_report = join("", map { "$_: $report->{$_}\n" } @report_plugins );
+if( scalar @critical ) {
+	my $alerts = join(", ", @critical);
+	print "EMAIL DELIVERY CRITICAL - $alerts; $short_report\n";
+	print $long_report if $verbose;
+	exit $status{CRITICAL};
+}
+if( scalar @warning ) {
+	my $alerts = join(", ", @warning);
+	print "EMAIL DELIVERY WARNING - $alerts; $short_report\n";
+	print $long_report if $verbose;
+	exit $status{WARNING};
+}
+print "EMAIL DELIVERY OK - $short_report\n";
+print $long_report if $verbose;
+exit $status{OK};
+
+# utility to load required modules. exits if unable to load one or more of the modules.
+sub load_modules {
+	my @missing_modules = ();
+	foreach( @_ ) {
+		eval "require $_";
+		push @missing_modules, $_ if $@;	
+	}
+	if( @missing_modules ) {
+		print "Missing perl modules: @missing_modules\n";
+		return 0;
+	}
+	return 1;
+}
+
+# returns one random character from a set of characters
+sub pick_random {
+	my @set = @_;
+	my $size = scalar @set;
+	my $string = $set[int(rand($size))];
+	return $string;
+}
+
+# appens tokens and times to a tab-separated value file
+sub record_tokens {
+	my ($tokenfile,$tokens,$time_start,$time_end,$status,$plugin_num,$output) = @_;
+	if( $tokenfile ) {
+		my @tokens = @$tokens;
+		$time_end = "" unless defined $time_end;
+		$status = "" unless defined $status;
+		$plugin_num = "" unless defined $plugin_num;
+		$output = "" unless defined $output;
+		print "saving ".scalar(@tokens)." tokens into $tokenfile\n" if $verbose;
+		open(TOKENFILE,">>$tokenfile");
+		foreach(@tokens) {
+			print TOKENFILE "$_\t$time_start\t$time_end\t$status\t$plugin_num\t$output\n";
+		}
+		close(TOKENFILE);
+	}
+}
+
+# wraps argument in single-quotes and escapes any single-quotes in the argument
+sub shellquote {
+	my $str = shift || "";
+	$str =~ s/\'/\'\\\'\'/g;
+	return "'$str'";
+}
+
+
+# NAME
+#	PluginReport
+# SYNOPSIS
+#	$report = new PluginReport;
+#   $report->{label1} = "value1";
+#   $report->{label2} = "value2";
+#	print $report->text(qw/label1 label2/);
+package PluginReport;
+
+sub new {
+	my ($proto,%p) = @_;
+	my $class = ref($proto) || $proto;
+	my $self  = bless {}, $class;
+	$self->{$_} = $p{$_} foreach keys %p;
+	return $self;
+}
+
+sub text {
+	my ($self,@labels) = @_;
+	my @report = map { "$self->{$_} $_" } grep { defined $self->{$_} } @labels;
+	my $text = join(", ", @report);
+	return $text;
+}
+
+package main;
+1;
+

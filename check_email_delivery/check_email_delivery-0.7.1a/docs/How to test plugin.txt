@@ -1,0 +1,15 @@
+HOW TO TEST THE PLUGIN
+
+Run the shell script tests which start the test server automatically:
+
+./test/3_email_delivery.sh
+
+
+
+
+
+
+If you want to start up the test server yourself:
+
+sudo perl test/dummy_smtp_server.pl
+

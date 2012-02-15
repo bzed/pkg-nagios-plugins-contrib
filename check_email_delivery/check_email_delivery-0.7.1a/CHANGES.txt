@@ -1,0 +1,15 @@
+2005-11-10
+* published
+2005-05-10
+* received patches from Johan Nilsson <johann (at) axis.com>
+2006-07-20
+* received patches from Geoff Crompton <geoff.crompton@strategicdata.com.au>
+2007-04-24
+* packaged ePN version of the plugins -- the __END__ block for embedded documentation was causing an error because of the way ePN wraps the perl scripts. see http://nagios.sourceforge.net/docs/2_0/embeddedperl.html
+* added SSL support using patch from Benjamin Ritcey <ben@ritcey.com>
+2007-10-21
+* added TLS support for SMTP using Net::SMTP::TLS
+* added SSL support for SMTP using Net::SMTP::SSL, but NOTE that I don't have access to an SMTPS server so I cannot test this. 
+2007-12-04
+* small fix with SSL support for IMAP related to bugfix in Mail::IMAPClient 3.00 over 2.2.9 thanks to Seth P. Low <low@modog.com>
+* added --usage option to all three plugins for familiarity with the official nagios plugins

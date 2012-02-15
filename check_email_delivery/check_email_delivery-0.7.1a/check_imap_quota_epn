@@ -1,0 +1,235 @@
+#!/usr/bin/perl
+use strict;
+my $VERSION = '0.1';
+my $COPYRIGHT = 'Copyright (C) 2005-2011 Jonathan Buhacoff <jonathan@buhacoff.net>';
+my $LICENSE = 'http://www.gnu.org/licenses/gpl.txt';
+my %status = ( 'OK' => 0, 'WARNING' => 1, 'CRITICAL' => 2, 'UNKNOWN' => 3 );
+
+#### IDEA AND INITIAL IMPLEMENTATION BASED ON CHECK_IMAP_RECEIVE WAS CONTRIBUTED BY JOHAN ROMME from THE NETHERLANDS 14 Oct 2011
+
+# look for required modules
+exit $status{UNKNOWN} unless load_modules(qw/Getopt::Long Mail::IMAPClient/);
+
+BEGIN {
+	if( grep { /^--hires$/ } @ARGV ) {
+		eval "use Time::HiRes qw(time);";
+		warn "Time::HiRes not installed\n" if $@;
+	}
+}
+
+# get options from command line
+Getopt::Long::Configure("bundling");
+my $verbose = 0;
+my $help = "";
+my $help_usage = "";
+my $show_version = "";
+my $imap_server = "";
+my $default_imap_port = "143";
+my $default_imap_ssl_port = "993";
+my $imap_port = "";
+my $username = "";
+my $password = "";
+my $mailbox = "INBOX";
+my $warntime = 15;
+my $criticaltime = 30;
+my $timeout = 60;
+my $peek = "";
+my $ssl = 0;
+my $tls = 0;
+my $time_hires = "";
+my $ok;
+$ok = Getopt::Long::GetOptions(
+	"V|version"=>\$show_version,
+	"v|verbose+"=>\$verbose,"h|help"=>\$help,"usage"=>\$help_usage,
+	"w|warning=i"=>\$warntime,"c|critical=i"=>\$criticaltime,"t|timeout=i"=>\$timeout,
+	# imap settings
+	"H|hostname=s"=>\$imap_server,"p|port=i"=>\$imap_port,
+	"U|username=s"=>\$username,"P|password=s"=>\$password, "m|mailbox=s"=>\$mailbox,
+	"ssl!"=>\$ssl, "tls!"=>\$tls,
+	# search settings
+	"peek!"=>\$peek,
+	# Time
+	"hires"=>\$time_hires,
+	);
+
+if( $show_version ) {
+	print "$VERSION\n";
+	if( $verbose ) {
+		print "Default warning threshold: $warntime seconds\n";
+		print "Default critical threshold: $criticaltime seconds\n";
+		print "Default timeout: $timeout seconds\n";
+	}
+	exit $status{UNKNOWN};
+}
+
+if( $help ) {
+	exec "perldoc", $0 or print "Try `perldoc $0`\n";
+	exit $status{UNKNOWN};
+}
+
+my @required_module = ();
+push @required_module, 'IO::Socket::SSL' if $ssl || $tls;
+exit $status{UNKNOWN} unless load_modules(@required_module);
+
+if( $help_usage
+	||
+	( $imap_server eq "" || $username eq "" || $password eq "" )
+  ) {
+	print "Usage: $0 -H host [-p port] -U username -P password [--imap-retries <tries>]\n";
+	exit $status{UNKNOWN};
+}
+
+
+# initialize
+my $report = new PluginReport;
+my $time_start = time;
+
+# connect to IMAP server
+print "connecting to server $imap_server\n" if $verbose > 2;
+my $imap;
+eval {
+	local $SIG{ALRM} = sub { die "exceeded timeout $timeout seconds\n" }; # NB: \n required, see `perldoc -f alarm`
+	alarm $timeout;
+	
+	if( $ssl || $tls ) {
+		$imap_port = $default_imap_ssl_port unless $imap_port;		
+		my $socket = IO::Socket::SSL->new("$imap_server:$imap_port");
+		die IO::Socket::SSL::errstr() unless $socket;
+		$socket->autoflush(1);
+		$imap = Mail::IMAPClient->new(Socket=>$socket, Debug => 0 );
+		$imap->State(Mail::IMAPClient->Connected);
+		$imap->_read_line() if "$Mail::IMAPClient::VERSION" le "2.2.9"; # necessary to remove the server's "ready" line from the input buffer for old versions of Mail::IMAPClient. Using string comparison for the version check because the numeric didn't work on Darwin and for Mail::IMAPClient the next version is 2.3.0 and then 3.00 so string comparison works
+		$imap->User($username);
+		$imap->Password($password);
+		$imap->login() or die "$@";
+	}
+	else {
+		$imap_port = $default_imap_port unless $imap_port;		
+		$imap = Mail::IMAPClient->new(Debug => 0 );		
+		$imap->Server("$imap_server:$imap_port");
+		$imap->User($username);
+		$imap->Password($password);
+		$imap->connect() or die "$@";
+	}
+
+	$imap->Peek(1) if $peek;
+	$imap->Ignoresizeerrors(1);
+
+	alarm 0;
+};
+if( $@ ) {
+	chomp $@;
+	print "IMAP QUOTA CRITICAL - Could not connect to $imap_server port $imap_port: $@\n";
+	exit $status{CRITICAL};	
+}
+unless( $imap ) {
+	print "IMAP QUOTA CRITICAL - Could not connect to $imap_server port $imap_port: $@\n";
+	exit $status{CRITICAL};
+}
+my $time_connected = time;
+
+my $quotaUsed;
+my $quotaLimit;
+my $quotaPercentage;
+my $quotaPercentageWarning = 80;
+my $quotaPercentageCritical = 90;
+my $quotaMessage;
+
+# look for the quota limits
+my $tries = 0;
+my @msgs;
+
+eval {
+	  my $k;
+	  my @l = $imap->getquotaroot();
+	  foreach $k (@l) {
+		print "$k\n" if $verbose > 2;
+		if ($k =~ /STORAGE +(\d+) +(\d+)/) {
+		  $quotaUsed = $1;
+		  $quotaLimit = $2;
+		}
+	  }
+	  if (! $quotaUsed && !$quotaLimit) {
+		print "no answer from imap host\n" if $verbose > 2;
+	  } elsif (! $quotaUsed || !$quotaLimit) {
+		print "incorrect answer from imap host\n";
+	$imap->close();
+	exit $status{UNKNOWN};
+	  } else {
+		$quotaPercentage = sprintf("%.1f", (100 * $quotaUsed) / $quotaLimit);
+		$quotaMessage = "$quotaUsed $quotaLimit - $quotaPercentage%";
+	  }
+};
+if( $@ ) {
+	chomp $@;
+	print "IMAP QUOTA CRITICAL - Could not check quota at $imap_server port $imap_port: $@\n";
+	exit $status{CRITICAL};	
+}
+
+
+# disconnect from IMAP server
+print "disconnecting from server\n" if $verbose > 2;
+$imap->logout();
+
+# calculate elapsed time and issue warnings
+my $time_end = time;
+my $elapsedtime = $time_end - $time_start;
+$report->{seconds} = $elapsedtime;
+
+# print report and exit with known status
+
+if($quotaPercentage >= $quotaPercentageCritical) {
+	print "IMAP QUOTA CRITICAL - $quotaMessage\n";
+	exit $status{CRITICAL};
+}
+if($quotaPercentage >= $quotaPercentageWarning) {
+	print "IMAP QUOTA WARNING - $quotaMessage\n";
+	exit $status{WARNING};
+}
+print "IMAP QUOTA OK - $quotaMessage\n";
+exit $status{OK};
+
+
+# utility to load required modules. exits if unable to load one or more of the modules.
+sub load_modules {
+	my @missing_modules = ();
+	foreach( @_ ) {
+		eval "require $_";
+		push @missing_modules, $_ if $@;	
+	}
+	if( @missing_modules ) {
+		print "Missing perl modules: @missing_modules\n";
+		return 0;
+	}
+	return 1;
+}
+
+
+# NAME
+#	PluginReport
+# SYNOPSIS
+#	$report = new PluginReport;
+#   $report->{label1} = "value1";
+#   $report->{label2} = "value2";
+#	print $report->text(qw/label1 label2/);
+package PluginReport;
+
+sub new {
+	my ($proto,%p) = @_;
+	my $class = ref($proto) || $proto;
+	my $self  = bless {}, $class;
+	$self->{$_} = $p{$_} foreach keys %p;
+	return $self;
+}
+
+sub text {
+	my ($self,@labels) = @_;
+	my @report = map { "$self->{$_} $_" } grep { defined $self->{$_} } @labels;
+	my $text = join(", ", @report);
+	return $text;
+}
+
+
+package main;
+1;
+

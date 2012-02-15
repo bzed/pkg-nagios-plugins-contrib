@@ -1,0 +1,122 @@
+
+
+
+=pod
+
+=head1 NAME
+
+imap_ssl_cert - connects to an IMAP server using SSL and saves the server certificate into a .pem file
+
+=head1 SYNOPSIS
+
+ imap_ssl_cert -H imap.server.com > server_ca_file.pem
+ imap_ssl_cert -?
+ imap_ssl_cert --help
+
+=head1 DEPENDENCIES
+
+This utility requires the following perl modules to be installed:
+
+Getopt::Long
+Mail::IMAPClient
+IO::Socket::SSL
+Net::SSLeay
+
+=head1 OPTIONS
+
+=over
+
+=item --timeout <seconds>
+
+Abort with critical status if it takes longer than <seconds> to connect to the IMAP server. Default is 60 seconds.
+The difference between timeout and critical is that, with the default settings, if it takes 45 seconds to 
+connect to the server then the connection will succeed but the plugin will return CRITICAL because it took longer
+than 30 seconds.
+Also known as: -t <seconds> 
+
+=item --hostname <server>
+
+Address or name of the IMAP server. Examples: mail.server.com, localhost, 192.168.1.100
+Also known as: -H <server>
+
+=item --port <number>
+
+Service port on the IMAP server. Default is 143. If you use SSL, default is 993.
+Also known as: -p <number>
+
+=item --verbose
+
+Display additional information. Useful for troubleshooting. 
+
+Also known as: -v
+
+=item --version
+
+Display plugin version and exit.
+Also known as: -V
+
+=item --help
+
+Display this documentation and exit.
+Also known as: -h
+
+=item --usage
+
+Display a short usage instruction and exit. 
+
+=back
+
+=head1 EXAMPLES
+
+=head2 Print the server's SSL certificate chain
+
+ $ perl imap_ssl_cert.pl -H imap.server.com > ca_file.pem
+ $ cat ca_file.pem
+
+ -----BEGIN CERTIFICATE-----
+ MIID1zCCAr+gAwIBAgIQPr3bVk0SkuXygjxgA7EVGDANBgkqhkiG9w0BAQUFADA8
+ [...snip...]
+ 0FF4warjskrfqaVtWeIV58LJheaM4cPJkc2M
+ -----END CERTIFICATE-----
+
+ $ openssl x509 -in ca_file.pem -text
+
+
+=head1 SEE ALSO
+
+http://en.wikipedia.org/wiki/X.509
+http://en.wikipedia.org/wiki/Privacy_Enhanced_Mail
+http://tools.ietf.org/html/rfc1422
+http://search.cpan.org/~mikem/Net-SSLeay-1.42/lib/Net/SSLeay.pm
+http://search.cpan.org/~plobbes/Mail-IMAPClient-3.29/lib/Mail/IMAPClient.pod
+
+=head1 CHANGES
+
+ Fri Nov 11 03:38:13 AST 2011
+ + version 0.1
+
+=head1 AUTHOR
+
+Jonathan Buhacoff <jonathan@buhacoff.net>
+
+=head1 COPYRIGHT AND LICENSE
+
+ Copyright (C) 2011 Jonathan Buhacoff
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+ http://www.gnu.org/licenses/gpl.txt
+
+=cut
+
