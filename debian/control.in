@@ -1,4 +1,4 @@
-Source: pkg-nagios-plugins-contrib
+Source: nagios-plugins-contrib
 Section: net
 Priority: extra
 Maintainer: Debian Nagios Maintainer Group <pkg-nagios-devel@lists.alioth.debian.org>
