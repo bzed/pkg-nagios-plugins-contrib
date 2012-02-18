@@ -6,7 +6,7 @@
  
 -C<check_lm_sensors> is a Nagios plugin to monitor the values of on
 -board sensors and hard disk temperatures on Linux systems
-+C<check_lm_sensors> is a Nagios plugin to monitor hardware sensors and disk temperatures
++C<check_lm_sensors> - Nagios plugin to monitor hardware sensors and disk temperatures
  
  =head1 DESCRIPTION
  
