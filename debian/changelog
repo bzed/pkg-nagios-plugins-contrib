@@ -1,3 +1,9 @@
+nagios-plugins-contrib (1.20120220) unstable; urgency=low
+
+  * [462444da] Removing unused code copies of the install module.
+
+ -- Bernd Zeimetz <bzed@debian.org>  Mon, 20 Feb 2012 22:49:53 +0100
+
 nagios-plugins-contrib (1.20120219) unstable; urgency=low
 
   * Initial Release.
