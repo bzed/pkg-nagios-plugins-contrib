@@ -3,3 +3,4 @@ check_lm_sensors/spelling_errors
 check_rbl/interpreter
 check_lm_sensors/interpreter
 check_rbl/spelling_errors
+check_multipath/netapp_support
