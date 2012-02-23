@@ -4,3 +4,5 @@ debian/nagios-plugins-contrib.debhelper.log
 debian/nagios-plugins-contrib.substvars
 .*.swp
 .pc
+*.rej
+*.orig
