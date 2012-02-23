@@ -21,7 +21,8 @@
 #
 # $Id: $
 #
-# Copyright (C) 2011 Hinnerk Rümenapf, Trond H. Amundsen, Gunther Schlegel, Matija Nalis
+# Copyright (C) 2011 Hinnerk Rümenapf, Trond H. Amundsen, Gunther Schlegel, Matija Nalis, 
+#                                      Bernd Zeimetz
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -48,6 +49,7 @@
 #      0.1.2    added support for more 'multipath'-tool versions, added testcases 18 and 19
 #      0.1.3    minor improvements
 #      0.1.4    add hostname to "unknown error" message, improve help text
+#      0.1.5    add debian testcases and patch by Bernd Zeimetz
 
 
 use strict;
@@ -71,9 +73,9 @@ use vars qw( $NAME $VERSION $AUTHOR $CONTACT $E_OK $E_WARNING $E_CRITICAL
 
 # === Version and similar info ===
 $NAME    = 'check-multipath.pl';
-$VERSION = '0.1.4'; # 18. NOV. 2011 
+$VERSION = '0.1.5'; # 23. FEB. 2012 
 $AUTHOR  = 'Hinnerk Rümenapf';
-$CONTACT = 'hinnerk.ruemenapf@rrz.uni-hamburg.de';
+$CONTACT = 'hinnerk.ruemenapf@rrz.uni-hamburg.de  hinnerk.ruemenapf@gmx.de';
 
 
 
@@ -320,8 +322,34 @@ $SIG{__WARN__} = sub { push @perl_warnings, [@_]; };
 ." \\_ 14:0:2:0  sdi 8:128 [active]\n"
 ." \\_ 14:0:3:0  sdj 8:144 [dadada]\n"
 ." \\_ 14:0:4:0  sdk 8:160 [active]\n",
-    );
 
+
+#20. netapp / Debian Squeeze sample (thanks to Bernd Zeimetz)
+"foobar_backup_lun0 (360a98aaaa72d444e423464685a786175) dm-1 NETAPP,LUN\n"
+."size=299G features='1 queue_if_no_path' hwhandler='0' wp=rw\n"
+."|-+- policy='round-robin 0' prio=8 status=active\n"
+."| |- 0:0:0:0 sda 8:0   active ready running\n"
+."| `- 1:0:0:0 sde 8:64  active ready running\n"
+."`-+- policy='round-robin 0' prio=2 status=enabled\n"
+."  |- 0:0:1:0 sdb 8:16  active ready running\n"
+."  `- 1:0:1:0 sdf 8:80  active ready running\n"
+."foobar_postgresql_lun0 (360a98aaaa470505a684a656930385a4a) dm-2 NETAPP,LUN\n"
+."size=4.9T features='1 queue_if_no_path' hwhandler='0' wp=rw\n"
+."|-+- policy='round-robin 0' prio=8 status=active\n"
+."| |- 0:0:2:0 sdc 8:32  active ready running\n"
+."| `- 1:0:2:0 sdg 8:96  active ready running\n"
+."`-+- policy='round-robin 0' prio=2 status=enabled\n"
+."  |- 0:0:3:0 sdd 8:48  active ready running\n"
+."  `- 1:0:3:0 sdh 8:112 active ready running\n",
+
+
+#21. netapp / Debian Squeeze failed path sample (thanks to Bernd Zeimetz)
+"foobar_postgresql_lun0 (360a98aaaa470505a684a656930385a4a) dm-2 NETAPP,LUN\n"
+."size=299G features='1 queue_if_no_path' hwhandler='0' wp=rw\n"
+."`-+- policy='round-robin 0' prio=0 status=enabled\n"
+."  `- #:#:#:# - #:# active faulty running\n",
+
+    );
 
 # Commands with path
 $SUDO      = '/usr/bin/sudo';
@@ -667,8 +695,11 @@ sub checkMultipathText {
                 ## \_ 13:0:1:0  sdc 8:32  [active]
                 ##  _ 13:0:1:0  sdc 8:32   active
 
+		#  (thanks to Bernd Zeimetz)
+                #  `- #:#:#:# - #:# active faulty running
+
 	        #if ( $textLine =~ m/^[\s_\|\-\`\\\+]+ [\d\:]+ \s+ (\w+) \s+ [\d\:]+ \s+ \w+ \s+ \w+/xi ) {
-                if ( $textLine =~ m/^[\s_\|\-\`\\\+]+ [\d\:]+ \s+ (\w+) \s+ [\d\:]+ \s+ \w+/xi ) { 
+                if ( $textLine =~ m/^[\s_\|\-\`\\\+]+ [#\d\:]+ \s+ ([\w\-]+) \s+ [#\d\:]+ \s+ \w+/xi ) { 
 		    my $pathName   = $1;
 		    #print "'$textLine', ";
 		    #print "LUN '$currentLun', path '$pathName'\n";
