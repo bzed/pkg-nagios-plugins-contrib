@@ -39,6 +39,8 @@ Description: Plugins for nagios compatible monitoring systems
      limit.
      Hit/miss and evictions are measured over a 30 minute interval,
      using a memcached object to store the earlier statistics.
+   * check_multipath (0.1.5): plugin to monitor the number of available and
+     failed paths of multipath devices
    * check_raid (rev1.106): plugin to check sw/hw RAID status
      The plugin looks for any known types of RAID configurations,
      and checks them all.
