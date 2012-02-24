@@ -1,0 +1,6 @@
+Homepage: https://www.secure-computing.net/svn/trunk/nagios/
+Watch: https://www.secure-computing.net/svn/trunk/nagios/check_printer SHA1:bdb9254c6bb01d147602eeedc9ed19d0ebe1cef4
+Uploaders: Bernd Zeimetz <bzed@debian.org>
+Description: plugin to check printer supply levels using SNMP
+ It outputs performance data for all supplies
+ found, for example toner and drum.

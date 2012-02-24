@@ -136,7 +136,7 @@ def watch():
             continue
         check=check.strip()
         if check.startswith('SHA1:'):
-            check=check.recplace('SHA1:','')
+            check=check.replace('SHA1:','')
             new_sha=hashlib.sha1(content).hexdigest()
             if check != new_sha:
                 print 'UPDATE NECESSARY: %s - SHA1 checksum does not match! New checksum: %s' %(plugin,new_sha)

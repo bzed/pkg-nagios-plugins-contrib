@@ -1,0 +1,269 @@
+#!/usr/bin/perl
+#
+# Copyright (c) 2007,2011 Eric F Crist
+#
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or 
+# without modification, are permitted provided that the following 
+# conditions are met:
+#
+# Redistributions of source code must retain the above copyright 
+# notice, this list of conditions and the following disclaimer.
+# 
+# Redistributions in binary form must reproduce the above copyright 
+# notice, this list of conditions and the following disclaimer in 
+# the documentation and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# $Id$
+# $HeadURL$
+
+use strict;
+use warnings;
+
+my $OS = `uname`;
+if ($OS =~ m/^\wBSD/){
+	use lib "/usr/local/libexec/nagios";
+} elsif ($OS =~ m/Linux/){
+	use lib "/usr/local/nagios/libexec";
+}
+
+use utils qw(%ERRORS);
+use Data::Dumper;
+
+'$Revision$' =~ m/Revision: (\d+)/;
+my $revision = $1;
+'$HeadURL$' =~ m/HeadURL: ([\w\:\/\-\.\_]+) /;
+my $src_url = $1;
+my $usage = "
+Usage: $0 host_addr community warn% crit%
+
+This script connects via SNMP to a print and checks printer supply
+levels.  This script outputs performance data for all supplies
+found for toner and drum.
+";
+
+## set to 1 if you want debug output for development
+my $debug = 0;
+if ($ARGV[4]){
+	$debug = 1;
+	print "check_printer Revision $revision\n$src_url\n\n";
+}
+die $usage unless ($#ARGV >= 3);
+my $base_oid = ".1.3.6.1.2.1.43.11.1.1";
+my $type_oid = "3.1";
+my $name_oid = "6.1";
+my $uom_oid = "7.1";
+my $max_oid  = "8.1";
+my $curr_oid = "9.1";
+my $loop;
+
+
+my $host = $ARGV[0];
+my $comm = $ARGV[1];
+
+my @vars = ("snmpwalk -On -v 1 -c $comm $host $base_oid.$name_oid",
+	   "snmpwalk -On -v 1 -c $comm $host $base_oid.$uom_oid",
+	   "snmpwalk -On -v 1 -c $comm $host $base_oid.$max_oid",
+	   "snmpwalk -On -v 1 -c $comm $host $base_oid.$curr_oid");
+my(@values, @names, @max, @min);
+
+our %uom = (     "4" => "µm",
+		"7" => "impressions",
+		"8" => "pages",
+		"11" => "hrs",
+		"12" => "oz/1000",
+		"13" => "gr/10",
+		"14" => "gr/100",
+		"15" => "mL",
+		"16" => "feet",
+		"17" => "meters",
+		"18" => "items",
+		"19" => "%");
+
+foreach(@vars){
+	@values = (@values, split /\n/, `$_`);
+	if ($? != 0){
+		print "Printer Supplies UNKNOWN";
+		exit $ERRORS{'UNKNOWN'};
+	}
+}
+
+if ($debug){
+	print Dumper(\@values);
+}
+my %finvalues;
+foreach(@values){
+	# matching the following line
+	#            $1                    $2           $3 
+	# .1.3.6.1.2.1.43.11.1.1.6.1.1 = STRING: "Black Cartridge"
+	$_ =~ m/^([\.\d]+) = ([\w-]+):[\s\"]+([\(\)\-\d\w\s,\/:]+)\"*$/;
+	my $loid = $1;
+	my $ltype = $2;
+	my $string = $3;
+	if ($ltype =~ m/HEX/i){
+		# hex string, convert to ascii
+		$string = join "", map {chr hex $_ } split m/ /, $string;
+	}
+	$finvalues{"$loid"} = $string;
+}
+
+my %status;
+# get OID field numbers for matching later
+while (my ($key, $value) = each(%finvalues)){
+	## sort this array into an associative in the following format:
+	#    $status['name']   : Supply Name
+	#    $status['curr']   : Supply Status
+	#    $status['max']    : Supply Level When New
+	my $search = quotemeta("$base_oid.$name_oid");
+	if ($key =~ /^$search\.([\d\.]+)$/){
+		## we'll assume a name
+		$status{$value}{"sub"} = $1;
+	} else {
+	}
+}
+# get maximum values,  matching on OID field number
+while (my ($key, $value) = each(%finvalues)){
+	my $search = quotemeta("$base_oid.$max_oid");
+	if ($key =~ /^$search\.([\d\.]+)$/){
+		## assign it to the other variable
+		## search the existing keys, find the one we want
+		foreach my $subvalue (values %status){
+			if ($subvalue->{"sub"} eq $1){
+				$subvalue->{"max"} = $value;
+			}
+		}
+	}
+}
+
+# get current value, matching on OID field number
+while (my ($key, $value) = each(%finvalues)){
+	my $search = quotemeta("$base_oid.$curr_oid");
+	if ($key =~ /^$search\.([\d\.]+)$/){
+		## assign it to the other variable
+		## search the existing keys, find the one we want
+		foreach my $subvalue (values %status){
+			if ($subvalue->{"sub"} eq $1){
+				$subvalue->{"curr"} = $value;
+			}
+		}
+	}
+}
+
+# get uom, add it to data
+while (my ($key, $value) = each(%finvalues)){
+	my $search = quotemeta("$base_oid.$uom_oid");
+	if ($key =~ /^$search\.([\d\.]+)$/){
+		## assign it to the other variable
+		## search the existing keys, find the one we want
+		foreach my $subvalue (values %status){
+			if ($subvalue->{"sub"} eq $1){
+				$subvalue->{"uom"} = $uom{$value};
+			}
+		}
+	}
+}
+
+## Assemble performance data and error string.
+my $perf_str = "";
+my $is_warn = 0;
+my $is_crit = 0;
+my $err_str = "";
+while (my($key, $value) = each(%status)){
+	my ($maximum, $current);
+	my $critical = $ARGV[3];
+	my $warning = $ARGV[2];
+	if ($value->{"curr"} == -3){
+		## we can process as yes/no
+		$current = 100;
+		## Override the critical/warning, since they're moot
+		$critical = 0;
+		$warning = 0;
+	} elsif (($value->{"max"} == -2) and ($value->{"uom"} ne '%')){
+		## we don't know (-2 == unknown) the max and can't compute
+		next;
+	} else {
+		$maximum = $value->{"max"};
+	}
+	if ($value->{"curr"} == -3){
+		## -3 means printer knows supply exists, but not how much
+		$current = 100;
+	} elsif ($value->{"curr"} < 0){
+		## weird value, set to 0 for math reasons
+		$current = 0;
+	} else {
+		$current = round(($value->{"curr"} / $maximum) * 100);
+	}
+
+	my $lcurrent;
+	if (($key =~ m/waste/i) or ($key =~ m/Toneruppsamlare/i) or ($key =~ m/Restonner/i)){
+		# invert the $current as waste is calculated in reverse
+		if ($value->{"curr"} == -3){
+			$lcurrent = 0;
+		} else {
+			$lcurrent = $maximum - $current;
+		}
+	} else {
+		$lcurrent = $current;
+	}
+	if ($lcurrent < $critical){
+		$is_crit = $is_crit + 1;
+		if ($err_str eq ""){
+			$err_str = "$key";
+		} else {
+			$err_str = "$err_str, $key";
+		}
+	} elsif ($lcurrent < $warning){
+		$is_warn = $is_warn + 1;
+		if ($err_str eq ""){
+			$err_str = "$key";
+		} else {
+			$err_str = "$err_str, $key";
+		}
+	}
+	if ($debug){
+		print "Key: $key\nCur: $current\nWarn: $warning\nCrit: $critical\n";
+	}
+	$perf_str = "$perf_str '$key'=$current%;$warning;$critical;0;100 ";
+}
+
+if ($debug){
+	print Dumper(\%status);
+	print "\n\n############ ATTENTION ############\n";
+	print "You have debug enabled.  If asked to enable debug by the developer,\n";
+	print "please send all of the output, including your command line to\n";
+	print "ecrist\@secure-computing.net with the subject line 'check_printer DEBUG' along\n";
+	print "with a description of the problem you're experiencing.\n###################################\n";
+}
+if ($is_crit){
+	print "$err_str CRITICAL.  See http://$ARGV[0] | $perf_str";
+	exit $ERRORS{'CRITICAL'};
+} elsif ($is_warn){
+	print "$err_str WARNING. See http://$ARGV[0] | $perf_str";
+	exit $ERRORS{'WARNING'};
+} else {
+	print "Printer Supplies OK | $perf_str";
+	exit $ERRORS{'OK'};
+}
+
+
+###
+### subroutines here
+###
+
+sub round {
+	my($number) = shift;
+	return int($number + .5 * ($number <=> 0));
+}

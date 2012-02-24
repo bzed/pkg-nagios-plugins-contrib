@@ -9,3 +9,4 @@ Description: plugin to check various hardware based information
  Juniper Networks, HP ProCurve, Netscreen, Citrix NetScaler
  and Transmode Systems hardware.
 Uploaders: Bernd Zeimetz <bzed@debian.org>
+Version: 0.7

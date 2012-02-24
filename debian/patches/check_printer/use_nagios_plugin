@@ -1,0 +1,18 @@
+--- a/check_printer/check_printer
++++ b/check_printer/check_printer
+@@ -33,14 +33,7 @@
+ use strict;
+ use warnings;
+ 
+-my $OS = `uname`;
+-if ($OS =~ m/^\wBSD/){
+-	use lib "/usr/local/libexec/nagios";
+-} elsif ($OS =~ m/Linux/){
+-	use lib "/usr/local/nagios/libexec";
+-}
+-
+-use utils qw(%ERRORS);
++use Nagios::Plugin qw(%ERRORS);
+ 
+ '$Revision$' =~ m/Revision: (\d+)/;
+ my $revision = $1;
