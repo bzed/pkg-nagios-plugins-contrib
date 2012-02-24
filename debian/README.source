@@ -1,3 +1,7 @@
+nagios-plugins-contrib - Plugins for nagios compatible monitoring systems
+--------------------------------------------------------------------------
+
+
 This README.source should give a short instruction about the
 way the pkg-nagios-plugins-contrib repository is structured
 and defines basic policies.
