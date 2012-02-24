@@ -56,6 +56,23 @@ http://buhacoff.net/software/check_email_delivery/
 
 ------------------------------------------------------------------------------
 
+check_haproxy:
+
+The plugin was downloaded from: 
+http://cvs.orion.education.fr/viewvc/viewvc.cgi/nagios-plugins-perl/trunk/plugins/check_haproxy.pl?view=log
+
+  2010 Stéphane Urbanovski <stephane.urbanovski@ac-nancy-metz.fr
+  
+  License: GPL v2
+  
+    On Debian systems, the complete text of the GNU General
+    Public License version 2 can be found in "/usr/share/common-licenses/GPL-2".
+  
+  
+  
+
+------------------------------------------------------------------------------
+
 check_ipmi_sensor:
 
 The plugin was downloaded from: 
