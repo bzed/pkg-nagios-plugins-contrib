@@ -11,8 +11,8 @@ Vcs-Browser: http://git.debian.org/?p=pkg-nagios/pkg-nagios-plugins-contrib;a=su
 Package: nagios-plugins-contrib
 Architecture: any
 Depends: ${misc:Depends}, 
-Recommends: ${shlibs:Depends}, libnagios-plugin-perl (>= 0.31), libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-ssleay-perl, freeipmi-tools, libnagios-plugin-perl (>= 0.31), libnagios-plugin-perl (>= 0.31), libreadonly-perl, libnet-dns-perl, libnet-snmp-perl
-Suggests: liblocale-gettext-perl, liblwp-useragent-determined-perl, cciss-vol-status, mpt-status
+Recommends: ${shlibs:Depends}, libnagios-plugin-perl (>= 0.31), libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-ssleay-perl, liblocale-gettext-perl, liblwp-useragent-determined-perl, liblocale-gettext-perl, liblwp-useragent-determined-perl, freeipmi-tools, libnagios-plugin-perl (>= 0.31), libnagios-plugin-perl (>= 0.31), libreadonly-perl, libnet-dns-perl, libnet-snmp-perl
+Suggests: cciss-vol-status, mpt-status
 Description: Plugins for nagios compatible monitoring systems
  This package provides various plugins for Nagios compatible monitoring
  systems like Nagios and Icinga.
@@ -28,6 +28,7 @@ Description: Plugins for nagios compatible monitoring systems
        - monitor automated mailboxes
        - check email-to-FTP or other special email gateways
    * check_haproxy (rev135): plugin check the statistics url provided by HAProxy
+   * check_httpd_status (rev140): plugin check Apache or Lighthttpd server-status page
    * check_ipmi_sensor (2.3): IPMI Sensor Monitoring Plugin
      Plugin to monitor the hardware status (fan speed, temperaturs,
      voltages, power usage, ...) of a server using IPMI.
