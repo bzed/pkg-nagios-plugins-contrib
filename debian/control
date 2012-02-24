@@ -2,7 +2,7 @@ Source: nagios-plugins-contrib
 Section: net
 Priority: extra
 Maintainer: Debian Nagios Maintainer Group <pkg-nagios-devel@lists.alioth.debian.org>
-Uploaders: Bernd Zeimetz <bzed@debian.org>
+Uploaders: Bernd Zeimetz <bzed@debian.org>, Jan Wagner <waja@cyconet.org>
 Build-Depends: debhelper (>= 8.0.0), python, python-debian, quilt (>= 0.46-7), flex, libmemcached-dev
 Standards-Version: 3.9.2
 Vcs-Git: git://git.debian.org/pkg-nagios/pkg-nagios-plugins-contrib
@@ -12,7 +12,7 @@ Package: nagios-plugins-contrib
 Architecture: any
 Depends: ${misc:Depends}, 
 Recommends: ${shlibs:Depends}, libnagios-plugin-perl (>= 0.31), libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-ssleay-perl, freeipmi-tools, libnagios-plugin-perl (>= 0.31), libnagios-plugin-perl (>= 0.31), libreadonly-perl, libnet-dns-perl, libnet-snmp-perl
-Suggests: cciss-vol-status, mpt-status
+Suggests: liblocale-gettext-perl, liblwp-useragent-determined-perl, cciss-vol-status, mpt-status
 Description: Plugins for nagios compatible monitoring systems
  This package provides various plugins for Nagios compatible monitoring
  systems like Nagios and Icinga.
@@ -27,6 +27,7 @@ Description: Plugins for nagios compatible monitoring systems
        - keep an eye on email lag
        - monitor automated mailboxes
        - check email-to-FTP or other special email gateways
+   * check_haproxy (rev135): plugins check the statistics url provided by HAProxy
    * check_ipmi_sensor (2.3): IPMI Sensor Monitoring Plugin
      Plugin to monitor the hardware status (fan speed, temperaturs,
      voltages, power usage, ...) of a server using IPMI.
