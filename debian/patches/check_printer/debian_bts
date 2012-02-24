@@ -1,0 +1,35 @@
+--- a/check_printer/check_printer
++++ b/check_printer/check_printer
+@@ -35,10 +35,6 @@ use warnings;
+ 
+ use Nagios::Plugin qw(%ERRORS);
+ 
+-'$Revision$' =~ m/Revision: (\d+)/;
+-my $revision = $1;
+-'$HeadURL$' =~ m/HeadURL: ([\w\:\/\-\.\_]+) /;
+-my $src_url = $1;
+ my $usage = "
+ Usage: $0 host_addr community warn% crit%
+ 
+@@ -52,7 +48,6 @@ my $debug = 0;
+ if ($ARGV[4]){
+         use Data::Dumper;
+ 	$debug = 1;
+-	print "check_printer Revision $revision\n$src_url\n\n";
+ }
+ die $usage unless ($#ARGV >= 3);
+ my $base_oid = ".1.3.6.1.2.1.43.11.1.1";
+@@ -235,10 +230,9 @@ while (my($key, $value) = each(%status))
+ if ($debug){
+ 	print Dumper(\%status);
+ 	print "\n\n############ ATTENTION ############\n";
+-	print "You have debug enabled.  If asked to enable debug by the developer,\n";
+-	print "please send all of the output, including your command line to\n";
+-	print "ecrist\@secure-computing.net with the subject line 'check_printer DEBUG' along\n";
+-	print "with a description of the problem you're experiencing.\n###################################\n";
++	print "You have debug enabled.  If asked to enable debug by the Debian Maintainer,\n";
++	print "please send all of the output to the Debian Bug Tracking System, either by \n";
++	print "replying to an existing bug or by opening a new bug.\n";
+ }
+ if ($is_crit){
+ 	print "$err_str CRITICAL.  See http://$ARGV[0] | $perf_str";
