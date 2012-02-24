@@ -41,11 +41,19 @@ def update_control():
         description = '   * %s' %(plugin,)
         if _control.has_key('Version'):
             description = '%s (%s)' %(description, _control['Version'])
-        description = '%s: %s' %(description, _control['Description'].replace('\n','\n    '))
+        try:
+            description = '%s: %s' %(description, _control['Description'].replace('\n','\n    '))
+        except KeyError:
+            print 'Description for plugin %s missing!' %(plugin,)
+            sys.exit(1)
 
-        for uploader in __uploaders_re__.split(_control['Uploaders']):
-            if uploader not in control_data['Uploaders']:
-                control_data['Uploaders'].append(uploader)
+        try:
+            for uploader in __uploaders_re__.split(_control['Uploaders']):
+                if uploader not in control_data['Uploaders']:
+                    control_data['Uploaders'].append(uploader)
+        except KeyError:
+            'Uploaders for plugin %s missing!' %(plugin,)
+            sys.exit(1)
 
 # disables right now. do we want to have the homepage in the description?
 #        if _control.has_key('Homepage'):
@@ -79,8 +87,12 @@ def update_copyright():
         if _control.has_key('Homepage'):
             _p_copyright = '%sThe plugin was downloaded from: \n%s\n\n' %(_p_copyright, _control['Homepage'])
 
-        with open(__basedir__ + os.path.sep + plugin + os.path.sep + 'copyright', 'r') as f:
-            _p_copyright = '%s  %s' %(_p_copyright, f.read().decode('utf-8').replace('\n','\n  '))
+        try:
+            with open(__basedir__ + os.path.sep + plugin + os.path.sep + 'copyright', 'r') as f:
+                _p_copyright = '%s  %s' %(_p_copyright, f.read().decode('utf-8').replace('\n','\n  '))
+        except IOError:
+            print 'copyright file for plugin %s missing!' %(plugin,)
+            sys.exit(1)
 
         copyrights.append(_p_copyright)
 
