@@ -27,7 +27,7 @@ Description: Plugins for nagios compatible monitoring systems
        - keep an eye on email lag
        - monitor automated mailboxes
        - check email-to-FTP or other special email gateways
-   * check_haproxy (rev135): plugins check the statistics url provided by HAProxy
+   * check_haproxy (rev135): plugin check the statistics url provided by HAProxy
    * check_ipmi_sensor (2.3): IPMI Sensor Monitoring Plugin
      Plugin to monitor the hardware status (fan speed, temperaturs,
      voltages, power usage, ...) of a server using IPMI.
