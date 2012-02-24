@@ -2,8 +2,7 @@
 
 =head1 NAME
 
-C<check_lm_sensors> is a Nagios plugin to monitor the values of on
-board sensors and hard disk temperatures on Linux systems
+C<check_lm_sensors> - Nagios plugin to monitor hardware sensors and disk temperatures
 
 =head1 DESCRIPTION
 
@@ -50,7 +49,7 @@ verbosity.
 =head1 EXIT STATUS
 
 0 if OK, 1 in case of a warning, 2 in case of a critical status and 3
-in case of an unkown problem
+in case of an unknown problem
 
 =head1 DEPENDENCIES
 
