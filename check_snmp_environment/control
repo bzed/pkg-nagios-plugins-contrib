@@ -1,0 +1,3 @@
+Homepage: http://exchange.nagios.org/directory/Plugins/Hardware/Network-Gear/Cisco/Check-various-hardware-environmental-sensors/details
+Watch: http://exchange.nagios.org/directory/Plugins/Hardware/Network-Gear/Cisco/Check-various-hardware-environmental-sensors/details Current Version</div><div class="data">([0-9.]+)</div>
+Recommends: libnet-snmp-perl
