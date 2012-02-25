@@ -36,7 +36,9 @@ def update_control():
         # look trough keys we might want to merge
         for key in ['Depends', 'Build-Depends', 'Suggests', 'Recommends']:
             if _control.has_key(key):
-                control_data[key].extend(deb822.PkgRelation.parse_relations(_control[key]))
+                for rel in deb822.PkgRelation.parse_relations(_control[key]):
+                    if not rel in control_data[key]:
+                        control_data[key].append(rel)
         # extract description
         description = '   * %s' %(plugin,)
         if _control.has_key('Version'):
