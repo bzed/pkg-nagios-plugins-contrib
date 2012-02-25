@@ -1,0 +1,427 @@
+#!/usr/bin/perl -w
+####################### check_apachestatus_auto.pl #######################
+# Version : 1.3
+# Date : 06 Aug 2010
+#
+# V1.3 Rewrite using Nagios::Plugin, rename check_httpd_status.pl (Stéphane Urbanovski)
+# V1.2 Updated perf data to be PNP compliant, added proxy option (Gerhard Lausser)
+# V1.1 Works with lighttpd server-status as well, added accesses perfdata
+# V1.0 Inital Release
+#
+#
+# Authors  : Dennis D. Spreen (dennis at spreendigital.de)
+#				Based on check_apachestatus.pl v1.4 by 
+#					De Bodt Lieven (Lieven dot DeBodt at gmail.com)
+#						Updated by
+#   						  Karsten Behrens (karsten at behrens dot in)
+#		    				  Geoff McQueen (geoff dot mcqueen at hiivesystems dot com )
+#				    		  Dave Steinberg (dave at redterror dot net)
+#						Updated by
+#							Gerhard Lausser (gerhard dot lausser at consol dot de)
+# Licence : GPL - http://www.fsf.org/licenses/gpl.txt
+#############################################################
+#
+#
+
+use strict;
+use warnings;
+#use Data::Dumper;
+
+use File::Basename;			# get basename()
+
+use POSIX qw(setlocale);
+use Locale::gettext;
+
+use Nagios::Plugin ;
+
+use LWP::UserAgent;
+use HTTP::Status; # get status_message()
+use Time::HiRes qw(gettimeofday tv_interval);
+use Digest::MD5 qw(md5 md5_hex);
+
+
+# Globals
+
+my $VERSION = '1.3';
+my $TIMEOUT = 10;
+my $PROGNAME = basename($0);
+# my $PROGNAME = 'check_httpd_status.pl';
+
+# Retention files path (save previous values) :
+# FIXME: Make this configurable
+my $TempPath = '/tmp/';
+
+# Check freshness og previous values
+my $MaxUptimeDif = 60*30;  # Maximum uptime difference (seconds), default 30 minutes
+
+
+# i18n :
+setlocale(LC_MESSAGES, '');
+textdomain('nagios-plugins-perl');
+
+# Translate Apache / lighthttpd scoreboard status
+my %TranslationTable = (
+	'APACHE' => {
+		'.' => 'OpenSLot',
+		'_' => 'Waiting',
+		'I' => 'Idle',
+		'S' => 'Starting',
+		'R' => 'Reading',
+		'W' => 'Sending',
+		'K' => 'Keepalive',
+		'D' => 'DNS',
+		'C' => 'Closing',
+		'L' => 'Logging',
+		'G' => 'Finishing',
+	},
+	'LIGHTTPD' => {
+		'.' => 'Connect',
+		'C' => 'Close',
+		'E' => 'HardError',
+		'r' => 'Read',
+		'R' => 'ReadPost',
+		'W' => 'Write',
+		'h' => 'HandleRequest',
+		'q' => 'RequestStart',
+		'Q' => 'ReqestEnd',
+		's' => 'ResponseStart',
+		'S' => 'ResponseEnd',
+	},
+);
+
+
+my $np = Nagios::Plugin->new(
+	version => $VERSION,
+	blurb => _gt('Apache / Lighthttpd server status monitor for Nagios'),
+	usage => "Usage: %s [ -H <host> [-p <port>] [-t <timeout>] [-w <warn_level> -c <crit_level>] [-V] [-u <url>] [-U user -P pass -r realm]",
+	extra => &showExtra(),
+	timeout => $TIMEOUT+1
+);
+
+$np->add_arg (
+	spec => 'hostname|H=s',
+	help => _gt('Name or IP address of host to check'),
+	required => 1,
+);
+
+$np->add_arg (
+	spec => 'port|p=i',
+	help => _gt('Http port'),
+);
+$np->add_arg (
+	spec => 'url|u=s',
+	help => _gt('Specific URL to use, instead of the default http://<hostname>/server-status?auto'),
+	default => '/server-status?auto',
+);
+
+$np->add_arg (
+	spec => 'user|U=s',
+	help => _gt('Username for basic auth'),
+);
+$np->add_arg (
+	spec => 'pass|P=s',
+	help => _gt('Password for basic auth'),
+);
+$np->add_arg (
+	spec => 'realm|r=s',
+	help => _gt('Realm for basic auth'),
+);
+$np->add_arg (
+	spec => 'proxy|X=s',
+	help => _gt('Proxy-URL for http and https (mandatory)'),
+);
+
+$np->add_arg (
+	spec => 'warn|w=s',
+	help => _gt('Number of available slots that will cause a warning (Range format).'),
+);
+$np->add_arg (
+	spec => 'crit|c=s',
+	help => _gt('Number of available slots that will cause an error (Range format).'),
+);
+
+
+$np->getopts;
+
+my $o_host = $np->opts->get('hostname');
+my $o_port = $np->opts->get('port');
+my $o_url = $np->opts->get('url');
+my $o_user = $np->opts->get('user');
+my $o_pass = $np->opts->get('pass');
+my $o_realm = $np->opts->get('realm');
+my $o_proxy = $np->opts->get('proxy');
+my $o_warn_level = $np->opts->get('warn');
+my $o_crit_level = $np->opts->get('crit');
+
+# if (((defined($o_warn_level) && !defined($o_crit_level)) || 
+# 	(!defined($o_warn_level) && defined($o_crit_level))) || 
+# 	((defined($o_warn_level) && defined($o_crit_level)) && (($o_warn_level != -1) &&  ($o_warn_level <= $o_crit_level)))
+# 	) {
+# 	$np->nagios_exit(UNKNOWN, _gt("Check warn and crit!") );
+# }
+
+my $o_proto = 'http';
+my $url = undef;
+my $httpserver = 'APACHE'; #assume it is apache by default
+
+if (($o_url =~ m/^http(s?)\:\/\//i) ){
+	$url = $o_url;
+	if ($1 eq 's') {
+		$o_proto = 'https';
+	}
+} else {
+	$url = $o_proto.'://' . $o_host;
+	if ( defined($o_port)) {
+		$url .= ':' . $o_port;
+	}
+	if ( $o_url !~ /^\// ) {
+		$url .= '/';
+	}
+	$url .= $o_url;
+}
+
+if ( $url !~ /\?auto$/ ) {
+	$url .= '/server-status?auto';
+}
+
+my $ua = LWP::UserAgent->new( protocols_allowed => ['http', 'https'], timeout => $TIMEOUT);
+$ua->agent($PROGNAME.'-'.$VERSION);
+
+
+logD("Web URL : $url");
+
+my $req = HTTP::Request->new( GET => $url );
+if ( defined($o_user) ) {
+	$req->authorization_basic($o_user, $o_pass);
+}
+
+if ( defined($o_proxy) ) {
+	if ($o_proto eq 'https') {
+		if ($o_proxy =~ /^http:\/\/(.*?)\/?$/) {
+			$o_proxy = $1;
+		}
+		$ENV{HTTPS_PROXY} = $o_proxy;
+	} else {
+		$ua->proxy(['http'], $o_proxy);
+	}
+}
+
+my $timing0 = [gettimeofday];
+my $response = $ua->request($req);
+my $timeelapsed = tv_interval($timing0, [gettimeofday]);
+
+
+if ( $response->is_error() ) {
+	my $err = $response->code." ".status_message($response->code)." (".$response->message.")";
+	my $status = CRITICAL;
+	$np->add_message(CRITICAL,  );
+
+	if (defined($o_warn_level) || defined($o_crit_level)) {
+		$status = UNKNOWN;
+	}
+	$np->nagios_exit($status, _gt("HTTP error: ").$err );
+
+} elsif ( ! $response->is_success() ) {
+	my $err = $response->code." ".status_message($response->code)." (".$response->message.")";
+	$np->add_message(CRITICAL, _gt("Internal error: ").$err );
+}
+
+
+
+my $webcontent = $response->content;
+
+logD("Web content :\n----------------------------\n".$webcontent."\n----------------------------");
+
+my $Uptime = 0;
+if ( $webcontent =~ m/Uptime: (.*?)\n/) {
+	$Uptime = $1;
+}
+	
+my $TotalAccesses = 0;
+if ( $webcontent =~ m/Total Accesses: (.*?)\n/) {
+	$TotalAccesses = $1;
+} else {
+	$np->add_message(WARNING, _gt('"Total Accesses" not set ! (need extented status ?)') );
+}
+
+my $TotalKbytes = 0;
+if ( $webcontent =~ m/Total kBytes: (.*?)\n/) {
+	$TotalKbytes = $1;
+}
+
+my $ScoreBoard = '';
+if ( $webcontent =~ m/Scoreboard: (.*?)\n/) {
+	$ScoreBoard = $1;
+} else {
+	$np->add_message(WARNING, _gt("Scoreboard not found in reponse !") );
+}
+
+my $BusyWorkers = 0;
+if ( $webcontent =~ m/(BusyWorkers|BusyServers): (.*?)\n/) {
+	$BusyWorkers = $2;
+	if ($1 eq 'BusyServers') {
+		$httpserver = 'LIGHTTPD';
+	}
+}
+
+my $IdleWorkers = 0;
+if ( $webcontent =~ m/(IdleWorkers|IdleServers): (.*?)\n/) {
+	$IdleWorkers = $2;
+}
+	
+	
+my $TempFile = $TempPath.$o_host.'_check_httpd_status'.md5_hex($url);
+
+my $LastUptime = 0;
+my $LastTotalAccesses = 0;
+my $LastTotalKbytes = 0;
+
+if ((-e $TempFile) && (-r $TempFile) && (-w $TempFile)) {
+	if ( !open (RETENTION_FILE, '<',$TempFile) ) {
+		$np->nagios_exit(CRITICAL, sprintf(_gt('Error while trying to read %s !'),$TempFile) );
+	}
+	$LastUptime = <RETENTION_FILE>;
+	$LastTotalAccesses = <RETENTION_FILE>;
+	$LastTotalKbytes = <RETENTION_FILE>;
+	close (RETENTION_FILE);
+	chomp($LastUptime);
+	chomp($LastTotalAccesses);
+	chomp($LastTotalKbytes);
+	logD("LastUptime=$LastUptime LastTotalAccesses=$LastTotalAccesses LastTotalKbytes=$LastTotalKbytes (from $TempFile)");
+	
+} else {
+	logD("Retention file '$TempFile' not found");
+}
+
+if ( !open (RETENTION_FILE, '>',$TempFile) ) {
+	$np->nagios_exit(CRITICAL, sprintf(_gt('Error while trying to write to %s !'),$TempFile) );
+}
+print RETENTION_FILE "$Uptime\n"; 
+print RETENTION_FILE "$TotalAccesses\n"; 
+print RETENTION_FILE "$TotalKbytes\n";
+close (RETENTION_FILE);
+	
+my $ReqPerSec = 0;
+my $BytesPerReq = 0;
+my $BytesPerSec = 0;
+
+my $DiffTime = $Uptime-$LastUptime;
+
+if ( ($DiffTime > 0) && ($DiffTime < $MaxUptimeDif) && ($TotalAccesses >= $LastTotalAccesses) && ($TotalKbytes >= $LastTotalKbytes) ) {
+
+	$ReqPerSec = ($TotalAccesses-$LastTotalAccesses)/$DiffTime;
+	$np->add_perfdata(
+		'label' => 'ReqPerSec',
+		'value' => sprintf('%.3f',$ReqPerSec),
+		'uom' => 'req/s',
+	);
+	
+	$BytesPerSec = (($TotalKbytes-$LastTotalKbytes)*1024)/$DiffTime;
+	$np->add_perfdata(
+		'label' => 'BytesPerSec',
+		'value' => sprintf('%.2f',$BytesPerSec),
+		'uom' => 'B/s',
+	);
+	
+	my $Accesses = ($TotalAccesses-$LastTotalAccesses);
+	
+	if ( $Accesses > 0 ) {
+		$BytesPerReq = (($TotalKbytes-$LastTotalKbytes)*1024)/$Accesses;
+		$np->add_perfdata(
+			'label' => 'BytesPerReq',
+			'value' => sprintf('%.2f',$BytesPerReq),
+			'uom' => 'B/req',
+		);
+	}
+}
+	
+my $CountOpenSlots = ($ScoreBoard =~ tr/\.//);
+my $TotalSlots = $CountOpenSlots+$IdleWorkers+$BusyWorkers;
+my $InfoData = '';
+
+my %WorkerStates = ();
+
+map( $WorkerStates{$_}++ , split(//,$ScoreBoard) );
+
+
+foreach my $slotState ( keys( %{$TranslationTable{$httpserver}} ) ) {
+	my $val = 0 ;
+	if ( defined($WorkerStates{$slotState}) ) {
+		$val = $WorkerStates{$slotState};
+	}
+
+	$np->add_perfdata(
+		'label' => $TranslationTable{$httpserver}{$slotState},
+		'value' => $val,
+	);
+}
+
+
+if ($httpserver eq 'APACHE') {
+	$InfoData = sprintf ("%.3f s - %d/%d Busy/Idle, %d/%d Open/Total, %.1f requests/s, %.1f B/s, %d B/request", 
+		$timeelapsed, $BusyWorkers, $IdleWorkers, $CountOpenSlots, $TotalSlots, $ReqPerSec, $BytesPerSec, $BytesPerReq);
+	
+} else {
+	$InfoData = sprintf ("%.3f sec. response time, Busy/Idle %d/%d, slots %d, ReqPerSec %.1f, BytesPerReq %d, BytesPerSec %d",
+		$timeelapsed, $BusyWorkers, $IdleWorkers, $TotalSlots, $ReqPerSec, $BytesPerReq, $BytesPerSec);
+
+}
+
+$np->add_message(OK, $InfoData);
+
+
+my $fw = $CountOpenSlots + $IdleWorkers;
+
+logD("FreeWorker = ".$fw);
+
+my $tmp_status = $np->check_threshold(
+	check => $fw,
+	warning => $o_warn_level,
+	critical => $o_crit_level,
+);
+	
+$np->add_perfdata(
+	'label' => 'FreeWorker',
+	'value' => $fw,
+	'min' => 0,
+	'threshold' => $np->threshold()
+);
+
+if ( $tmp_status ) {
+	$np->add_message($tmp_status, sprintf(_gt(" Not enough free worker (%d) !"),$fw) );
+}
+	
+
+
+my ($status, $message) = $np->check_messages('join' => ' ');
+$np->nagios_exit($status, $message );
+
+
+sub logD {
+	print STDERR 'DEBUG:   '.$_[0]."\n" if ($np->opts->verbose);
+}
+sub logW {
+	print STDERR 'WARNING: '.$_[0]."\n" if ($np->opts->verbose);
+}
+# Gettext wrapper
+sub _gt {
+	return gettext($_[0]);
+}
+sub showExtra {
+	return <<EOT;
+(c)2009 Dennis D. Spreen
+(c)2010 Stéphane Urbanovski
+
+Note :
+
+  This plugin check Apache or Lighthttpd server-status page (using mod_status). It require the ?auto option.
+
+  Warning and critical values follow Nagios::Plugins::Threshold format. See http://nagiosplug.sourceforge.net/developer-guidelines.html
+
+  Example (note the trailing colon):
+
+  check_httpd_status -H www.server.org -w 100: -c 10:
+        Warn if less than 100 workers are available
+        Crit if less than 10 workers are available
+EOT
+}
