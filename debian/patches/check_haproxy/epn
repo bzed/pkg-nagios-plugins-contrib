@@ -1,0 +1,8 @@
+--- a/check_haproxy/check_haproxy
++++ b/check_haproxy/check_haproxy
+@@ -1,4 +1,5 @@
+ #!/usr/bin/perl -w
++# nagios: -epn
+ #
+ # Copyright (c) 2010 Stéphane Urbanovski <stephane.urbanovski@ac-nancy-metz.fr>
+ #

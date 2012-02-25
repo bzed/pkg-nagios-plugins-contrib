@@ -1,0 +1,6 @@
+Homepage: http://cvs.orion.education.fr/viewvc/viewvc.cgi/nagios-plugins-perl/trunk/plugins/check_haproxy.pl?view=log
+Watch: http://cvs.orion.education.fr/viewvc/viewvc.cgi/nagios-plugins-perl/trunk/plugins/check_haproxy.pl?view=log <a name="(rev[^"]+)"></a>
+Recommends: liblocale-gettext-perl, liblwp-useragent-determined-perl
+Version: rev135
+Uploaders: Jan Wagner <waja@cyconet.org>
+Description: plugin check the statistics url provided by HAProxy

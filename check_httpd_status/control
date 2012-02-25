@@ -1,0 +1,7 @@
+Homepage: http://cvs.orion.education.fr/viewvc/viewvc.cgi/nagios-plugins-perl/trunk/plugins/check_httpd_status.pl?view=log
+Watch: http://cvs.orion.education.fr/viewvc/viewvc.cgi/nagios-plugins-perl/trunk/plugins/check_httpd_status.pl?view=log <a name="(rev[^"]+)"></a>
+Recommends: liblocale-gettext-perl, libnagios-plugin-perl, liblwp-useragent-determined-perl
+Version: rev140
+Uploaders: Jan Wagner <waja@cyconet.org>
+Description: plugin checking Apache or Lighthttpd
+ server-status page (using mod_status)
