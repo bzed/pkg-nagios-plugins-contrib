@@ -1,0 +1,71 @@
+"1.3.6.1.4.1.232.6.2.9.3.1.4.0"; /* PSU Table */
+warning = 3, critical = 4
+
+"1.3.6.1.4.1.232.6.2.6.4.0"; /* Fan status */ 
+oder auch ....         7
+warning = 3, critical = 4
+3=non-required fan im arsch
+4=required fan im arsch
+
+
+"1.3.6.1.4.1.232.3.2.5.1.1.5"; /* Location Table */
+"1.3.6.1.4.1.232.3.2.5.1.1.6"; /* Drive Table */
+"1.3.6.1.4.1.232.3.2.5.1.1.50"; /* Drive Bus */
+
+
+"1.3.6.1.4.1.232.6.2.6.8.1.4.1"; /* Temperature table */
+
+ml370g4
+	"Processor zone",
+	"CPU 1",
+	"I/O zone",
+	"CPU 2"
+	57.0, 80.0, 53.0, 80.0
+
+dl385g1
+	"CPU 1",
+	"I/O zone",
+	"CPU 2",
+	"Processor zone",
+	"PSU bay"
+	100.0, 62.0, 100.0, 60.0, 51.0
+
+dl380g4
+	"Processor zone",
+	"CPU 1",
+	"I/O zone",
+	"CPU 2",
+	"PSU bay"
+	62.0, 80.0, 60.0, 80.0, 50.0
+
+dl380g3
+	"Processor zone",
+	"CPU 1",
+	"I/O zone",
+	"CPU 2",
+	"PSU bay"
+	62.0, 73.0, 68.0, 73.0, 53.0
+
+dl360g4
+	"I/O zone",
+	"CPU 1",
+	"CPU 2",
+	"PSU bay",
+	"System board"
+	63.0, 85.0, 85.0, 48.0, 41.0
+
+dl360g3
+	"Processor zone",
+	"CPU 1",
+	"I/O zone",
+	"CPU 2"
+	56.0, 67.0, 57.0, 67.0
+
+dl329g3
+	"Processor zone",
+	"CPU 1",
+	"I/O zone"
+	41.0, 85.0, 52.0
+
+
+

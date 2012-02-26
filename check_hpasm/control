@@ -1,0 +1,16 @@
+Homepage: http://labs.consol.de/lang/en/nagios/check_hpasm/
+Watch: http://labs.consol.de/lang/en/nagios/check_hpasm/ check_hpasm-([0-9.]+)\.tar\.gz
+Uploaders: Bernd Zeimetz <bzed@debian.org>
+Description: plugin to check the hardware health of
+ HP Proliant Servers
+ It either uses snmp or - if installed - the hpasm package locally.
+ The plugin checks the health of
+   * Processors
+   * Power supplies
+   * Memory modules
+   * Fans
+   * CPU- and board-temperatures
+   * Raids
+ and alerts you if one of these components is faulty or operates
+ outside its normal parameters.
+Build-Depends: autotools-dev
