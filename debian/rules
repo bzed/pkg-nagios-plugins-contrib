@@ -15,15 +15,13 @@ PLUGINS := $(shell find $(CURDIR) -mindepth 1 -maxdepth 1 -name .git -prune -o -
 #   we run dh_auto_$(1) with -O--sourcedirectory="$$plugin"
 # - if $${plugin}/src exists, we run dh_auto_$(1) on that directory
 # - else: fail :)
-DH_AUTO_CALL = set -e; for plugin in $(PLUGINS); do \
-		  if [ -f $(CURDIR)/$$plugin/Makefile ]; then \
+DH_AUTO_CALL = 	  if [ -f $(CURDIR)/$$plugin/Makefile ]; then \
 			$$auto_command -O--sourcedirectory="$${plugin}"; \
 		  elif [ -d $(CURDIR)/$$plugin/src ]; then \
 			$$auto_command -O--sourcedirectory="$${plugin}/src" ; \
 		  else \
 			echo failed to build $$plugin; exit 255 ; \
-		  fi ;\
-		done
+		  fi
 
 PACKAGING_HELPER = /usr/bin/python $(CURDIR)/debian/packaging-helper.py
 
@@ -31,20 +29,22 @@ PACKAGING_HELPER = /usr/bin/python $(CURDIR)/debian/packaging-helper.py
 clean: debian/copyright debian/control
 	dh $@ --with quilt
 
-override_dh_auto_build:
-	export auto_command=`echo $@ | sed 's,override_,,'`; $(DH_AUTO_CALL)
+dh_auto_%:
+	set -e; \
+	    export auto_command=`echo $* | sed 's,-.*,,;s,^,dh_auto_,'` ;\
+	    export plugin=`echo $* | sed 's,.*-,,'` ;\
+	    $(DH_AUTO_CALL)
 
-override_dh_auto_clean:
-	export auto_command=`echo $@ | sed 's,override_,,'`; $(DH_AUTO_CALL)
 
-override_dh_auto_configure:
-	export auto_command=`echo $@ | sed 's,override_,,'`; $(DH_AUTO_CALL)
+override_dh_auto_build: $(PLUGINS:%=dh_auto_build-%)
 
-override_dh_auto_install:
-	export auto_command=`echo $@ | sed 's,override_,,'`; $(DH_AUTO_CALL)
+override_dh_auto_clean: $(PLUGINS:%=dh_auto_clean-%)
 
-override_dh_auto_test:
-	-export auto_command=`echo $@ | sed 's,override_,,'`; $(DH_AUTO_CALL)
+override_dh_auto_configure: $(PLUGINS:%=dh_auto_configure-%)
+
+override_dh_auto_install: $(PLUGINS:%=dh_auto_install-%)
+
+override_dh_auto_test: $(PLUGINS:%=dh_auto_test-%)
 
 
 CONTROL_FILES := $(shell for p in $(PLUGINS); do echo $$p/control; done)
