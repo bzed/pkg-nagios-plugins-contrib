@@ -3,7 +3,7 @@ Section: net
 Priority: extra
 Maintainer: Debian Nagios Maintainer Group <pkg-nagios-devel@lists.alioth.debian.org>
 Uploaders: Bernd Zeimetz <bzed@debian.org>, Jan Wagner <waja@cyconet.org>
-Build-Depends: debhelper (>= 8.0.0), python, python-debian, quilt (>= 0.46-7), flex, libmemcached-dev
+Build-Depends: debhelper (>= 8.0.0), python, python-debian, quilt (>= 0.46-7), autotools-dev, flex, libmemcached-dev
 Standards-Version: 3.9.2
 Vcs-Git: git://git.debian.org/pkg-nagios/pkg-nagios-plugins-contrib
 Vcs-Browser: http://git.debian.org/?p=pkg-nagios/pkg-nagios-plugins-contrib;a=summary
@@ -28,6 +28,18 @@ Description: Plugins for nagios compatible monitoring systems
        - monitor automated mailboxes
        - check email-to-FTP or other special email gateways
    * check_haproxy (rev135): plugin check the statistics url provided by HAProxy
+   * check_hpasm: plugin to check the hardware health of
+     HP Proliant Servers
+     It either uses snmp or - if installed - the hpasm package locally.
+     The plugin checks the health of
+       * Processors
+       * Power supplies
+       * Memory modules
+       * Fans
+       * CPU- and board-temperatures
+       * Raids
+     and alerts you if one of these components is faulty or operates
+     outside its normal parameters.
    * check_httpd_status (rev140): plugin checking Apache or Lighthttpd
      server-status page (using mod_status)
    * check_ipmi_sensor (2.3): IPMI Sensor Monitoring Plugin
