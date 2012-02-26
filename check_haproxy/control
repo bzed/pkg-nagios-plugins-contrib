@@ -3,4 +3,4 @@ Watch: http://cvs.orion.education.fr/viewvc/viewvc.cgi/nagios-plugins-perl/trunk
 Recommends: liblocale-gettext-perl, liblwp-useragent-determined-perl
 Version: rev135
 Uploaders: Jan Wagner <waja@cyconet.org>
-Description: plugin check the statistics url provided by HAProxy
+Description: plugin check the HAProxy statistics url
