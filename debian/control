@@ -11,8 +11,8 @@ Vcs-Browser: http://git.debian.org/?p=pkg-nagios/pkg-nagios-plugins-contrib;a=su
 Package: nagios-plugins-contrib
 Architecture: any
 Depends: ${misc:Depends}, 
-Recommends: ${shlibs:Depends}, libnagios-plugin-perl (>= 0.31), libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-ssleay-perl, liblocale-gettext-perl, liblwp-useragent-determined-perl, libnagios-plugin-perl, freeipmi-tools, libreadonly-perl, libnet-dns-perl, libnet-snmp-perl
-Suggests: cciss-vol-status, mpt-status
+Recommends: ${shlibs:Depends}, libnagios-plugin-perl (>= 0.31), libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-ssleay-perl, liblocale-gettext-perl, liblwp-useragent-determined-perl, libnagios-plugin-perl, freeipmi-tools, libreadonly-perl, libnet-dns-perl, libnet-snmp-perl, openssl
+Suggests: cciss-vol-status, mpt-status, expect
 Description: Plugins for nagios compatible monitoring systems
  This package provides various plugins for Nagios compatible monitoring
  systems like Nagios and Icinga.
@@ -27,7 +27,7 @@ Description: Plugins for nagios compatible monitoring systems
        - keep an eye on email lag
        - monitor automated mailboxes
        - check email-to-FTP or other special email gateways
-   * check_haproxy (rev135): plugin check the statistics url provided by HAProxy
+   * check_haproxy (rev135): plugin check the HAProxy statistics url
    * check_hpasm: plugin to check the hardware health of
      HP Proliant Servers
      It either uses snmp or - if installed - the hpasm package locally.
@@ -90,6 +90,8 @@ Description: Plugins for nagios compatible monitoring systems
      Foundry Network, Linux (using lm-sensors), Extreme Networks,
      Juniper Networks, HP ProCurve, Netscreen, Citrix NetScaler
      and Transmode Systems hardware.
+   * check_ssl_cert (1.11.0): plugin to check the CA and validity of an
+     X.509 certificate
  .
  Some scripts and binaries need more packages installed to work, which is
  implemented as recommands.
