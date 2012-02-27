@@ -24,7 +24,6 @@ def __get_control_data__():
 
 def update_control():
     control_data = {
-        'Depends' : [],
         'Suggests' : [],
         'Recommends' : [],
         'Build-Depends' : [],
@@ -34,7 +33,10 @@ def update_control():
 
     for plugin, _control in __get_control_data__():
         # look trough keys we might want to merge
-        for key in ['Depends', 'Build-Depends', 'Suggests', 'Recommends']:
+        if _control.has_key('Depends'):
+            print "Don't use 'Depends' in %s/control - use 'Recommends' instead" %(plugin,)
+            sys.exit(1)
+        for key in ['Build-Depends', 'Suggests', 'Recommends']:
             if _control.has_key(key):
                 for rel in deb822.PkgRelation.parse_relations(_control[key]):
                     if not rel in control_data[key]:

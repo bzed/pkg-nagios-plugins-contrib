@@ -10,7 +10,7 @@ Vcs-Browser: http://git.debian.org/?p=pkg-nagios/pkg-nagios-plugins-contrib;a=su
 
 Package: nagios-plugins-contrib
 Architecture: any
-Depends: ${misc:Depends}, #AUTO_UPDATE_Depends#
+Depends: ${misc:Depends}
 Recommends: ${shlibs:Depends}, #AUTO_UPDATE_Recommends#
 Suggests: #AUTO_UPDATE_Suggests#
 Description: Plugins for nagios compatible monitoring systems
