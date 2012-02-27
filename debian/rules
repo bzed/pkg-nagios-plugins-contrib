@@ -7,7 +7,7 @@ export DH_VERBOSE=1
 PLUGINS := $(shell find $(CURDIR) -mindepth 1 -maxdepth 1 -name .git -prune -o -name .pc -prune -o -name debian -prune -o -type d -printf '%f\n')
 
 %:
-	dh $@ --with quilt
+	dh $@ --with quilt --parallel
 
 # Here follows a small shell snipped to call dh_auto_* for all plugins
 # Currently
@@ -27,7 +27,7 @@ PACKAGING_HELPER = /usr/bin/python $(CURDIR)/debian/packaging-helper.py
 
 
 clean: debian/copyright debian/control
-	dh $@ --with quilt
+	dh $@ --with quilt --parallel
 
 dh_auto_%:
 	set -e; \
