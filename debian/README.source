@@ -29,9 +29,11 @@ and defines basic policies.
   - required files:
     * $plugin/control: file format similar to debian/control.
       - Required is the Description and Uploaders part.
-        Add Build-Depends, Depends, Recommends, Suggests
+        Add Build-Depends, Recommends, Suggests
         and Homepage to have their content added to debian/control/
-        debian/copyright.
+        debian/copyright. Don't use Depends as we don't want to force
+        people to install dependencies for a plugin they might not
+        want to use.
       - Add Version to be able to track an upstream version of
         the plugin.
       - Add Watch to check for new versions using
