@@ -10,7 +10,7 @@ Vcs-Browser: http://git.debian.org/?p=pkg-nagios/pkg-nagios-plugins-contrib;a=su
 
 Package: nagios-plugins-contrib
 Architecture: any
-Depends: ${misc:Depends}, 
+Depends: ${misc:Depends}
 Recommends: ${shlibs:Depends}, libnagios-plugin-perl (>= 0.31), libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-ssleay-perl, liblocale-gettext-perl, liblwp-useragent-determined-perl, snmp, libnagios-plugin-perl, freeipmi-tools, libreadonly-perl, libnet-dns-perl, libnet-snmp-perl, openssl
 Suggests: cciss-vol-status, mpt-status, expect
 Description: Plugins for nagios compatible monitoring systems
