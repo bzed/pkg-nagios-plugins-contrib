@@ -1,0 +1,20 @@
+nagios-plugins-contrib
+======================
+
+Some plugins require additional libraries. To prevent you from having to
+install dozens of further packages that you don't actually need, there is no
+strict dependency on those libraries. Rather, they are listed as recommenda-
+tions or suggestions.
+
+apt-get(8) and aptitude(8) will install recommended packages automatically by
+default. If you did not disable this feature you will have everything in place
+to operate all plugins when installing the "nagios-plugins-contrib" package.
+Else you have to install missing dependencies manually (see the section "Plugin
+dependencies" below).
+
+
+Plugin dependencies:
+--------------------
+
+#AUTO_UPDATE_README#
+

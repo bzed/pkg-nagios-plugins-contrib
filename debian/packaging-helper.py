@@ -14,6 +14,7 @@ __plugins__.sort()
 
 
 __uploaders_re__ = re.compile(r', *')
+__shlibs_re__ = re.compile(r'shlibs:Depends=(.+)')
 
 def __get_control_data__():
     # returns (plug, parsed control field data)
@@ -21,6 +22,56 @@ def __get_control_data__():
     for plugin in __plugins__:
         yield (plugin, [x for x in deb822.Packages.iter_paragraphs(file(__basedir__ + os.path.sep+ plugin + os.path.sep + 'control'))][0])
 
+def generate_debian_readme_plugins():
+    plugins_depends={}
+    for plugin, _control in __get_control_data__():
+        plugins_depends[plugin]={}
+        # look trough keys we might want to merge
+        for key in ['Suggests', 'Recommends']:
+            if _control.has_key(key):
+                plugins_depends[plugin][key]=deb822.PkgRelation.parse_relations(_control[key])
+
+        # check for generated substvars files
+        substvarsfile = __basedir__ + os.path.sep + 'debian' + os.path.sep + plugin + os.path.sep + 'substvars'
+        if os.path.exists(substvarsfile):
+            with open(substvarsfile, 'r') as fd:
+                substvars = fd.read()
+            try:
+                rel = deb822.PkgRelation.parse_relations(__shlibs_re__.findall(substvars)[0])
+                if plugins_depends[plugin].has_key('Recommends'):
+                    plugins_depends[plugin]['Recommends'].extend(rel)
+                else:
+                    plugins_depends[plugin]['Recommends']=rel
+            except IndexError:
+                pass
+
+    # generate content
+    result=[]
+    for plugin in __plugins__:
+        if len(plugins_depends[plugin]) > 0:
+            rtext = '%s:' %(plugin,)
+            if plugins_depends[plugin].has_key('Recommends'):
+                rtext = '%s\n    Required Packages: %s' %(
+                    rtext,
+                    deb822.PkgRelation.str(plugins_depends[plugin]['Recommends'])
+                )
+            if plugins_depends[plugin].has_key('Suggests'):
+                rtext = '%s\n    Optional Packages: %s' %(
+                    rtext,
+                    deb822.PkgRelation.str(plugins_depends[plugin]['Suggests'])
+                )
+            result.append(rtext)
+    
+    readmefile=__basedir__ + os.path.sep + 'debian' + os.path.sep + 'README.Debian.plugins'
+    with open(readmefile + '.in', 'r') as fd:
+        readme=fd.read()
+    
+    readme=readme.replace('#AUTO_UPDATE_README#', '\n\n'.join(result))
+
+    with open(readmefile, 'w') as fd:
+        fd.write(readme)
+
+        
 
 def update_control():
     control_data = {
@@ -178,7 +229,7 @@ def watch():
 if __name__ == '__main__':
     from optparse import OptionParser
     prog = os.path.basename(sys.argv[0])
-    usage = ('%s [--copyright] [--control] [--watch] [-h|--help]') %(prog,)
+    usage = ('%s [--copyright] [--control] [--watch] [--generate-readme] [-h|--help]') %(prog,)
     parser = OptionParser(usage=usage)
 
     parser.add_option(
@@ -204,9 +255,16 @@ if __name__ == '__main__':
         default=False,
         help='Search for updates'
     )
+    parser.add_option(
+        '--generate-readme',
+        dest='generate_readme',
+        action='store_true',
+        default=False,
+        help='Generate debian/README.Debian.plugins'
+    )
     (options, args) = parser.parse_args()
 
-    if not (options.control or options.copyright or options.watch):
+    if not (options.control or options.copyright or options.watch or options.generate_readme):
         parser.print_help()
         sys.exit(1)
 
@@ -218,3 +276,6 @@ if __name__ == '__main__':
 
     if options.watch:
         watch()
+
+    if options.generate_readme:
+        generate_debian_readme_plugins()

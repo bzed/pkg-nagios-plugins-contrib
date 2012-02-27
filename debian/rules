@@ -4,7 +4,7 @@
 # Uncomment this to turn on verbose mode.
 export DH_VERBOSE=1
 
-PLUGINS := $(shell find $(CURDIR) -mindepth 1 -maxdepth 1 -name .git -prune -o -name .pc -prune -o -name debian -prune -o -type d -printf '%f\n')
+PLUGINS := $(shell find $(CURDIR) -mindepth 1 -maxdepth 1 -name .git -prune -o -name .pc -prune -o -name debian -prune -o -type d -printf '%f\n' | sort)
 
 %:
 	dh $@ --with quilt --parallel
@@ -16,9 +16,9 @@ PLUGINS := $(shell find $(CURDIR) -mindepth 1 -maxdepth 1 -name .git -prune -o -
 # - if $${plugin}/src exists, we run dh_auto_$(1) on that directory
 # - else: fail :)
 DH_AUTO_CALL = 	  if [ -f $(CURDIR)/$$plugin/Makefile ]; then \
-			$$auto_command -O--sourcedirectory="$${plugin}"; \
+			$$auto_command -O--sourcedirectory="$${plugin}" $$options; \
 		  elif [ -d $(CURDIR)/$$plugin/src ]; then \
-			$$auto_command -O--sourcedirectory="$${plugin}/src" ; \
+			$$auto_command -O--sourcedirectory="$${plugin}/src" $$options; \
 		  else \
 			echo failed to build $$plugin; exit 255 ; \
 		  fi
@@ -26,9 +26,36 @@ DH_AUTO_CALL = 	  if [ -f $(CURDIR)/$$plugin/Makefile ]; then \
 PACKAGING_HELPER = /usr/bin/python $(CURDIR)/debian/packaging-helper.py
 
 
-clean: debian/copyright debian/control
+clean: $(PLUGINS:%=clean-%) debian/copyright debian/control
 	dh $@ --with quilt --parallel
+	rm -f debian/nagios-plugins-contrib.install
+	rm -f debian/README.Debian.plugins
 
+clean-%:
+	rm -rf debian/$*
+
+dh_auto_install-%:
+	# run dh_auto_install to debian/$plugin
+	set -e ;\
+	    export auto_command="dh_auto_install" ;\
+	    export plugin="$*" ;\
+	    export options="--destdir=debian/$*" ;\
+	    $(DH_AUTO_CALL)
+	# add files to debian/nagios-plugins-contrib.install
+	set -e; find debian/$* -type f -printf '%h\n' | sort -u  |\
+	    while read dir; do \
+	        echo "$$dir/* `echo $$dir | sed 's,debian/$*/,,'`" ;\
+	    done >> debian/nagios-plugins-contrib.install
+	# create shlibdeps for the plugin into a temp file
+	set -e; \
+	   opts=`find debian/$* -type f -exec file {} \; |\
+	   grep -E ' ELF ' |\
+	   sed 's,:.*,,;s,^,-e,' |\
+	   tr '\n' ' '` ;\
+	   if [ -n "$$opts" ]; then \
+	   	dpkg-shlibdeps -O $$opts | grep shlibs:Depends > debian/$*/substvars ;\
+	   fi
+       
 dh_auto_%:
 	set -e; \
 	    export auto_command=`echo $* | sed 's,-.*,,;s,^,dh_auto_,'` ;\
@@ -43,9 +70,11 @@ override_dh_auto_clean: $(PLUGINS:%=dh_auto_clean-%)
 override_dh_auto_configure: $(PLUGINS:%=dh_auto_configure-%)
 
 override_dh_auto_install: $(PLUGINS:%=dh_auto_install-%)
+	$(PACKAGING_HELPER) --generate-readme
 
-override_dh_auto_test: $(PLUGINS:%=dh_auto_test-%)
-
+#override_dh_auto_test: $(PLUGINS:%=dh_auto_test-%)
+override_dh_auto_test: 
+	# nothign to do right now.
 
 CONTROL_FILES := $(shell for p in $(PLUGINS); do echo $$p/control; done)
 COPYRIGHT_FILES := $(shell for p in $(PLUGINS); do echo $$p/copyright; done)
@@ -56,6 +85,7 @@ debian/copyright: debian/copyright.in debian/packaging-helper.py $(CONTROL_FILES
 debian/control: debian/control.in debian/packaging-helper.py $(CONTROL_FILES)
 	$(PACKAGING_HELPER) --control
 	-if [ -d .git ]; then git add $@; git commit -m 'Auto update of $@' $@; fi
+
 
 watch:
 	@$(PACKAGING_HELPER) --watch
