@@ -14,3 +14,4 @@ Description: plugin to check the hardware health of
  and alerts you if one of these components is faulty or operates
  outside its normal parameters.
 Build-Depends: autotools-dev
+Recommends: snmp
