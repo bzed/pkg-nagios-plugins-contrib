@@ -56,6 +56,8 @@ Description: Plugins for nagios compatible monitoring systems
      using a memcached object to store the earlier statistics.
    * check_multipath (0.1.5): plugin to monitor the number of available and
      failed paths of multipath devices
+   * check_mysql_health: plugin to check various parameters of a
+     MySQL database
    * check_printer: plugin to check printer supply levels using SNMP
      It outputs performance data for all supplies
      found, for example toner and drum.
