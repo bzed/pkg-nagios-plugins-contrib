@@ -1,7 +1,7 @@
 Homepage: http://exchange.nagios.org/directory/Plugins/Hardware/Network-Gear/Cisco/Check-various-hardware-environmental-sensors/details
 Watch: http://exchange.nagios.org/directory/Plugins/Hardware/Network-Gear/Cisco/Check-various-hardware-environmental-sensors/details Current Version</div><div class="data">([0-9.]+)</div>
 Recommends: libnet-snmp-perl
-Description: plugin to check various hardware based information
+Description: plugin to check various hardware statuses
  Using snmp the plugin is able to retrieve Fan, power-supply,
  voltage, temperature, card and module status and various other
  information from Cisco, Nokia, Blue Coat, IronPort,
