@@ -1,3 +1,48 @@
+nagios-plugins-contrib (1.20120228) unstable; urgency=low
+
+  * [9079e12a] Add check-multipath.pl upstream version.
+  * [8e0a5908] Add patch for check_multipath
+  * [6da07d78] Ignore .rej and .orig files.
+  * [4bda0e7c] Upstream included our patch already.
+  * [21e3756b] Add packaging info for check_multipath.
+  * [9f664c91] Link debian/README.source to README for github fancyness.
+  * [a527810c] Add check_snmp_environment (unfinished).
+  * [41052baf] Add some useful error messages for the packaging-helper.py
+  * [afa04c7b] Finish check_snmp_environment plugin.
+    No .cfg file included yet.
+  * [743e5dfd] Add current version info to check_snmp_environment.
+  * [76bccfe3] Fix SHA1 watch in packaging-helper.py
+  * [8f4c4d13] Add check_printer plugin.
+  * [7dc69bf0] Add check_haproxy and check_httpd_status.
+    manually merging the work of Jan Wagner <waja@cyconet.org>.
+  * [2577af3a] Better sorting of the quilt series file.
+  * [0526814c] Add nagios: -epn tags to the non epn checks in
+    check_email_delivery.
+  * [caadc8e7] Don't add a dependency if it is listed already.
+  * [974e8d36] Add check_hpasm.
+  * [0d3b76da] make -j should work for debian/rules now
+  * [6f4593ac] Fix too long description.
+  * [a3cce5ad] check_hpasm needs snmpwalk, recommend it.
+  * [4760a28d] shorter check_snmp_environment desc
+  * [1af8a931] Fix FSF address.
+  * [a2e9282a] Auto update of debian/copyright
+  * [3a702550] Auto update of debian/control
+  * [d4d74a06] Add --parallel to dh calls.
+  * [a41f66fe] Merge remote-tracking branch 'github/master'
+    Conflicts:
+    	debian/control
+  * [65d87a13] Merge pull request #3 from waja/master
+    adding check_mysql_health
+  * [573abd8c] Ensure Depends is nto used in plugin control files.
+  * [42d0dcfe] Auto update of debian/control
+  * [58e56a7b] Auto-generate and install README.Debian.plugins
+  * [4a73d8a7] Enhance dependency description in debian/README.source
+  * [69f4e3e9] Merge pull request #4 from waja/master
+    fixing 'check_ipmi_sensor_exclude' command definition
+    (Closes: #661528)
+
+ -- Bernd Zeimetz <bzed@debian.org>  Tue, 28 Feb 2012 20:17:06 +0100
+
 nagios-plugins-contrib (1.20120220) unstable; urgency=low
 
   * [462444da] Removing unused code copies of the install module.
