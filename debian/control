@@ -94,6 +94,12 @@ Description: Plugins for nagios compatible monitoring systems
      and Transmode Systems hardware.
    * check_ssl_cert (1.11.0): plugin to check the CA and validity of an
      X.509 certificate
+   * check_webinject: plugin for testing web services
+     It uses the WebInject Perl module for automated testing of
+     web applications and web services. It can be used to check
+     individual system components that have HTTP interfaces
+     (JSP, ASP, CGI, PHP, AJAX, Servlets, HTML Forms,
+     XML/SOAP Web Services, REST, etc).
  .
  Some scripts and binaries need more packages installed to work, which is
  implemented as recommands.
