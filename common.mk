@@ -20,8 +20,8 @@ endif
 DOCDIR := /usr/share/doc/nagios-plugins-contrib/$(PLUGINNAME)
 
 # add some default files to clean
-CLEANFILES += $(wildcard *.o) $(wildcard *.a) $(wildcard *.so)
-
+# we actually need strip here. make is weird sometimes.
+CLEANFILES=$(strip $(wildcard *.o) $(wildcard *.a) $(wildcard *.so))
 
 # build the stuff actually
 all:: $(PLUGIN) $(MANPAGES) $(INIFILES)
@@ -51,6 +51,6 @@ ifdef DOCFILES
 endif
 
 clean::
-ifdef CLEANFILES
+ifneq (,$(CLEANFILES))
 	rm -f $(CLEANFILES)
 endif
