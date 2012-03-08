@@ -1,3 +1,4 @@
+check_raid/use_cciss_vol_status_if_present
 check_email_delivery/epn
 check_printer/use_data_dumper_if_needed
 check_printer/use_nagios_plugin
