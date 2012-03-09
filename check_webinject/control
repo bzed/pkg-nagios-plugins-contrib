@@ -8,3 +8,4 @@ Description: plugin for testing web services
  individual system components that have HTTP interfaces
  (JSP, ASP, CGI, PHP, AJAX, Servlets, HTML Forms,
  XML/SOAP Web Services, REST, etc).
+Version: 1.69
