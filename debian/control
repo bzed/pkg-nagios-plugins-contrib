@@ -18,7 +18,7 @@ Description: Plugins for nagios compatible monitoring systems
  systems like Nagios and Icinga.
  It contains the following plugins:
  .
-   * check_email_delivery (0.7.1a): plugin to monitor email delivery
+   * check_email_delivery (0.7.1b): plugin to monitor email delivery
      Some typical uses of this plugin include:
        - check SMTP server
        - check messages and quota on IMAP server
@@ -28,7 +28,7 @@ Description: Plugins for nagios compatible monitoring systems
        - monitor automated mailboxes
        - check email-to-FTP or other special email gateways
    * check_haproxy (rev135): plugin check the HAProxy statistics url
-   * check_hpasm: plugin to check the hardware health of
+   * check_hpasm (4.3): plugin to check the hardware health of
      HP Proliant Servers
      It either uses snmp or - if installed - the hpasm package locally.
      The plugin checks the health of
@@ -56,12 +56,12 @@ Description: Plugins for nagios compatible monitoring systems
      using a memcached object to store the earlier statistics.
    * check_multipath (0.1.5): plugin to monitor the number of available and
      failed paths of multipath devices
-   * check_mysql_health: plugin to check various parameters of a
+   * check_mysql_health (2.1.7): plugin to check various parameters of a
      MySQL database
    * check_printer: plugin to check printer supply levels using SNMP
      It outputs performance data for all supplies
      found, for example toner and drum.
-   * check_raid (rev1.106): plugin to check sw/hw RAID status
+   * check_raid (rev1.107): plugin to check sw/hw RAID status
      The plugin looks for any known types of RAID configurations,
      and checks them all.
      .
@@ -94,7 +94,7 @@ Description: Plugins for nagios compatible monitoring systems
      and Transmode Systems hardware.
    * check_ssl_cert (1.11.0): plugin to check the CA and validity of an
      X.509 certificate
-   * check_webinject: plugin for testing web services
+   * check_webinject (1.69): plugin for testing web services
      It uses the WebInject Perl module for automated testing of
      web applications and web services. It can be used to check
      individual system components that have HTTP interfaces
