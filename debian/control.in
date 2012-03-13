@@ -13,6 +13,7 @@ Architecture: any
 Depends: ${misc:Depends}
 Recommends: ${shlibs:Depends}, #AUTO_UPDATE_Recommends#
 Suggests: #AUTO_UPDATE_Suggests#
+Enhances: nagios-plugins, nagios-plugins-basic, nagios-plugins-standard
 Description: Plugins for nagios compatible monitoring systems
  This package provides various plugins for Nagios compatible monitoring
  systems like Nagios and Icinga.
