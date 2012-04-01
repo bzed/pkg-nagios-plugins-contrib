@@ -11,3 +11,6 @@ include ../common.mk
 check_backuppc:
 	sed -e "s|NAGIOS_LIB|$(NAGIOS_LIB)|g" -e \
 		"s|BACKUPPC_LIB|${BACKUPPC_LIB}|g" src/check_backuppc > $@
+
+clean::
+	rm $(PLUGIN)
