@@ -1,0 +1,14 @@
+This plugin must be run as the same user that BackupPC runs under.  For a host 
+to be considered an archive host by the --backup-only and --archive-only options
+at least one archive must be run by the host.
+
+Sample configuration for NRPE with Ubuntu hosts:
+1) Add the following line to /etc/sudoers on the backup host
+  nagios ALL = (backuppc) NOPASSWD: /usr/local/lib/nagios/plugins/check_backuppc
+
+2) Add the following line to /etc/nagios/nrpe.cfg
+  command[check_backuppc]=/usr/bin/sudo -u backuppc \
+    /usr/local/lib/nagios/plugins/check_backuppc
+
+3) Add the appropriate stanza to your Nagios configuration to use this check
+   with NRPE.

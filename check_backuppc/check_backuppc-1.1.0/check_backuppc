@@ -1,0 +1,265 @@
+#!/usr/bin/perl
+#
+# check_backuppc: a Nagios plugin to check the status of BackupPC
+#
+# Tested against BackupPC 2.1.2 and Nagios 1.3
+#   <http://backuppc.sourceforge.net>
+#   <http://nagios.org>
+#
+# AUTHORS
+#   Seneca Cunningham  <tetragon@users.sourceforge.net>
+#
+# COPYRIGHT
+#   Copyright (C) 2006,2007       Seneca Cunningham
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+
+use strict;
+no utf8;
+
+# Nagios
+use lib "NAGIOS_LIB";
+use utils qw(%ERRORS $TIMEOUT);
+use POSIX qw(strftime difftime);
+use Getopt::Long;
+Getopt::Long::Configure('bundling');
+
+# BackupPC
+use lib "BACKUPPC_LIB";
+use BackupPC::Lib;
+
+my $version = '1.1.0';
+my $warnLevel = 0;
+my $daysOld = 7;
+my $verbose = 0;
+my $opt_V = 0;
+my $opt_h = 0;
+my $goodOpt = 0;
+my $reduce = 0;
+my $backupOnly = 0;
+my $archiveOnly = 0;
+my $statusOnly = 0;
+my @hostsDesired;
+my @hostsExcluded;
+
+# Process options
+$goodOpt = GetOptions(
+	'v+' => \$verbose, 'verbose+' => \$verbose, 
+	'c=f' => \$daysOld, 'critical=f' => \$daysOld,
+	'w=f' => \$warnLevel, 'warning=f' => \$warnLevel,
+	'V' => \$opt_V, 'version' => \$opt_V,
+	'h' => \$opt_h, 'help' => \$opt_h,
+	'r=i' => \$reduce, 'reduce' => \$reduce,
+	'b' => \$backupOnly, 'backup-only' => \$backupOnly,
+	'a' => \$archiveOnly, 'archive-only' => \$archiveOnly,
+	's' => \$statusOnly, 'status-only' => \$statusOnly,
+	'H=s' => \@hostsDesired, 'hostname=s' => \@hostsDesired,
+	'x=s' => \@hostsExcluded, 'exclude=s' => \@hostsExcluded);
+
+@hostsDesired = () if $#hostsDesired < 0;
+@hostsExcluded = () if $#hostsExcluded < 0;
+
+if ($opt_V)
+{
+	print "check_backuppc - " . $version . "\n";
+	exit $ERRORS{'OK'};
+}
+if ($backupOnly and $archiveOnly)
+{
+	$goodOpt = 0;
+	print "Cannot apply both --backup-only and --archive-only, contradictory\n\n";
+}
+if ($opt_h or not $goodOpt)
+{
+	print "check_backuppc - " . $version . "\n";
+	print "A Nagios plugin to check on BackupPC backup status.\n\n";
+	print "Options:\n";
+	print "  --hostname,-H      only check the specified host\n";
+	print "  --exclude,-x       do not check the specified host\n";
+	print "  --archive-only,-a  only check the archive hosts\n";
+	print "  --backup-only,-b   only check the backup hosts\n";
+	print "  --status-only,-s   only check backup status, omit connection failures that are\n";
+	print "                     less than \$Conf{FullPeriod} old\n";
+	print "  --warning,-w       days old an errored host must be to cause a warning\n";
+	print "  --critical,-c      number of days old an errored backup must be to be critical\n";
+	print "  --reduce,-r        maximum number of failed hosts for severity reduction\n";
+	print "  --verbose,-v       increase verbosity\n";
+	print "  --version,-V       display plugin version\n";
+	print "  --help,-h          display this message\n\n";
+	exit $ERRORS{'OK'} if $goodOpt;
+	exit $ERRORS{'UNKNOWN'};
+}
+if ($warnLevel > $daysOld)
+{
+	print("BACKUPPC UNKNOWN - Warning threshold must be <= critical\n");
+	exit $ERRORS{'UNKNOWN'};
+}
+
+# Connect to BackupPC
+my $server;
+if (!($server = BackupPC::Lib->new))
+{
+	print "BACKUPPC CRITICAL - Couldn't connect to BackupPC\n";
+	exit $ERRORS{'CRITICAL'};
+}
+my %Conf = $server->Conf();
+
+$server->ChildInit();
+
+my $err = $server->ServerConnect($Conf{ServerHost}, $Conf{ServerPort});
+if ($err)
+{
+	print("BACKUPPC UNKNOWN - Can't connect to server ($err)\n");
+	exit $ERRORS{'UNKNOWN'};
+}
+
+# hashes that BackupPC uses for varios status info
+my %Status;
+my %Jobs;
+my %Info;
+
+# query the BackupPC server for host, job, and server info
+my $info_raw = $server->ServerMesg('status info');
+my $jobs_raw = $server->ServerMesg('status jobs');
+my $status_raw = $server->ServerMesg('status hosts');
+
+# undump the output... BackupPC uses Data::Dumper
+eval $info_raw;
+eval $jobs_raw;
+eval $status_raw;
+
+# check the dumped output
+my $hostCount = 0;
+my @goodHost;
+my @badHost;
+my @tooOld;
+my @notTooOld;
+
+foreach my $host (@hostsDesired, @hostsExcluded)
+{
+	if (not grep {/$host/} keys(%Status))
+	{
+		print("BACKUPPC UNKNOWN - Unknown host ($host)\n");
+		exit $ERRORS{'UNKNOWN'};
+	}
+}
+
+# host status checks
+foreach my $host (sort(keys(%Status)))
+{
+	next if $host =~ /^ /;
+	next if (@hostsDesired and not grep {/$host/} @hostsDesired);
+	next if (@hostsExcluded and grep {/$host/} @hostsExcluded);
+	next if ($backupOnly and $Status{$host}{'type'} eq 'archive');
+	next if ($archiveOnly and $Status{$host}{'type'} ne 'archive');
+	$hostCount++;
+	# Debug
+	if ($verbose == 3)
+	{
+		print "Host $host state " . $Status{$host}{'state'};
+		print " with error: " . $Status{$host}{'error'} . "\n";
+	}
+	if ($Status{$host}{'error'})
+	{
+		# Check connectivity errors with greater care
+		if ($statusOnly && (
+		    $Status{$host}{'error'} eq 'ping too slow' ||
+		    $Status{$host}{'error'} eq 'no ping response' ||
+		    $Status{$host}{'error'} eq 'host not found')) {
+			if ($Status{$host}{'lastGoodBackupTime'} - $Status{$host}{'startTime'} <= $Conf{FullPeriod} * 3600 * 24) {
+				push @goodHost, $host;
+				next;
+			}
+		}
+		push @badHost, $host;
+		# Check bad host ages
+		$Status{$host}{'lastGoodBackupTime'} = $Status{$host}{'startTime'} if (not $Status{$host}{'lastGoodBackupTime'});
+		if (difftime(time(), $Status{$host}{'lastGoodBackupTime'}) > ($daysOld * 3600 * 24))
+		{
+			push @tooOld, $host;
+		} 
+		elsif (difftime(time(), $Status{$host}{'lastGoodBackupTime'}) > ($warnLevel * 3600 * 24))
+		{
+			push @notTooOld, $host;
+		}
+		else
+		{
+			push @goodHost, $host;
+			pop @badHost;
+		}
+		# Debug
+		if ($verbose == 2)
+		{
+			print "Host $host state " . $Status{$host}{'state'};
+			print " with error: " . $Status{$host}{'error'} . "\n";
+		}
+	}
+	else
+	{
+		push @goodHost, $host;
+	}
+}
+
+if ($hostCount == @goodHost or $#badHost < $reduce and not @tooOld)
+{
+	print "BACKUPPC OK - (" . @badHost . "/" . $hostCount . ") failures\n";
+	exit $ERRORS{'OK'};
+}
+
+# Only failures reach this far
+# WARNING
+if ($#tooOld < 0 or $#badHost < $reduce)
+{
+	print "BACKUPPC WARNING - (";
+	if ($verbose)
+	{
+		foreach my $host (@badHost)
+		{
+			print $host . " (" . $Status{$host}{'error'} . "), ";
+		}
+		print ")\n";
+	}
+	else
+	{
+		print $#badHost + 1  . "/" . $hostCount . ") failures\n";
+	}
+	exit $ERRORS{'WARNING'};
+}
+
+# CRITICAL
+print "BACKUPPC CRITICAL - (";
+if ($#notTooOld >= 0 and $verbose)
+{
+	foreach my $host (@notTooOld)
+	{
+		print $host . " (" . $Status{$host}{'error'} . "), ";
+	}
+	print "), (";
+}
+if ($verbose)
+{
+	foreach my $host (@tooOld)
+	{
+		print $host . " (" . $Status{$host}{'error'} . "), " if $verbose;
+	}
+	print ") critical\n";
+}
+else
+{
+	print $#badHost + 1 . "/" . $hostCount . ") failures, ";
+	print $#tooOld + 1 . " critical\n";
+}
+exit $ERRORS{'CRITICAL'};

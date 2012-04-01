@@ -1,0 +1,33 @@
+Mar. 18 2007 - 1.1.0
+	- Added --status-only option
+	- Fixed logic of --warning option
+	- Adjusted default warning age to 0 and critical age to 7 days
+
+Sep. 16 2006 - 1.0
+	- Added manpage
+	- Adjusted spacing in debug messages
+	- Adjusted behaviour of when an initial backup fails
+	- Code cleanup
+
+Aug. 31 2006 - 0.9.0
+	- Added Makefile
+	- Increased verbosity level
+	- Added host exclusion option
+	- Added --archive-only and --backup-only options
+
+Aug. 23 2006 - 0.8.0
+	- Added hostname option
+	- Added warning threshold
+	- Added severity reduction count
+	- Code cleanup
+
+Aug. 22 2006 - 0.2.0
+	- First public release
+	- Code cleanup
+	- Added command-line arguments
+
+Aug. 16 2006 - 0.1.1
+	- Change error detection to checking for 'error' in hashes
+
+Aug. 15 2006 - 0.1.0
+	- First technically working version of plugin, still needs options
