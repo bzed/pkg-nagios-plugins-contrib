@@ -2,7 +2,7 @@ Source: nagios-plugins-contrib
 Section: net
 Priority: extra
 Maintainer: Debian Nagios Maintainer Group <pkg-nagios-devel@lists.alioth.debian.org>
-Uploaders: Bernd Zeimetz <bzed@debian.org>, Jan Wagner <waja@cyconet.org>
+Uploaders: Jan Wagner <waja@cyconet.org>, Bernd Zeimetz <bzed@debian.org>
 Build-Depends: debhelper (>= 8.0.0), python, python-debian, quilt (>= 0.46-7), autotools-dev, flex, libmemcached-dev
 Standards-Version: 3.9.2
 Vcs-Git: git://git.debian.org/pkg-nagios/pkg-nagios-plugins-contrib
@@ -11,13 +11,15 @@ Vcs-Browser: http://git.debian.org/?p=pkg-nagios/pkg-nagios-plugins-contrib;a=su
 Package: nagios-plugins-contrib
 Architecture: any
 Depends: ${misc:Depends}
-Recommends: ${shlibs:Depends}, libnagios-plugin-perl (>= 0.31), libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-ssleay-perl, liblocale-gettext-perl, liblwp-useragent-determined-perl, snmp, libnagios-plugin-perl, freeipmi-tools, libreadonly-perl, libnet-dns-perl, libnet-snmp-perl, openssl
+Recommends: ${shlibs:Depends}, backuppc, libnagios-plugin-perl, libnagios-plugin-perl (>= 0.31), libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-ssleay-perl, liblocale-gettext-perl, liblwp-useragent-determined-perl, snmp, freeipmi-tools, libreadonly-perl, libnet-dns-perl, libnet-snmp-perl, openssl
 Suggests: perl-doc, cciss-vol-status, mpt-status, expect
+Enhances: nagios-plugins, nagios-plugins-basic, nagios-plugins-standard
 Description: Plugins for nagios compatible monitoring systems
  This package provides various plugins for Nagios compatible monitoring
  systems like Nagios and Icinga.
  It contains the following plugins:
  .
+   * check_backuppc (1.1.0): plugin for checking on the status of BackupPC backups
    * check_email_delivery (0.7.1b): plugin to monitor email delivery
      Some typical uses of this plugin include:
        - check SMTP server
