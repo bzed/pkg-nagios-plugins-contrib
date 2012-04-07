@@ -1,0 +1,11 @@
+--- pkg-nagios-plugins-contrib.orig/check_backuppc/src/check_backuppc	2007-03-18 18:54:26.000000000 +0100
++++ pkg-nagios-plugins-contrib/check_backuppc/src/check_backuppc	2012-04-02 00:48:10.000000000 +0200
+@@ -32,7 +32,7 @@
+ 
+ # Nagios
+ use lib "NAGIOS_LIB";
+-use utils qw(%ERRORS $TIMEOUT);
++use Nagios::Plugin qw(%ERRORS);
+ use POSIX qw(strftime difftime);
+ use Getopt::Long;
+ Getopt::Long::Configure('bundling');

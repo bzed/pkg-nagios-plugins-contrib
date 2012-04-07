@@ -1,0 +1,61 @@
+.TH check_backuppc 8 
+.SH NAME
+check_backuppc \- A Nagios plugin to monitor BackupPC
+.SH SYNOPSIS
+.B check_backuppc
+.I [options]
+.SH DESCRIPTION
+.B check_backuppc
+is a nagios plugin that reports on the status of BackupPC.  By default, it
+monitors both archive and backup hosts for errors.
+.SH OPTIONS
+.TP
+.B \-a, \-\-archive\-only
+Only check the status of archive hosts.
+.TP
+.B \-b, \-\-backup\-only
+Only check the status of non-archive hosts.
+.TP
+.B \-s, \-\-status\-only
+Only check the status of the backups, omit connection failures that are less
+than $Conf{FullPeriod} old.
+.TP
+.B \-H, \-\-hostname hostname
+Only check the specified host.  Uses hostnames that BackupPC is configured to
+use, can be specified multiple times.
+.TP
+.B \-x, \-\-exclude hostname
+Do not check the specified host.  Uses hostnames that BackupPC is configured to
+use, can be specified multiple times.
+.TP
+.B \-w, \-\-warning age
+The days old at which a failure is considered a warning, default 1.
+.TP
+.B \-c, \-\-critical age
+The days old at which a failure is considered critical, default 8.
+.TP
+.B \-r, \-\-reduce count
+The maximum number of failed hosts for which to reduce reported severity, 
+default 0.
+.TP
+.B \-h, \-\-help
+Show summary of options.
+.SH NOTES
+This plugin must be run on the same host and as the same user as BackupPC.
+An archive host only takes on a reported type of archive after its first archive
+run.
+.SH EXAMPLES
+.TP
+.EX
+/usr/local/lib/nagios/plugins/check_backuppc -r1 -w3 -c8 -b -x otter
+.EE
+Check the status of all backup hosts except "otter".  Warn if a failed backup
+is older than three days old, return critical if a failure is older than eight
+days old unless there is only a single failure.  In that case, warn if the
+single failed backup is older than eight days.
+.SH AUTHOR
+Seneca Cunningham <tetragon@users.sourceforge.net>
+.SH "SEE ALSO"
+.\" Always quote multiple words for .SH
+.BR sudo (8).
+.BR backuppc (8).
