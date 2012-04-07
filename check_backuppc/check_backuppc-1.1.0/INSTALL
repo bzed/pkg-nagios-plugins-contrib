@@ -1,0 +1,19 @@
+Automated Install Steps:
+------------------------
+1) Set NAGIOS_LIB to the directory containing Nagios's util.pm
+2) Set BACKUPPC_LIB to the directory containing BackupPC's Perl libraries
+3) Set PREFIX to the desired installation location
+4) make install
+
+Manual Install Steps:
+---------------------
+1) Edit check_backuppc and adjust the two "use lib" lines to refer to the 
+   correct location for Nagios's utils.pm and BackupPC's Perl libraries.
+2) Copy check_backuppc into where you want this plugin.
+
+Configuration:
+--------------
+1) Add a sudoers entry to allow Nagios to run this plugin as the BackupPC user.
+2) Configure Nagios to run this plugin through sudo as the BackupPC user.
+3) Test
+4) Add to Nagios service checks

@@ -1,0 +1,6 @@
+Uploaders: Jan Wagner <waja@cyconet.org>
+Recommends: backuppc, libnagios-plugin-perl
+Version: 1.1.0
+Homepage: http://n-backuppc.sourceforge.net/
+Watch: http://sourceforge.net/projects/n-backuppc/files/ check_backuppc-([0-9.]+)\.tar\.gz
+Description: plugin for checking on the status of BackupPC backups

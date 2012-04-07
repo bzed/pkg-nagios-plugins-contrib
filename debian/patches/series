@@ -10,3 +10,4 @@ check_rbl/interpreter
 check_rbl/spelling_errors
 check_haproxy/epn
 check_httpd_status/epn
+check_backuppc/use_nagios_plugins

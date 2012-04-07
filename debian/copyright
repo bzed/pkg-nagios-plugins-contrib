@@ -32,6 +32,21 @@ and the following files:
 The copyright information for the included plugins is listed below:
 
 
+check_backuppc:
+
+The plugin was downloaded from: 
+http://n-backuppc.sourceforge.net/
+
+  Copyright (C) 2006,2007       Seneca Cunningham
+  
+  License: GPL v2
+  
+    On Debian systems, the complete text of the GNU General
+    Public License version 2 can be found in "/usr/share/common-licenses/GPL-2".
+  
+
+------------------------------------------------------------------------------
+
 check_email_delivery:
 
 The plugin was downloaded from: 
