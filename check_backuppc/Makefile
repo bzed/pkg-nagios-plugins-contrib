@@ -13,4 +13,4 @@ check_backuppc:
 		"s|BACKUPPC_LIB|${BACKUPPC_LIB}|g" src/check_backuppc > $@
 
 clean::
-	rm $(PLUGIN)
+	rm -f $(PLUGIN)
