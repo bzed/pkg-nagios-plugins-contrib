@@ -1,0 +1,4 @@
+Homepage: http://anonscm.debian.org/gitweb/?p=mirror/dsa-nagios.git;a=tree;f=dsa-nagios-checks;hb=HEAD
+Uploaders: Bernd Zeimetz <bzed@debian.org>
+Description: plugins from the Debian System Administrators
+ nagios plugins repository.
