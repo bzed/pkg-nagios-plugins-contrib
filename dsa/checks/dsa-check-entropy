@@ -1,0 +1,81 @@
+#!/usr/bin/python
+
+# Copyright 2011 Peter Palfrader
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+import sys
+import os
+import time
+import optparse
+
+AVAIL = '/proc/sys/kernel/random/entropy_avail'
+
+parser = optparse.OptionParser()
+parser.add_option("-r", "--retries", dest="retries", metavar="NUM",
+  type="int", default=10,
+  help="Max number of retries [10].")
+parser.add_option("-s", "--sleep", dest="sleep", metavar="MSECS",
+  type="int", default=250,
+  help="Amount of time to wait between reads [250msec].")
+parser.add_option("-w", "--watermark", dest="watermark", metavar="BYTES",
+  type="int", default=800,
+  help="Minimum number of expected bytes in the entropy pool [800].")
+(options, args) = parser.parse_args()
+
+if len(args) != 0:
+    parser.print_help()
+    sys.exit(4)
+
+if not os.path.exists(AVAIL):
+    print "File %s does not exist."%(AVAIL)
+    sys.exit(4)
+
+tries = 0
+values = []
+while tries <= options.retries:
+    f = open('/proc/sys/kernel/random/entropy_avail')
+    avail = f.readline().rstrip()
+    if len(avail) == 0:
+        print "Could not read anything from %s"%(AVAIL)
+        sys.exit(4)
+    try:
+        avail = int(avail)
+    except ValueError:
+        print "Did not read a number from %s, got '%s' instead"%(AVAIL, avail)
+        sys.exit(4)
+
+    if avail >= options.watermark:
+        if tries > 0:
+            print "OK: %d bytes in the pool after %d attempts."%(avail, tries)
+        else:
+            print "OK: %d bytes in the pool."%(avail)
+        sys.exit(0)
+
+    values.append(avail)
+    time.sleep(1.0 * options.sleep / 1000)
+    tries += 1
+
+print "WARNING: Too little entropy in the pool (min: %d, max: %d in %d reads)"%(min(values), max(values), tries-1)
+sys.exit(1)
+
+# vim:set et:
+# vim:set ts=4:
+# vim:set shiftwidth=4:

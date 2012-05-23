@@ -1,0 +1,128 @@
+#!/usr/bin/ruby
+
+# Copyright 2006, 2012 Peter Palfrader
+#           2012  Uli Martens
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+require 'ipaddr'
+require 'resolv'
+require 'optparse'
+require 'yaml'
+
+NAGIOS_STATUS = { :OK => 0, :WARNING => 1, :CRITICAL => 2, :UNKNOWN => -1 };
+@verbose = 0;
+@additional_nameservers = []
+@check_soa_nameservers = true;
+
+def show_help(parser, code=0, io=STDOUT)
+  program_name = File.basename($0, '.*')
+  io.puts "Usage: #{program_name} [options] <domainname> [<domainname> ...]"
+  io.puts parser.summarize
+  exit(code)
+end
+ARGV.options do |opts|
+        opts.on_tail("-h", "--help" , "Display this help screen")                               { show_help(opts) }
+        opts.on("-v", "--verbose"   , String, "Be verbose")                                     { @verbose += 1 }
+        opts.on("-a", "--add=HOST"  , String, "Also check SOA on <nameserver>")                 { |val| @additional_nameservers << val }
+        opts.on("-n", "--no-soa-ns" , String, "Don't query SOA record for list of nameservers") { @check_soa_nameservers = false }
+        opts.parse!
+end
+show_help(ARGV.options, 1, STDERR) if ARGV.length == 0
+
+if @additional_nameservers.count <= 1 and not @check_soa_nameservers
+	program_name = File.basename($0, '.*')
+	STDERR.puts "#{program_name}: Only know about #{@additional_nameservers.count} nameserver(s) and --no-soa-ns specified.  I want at least two."
+	exit(1)
+end
+
+warnings = []
+oks = []
+
+def resolve_ns(dns, domain, nameserver)
+	puts "Getting A record for nameserver #{nameserver} for #{domain}" if @verbose > 0
+	arecords = dns.getresources(nameserver, Resolv::DNS::Resource::IN::A)
+	warnings << "Nameserver #{nameserver} for #{domain} has #{arecords.length} A records" if arecords.length != 1
+	addresses = arecords.map { |a| a.address.to_s }
+	puts "Addresses for nameserver #{nameserver} for #{domain}: #{addresses.join(', ')}" if @verbose > 0
+	return addresses
+end
+
+dns = Resolv::DNS.new
+ARGV.each{ |domain|
+	serial = []
+	nameserver_addresses = {}
+	if @check_soa_nameservers
+		nameservers = dns.getresources(domain, Resolv::DNS::Resource::IN::NS)
+		nameservernames = nameservers.collect{ |ns| ns.name.to_s }
+		nameservernames.each do |nameserver|
+			addrs = resolve_ns(dns, domain, nameserver)
+			warnings << "Duplicate nameserver #{nameserver} for #{domain}" if nameserver_addresses[nameserver]
+			nameserver_addresses[nameserver] = addrs
+		end
+	end
+	@additional_nameservers.each do |ns|
+		begin
+			ipa = IPAddr.new(ns)  # check if it's an address
+			addrs = [ns]
+		rescue ArgumentError
+			addrs = resolve_ns(dns, domain, ns)
+		end
+		warnings << "Duplicate nameserver #{ns} for #{domain}" if nameserver_addresses[ns]
+		nameserver_addresses[ns] = addrs
+	end
+
+	nameserver_addresses.each_pair do |nameserver, addrs|
+		puts "Testing nameserver #{nameserver} for #{domain}" if @verbose > 0
+		addrs.each do |a|
+			puts " Nameserver #{nameserver} is at #{a}" if @verbose > 0
+			begin
+				resolver = Resolv::DNS.new({:nameserver => a})
+				soas = resolver.getresources(domain, Resolv::DNS::Resource::IN::SOA)
+			rescue SystemCallError => e
+				warnings << "Could not resolve #{domain} on #{nameserver}: #{e.message}"
+			else
+				resolver.close
+				warnings << "Nameserver #{nameserver} for #{domain} returns #{soas.length} SOAs" if soas.length != 1
+				soas.each do |soa|
+					puts " Nameserver #{nameserver} returns serial #{soa.serial} for #{domain}" if @verbose > 0
+					serial << soa.serial unless serial.include? soa.serial
+				end
+			end
+		end
+	end
+	case serial.length
+		when 0
+			warnings << "Found no serials for #{domain}"
+		when 1
+			oks << "#{domain} is at #{serial.first}"
+		else
+			warnings << "Nameservers disagree on serials for #{domain}: found #{serial.join(', ')}" if serial.length != 1
+	end
+}
+dns.close
+
+if warnings.length > 0
+	puts warnings.join('; ')
+	exit NAGIOS_STATUS[:WARNING]
+else
+	puts oks.join('; ')
+	exit NAGIOS_STATUS[:OK]
+end
