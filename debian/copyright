@@ -179,6 +179,37 @@ http://www.thomas-krenn.com/en/oss/ipmi-plugin.html
 
 ------------------------------------------------------------------------------
 
+check_libs:
+
+The plugin was downloaded from: 
+http://svn.noreply.org/cgi-bin/viewvc.cgi/weaselutils/trunk/?logsort=cvs&diff_format=s&sortby=file#dirlist
+
+  Copyright (C) 2005, 2006, 2007, 2008, 2012 Peter Palfrader <peter@palfrader.org>
+                2012 Uli Martens <uli@youam.net>
+  
+  Permission is hereby granted, free of charge, to any person obtaining
+  a copy of this software and associated documentation files (the
+  "Software"), to deal in the Software without restriction, including
+  without limitation the rights to use, copy, modify, merge, publish,
+  distribute, sublicense, and/or sell copies of the Software, and to
+  permit persons to whom the Software is furnished to do so, subject to
+  the following conditions:
+  
+  The above copyright notice and this permission notice shall be
+  included in all copies or substantial portions of the Software.
+  
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  
+  
+
+------------------------------------------------------------------------------
+
 check_lm_sensors:
 
 The plugin was downloaded from: 
@@ -422,5 +453,46 @@ http://labs.consol.de/lang/en/nagios/check_webinject/
   but without any warranty; without even the implied warranty of
   merchantability or fitness for a particular purpose.  See the
   GNU General Public License for more details.
+  
+  
+
+------------------------------------------------------------------------------
+
+dsa:
+
+The plugin was downloaded from: 
+http://anonscm.debian.org/gitweb/?p=mirror/dsa-nagios.git;a=tree;f=dsa-nagios-checks;hb=HEAD
+
+  checks/dsa-check-cert-expire:# Copyright 2009 Peter Palfrader
+  checks/dsa-check-dnssec-delegation:# Copyright (c) 2010 Peter Palfrader <peter@palfrader.org>
+  checks/dsa-check-entropy:# Copyright 2011 Peter Palfrader
+  checks/dsa-check-soas:# Copyright 2006, 2012 Peter Palfrader
+  checks/dsa-check-packages:# Copyright (C) 2008, 2009 Peter Palfrader <peter@palfrader.org>
+  checks/dsa-check-statusfile:# Copyright 2008, 2012 Peter Palfrader
+  checks/dsa-check-running-kernel:# Copyright 2008,2009,2011 Peter Palfrader
+  checks/dsa-check-running-kernel:# Copyright 2009 Stephen Gran
+  checks/dsa-check-running-kernel:# Copyright 2010 Uli Martens
+  checks/dsa-check-running-kernel:# Copyright 2011 Alexander Reichle-Schmehl
+  sbin/dsa-update-apt-status:# Copyright 2009 Peter Palfrader
+  sbin/dsa-update-unowned-file-status:# Copyright 2012 Peter Palfrader
+  
+  Permission is hereby granted, free of charge, to any person obtaining
+  a copy of this software and associated documentation files (the
+  "Software"), to deal in the Software without restriction, including
+  without limitation the rights to use, copy, modify, merge, publish,
+  distribute, sublicense, and/or sell copies of the Software, and to
+  permit persons to whom the Software is furnished to do so, subject to
+  the following conditions:
+  
+  The above copyright notice and this permission notice shall be
+  included in all copies or substantial portions of the Software.
+  
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   
   
