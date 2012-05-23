@@ -11,7 +11,7 @@ Vcs-Browser: http://git.debian.org/?p=pkg-nagios/pkg-nagios-plugins-contrib;a=su
 Package: nagios-plugins-contrib
 Architecture: any
 Depends: ${misc:Depends}
-Recommends: ${shlibs:Depends}, backuppc, libnagios-plugin-perl, libnagios-plugin-perl (>= 0.31), libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-ssleay-perl, liblocale-gettext-perl, liblwp-useragent-determined-perl, snmp, freeipmi-tools, libreadonly-perl, libnet-dns-perl, libnet-snmp-perl, openssl
+Recommends: ${shlibs:Depends}, backuppc, libnagios-plugin-perl, libnagios-plugin-perl (>= 0.31), libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-ssleay-perl, liblocale-gettext-perl, liblwp-useragent-determined-perl, snmp, freeipmi-tools, lsof, libreadonly-perl, libnet-dns-perl, libnet-snmp-perl, openssl
 Suggests: perl-doc, cciss-vol-status, mpt-status, expect
 Enhances: nagios-plugins, nagios-plugins-basic, nagios-plugins-standard
 Description: Plugins for nagios compatible monitoring systems
@@ -47,6 +47,8 @@ Description: Plugins for nagios compatible monitoring systems
    * check_ipmi_sensor (2.3): IPMI Sensor Monitoring Plugin
      Plugin to monitor the hardware status (fan speed, temperaturs,
      voltages, power usage, ...) of a server using IPMI.
+   * check_libs (520): plugin to report the usage of no longer existing
+     libraries by running processes
    * check_lm_sensors (3.1.1): plugin to monitor hardware sensors
      and disk temperatures
    * check_memcached (1.2): plugin to check memcached instances
@@ -102,6 +104,8 @@ Description: Plugins for nagios compatible monitoring systems
      individual system components that have HTTP interfaces
      (JSP, ASP, CGI, PHP, AJAX, Servlets, HTML Forms,
      XML/SOAP Web Services, REST, etc).
+   * dsa: plugins from the Debian System Administrators
+     nagios plugins repository.
  .
  Some scripts and binaries need more packages installed to work, which is
  implemented as recommands.
