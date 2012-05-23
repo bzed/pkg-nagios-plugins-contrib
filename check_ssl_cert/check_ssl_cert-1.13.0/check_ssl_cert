@@ -9,7 +9,7 @@
 #
 # See  the INSTALL file for installation instructions
 #
-# Copyright (c) 2007-2011 ETH Zurich.
+# Copyright (c) 2007-2012 ETH Zurich.
 #
 # This module is free software; you can redistribute it and/or modify it
 # under the terms of GNU general public license (gpl) version 3.
@@ -19,15 +19,15 @@
 # enable substitution with:
 #   $ svn propset svn:keywords "Id Revision HeadURL Source Date"
 #
-#   $Id: check_ssl_cert 1272 2011-10-22 09:41:59Z corti $
-#   $Revision: 1272 $
+#   $Id: check_ssl_cert 1292 2012-04-05 09:30:27Z corti $
+#   $Revision: 1292 $
 #   $HeadURL: https://svn.id.ethz.ch/nagios_plugins/check_ssl_cert/check_ssl_cert $
-#   $Date: 2011-10-22 11:41:59 +0200 (Sat, 22 Oct 2011) $
+#   $Date: 2012-04-05 11:30:27 +0200 (Thu, 05 Apr 2012) $
 
 ################################################################################
 # Constants
 
-VERSION=1.11.0
+VERSION=1.13.0
 SHORTNAME="SSL_CERT"
 
 ################################################################################
@@ -54,7 +54,8 @@ usage() {
     echo
     echo "Options:"
     echo "   -A,--noauth            ignore authority warnings (expiration only)"
-    echo "      --altnames          matches the pattern specified in -n with alternate names too"
+    echo "      --altnames          matches the pattern specified in -n with alternate"
+    echo "                          names too"
     echo "   -C,--clientcert path   use client certificate to authenticate"
     echo "      --clientpass phrase set passphrase for client certificate."
     echo "   -c,--critical days     minimum number of days a certificate has to be valid"
@@ -175,6 +176,53 @@ check_required_prog() {
     fi
 
 }
+
+################################################################################
+# Tries to fetch the certificate
+
+fetch_certificate() {
+
+    # check if a protocol was specified (if not HTTP switch to TLS)
+    if [ -n "${PROTOCOL}" -a "${PROTOCOL}" != "http" -a "${PROTOCOL}" != "https" ] ; then
+        
+        case "${PROTOCOL}" in
+            
+            smtp|pop3|imap|ftp)
+
+timeout $TIMEOUT "echo 'Q' | $OPENSSL s_client ${CLIENT} ${CLIENTPASS} -starttls ${PROTOCOL} -connect $HOST:$PORT ${SERVERNAME} -verify 6 ${ROOT_CA} 2> ${ERROR} 1> ${CERT}"
+;;
+
+*)
+
+unknown "Error: unsupported protocol ${PROTOCOL}"
+
+esac
+
+elif [ -n "${FILE}" ] ; then
+
+if [ "${HOST}" = "localhost" ] ; then
+    
+    timeout $TIMEOUT "/bin/cat '${FILE}' 2> ${ERROR} 1> ${CERT}"
+    
+else
+    
+    unknown "Error: option 'file' works with -H localhost only"
+    
+fi
+
+else
+
+timeout $TIMEOUT "echo 'Q' | $OPENSSL s_client ${CLIENT} ${CLIENTPASS} -connect $HOST:$PORT ${SERVERNAME} -verify 6 ${ROOT_CA} 2> ${ERROR} 1> ${CERT}"
+
+fi
+
+if [ $? -ne 0 ] ; then
+    critical "Error: $(head -n 1 ${ERROR})"
+fi
+
+
+}
+
 
 ################################################################################
 # Main
@@ -425,6 +473,13 @@ if [ -z "${EXPECT}" -a -n "${VERBOSE}" ] ; then
     echo "Expect not found: disabling timeouts"
 fi
 
+# check if openssl s_client supports the -servername option
+
+SERVERNAME=
+if ${OPENSSL} s_client not_a_real_option 2>&1 | grep -q -- -servername ; then
+    SERVERNAME="-servername ${HOST}"
+fi
+
 ################################################################################
 # check if openssl s_client supports the -servername option
 #
@@ -474,42 +529,29 @@ fi
 # using named signals to be POSIX compliant
 trap "rm -f $CERT $ERROR" EXIT HUP INT QUIT TERM
 
-# check if a protocol was specified (if not HTTP switch to TLS)
-if [ -n "${PROTOCOL}" -a "${PROTOCOL}" != "http" -a "${PROTOCOL}" != "https" ] ; then
+fetch_certificate
 
-    case "${PROTOCOL}" in
+if grep -q 'sslv3\ alert\ unexpected\ message' ${ERROR} ; then
 
-        smtp|pop3|imap|ftp)
+    if [ -n "${SERVERNAME}" ] ; then
 
-        timeout $TIMEOUT "echo 'Q' | $OPENSSL s_client ${CLIENT} ${CLIENTPASS} -starttls ${PROTOCOL} -connect $HOST:$PORT ${SERVERNAME} -verify 6 ${ROOT_CA} 2> ${ERROR} 1> ${CERT}"
-        ;;
-    
-        *)
-
-        unknown "Error: unsupported protocol ${PROTOCOL}"
-
-    esac
-
-elif [ -n "${FILE}" ] ; then
-
-    if [ "${HOST}" = "localhost" ] ; then
-
-        timeout $TIMEOUT "/bin/cat '${FILE}' 2> ${ERROR} 1> ${CERT}"
-
-    else
-
-        unknown "Error: option 'file' works with -H localhost only"
+        # some OpenSSL versions have problems with the -servername option
+        # we try without
+        if [ -n "${VERBOSE}" ] ; then
+            echo "'${OPENSSL} s_client' returned an error: trying without '-servername'"
+        fi
+        
+        SERVERNAME=
+        fetch_certificate
 
     fi
 
-else
+    if grep -q 'sslv3\ alert\ unexpected\ message' ${ERROR} ; then
 
-    timeout $TIMEOUT "echo 'Q' | $OPENSSL s_client ${CLIENT} ${CLIENTPASS} -connect $HOST:$PORT ${SERVERNAME} -verify 6 ${ROOT_CA} 2> ${ERROR} 1> ${CERT}"
-    
-fi
+        critical "cannot fetch certificate: OpenSSL got an unexpected message"
 
-if [ $? -ne 0 ] ; then
-    critical "Error: $(head -n 1 ${ERROR})"
+    fi
+
 fi
 
 if ! grep -q "CERTIFICATE" ${CERT} ; then
@@ -648,7 +690,7 @@ fi
 
 if [ -z "${NOAUTH}" ] && grep -q '^verify\ error:' ${ERROR} ; then
 
-    if grep -q '^verify\ error:num=18:self\ signed\ certificate' ${ERROR} ; then
+    if grep -q '^verify\ error:num=[0-9][0-9]*:self\ signed\ certificate' ${ERROR} ; then
 
         if [ -z "${SELFSIGNED}" ] ; then
             critical "Cannot verify certificate\nself signed certificate"
