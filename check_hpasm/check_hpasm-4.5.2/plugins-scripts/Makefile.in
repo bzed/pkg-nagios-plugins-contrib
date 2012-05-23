@@ -156,6 +156,8 @@ EXTRA_MODULES = \
   HP/Proliant/Component/MemorySubsystem/CLI.pm \
   HP/Proliant/Component/MemorySubsystem/SNMP.pm \
   HP/Proliant/Component/MemorySubsystem.pm \
+  HP/Proliant/Component/NicSubsystem/SNMP.pm \
+  HP/Proliant/Component/NicSubsystem.pm \
   HP/Proliant/Component/AsrSubsystem/CLI.pm \
   HP/Proliant/Component/AsrSubsystem/SNMP.pm \
   HP/Proliant/Component/AsrSubsystem.pm \
@@ -258,7 +260,7 @@ CTAGS:
 
 
 distdir: $(DISTFILES)
-	$(mkdir_p) $(distdir)/HP $(distdir)/HP/BladeSystem $(distdir)/HP/BladeSystem/Component $(distdir)/HP/BladeSystem/Component/CommonEnclosureSubsystem $(distdir)/HP/Proliant $(distdir)/HP/Proliant/Component $(distdir)/HP/Proliant/Component/AsrSubsystem $(distdir)/HP/Proliant/Component/CpuSubsystem $(distdir)/HP/Proliant/Component/DiskSubsystem $(distdir)/HP/Proliant/Component/DiskSubsystem/Da $(distdir)/HP/Proliant/Component/DiskSubsystem/Fca $(distdir)/HP/Proliant/Component/DiskSubsystem/Ide $(distdir)/HP/Proliant/Component/DiskSubsystem/Sas $(distdir)/HP/Proliant/Component/DiskSubsystem/Scsi $(distdir)/HP/Proliant/Component/EventSubsystem $(distdir)/HP/Proliant/Component/FanSubsystem $(distdir)/HP/Proliant/Component/MemorySubsystem $(distdir)/HP/Proliant/Component/PowersupplySubsystem $(distdir)/HP/Proliant/Component/TemperatureSubsystem $(distdir)/HP/SNMP $(distdir)/Nagios
+	$(mkdir_p) $(distdir)/HP $(distdir)/HP/BladeSystem $(distdir)/HP/BladeSystem/Component $(distdir)/HP/BladeSystem/Component/CommonEnclosureSubsystem $(distdir)/HP/Proliant $(distdir)/HP/Proliant/Component $(distdir)/HP/Proliant/Component/AsrSubsystem $(distdir)/HP/Proliant/Component/CpuSubsystem $(distdir)/HP/Proliant/Component/DiskSubsystem $(distdir)/HP/Proliant/Component/DiskSubsystem/Da $(distdir)/HP/Proliant/Component/DiskSubsystem/Fca $(distdir)/HP/Proliant/Component/DiskSubsystem/Ide $(distdir)/HP/Proliant/Component/DiskSubsystem/Sas $(distdir)/HP/Proliant/Component/DiskSubsystem/Scsi $(distdir)/HP/Proliant/Component/EventSubsystem $(distdir)/HP/Proliant/Component/FanSubsystem $(distdir)/HP/Proliant/Component/MemorySubsystem $(distdir)/HP/Proliant/Component/NicSubsystem $(distdir)/HP/Proliant/Component/PowersupplySubsystem $(distdir)/HP/Proliant/Component/TemperatureSubsystem $(distdir)/HP/SNMP $(distdir)/Nagios
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \

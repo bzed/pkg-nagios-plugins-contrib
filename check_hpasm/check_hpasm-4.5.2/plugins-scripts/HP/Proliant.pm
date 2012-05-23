@@ -14,7 +14,10 @@ sub init {
       temperature_subsystem => undef,
       cpu_subsystem => undef,
       memory_subsystem => undef,
+      nic_subsystem => undef,
       disk_subsystem => undef,
+      asr_subsystem => undef,
+      event_subsystem => undef,
   };
   $self->{serial} = 'unknown';
   $self->{product} = 'unknown';
@@ -29,6 +32,7 @@ sub init {
     $self->analyze_fan_subsystem();
     $self->analyze_temperatures();
     $self->analyze_memory_subsystem();
+    $self->analyze_nic_subsystem();
     $self->analyze_disk_subsystem();
     $self->analyze_asr_subsystem();
     $self->analyze_event_subsystem();
@@ -38,6 +42,7 @@ sub init {
     $self->check_fan_subsystem();
     $self->check_temperatures();
     $self->check_memory_subsystem();
+    $self->check_nic_subsystem();
     $self->check_disk_subsystem();
     $self->check_asr_subsystem();
     $self->check_event_subsystem();
@@ -121,6 +126,17 @@ sub analyze_memory_subsystem {
   );
 }
 
+sub analyze_nic_subsystem {
+  my $self = shift;
+  return if $self->{method} ne "snmp";
+  $self->{components}->{nic_subsystem} = 
+      HP::Proliant::Component::NicSubsystem->new(
+    rawdata => $self->{rawdata},
+    method => $self->{method},
+    runtime => $self->{runtime},
+  );
+}
+
 sub analyze_disk_subsystem {
   my $self = shift;
   $self->{components}->{disk_subsystem} =
@@ -186,6 +202,15 @@ sub check_memory_subsystem {
       if $self->{runtime}->{options}->{verbose} >= 2;
 }
 
+sub check_nic_subsystem {
+  my $self = shift;
+  return if $self->{method} ne "snmp";
+  if ($self->{runtime}->{plugin}->{opts}->get('eval-nics')) {
+    $self->{components}->{nic_subsystem}->check();
+    $self->{components}->{nic_subsystem}->dump()
+        if $self->{runtime}->{options}->{verbose} >= 2;
+  }
+}
 sub check_disk_subsystem {
   my $self = shift;
   $self->{components}->{disk_subsystem}->check();
@@ -556,6 +581,7 @@ sub collect {
       my $cpqFcaComponent =  "1.3.6.1.4.1.232.16.2";
       my $cpqSiComponent =  "1.3.6.1.4.1.232.2.2";
       my $cpqHeAsr = "1.3.6.1.4.1.232.6.2.5";
+      my $cpqNic = "1.3.6.1.4.1.232.18.2";
       $session->translate;
       my $response = {}; #break the walk up in smaller pieces
       my $tic = time; my $tac = $tic;
@@ -683,6 +709,12 @@ sub collect {
       $tac = time;
       $self->trace(2, sprintf "%03d seconds for walk $cpqHeAsr (%d oids)",
           $tac - $tic, scalar(keys %{$response9}));
+      $tic = time;
+      my $response10 = $session->get_table(
+          -baseoid => $cpqNic);
+      $tac = time;
+      $self->trace(2, sprintf "%03d seconds for walk cpqNic (%d oids)",
+          $tac - $tic, scalar(keys %{$response10}));
       $session->close();
 
       map { $response->{$_} = $response1->{$_} } keys %{$response1};
@@ -697,6 +729,7 @@ sub collect {
       map { $response->{$_} = $response7->{$_} } keys %{$response7};
       map { $response->{$_} = $response8->{$_} } keys %{$response8};
       map { $response->{$_} = $response9->{$_} } keys %{$response9};
+      map { $response->{$_} = $response10->{$_} } keys %{$response10};
       map { $response->{$_} =~ s/^\s+//; $response->{$_} =~ s/\s+$//; }
           keys %$response;
       $self->{rawdata} = $response;

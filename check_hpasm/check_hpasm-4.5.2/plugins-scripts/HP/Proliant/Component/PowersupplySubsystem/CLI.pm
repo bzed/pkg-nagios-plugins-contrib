@@ -11,6 +11,7 @@ sub new {
     runtime => $params{runtime},
     rawdata => $params{rawdata},
     powersupplies => [],
+    powerconverters => [],
     blacklisted => 0,
     info => undef,
     extendedinfo => undef,

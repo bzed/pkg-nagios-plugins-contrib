@@ -87,7 +87,8 @@ sub init {
           #    POST Error: 207-Memory Configuration Warning - memory boards should be installed sequentially.
           #    POST Error: 210-Memory Board Failure on board 4.
           #    POST Error: 210-Memory Board Power Fault on board 3.
-          #    POST Error: 207-Memory initialization error on Memory Board 5 DIMM 7. The operating system may not have access to all of the memory installed in the system..         #    POST Error: 207-Invalid Memory Configuration-Mismatched DIMMs within DIMM Bank Memory in Bank A Not Utilized..
+          #    POST Error: 207-Memory initialization error on Memory Board 5 DIMM 7. The operating system may not have access to all of the memory installed in the system..         
+          #    POST Error: 207-Invalid Memory Configuration-Mismatched DIMMs within DIMM Bank Memory in Bank A Not Utilized..
           10 => "POST Messages",
           11 => "Power Subsystem",
           13 => "ASR",
@@ -133,12 +134,30 @@ sub init {
     if ($_->{cpqHeEventLogInitialTime} =~ /^(([0-9a-fA-F]{2})( [0-9a-fA-F]{2})*)\s*$/) {
       $_->{cpqHeEventLogInitialTime} =~ s/ //;
       my  ($year, $month, $day, $hour, $min) = map { hex($_) } split(/\s+/, $_->{cpqHeEventLogInitialTime});
-      $_->{cpqHeEventLogInitialTime} = timelocal(0, $min, $hour, $day, $month - 1, $year);
+      if ($year == 0) {
+        $_->{cpqHeEventLogInitialTime} = 0;
+      } else {
+        eval {
+          $_->{cpqHeEventLogInitialTime} = timelocal(0, $min, $hour, $day, $month - 1, $year);
+        };
+        if ($@) {
+          $_->{cpqHeEventLogInitialTime} = 0;
+        }
+      }
     }
     if ($_->{cpqHeEventLogUpdateTime} =~ /^(([0-9a-fA-F]{2})( [0-9a-fA-F]{2})*)\s*$/) {
       $_->{cpqHeEventLogUpdateTime} =~ s/ //;
       my  ($year, $month, $day, $hour, $min) = map { hex($_) } split(/\s+/, $_->{cpqHeEventLogUpdateTime});
-      $_->{cpqHeEventLogUpdateTime} = timelocal(0, $min, $hour, $day, $month - 1, $year);
+      if ($year == 0) {
+        $_->{cpqHeEventLogUpdateTime} = 0;
+      } else {
+        eval {
+          $_->{cpqHeEventLogUpdateTime} = timelocal(0, $min, $hour, $day, $month - 1, $year);
+        };
+        if ($@) {
+          $_->{cpqHeEventLogUpdateTime} = 0;
+        }
+      }
     }
     if ($_->{cpqHeEventLogErrorDesc} =~ /^(([0-9a-fA-F]{2})(\s+[0-9a-fA-F]{2})*)\s*$/) {
       $_->{cpqHeEventLogErrorDesc} = join "", map { chr($_) } map { if (hex($_) > 127) { 20; } else { hex($_) } } split(/\s+/, $_->{cpqHeEventLogErrorDesc});

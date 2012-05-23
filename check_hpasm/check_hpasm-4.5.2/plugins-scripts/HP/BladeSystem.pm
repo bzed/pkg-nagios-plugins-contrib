@@ -177,40 +177,42 @@ sub collect {
       # snmp peer is alive
       $self->trace(2, sprintf "Protocol is %s",
           $self->{runtime}->{snmpparams}->{'-version'});
+      my $oidtrees = [
+          ["cpqSiComponent", "1.3.6.1.4.1.232.2.2"],
+          ["cpqSiAsset", "1.3.6.1.4.1.232.2.2.2"],
+          #["cpqRackInfo", "1.3.6.1.4.1.232.22"],
+          ['cpqRackCommonEnclosureEntry', '1.3.6.1.4.1.232.22.2.3.1.1.1'],
+          ['cpqRackCommonEnclosureTempEntry', '1.3.6.1.4.1.232.22.2.3.1.2.1'],
+          ['cpqRackCommonEnclosureFanEntry', '1.3.6.1.4.1.232.22.2.3.1.3.1'],
+          ['cpqRackCommonEnclosureFuseEntry', '1.3.6.1.4.1.232.22.2.3.1.4.1'],
+          ['cpqRackCommonEnclosureManagerEntry', '1.3.6.1.4.1.232.22.2.3.1.6.1'],
+          ['cpqRackPowerEnclosureEntry', '1.3.6.1.4.1.232.22.2.3.3.1.1'],
+          ['cpqRackServerBladeEntry', '1.3.6.1.4.1.232.22.2.4.1.1.1'],
+          ['cpqRackPowerSupplyEntry', '1.3.6.1.4.1.232.22.2.5.1.1.1'],
+          ['cpqRackNetConnectorEntry', '1.3.6.1.4.1.232.22.2.6.1.1.1'],
+          ['cpqRackMibCondition', '1.3.6.1.4.1.232.22.1.3.0'],
+      ];
       my $cpqSiComponent = "1.3.6.1.4.1.232.2.2";
       my $cpqSiAsset = "1.3.6.1.4.1.232.2.2.2";
       my $cpqRackInfo = "1.3.6.1.4.1.232.22";
       $session->translate;
       my $response = {}; #break the walk up in smaller pieces
-      my $tic = time; my $tac = $tic;
-      # Walk for Asset
-      $tic = time;
-      my $response0 = $session->get_table(
-          -maxrepetitions => 1,
-          -baseoid => $cpqSiComponent);
-      if (scalar (keys %{$response0}) == 0) {
-        $self->trace(2, sprintf "maxrepetitions failed. fallback");
-        $response0 = $session->get_table(
-            -baseoid => $cpqSiComponent);
+      foreach my $subtree (@{$oidtrees}) {
+          my $tic = time; my $tac = $tic;
+          my $response0 = $session->get_table(
+              -maxrepetitions => 1,
+              -baseoid => $subtree->[1]);
+          if (scalar (keys %{$response0}) == 0) {
+            $self->trace(2, sprintf "maxrepetitions failed. fallback");
+            $response0 = $session->get_table(
+                -baseoid => $subtree->[1]);
+          }
+          $tac = time;
+          $self->trace(2, sprintf "%03d seconds for walk %s (%d oids)",
+              $tac - $tic, $subtree->[0], scalar(keys %{$response0}));
+          map { $response->{$_} = $response0->{$_} } keys %{$response0};
       }
-      $tac = time;
-      $self->trace(2, sprintf "%03d seconds for walk cpqSiComponent (%d oids)",
-          $tac - $tic, scalar(keys %{$response0}));
-      $tic = time;
-      my $response1 = $session->get_table(
-          -maxrepetitions => 1,
-          -baseoid => $cpqRackInfo);
-      if (scalar (keys %{$response1}) == 0) {
-        $self->trace(2, sprintf "maxrepetitions failed. fallback");
-        $response1 = $session->get_table(
-            -baseoid => $cpqRackInfo);
-      }
-      $tac = time;
-      $self->trace(2, sprintf "%03d seconds for walk cpqRackInfo (%d oids)",
-          $tac - $tic, scalar(keys %{$response1}));
       $session->close;
-      map { $response->{$_} = $response0->{$_} } keys %{$response0};
-      map { $response->{$_} = $response1->{$_} } keys %{$response1};
       map { $response->{$_} =~ s/^\s+//; $response->{$_} =~ s/\s+$//; }
           keys %$response;
       $self->{rawdata} = $response;

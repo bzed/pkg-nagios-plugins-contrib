@@ -29,6 +29,9 @@ sub new {
       if ($self->{productname} =~ /ProLiant/) {
         bless $self, 'HP::Proliant::SNMP';
         $self->trace(3, 'using HP::Proliant::SNMP');
+      } elsif ($self->{productname} =~ /^DL\d+\s*G\d+/) {
+        bless $self, 'HP::Proliant::SNMP';
+        $self->trace(3, 'using HP::Proliant::SNMP');
       } elsif ($self->{productname} =~ /OpenView .* appliance/) {
         bless $self, 'HP::Proliant::SNMP';
         $self->trace(3, 'using HP::Proliant::SNMP');
@@ -90,12 +93,20 @@ sub check_snmp_and_model {
       close WALK;
     } else {
       open(MESS, $self->{runtime}->{plugin}->opts->snmpwalk);
+      my $in_string = 0;
       my $in_hex_string = 0;
       my $hex_oid = 0;
       while(<MESS>) {
         chomp;
         if ($in_hex_string && /^(([0-9a-fA-F]{2})( [0-9a-fA-F]{2})*)\s*$/) {
           $response->{$hex_oid} .= " ".$1;
+        } elsif ($in_string) {
+          if (/(.*)"$/) {
+            $response->{$hex_oid} .= $1;
+            $in_string = 0;
+          } else {
+            $response->{$hex_oid} .= $_;
+          }
         } elsif (/^.*?\.(232\.[\d\.]+) = .*?: (\-*\d+)\s*$/) {
           # SNMPv2-SMI::enterprises.232.6.2.6.7.1.3.1.4 = INTEGER: 6
           $response->{'1.3.6.1.4.1.'.$1} = $2;
@@ -111,7 +122,16 @@ sub check_snmp_and_model {
           $response->{'1.3.6.1.4.1.'.$1} = $2;
           $response->{'1.3.6.1.4.1.'.$1} =~ s/\s+$//;
           $in_hex_string = 0;
+        } elsif (/^.*?\.(232\.[\d\.]+) = STRING: "(.*?[^"])$/) {
+          $response->{'1.3.6.1.4.1.'.$1} = $2;
+          $response->{'1.3.6.1.4.1.'.$1} =~ s/\s+$//;
+          $in_string = 0;
+          $in_hex_string = 0;
         } elsif (/^.*?\.(232\.[\d\.]+) = Hex-STRING: (.*)/) {
+          $response->{'1.3.6.1.4.1.'.$1} = $2;
+          $in_hex_string = 1;
+          $hex_oid = '1.3.6.1.4.1.'.$1;
+        } elsif (/^.*?\.(232\.[\d\.]+) =[ ]{1,2}Hex: (.*)/) {
           $response->{'1.3.6.1.4.1.'.$1} = $2;
           $in_hex_string = 1;
           $hex_oid = '1.3.6.1.4.1.'.$1;

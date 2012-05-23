@@ -15,6 +15,7 @@ sub init {
       cpu_subsystem => undef,
       memory_subsystem => undef,
       disk_subsystem => undef,
+      sensor_subsystem => undef,
   };
   $self->{serial} = 'unknown';
   $self->{product} = 'unknown';
@@ -29,12 +30,14 @@ sub init {
 #    $self->analyze_temperatures();
 #    $self->analyze_memory_subsystem();
     $self->analyze_disk_subsystem();
+##    $self->analyze_sensor_subsystem();
 #    $self->check_cpus();
 #    $self->check_powersupplies();
 #    $self->check_fan_subsystem();
 #    $self->check_temperatures();
 #    $self->check_memory_subsystem();
     $self->check_disk_subsystem();
+##    $self->check_sensor_subsystem();
   }
 }
 
@@ -125,6 +128,16 @@ sub analyze_disk_subsystem {
   );
 }
 
+sub analyze_sensor_subsystem {
+  my $self = shift;
+  $self->{components}->{sensor_subsystem} =
+      HP::FCMGMT::Component::SensorSubsystem->new(
+    rawdata => $self->{rawdata},
+    method => $self->{method},
+    runtime => $self->{runtime},
+  );
+}
+
 sub check_cpus {
   my $self = shift;
   $self->{components}->{cpu_subsystem}->check();
@@ -164,6 +177,13 @@ sub check_disk_subsystem {
   my $self = shift;
   $self->{components}->{disk_subsystem}->check();
   $self->{components}->{disk_subsystem}->dump()
+      if $self->{runtime}->{options}->{verbose} >= 1;
+}
+
+sub check_sensor_subsystem {
+  my $self = shift;
+  $self->{components}->{isensor_subsystem}->check();
+  $self->{components}->{sensor_subsystem}->dump()
       if $self->{runtime}->{options}->{verbose} >= 1;
 }
 

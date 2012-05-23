@@ -39,7 +39,13 @@ sub init {
         # Event: 29 Added: 00/00/0000 00:00
         $tmpevent{cpqHeEventLogUpdateTime} = 0;
       } else {
-        $tmpevent{cpqHeEventLogUpdateTime} = timelocal(0, $6, $5, $3, $2 - 1, $4);
+        eval {
+          $tmpevent{cpqHeEventLogUpdateTime} = timelocal(0, $6, $5, $3, $2 - 1, $4);
+        };
+        if ($@) {
+          # Event: 10 Added: 27/27/2027 27:27
+          $tmpevent{cpqHeEventLogUpdateTime} = 0;
+        }
       }
       $inblock = 1;
     } elsif (/^(\w+):\s+(.*?)\s+\-\s+(.*)/) {
@@ -65,24 +71,6 @@ sub init {
   if ($inblock) {
     push(@{$self->{events}},
         HP::Proliant::Component::EventSubsystem::Event->new(%tmpevent));
-  }
-  # repair dates
-  my $lasttime = 0;
-  for my $event (reverse @{$self->{events}}) {
-    if ($event->{cpqHeEventLogUpdateTime} != 0) {
-      $lasttime = $event->{cpqHeEventLogUpdateTime};
-    } else {
-      $event->{cpqHeEventLogUpdateTime} = $lasttime;
-    }
-  }
-  # maybe the most recent events had zero timestamps.
-  # fill them up with timestamps from the past.
-  for my $event (@{$self->{events}}) {
-    if ($event->{cpqHeEventLogUpdateTime} != 0) {
-      $lasttime = $event->{cpqHeEventLogUpdateTime};
-    } else {
-      $event->{cpqHeEventLogUpdateTime} = $lasttime;
-    }
   }
 }
 

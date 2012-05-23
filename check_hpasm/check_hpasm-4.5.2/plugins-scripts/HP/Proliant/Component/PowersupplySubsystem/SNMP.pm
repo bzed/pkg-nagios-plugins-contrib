@@ -12,6 +12,7 @@ sub new {
     runtime => $params{runtime},
     rawdata => $params{rawdata},
     powersupplies => [],
+    powerconverters => [],
     blacklisted => 0,
     info => undef,
     extendedinfo => undef,
@@ -84,8 +85,8 @@ sub init {
 
   # INDEX { cpqHePowerConvChassis cpqHePowerConvIndex }
   foreach ($self->get_entries($oids, 'cpqHePowerConvEntry')) {
-    push(@{$self->{powersupplies}},
-        HP::Proliant::Component::PowersupplySubsystem::Powersupply->new(%{$_}));
+    push(@{$self->{powerconverters}},
+        HP::Proliant::Component::PowersupplySubsystem::Powerconverter->new(%{$_}));
   }
   # keine ahnung, was man damit machen kann
 

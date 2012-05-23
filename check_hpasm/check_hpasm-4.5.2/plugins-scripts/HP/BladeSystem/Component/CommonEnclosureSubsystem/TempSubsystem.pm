@@ -50,10 +50,10 @@ sub init {
       cpqRackCommonEnclosureTempSensorIndex => '1.3.6.1.4.1.232.22.2.3.1.2.1.3',
       cpqRackCommonEnclosureTempSensorEnclosureName => '1.3.6.1.4.1.232.22.2.3.1.2.1.4',
       cpqRackCommonEnclosureTempLocation => '1.3.6.1.4.1.232.22.2.3.1.2.1.5',
-      cpqRackCommonEnclosureTempCurrent => '1.3.6.1.4.1.232.22.2.3.12.1.6',
+      cpqRackCommonEnclosureTempCurrent => '1.3.6.1.4.1.232.22.2.3.2.1.6',
       cpqRackCommonEnclosureTempThreshold => '1.3.6.1.4.1.232.22.2.3.1.2.1.7',
       cpqRackCommonEnclosureTempCondition => '1.3.6.1.4.1.232.22.2.3.1.2.1.8',
-      cpqRackCommonEnclosureTempType => '1.3.6.1.4.1.232.22.2.3.12.1.9',
+      cpqRackCommonEnclosureTempType => '1.3.6.1.4.1.232.22.2.3.1.2.1.9',
       cpqRackCommonEnclosureTempConditionValue => {
           1 => 'other',
           2 => 'ok',

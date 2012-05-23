@@ -2,6 +2,24 @@
 # Changelog of the check_hpasm plugin #
 #######################################
 
+4.5.2 2012-03-06
+- add another error log: Main Memory - Corrected Memory Error threshold exceeded 
+4.5.1 2012-02
+- add another error log: 210 - Quick Path Interconnect (QPI) Link Degradation
+- remove watt percent for blade center power supply
+- make the snmp oid collection phase shorter for blade center
+
+4.5 2012-01-26
+- output power consumption perfdata for BladeCenters
+- correctly identify dl388g7 (Thanks lilei8)
+
+4.4 2011-12-16
+- add checks for power converters
+- add checks for nic teaming (experimental!!, must be enabled with --eval-nics)
+- fix a bug with invalid date/time from iml
+- fix a bug in blade enclosure manager verbose output
+- add msa2xxx storage sensors
+
 4.3 2011-10-14
 - add monitoring of IML events (Thanks Klaus)
   esp. Memory initialization error... The OS may not have access to all of the memory installed in the system 

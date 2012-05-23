@@ -38,13 +38,13 @@ sub init {
       cpqRackCommonEnclosureManagerRedundant => '1.3.6.1.4.1.232.22.2.3.1.6.1.11',
       cpqRackCommonEnclosureManagerCondition => '1.3.6.1.4.1.232.22.2.3.1.6.1.12',
       cpqRackCommonEnclosureManagerFWRev => '1.3.6.1.4.1.232.22.2.3.1.6.1.15',
-      cpqRackCommonEnclosureManagerRole => {
+      cpqRackCommonEnclosureManagerRoleValue => {
           1 => 'standby',
           2 => 'active',
       },
       cpqRackCommonEnclosureManagerPresentValue => {
           1 => 'other',
-          2 => 'absent',
+          2 => 'absent', # mit vorsicht zu geniessen!
           3 => 'present',
       },
       cpqRackCommonEnclosureManagerRedundantValue => {
@@ -106,6 +106,10 @@ sub new {
   $self->{name} = $self->{cpqRackCommonEnclosureManagerRack}.
       ':'.$self->{cpqRackCommonEnclosureManagerChassis}.
       ':'.$self->{cpqRackCommonEnclosureManagerIndex};
+  if ($self->{cpqRackCommonEnclosureManagerPresent} eq "absent" &&
+      defined $self->{cpqRackCommonEnclosureManagerEnclosureName}) {
+    $self->{cpqRackCommonEnclosureManagerPresent} = "present";
+  }
   bless $self, $class;
   return $self;
 }
@@ -113,11 +117,12 @@ sub new {
 sub check {
   my $self = shift;
   $self->blacklist('em', $self->{name});
-  my $info = sprintf 'manager %s is %s, location is %s, redundance is %s, condition is %s',
+  my $info = sprintf 'manager %s is %s, location is %s, redundance is %s, condition is %s, role is %s',
       $self->{name}, $self->{cpqRackCommonEnclosureManagerPresent},
       $self->{cpqRackCommonEnclosureManagerLocation},
       $self->{cpqRackCommonEnclosureManagerRedundant},
-      $self->{cpqRackCommonEnclosureManagerCondition};
+      $self->{cpqRackCommonEnclosureManagerCondition},
+      $self->{cpqRackCommonEnclosureManagerRole};
   $self->add_info($info) if $self->{cpqRackCommonEnclosureManagerPresent} eq 'present' ||
       $self->{runtime}->{options}->{verbose} >= 3; # absent managers nur bei -vvv
   if ($self->{cpqRackCommonEnclosureManagerCondition} eq 'degraded') {
@@ -139,7 +144,7 @@ sub dump {
       cpqRackCommonEnclosureManagerLocation cpqRackCommonEnclosureManagerPartNumber 
       cpqRackCommonEnclosureManagerSparePartNumber cpqRackCommonEnclosureManagerPresent 
       cpqRackCommonEnclosureManagerRedundant 
-      cpqRackCommonEnclosureManagerCondition cpqRackCommonEnclosureManagerEnclosureFWRev)) {
+      cpqRackCommonEnclosureManagerCondition cpqRackCommonEnclosureManagerFWRev)) {
     printf "%s: %s\n", $_, $self->{$_};
   }
   printf "info: %s\n", $self->{info};

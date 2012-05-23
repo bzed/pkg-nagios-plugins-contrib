@@ -14,6 +14,7 @@ sub new {
     condition => $params{condition},
     status => $params{status},
     powersupplies => [],
+    powerconverters => [],
     blacklisted => 0,
     info => undef,
     extendedinfo => undef,
@@ -109,18 +110,81 @@ sub check {
 
 sub dump {
   my $self = shift;
-  if (exists $self->{cpqHeFltTolPowerSupplyBay}) {
-    printf "[PS_%s]\n", $self->{cpqHeFltTolPowerSupplyBay};
-    foreach (qw(cpqHeFltTolPowerSupplyBay cpqHeFltTolPowerSupplyChassis
-        cpqHeFltTolPowerSupplyPresent cpqHeFltTolPowerSupplyCondition
-        cpqHeFltTolPowerSupplyRedundant)) {
-      printf "%s: %s\n", $_, $self->{$_};
+  printf "[PS_%s]\n", $self->{cpqHeFltTolPowerSupplyBay};
+  foreach (qw(cpqHeFltTolPowerSupplyBay cpqHeFltTolPowerSupplyChassis
+      cpqHeFltTolPowerSupplyPresent cpqHeFltTolPowerSupplyCondition
+      cpqHeFltTolPowerSupplyRedundant)) {
+    printf "%s: %s\n", $_, $self->{$_};
+  }
+  printf "info: %s\n\n", $self->{info};
+}
+
+
+package HP::Proliant::Component::PowersupplySubsystem::Powerconverter;
+our @ISA = qw(HP::Proliant::Component::PowersupplySubsystem);
+
+use strict;
+use constant { OK => 0, WARNING => 1, CRITICAL => 2, UNKNOWN => 3 };
+
+sub new {
+  my $class = shift;
+  my %params = @_;
+  my $self = {
+    runtime => $params{runtime},
+
+    cpqHePowerConvEntry => $params{cpqHePowerConvEntry},
+    cpqHePowerConvChassis => $params{cpqHePowerConvChassis},
+    cpqHePowerConvIndex => $params{cpqHePowerConvIndex},
+    cpqHePowerConvPresent => $params{cpqHePowerConvPresent},
+    cpqHePowerConvRedundant => $params{cpqHePowerConvRedundant},
+    cpqHePowerConvCondition => $params{cpqHePowerConvCondition},
+    cpqHePowerConvHwLocation => $params{cpqHePowerConvHwLocation},
+    blacklisted => 0,
+    info => undef,
+    extendexinfo => undef,
+  };
+  bless $self, $class;
+  return $self;
+}
+
+sub check {
+  my $self = shift;
+  $self->blacklist('pc', $self->{cpqHePowerConvIndex});
+  if ($self->{cpqHePowerConvPresent} eq "present") {
+    if ($self->{cpqHePowerConvCondition} ne "ok") {
+      if ($self->{cpqHePowerConvCondition} eq "other") {
+        $self->add_info(sprintf "powerconverter %d is missing",
+            $self->{cpqHePowerConvIndex});
+      } else {
+        $self->add_info(sprintf "powerconverter %d needs attention (%s)",
+            $self->{cpqHePowerConvIndex},
+            $self->{cpqHePowerConvCondition});
+      }
+      $self->add_message(CRITICAL, $self->{info});
+    } else {
+      $self->add_info(sprintf "powerconverter %d is %s",
+          $self->{cpqHePowerConvIndex},
+          $self->{cpqHePowerConvCondition});
     }
-  } elsif (exists $self->{cpqHePowerConvChassis}) {
-    printf "[PS_%s]\n", ($self->{cpqHePowerConvChassis} ? $self->{cpqHePowerConvChassis}.":" : "").$self->{cpqHePowerConvIndex};
-    foreach (qw(cpqHePowerConvIndex cpqHePowerConvPresent cpqHePowerConvRedundant cpqHePowerConvCondition)) {
-      printf "%s: %s\n", $_, $self->{$_};
-    }
+    $self->add_extendedinfo(sprintf "pc_%s=%s",
+        $self->{cpqHePowerConvIndex},
+        $self->{cpqHePowerConvCondition});
+  } else {
+    $self->add_info(sprintf "powerconverter %d is %s",
+        $self->{cpqHePowerConvIndex},
+        $self->{cpqHePowerConvPresent});
+    $self->add_extendedinfo(sprintf "pc_%s=%s",
+        $self->{cpqHePowerConvIndex},
+        $self->{cpqHePowerConvPresent});
+  }
+}
+
+
+sub dump {
+  my $self = shift;
+  printf "[PS_%s]\n", ($self->{cpqHePowerConvChassis} ? $self->{cpqHePowerConvChassis}.":" : "").$self->{cpqHePowerConvIndex};
+  foreach (qw(cpqHePowerConvIndex cpqHePowerConvPresent cpqHePowerConvRedundant cpqHePowerConvCondition)) {
+    printf "%s: %s\n", $_, $self->{$_};
   }
   printf "info: %s\n\n", $self->{info};
 }
