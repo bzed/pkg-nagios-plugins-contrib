@@ -2,3 +2,15 @@ Homepage: http://anonscm.debian.org/gitweb/?p=mirror/dsa-nagios.git;a=tree;f=dsa
 Uploaders: Bernd Zeimetz <bzed@debian.org>
 Description: plugins from the Debian System Administrators
  nagios plugins repository.
+ * check_cert_expire: check for certificate expiration
+   using openssl on the certificate file
+ * check_dnssec_delegation: check for correct DNSSEC
+   delegation
+ * check_entropy: check if there is enough entropy available.
+ * check_packages: replacement for check_apt; needs a cronjob
+   to update the apt database regularily
+ * check_running_kernel: check if a system was rebooted after
+   a kernel upgrade
+ * check_soas: check SOA records
+ * check_statusfile: deliver the content of a status file
+   as check result
