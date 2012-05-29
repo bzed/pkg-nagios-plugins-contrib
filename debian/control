@@ -30,7 +30,7 @@ Description: Plugins for nagios compatible monitoring systems
        - monitor automated mailboxes
        - check email-to-FTP or other special email gateways
    * check_haproxy (rev135): plugin check the HAProxy statistics url
-   * check_hpasm (4.3): plugin to check the hardware health of
+   * check_hpasm (4.5.2): plugin to check the hardware health of
      HP Proliant Servers
      It either uses snmp or - if installed - the hpasm package locally.
      The plugin checks the health of
@@ -65,7 +65,7 @@ Description: Plugins for nagios compatible monitoring systems
    * check_printer: plugin to check printer supply levels using SNMP
      It outputs performance data for all supplies
      found, for example toner and drum.
-   * check_raid (rev1.107): plugin to check sw/hw RAID status
+   * check_raid (rev1.119): plugin to check sw/hw RAID status
      The plugin looks for any known types of RAID configurations,
      and checks them all.
      .
@@ -106,6 +106,18 @@ Description: Plugins for nagios compatible monitoring systems
      XML/SOAP Web Services, REST, etc).
    * dsa: plugins from the Debian System Administrators
      nagios plugins repository.
+     * check_cert_expire: check for certificate expiration
+       using openssl on the certificate file
+     * check_dnssec_delegation: check for correct DNSSEC
+       delegation
+     * check_entropy: check if there is enough entropy available.
+     * check_packages: replacement for check_apt; needs a cronjob
+       to update the apt database regularily
+     * check_running_kernel: check if a system was rebooted after
+       a kernel upgrade
+     * check_soas: check SOA records
+     * check_statusfile: deliver the content of a status file
+       as check result
  .
  Some scripts and binaries need more packages installed to work, which is
  implemented as recommands.
