@@ -45,8 +45,12 @@ nagios-plugins-contrib (2.20120529) unstable; urgency=low
   * [f993848c] Add missing recommends for DSA plugins.
   * [80938fd9] Support checks written in Python.
   * [cbf5f37f] Auto update of debian/control
+  * [6f5f3157] Updating changelog.
+  * [72492690] Fix location of check_packages in cron script.
+  * [68284bb0] Add patch to fix check_packages output.
+  * [fd32ac40] check_libs needs libyaml-syck-perl.
 
- -- Bernd Zeimetz <bzed@debian.org>  Tue, 29 May 2012 13:44:49 +0200
+ -- Bernd Zeimetz <bzed@debian.org>  Tue, 29 May 2012 15:17:21 +0200
 
 nagios-plugins-contrib (1.20120228) unstable; urgency=low
 
