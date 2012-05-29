@@ -1,3 +1,4 @@
+dsa/check_packages_location
 check_libs/config_location
 check_libs/config_path
 dsa/status_directory

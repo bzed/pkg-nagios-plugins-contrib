@@ -1,0 +1,11 @@
+--- a/dsa/sbin/dsa-update-apt-status
++++ b/dsa/sbin/dsa-update-apt-status
+@@ -78,7 +78,7 @@ fi
+ tmp=`tempfile`
+ trap "rm -f '$tmp'" exit
+ #/usr/share/dsa/apt-status-check --noupdate --timeout=600 > "$tmp"
+-/usr/lib/nagios/plugins/dsa-check-packages > "$tmp"
++/usr/lib/nagios/plugins/check_packages > "$tmp"
+ result="$?"
+ case "$result" in
+   0)
