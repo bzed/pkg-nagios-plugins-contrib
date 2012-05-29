@@ -14,3 +14,4 @@ Description: plugins from the Debian System Administrators
  * check_soas: check SOA records
  * check_statusfile: deliver the content of a status file
    as check result
+Recommends: ruby | ruby-interpreter, openssl, libnet-dns-perl
