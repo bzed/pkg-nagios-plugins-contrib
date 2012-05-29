@@ -1,0 +1,7 @@
+Homepage: http://dns.measurement-factory.com/tools/nagios-plugins/check_zone_rrsig_expiration.html
+Watch: http://dns.measurement-factory.com/tools/nagios-plugins/src/check_zone_rrsig_expiration Id: check_zone_rrsig_expiration,v ([0-9.]+)
+Uploaders: Bernd Zeimetz <bzed@debian.org>
+Description: plugin to check for expiration of signatures in
+ dnssec-enabled zones.
+Recommends: libnet-dns-perl
+Version: 1.10
