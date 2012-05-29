@@ -3,5 +3,5 @@ Watch: http://svn.noreply.org/cgi-bin/viewvc.cgi/weaselutils/trunk/nagios-check-
 Uploaders: Bernd Zeimetz <bzed@debian.org>
 Description: plugin to report the usage of no longer existing
  libraries by running processes
-Recommends: lsof
+Recommends: lsof, libyaml-syck-perl
 Version: 520
