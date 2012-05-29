@@ -1,0 +1,7 @@
+Homepage: http://dns.measurement-factory.com/tools/nagios-plugins/check_zone_auth.html
+Watch: http://dns.measurement-factory.com/tools/nagios-plugins/src/check_zone_auth Id: check_zone_auth,v ([0-9.]+)
+Uploaders: Bernd Zeimetz <bzed@debian.org>
+Description: plugin to ensure that the authoritative nameservers
+ for a given zone remain in sync.
+Recommends: libnet-dns-perl
+Version: 1.13
