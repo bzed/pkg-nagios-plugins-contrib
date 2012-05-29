@@ -49,8 +49,12 @@ nagios-plugins-contrib (2.20120529) unstable; urgency=low
   * [72492690] Fix location of check_packages in cron script.
   * [68284bb0] Add patch to fix check_packages output.
   * [fd32ac40] check_libs needs libyaml-syck-perl.
+  * [63d54efa] Updating changelog.
+  * [f29b76d6] Add check_zone_auth plugin.
+  * [0f95a649] Add check_whois plugin.
+  * [3562b848] Add check_zone_rrsig_expiration plugin.
 
- -- Bernd Zeimetz <bzed@debian.org>  Tue, 29 May 2012 15:17:21 +0200
+ -- Bernd Zeimetz <bzed@debian.org>  Tue, 29 May 2012 22:33:51 +0200
 
 nagios-plugins-contrib (1.20120228) unstable; urgency=low
 
