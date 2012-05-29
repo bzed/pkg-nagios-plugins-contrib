@@ -19,7 +19,8 @@ Description: Plugins for nagios compatible monitoring systems
  systems like Nagios and Icinga.
  It contains the following plugins:
  .
-   * check_backuppc (1.1.0): plugin for checking on the status of BackupPC backups
+   * check_backuppc (1.1.0): plugin for checking on the status of
+     BackupPC backups
    * check_email_delivery (0.7.1b): plugin to monitor email delivery
      Some typical uses of this plugin include:
        - check SMTP server
@@ -110,8 +111,8 @@ Description: Plugins for nagios compatible monitoring systems
      whois output.
    * check_zone_auth (1.13): plugin to ensure that the authoritative nameservers
      for a given zone remain in sync.
-   * check_zone_rrsig_expiration (1.10): plugin to check for expiration of signatures in
-     dnssec-enabled zones.
+   * check_zone_rrsig_expiration (1.10): plugin to check for expiration of
+     signatures in dnssec-enabled zones.
    * dsa: plugins from the Debian System Administrators
      nagios plugins repository.
      * check_cert_expire: check for certificate expiration
