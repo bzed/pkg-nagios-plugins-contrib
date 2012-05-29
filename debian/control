@@ -120,4 +120,4 @@ Description: Plugins for nagios compatible monitoring systems
        as check result
  .
  Some scripts and binaries need more packages installed to work, which is
- implemented as recommands.
+ implemented as recommends.
