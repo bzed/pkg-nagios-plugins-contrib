@@ -22,4 +22,4 @@ Description: Plugins for nagios compatible monitoring systems
 #AUTO_UPDATE_Description#
  .
  Some scripts and binaries need more packages installed to work, which is
- implemented as recommands.
+ implemented as recommends.
