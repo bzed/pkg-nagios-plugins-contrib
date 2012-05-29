@@ -7,6 +7,7 @@ LDFLAGS := $(shell dpkg-buildflags --get LDFLAGS)
 
 # define common directories
 PLUGINDIR := /usr/lib/nagios/plugins
+CRONJOBDIR := /usr/lib/nagios/cronjobs
 CONFIGDIR := /etc/nagios-plugins/config
 INIDIR := /etc/nagios-plugins
 CONFIGFILES := $(wildcard *.cfg)
@@ -24,7 +25,7 @@ DOCDIR := /usr/share/doc/nagios-plugins-contrib/$(PLUGINNAME)
 CLEANEXTRAFILES := $(strip $(wildcard *.o) $(wildcard *.a) $(wildcard *.so))
 
 # build the stuff actually
-all:: $(PLUGIN) $(MANPAGES) $(INIFILES)
+all:: $(PLUGIN) $(MANPAGES) $(INIFILES) $(CRONJOBS)
 
 install::
 	install -d $(DESTDIR)$(PLUGINDIR)
@@ -48,6 +49,10 @@ endif
 ifdef DOCFILES
 	install -d $(DESTDIR)$(DOCDIR)
 	install -m 644 -o root -g root $(DOCFILES) $(DESTDIR)$(DOCDIR)
+endif
+ifdef CRONJOBS
+	install -d $(DESTDIR)$(CRONJOBDIR)
+	install -m 755 -o root -g root $(CRONJOBS) $(DESTDIR)$(CRONJOBDIR)
 endif
 
 clean::
