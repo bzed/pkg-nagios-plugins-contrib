@@ -7,7 +7,7 @@ export DH_VERBOSE=1
 PLUGINS := $(shell find $(CURDIR) -mindepth 1 -maxdepth 1 -name .git -prune -o -name .pc -prune -o -name debian -prune -o -type d -printf '%f\n' | sort)
 
 %:
-	dh $@ --with quilt --parallel
+	dh $@ --with quilt,python2 --parallel
 
 # Here follows a small shell snipped to call dh_auto_* for all plugins
 # Currently
@@ -27,7 +27,7 @@ PACKAGING_HELPER = /usr/bin/python $(CURDIR)/debian/packaging-helper.py
 
 
 clean: $(PLUGINS:%=clean-%) debian/copyright debian/control
-	dh $@ --with quilt --parallel
+	dh $@ --with quilt,python2 --parallel
 	rm -f debian/nagios-plugins-contrib.install
 	rm -f debian/README.Debian.plugins
 
@@ -75,6 +75,9 @@ override_dh_auto_install: $(PLUGINS:%=dh_auto_install-%)
 #override_dh_auto_test: $(PLUGINS:%=dh_auto_test-%)
 override_dh_auto_test: 
 	# nothign to do right now.
+
+override_dh_python2:
+	dh_python2 usr/lib/nagios/plugins usr/lib/nagios/cronjobs
 
 CONTROL_FILES := $(shell for p in $(PLUGINS); do echo $$p/control; done)
 COPYRIGHT_FILES := $(shell for p in $(PLUGINS); do echo $$p/copyright; done)
