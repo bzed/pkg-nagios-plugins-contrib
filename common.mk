@@ -1,9 +1,9 @@
 
 # import buildflags
-CFLAGS := $(shell dpkg-buildflags --get CFLAGS)
-CPPFLAGS := $(shell dpkg-buildflags --get CPPFLAGS)
-CXXFLAGS := $(shell dpkg-buildflags --get CXXFLAGS)
-LDFLAGS := $(shell dpkg-buildflags --get LDFLAGS)
+CFLAGS += $(shell dpkg-buildflags --get CFLAGS)
+CPPFLAGS += $(shell dpkg-buildflags --get CPPFLAGS)
+CXXFLAGS += $(shell dpkg-buildflags --get CXXFLAGS)
+LDFLAGS += $(shell dpkg-buildflags --get LDFLAGS)
 
 # define common directories
 PLUGINDIR := /usr/lib/nagios/plugins
