@@ -1,3 +1,4 @@
+check_libs/config_location
 check_libs/config_path
 dsa/status_directory
 dsa/check_packages-inifile
