@@ -1,30 +1,34 @@
 --- a/dsa/checks/dsa-check-packages
 +++ b/dsa/checks/dsa-check-packages
-@@ -96,14 +96,23 @@ sub get_packages {
+@@ -96,14 +96,27 @@ sub get_packages {
  
  	my $line;
  	my $pkgname = undef;
-+        my $candidate_found = 0;
++	my $candidate_found = 0;
  	while (defined($line = shift @lines)) {
  		if ($line =~ /^([^ ]*):$/) {
  			$pkgname = $1;
  		} elsif ($line =~ /^ +Installed: (.*)$/) {
  			# etch dpkg -l does not print epochs, so use this info, it's better
  			$installed->{$pkgname}{'installed'} = $1;
-+                        # initialize security-update
-+                        $installed->{$pkgname}{'security-update'} = 0;
++			# initialize security-update
++			$installed->{$pkgname}{'security-update'} = 0;
  		} elsif ($line =~ /^ +Candidate: (.*)$/) {
  			$installed->{$pkgname}{'candidate'} = $1;
 +		} elsif ($line =~ /     ([^ ]+) [0-9]+/) {
 +			# check if the next lines show the sources of our candidate
-+			($1 eq $installed->{$pkgname}{'candidate'}) ?
-+				$candidate_found = 1 : $candidate_found = 0;
-+                } elsif ($line =~ / +[0-9]+ [^ ]+\/debian-security.*\/updates\//) {
-+                        $installed->{$pkgname}{'security-update'} = 1;
++			if ($1 eq $installed->{$pkgname}{'candidate'}) {
++				$candidate_found = 1;
++			} else {
++				$candidate_found = 0;
++			}
++			print "foo: $1 $candidate_found $installed->{$pkgname}{'candidate'}\n";
++		} elsif (($line =~ / +[0-9]+ [^ ]+\/debian-security.*\/updates\//) && $candidate_found ) {
++			$installed->{$pkgname}{'security-update'} = 1;
  		} elsif ($line =~ /^ +\*\*\*/) {
  			my @l;
  			@l = split(/ +/, $line);
-@@ -113,7 +122,7 @@ sub get_packages {
+@@ -113,7 +126,7 @@ sub get_packages {
  		}
  	}
  
@@ -33,18 +37,18 @@
  	for my $pkgname (keys %$installed) {
  		my $pkg = $installed->{$pkgname};
  
-@@ -123,7 +132,9 @@ sub get_packages {
+@@ -123,7 +136,9 @@ sub get_packages {
  	       }
  			
  		if ($pkg->{'candidate'} ne $pkg->{'installed'}) {
 -			$outofdate{$pkgname} = $pkg;
-+                        ($pkg->{'security-update'}) ?
-+                                $security_outofdate{$pkgname} = $pkg :
-+			        $outofdate{$pkgname} = $pkg;
++			($pkg->{'security-update'}) ?
++				$security_outofdate{$pkgname} = $pkg :
++				$outofdate{$pkgname} = $pkg;
  			next;
  		};
  		if ($pkg->{'origin'} eq '/var/lib/dpkg/status') {
-@@ -135,6 +146,7 @@ sub get_packages {
+@@ -135,6 +150,7 @@ sub get_packages {
  
  	$pkgs{'current'} = \%current;
  	$pkgs{'outofdate'} = \%outofdate;
@@ -52,7 +56,7 @@
  	$pkgs{'obsolete'} = \%obsolete;
  	return \%pkgs;
  }
-@@ -270,6 +282,12 @@ my @reportform = (
+@@ -270,6 +286,12 @@ my @reportform = (
  	  'short' => "%d pc",
  	  'perf' => "prg_conf=%d;1;;0",
  	  'status' => 'WARNING' },
