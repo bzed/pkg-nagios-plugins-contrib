@@ -1,6 +1,6 @@
 --- a/dsa/checks/dsa-check-packages
 +++ b/dsa/checks/dsa-check-packages
-@@ -96,14 +96,27 @@ sub get_packages {
+@@ -96,14 +96,26 @@ sub get_packages {
  
  	my $line;
  	my $pkgname = undef;
@@ -22,13 +22,12 @@
 +			} else {
 +				$candidate_found = 0;
 +			}
-+			print "foo: $1 $candidate_found $installed->{$pkgname}{'candidate'}\n";
 +		} elsif (($line =~ / +[0-9]+ [^ ]+\/debian-security.*\/updates\//) && $candidate_found ) {
 +			$installed->{$pkgname}{'security-update'} = 1;
  		} elsif ($line =~ /^ +\*\*\*/) {
  			my @l;
  			@l = split(/ +/, $line);
-@@ -113,7 +126,7 @@ sub get_packages {
+@@ -113,7 +125,7 @@ sub get_packages {
  		}
  	}
  
@@ -37,7 +36,7 @@
  	for my $pkgname (keys %$installed) {
  		my $pkg = $installed->{$pkgname};
  
-@@ -123,7 +136,9 @@ sub get_packages {
+@@ -123,7 +135,9 @@ sub get_packages {
  	       }
  			
  		if ($pkg->{'candidate'} ne $pkg->{'installed'}) {
@@ -48,7 +47,7 @@
  			next;
  		};
  		if ($pkg->{'origin'} eq '/var/lib/dpkg/status') {
-@@ -135,6 +150,7 @@ sub get_packages {
+@@ -135,6 +149,7 @@ sub get_packages {
  
  	$pkgs{'current'} = \%current;
  	$pkgs{'outofdate'} = \%outofdate;
@@ -56,7 +55,7 @@
  	$pkgs{'obsolete'} = \%obsolete;
  	return \%pkgs;
  }
-@@ -270,6 +286,12 @@ my @reportform = (
+@@ -270,6 +285,12 @@ my @reportform = (
  	  'short' => "%d pc",
  	  'perf' => "prg_conf=%d;1;;0",
  	  'status' => 'WARNING' },
