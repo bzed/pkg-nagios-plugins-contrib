@@ -36,18 +36,20 @@
  	for my $pkgname (keys %$installed) {
  		my $pkg = $installed->{$pkgname};
  
-@@ -123,7 +135,9 @@ sub get_packages {
+@@ -123,7 +135,11 @@ sub get_packages {
  	       }
  			
  		if ($pkg->{'candidate'} ne $pkg->{'installed'}) {
 -			$outofdate{$pkgname} = $pkg;
-+			($pkg->{'security-update'}) ?
-+				$security_outofdate{$pkgname} = $pkg :
++			if ($pkg->{'security-update'}) {
++				$security_outofdate{$pkgname} = $pkg;
++			} else {
 +				$outofdate{$pkgname} = $pkg;
++			}
  			next;
  		};
  		if ($pkg->{'origin'} eq '/var/lib/dpkg/status') {
-@@ -135,6 +149,7 @@ sub get_packages {
+@@ -135,6 +151,7 @@ sub get_packages {
  
  	$pkgs{'current'} = \%current;
  	$pkgs{'outofdate'} = \%outofdate;
@@ -55,7 +57,7 @@
  	$pkgs{'obsolete'} = \%obsolete;
  	return \%pkgs;
  }
-@@ -270,6 +285,12 @@ my @reportform = (
+@@ -270,6 +287,12 @@ my @reportform = (
  	  'short' => "%d pc",
  	  'perf' => "prg_conf=%d;1;;0",
  	  'status' => 'WARNING' },
