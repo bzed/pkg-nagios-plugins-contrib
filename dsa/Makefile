@@ -3,6 +3,7 @@
 PLUGIN:=$(shell cd checks; ls -1 | sed 's,^dsa-,,;s,-,_,g')
 CRONJOBS:=$(shell cd sbin; ls -1 | sed 's,^dsa-,,')
 INIFILES:=etc/obsolete-packages-ignore
+DOCFILES:=$(wildcard *.cmd)
 
 check_%:
 	cp checks/dsa-`echo $@ | sed 's,_,-,g'` $@
