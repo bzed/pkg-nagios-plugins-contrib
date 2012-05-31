@@ -20,5 +20,5 @@ command[ running_kernel ]	= sudo /usr/lib/nagios/plugins/check_running_kernel
 
 
 state   [ CRITICAL ] = COUNT(CRITICAL) > 0
-state   [ WARNING ] = COUNT(WARNING) > 0 || COUNT(CRITICAL) > 0
+state   [ WARNING ] = COUNT(WARNING) > 0
 state   [ UNKNOWN ] = COUNT(UNKNOWN) > 0
