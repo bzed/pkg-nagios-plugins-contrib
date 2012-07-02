@@ -1,5 +1,6 @@
 Uploaders: Jan Wagner <waja@cyconet.org>
-Recommends: backuppc, libnagios-plugin-perl
+Recommends: libnagios-plugin-perl
+Suggests: backuppc
 Version: 1.1.0
 Homepage: http://n-backuppc.sourceforge.net/
 Watch: http://sourceforge.net/projects/n-backuppc/files/ check_backuppc-([0-9.]+)\.tar\.gz
