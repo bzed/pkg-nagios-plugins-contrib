@@ -1,3 +1,11 @@
+nagios-plugins-contrib (4.20120702) unstable; urgency=low
+
+  * [bf291c63] check_backuppc: move backuppc to Suggests.
+    Thanks to Werner Detter (Closes: #679871)
+  * [0997dfd3] Auto update of debian/control
+
+ -- Bernd Zeimetz <bzed@debian.org>  Mon, 02 Jul 2012 19:28:52 +0200
+
 nagios-plugins-contrib (3.20120614) unstable; urgency=low
 
   * [30fd20be] check_packages should return CRITICAL for outstanding security updates.
