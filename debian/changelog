@@ -1,8 +1,29 @@
-nagios-plugins-contrib (2.20120529~bpo60+1) squeeze-backports; urgency=low
+nagios-plugins-contrib (4.20120702~bpo60+1) squeeze-backports; urgency=low
 
   * Rebuild for squeeze-backports.
 
- -- Bernd Zeimetz <bzed@debian.org>  Wed, 30 May 2012 12:19:55 +0200
+ -- Bernd Zeimetz <bzed@debian.org>  Thu, 02 Aug 2012 23:16:50 +0200
+
+nagios-plugins-contrib (4.20120702) unstable; urgency=low
+
+  * [bf291c63] check_backuppc: move backuppc to Suggests.
+    Thanks to Werner Detter (Closes: #679871)
+  * [0997dfd3] Auto update of debian/control
+
+ -- Bernd Zeimetz <bzed@debian.org>  Mon, 02 Jul 2012 19:28:52 +0200
+
+nagios-plugins-contrib (3.20120614) unstable; urgency=low
+
+  * [30fd20be] check_packages should return CRITICAL for outstanding security updates.
+  * [3cd5656f] Fix last patch; refresh others.
+  * [2c3c1626] Remove extra debug print statement.
+  * [4e43ec28] Fix a funky ? : related bug.
+  * [e9172807] Add a check_apt.cmd example config for check_multi.
+  * [15d58b48] Remove unneeded || COUNT(CRITICAL) > 0 in check_apt.cmd
+  * [ea2f8abc] check_ipmi_sensor: updating to 3.1
+  * [d405a206] check_ssl_cert: fix version number (was updated already).
+
+ -- Bernd Zeimetz <bzed@debian.org>  Thu, 14 Jun 2012 22:02:34 +0200
 
 nagios-plugins-contrib (2.20120529) unstable; urgency=low
 
