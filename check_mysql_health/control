@@ -1,7 +1,7 @@
 Homepage: http://labs.consol.de/lang/en/nagios/check_mysql_health/
 Watch: http://labs.consol.de/lang/en/nagios/check_mysql_health/ check_mysql_health-([0-9.]+)\.tar\.gz
 Uploaders: Jan Wagner <waja@cyconet.org>
-Recommands: libdbd-mysql-perl
+Recommends: libdbd-mysql-perl
 Description: plugin to check various parameters of a
  MySQL database
 Build-Depends: autotools-dev
