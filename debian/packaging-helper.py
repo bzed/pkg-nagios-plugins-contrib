@@ -6,6 +6,16 @@ import os
 import re
 from debian import deb822
 
+ALLOWED_FIELDS = ('Suggests',
+                  'Recommends',
+                  'Depends',
+                  'Uploaders',
+                  'Version',
+                  'Homepage',
+                  'Watch',
+                  'Description',
+                  'Build-Depends')
+
 # find all plugins
 __basedir__ = os.path.realpath(os.path.dirname(sys.argv[0]) + os.path.sep + '..')
 __plugins__ = [p for p in os.listdir(__basedir__) 
@@ -20,7 +30,11 @@ def __get_control_data__():
     # returns (plug, parsed control field data)
     # We look at the first paragraph only!
     for plugin in __plugins__:
-        yield (plugin, [x for x in deb822.Packages.iter_paragraphs(file(__basedir__ + os.path.sep+ plugin + os.path.sep + 'control'))][0])
+        data=(plugin, [x for x in deb822.Packages.iter_paragraphs(file(__basedir__ + os.path.sep+ plugin + os.path.sep + 'control'))][0])
+        for key in data[1].iterkeys():
+            if key not in ALLOWED_FIELDS:
+                raise Exception("Unknown control field in plugin %s: %s" %(data[0],key))
+        yield data
 
 def generate_debian_readme_plugins():
     plugins_depends={}
