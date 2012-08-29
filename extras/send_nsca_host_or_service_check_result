@@ -1,0 +1,82 @@
+#!/bin/bash
+
+
+# Enhanced version of the send_nsca wrappers to handle service and host checks.
+# Allows to specify the nsca host and send_nsca config file in the command definition.
+
+
+# define command{
+#	command_name	send_nsca_host_or_service_check_result
+# 	command_line	/usr/share/icinga/plugins/eventhandlers/distributed-monitoring/send_nsca_host_or_service_check_result nsca-host /etc/send_nsca.conf '$HOSTNAME$' '$SERVICEDESC$' '$SERVICESTATE$' '$OUTPUT$'
+#	}
+
+
+
+NSCA_HOST="$1"
+shift
+SEND_NSCA_CFG="$1"
+shift
+
+# Service check
+# Arguments:
+#  $1 = host_name (Short name of host that the service is
+#       associated with)
+#  $2 = svc_description (Description of the service)
+#  $3 = state_string (A string representing the status of
+#       the given service - "OK", "WARNING", "CRITICAL"
+#       or "UNKNOWN")
+#  $4 = plugin_output (A text string that should be used
+#       as the plugin output for the service checks)
+#
+
+# Host check
+# Arguments:
+#  $1 = host_name (Short name of host that the service is
+#       associated with)
+#  $2 = state_string (A string representing the status of
+#       the given service - "OK", "WARNING", "CRITICAL"
+#       or "UNKNOWN")
+#  $3 = plugin_output (A text string that should be used
+#       as the plugin output for the service checks)
+#
+
+HOSTNAME="$1"
+shift
+
+if [ $# -eq 3 ]; then
+	# we have a service check
+	# append service name to target.
+	SERVICE="${1}"
+	shift
+fi
+
+# Convert the state string to the corresponding return code
+RETURN_CODE=-1
+
+case "$1" in
+	OK)
+		RETURN_CODE=0
+	;;
+	WARNING)
+		RETURN_CODE=1
+	;;
+	CRITICAL)
+		RETURN_CODE=2
+	;;
+	UNKNOWN)
+		RETURN_CODE=3
+	;;
+esac
+
+shift
+
+# pipe the service check info into the send_nsca program, which
+# in turn transmits the data to the nsca daemon on the central
+# monitoring server
+
+if [ -n "${SERVICE}" ]; then
+	/usr/bin/printf "%s\t%s\t%s\t%s\n" "${HOSTNAME}" "${SERVICE}" "$RETURN_CODE" "$1"
+else
+	/usr/bin/printf "%s\t%s\t%s\n" "${HOSTNAME}" "$RETURN_CODE" "$1"
+fi | /usr/sbin/send_nsca -H ${NSCA_HOST} -c ${SEND_NSCA_CFG}
+
