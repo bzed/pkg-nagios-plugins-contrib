@@ -1,0 +1,9 @@
+Homepage: https://www.monitoringexchange.org/inventory/Check-Plugins/Operating-Systems/Linux/check_memory
+Watch: https://www.monitoringexchange.org/inventory/Check-Plugins/Operating-Systems/Linux/check_memory >check_memory v.([0-9.]+)</div>
+Uploaders: Bernd Zeimetz <bzed@debian.org>
+Description: plugin to check for free memory
+ This plugin excludes the system cache and buffer, because
+ on some system with very stable memory usage it is perfectly
+ normal for system cache to fill in all available memory.
+Recommends: libnagios-plugin-perl (>= 0.31)
+Version: 1.0
