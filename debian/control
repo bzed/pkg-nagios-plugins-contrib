@@ -59,6 +59,10 @@ Description: Plugins for nagios compatible monitoring systems
      limit.
      Hit/miss and evictions are measured over a 30 minute interval,
      using a memcached object to store the earlier statistics.
+   * check_memory (1.0): plugin to check for free memory
+     This plugin excludes the system cache and buffer, because
+     on some system with very stable memory usage it is perfectly
+     normal for system cache to fill in all available memory.
    * check_multipath (0.1.5): plugin to monitor the number of available and
      failed paths of multipath devices
    * check_mysql_health (2.1.7): plugin to check various parameters of a
