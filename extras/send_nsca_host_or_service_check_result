@@ -4,11 +4,15 @@
 # Enhanced version of the send_nsca wrappers to handle service and host checks.
 # Allows to specify the nsca host and send_nsca config file in the command definition.
 
+#define command{
+#        command_name    obsessive_host_handler
+#        command_line    /usr/share/icinga/plugins/eventhandlers/distributed-monitoring/send_nsca_host_or_service_check_result '$_HOSTOCHP_HOST$' '$_HOSTOCHP_CONFIG$' '$HOSTNAME$' '$HOSTSTATE$' '$HOSTOUTPUT$\\n$LONGHOSTOUTPUT$|$HOSTPERFDATA$'
+#}
 
-# define command{
-#	command_name	send_nsca_host_or_service_check_result
-# 	command_line	/usr/share/icinga/plugins/eventhandlers/distributed-monitoring/send_nsca_host_or_service_check_result nsca-host /etc/send_nsca.conf '$HOSTNAME$' '$SERVICEDESC$' '$SERVICESTATE$' '$OUTPUT$'
-#	}
+#define command{
+#        command_name    obsessive_service_handler
+#        command_line    /usr/share/icinga/plugins/eventhandlers/distributed-monitoring/send_nsca_host_or_service_check_result '$_SERVICEOCSP_HOST$' '$_SERVICEOCSP_CONFIG$' '$HOSTNAME$' '$SERVICEDESC$' '$SERVICESTATE$' '$SERVICEOUTPUT$\\n$LONGSERVICEOUTPUT$|$SERVICEPERFDATA$'
+#}
 
 
 
@@ -54,16 +58,16 @@ fi
 RETURN_CODE=-1
 
 case "$1" in
-	OK)
+	OK|UP)
 		RETURN_CODE=0
 	;;
 	WARNING)
 		RETURN_CODE=1
 	;;
-	CRITICAL)
+	CRITICAL|DOWN)
 		RETURN_CODE=2
 	;;
-	UNKNOWN)
+	UNKNOWN|UNREACHABLE)
 		RETURN_CODE=3
 	;;
 esac
