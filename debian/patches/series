@@ -1,3 +1,5 @@
+check_nfsmounts/perl_module
+check_nfsmounts/nfs_write_location
 dsa/security_updates_critical
 dsa/fix_check_packages_output
 dsa/check_packages_location

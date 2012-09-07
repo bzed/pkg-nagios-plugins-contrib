@@ -1,0 +1,19 @@
+--- a/check_nfsmounts/check_nfsmounts
++++ b/check_nfsmounts/check_nfsmounts
+@@ -21,14 +21,14 @@
+ #    along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+ #
+ 
+-use utils qw{$TIMEOUT %ERRORS};
++use Nagios::Plugin qw(%ERRORS);
+ use Time::HiRes qw{time alarm};
+ use Getopt::Long;
+ use strict;
+ 
+ my $version="1.0";
+ 
+-my $nfs_timeout=$TIMEOUT;
++my $nfs_timeout=15;
+ my $nfs_warn=-1;
+ my $writemode=0;
+ my $help=0;
