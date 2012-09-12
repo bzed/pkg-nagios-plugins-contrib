@@ -1,7 +1,7 @@
 Suggests: nsca-client
 Version: 1
 Uploaders: Bernd Zeimetz <bzed@debian.org>
-Recommends: nagios-plugin-check-multi
+Suggests: nagios-plugin-check-multi, moreutils
 Description: various scripts and extras
  Not a plugin, but a collection of various useful
  event/obsession handlers and similar scripts.
