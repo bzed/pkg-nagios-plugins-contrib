@@ -1,0 +1,73 @@
+--- a/check_clamav/check_clamav
++++ b/check_clamav/check_clamav
+@@ -16,18 +16,18 @@
+ #
+ ################################################################################
+ # This script is used to compare the version and signature level of the
+-# currently running clamd daemon with the latest available versions listed in
++# currently running clamscan daemon with the latest available versions listed in
+ # the TXT record for current.cvd.clamav.net.
+ #
+ # In order to use this script, you might need to make the following adjustments:
+ #  - Set the "use lib" path correctly (where utils.pm is located.)
+-#  - Set the path to your clamd binary in $clamd_cmd.
++#  - Set the path to your clamscan binary in $clamscan_cmd.
+ #
+ # This plugin requires the Net::DNS Perl module.
+ ################################################################################
+ 
+ # Plugin directory / home of utils.pm.
+-use lib "/usr/local/libexec/nagios";
++use lib "/usr/lib/nagios/plugins";
+ use utils qw(%ERRORS &print_revision &support &usage);
+ use Getopt::Long qw(:config no_ignore_case bundling);
+ use File::Basename;
+@@ -35,8 +35,8 @@ use Net::DNS;
+ 
+ use strict;
+ 
+-# Path to installed clamd binary.
+-my $clamd_cmd  = "/usr/local/sbin/clamd";
++# Path to installed clamscan binary.
++my $clamscan_cmd  = "/usr/bin/clamscan";
+ 
+ # Leave the rest of this alone:
+ my $prog_name  = basename $0;
+@@ -153,28 +153,28 @@ if ($vers_val != 0) {
+ }
+ 
+ # Make sure the binary exists.
+-if (-x $clamd_cmd) {
+-    &print_debug("Found clamd at $clamd_cmd");
++if (-x $clamscan_cmd) {
++    &print_debug("Found clamscan at $clamscan_cmd");
+ } else {
+-    &print_debug("Can't execute clamd at $clamd_cmd");
+-    die("FATAL: Unable to execute $clamd_cmd");
++    &print_debug("Can't execute clamscan at $clamscan_cmd");
++    die("FATAL: Unable to execute $clamscan_cmd");
+ }
+ 
+ &print_debug("Threshhold values: warning=$warn_val, critical=$crit_val");
+ 
+ # Should return something like: ClamAV 0.87.1/1205/Wed Dec  7 07:00:48 2005
+-chomp(my $clamd_ver = `$clamd_cmd -V`);
++chomp(my $clamscan_ver = `$clamscan_cmd -V`);
+ 
+ # Should return something like: 0.87.1:34:1206:1134072033:1
+ chomp(my $dnstxt_ver = &lookup_current());
+ 
+-# Parse what we get from clamd -V and our DNS query
+-my @clamdresults = split(/\//,$clamd_ver);
++# Parse what we get from clamscan -V and our DNS query
++my @clamscanresults = split(/\//,$clamscan_ver);
+ my @txtresults   = split(/:/,$dnstxt_ver);
+ 
+ # Get the currently running ClamAV sig level and cvd date out of this
+-my $local_latest_daily   = $clamdresults[1];
+-my $local_latest_date    = $clamdresults[2];
++my $local_latest_daily   = $clamscanresults[1];
++my $local_latest_date    = $clamscanresults[2];
+ 
+ &print_debug("Local daily.cvd dated $local_latest_date");
+ &print_debug("Local daily.cvd version = $local_latest_daily");
