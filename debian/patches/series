@@ -1,5 +1,14 @@
-check_raid/use_cciss_vol_status_if_present
+check_nfsmounts/perl_module
+check_nfsmounts/nfs_write_location
+dsa/security_updates_critical
+dsa/fix_check_packages_output
+dsa/check_packages_location
+check_libs/config_location
+check_libs/config_path
+dsa/status_directory
+dsa/check_packages-inifile
 check_email_delivery/epn
+check_email_delivery/paths
 check_printer/use_data_dumper_if_needed
 check_printer/use_nagios_plugin
 check_printer/debian_bts

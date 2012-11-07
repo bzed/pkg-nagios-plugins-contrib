@@ -1,7 +1,9 @@
 #/usr/bin/make -f
-
-CLEANFILES = check_memcached
+CLEANFILES = check_memcached check_memcached.c
+LIBS += -lmemcached
 
 include ../common.mk
 
-LDFLAGS += -lmemcached
+
+check_memcached: check_memcached.o
+	$(CC) $(LDFLAGS) -o $@ $< $(LIBS)

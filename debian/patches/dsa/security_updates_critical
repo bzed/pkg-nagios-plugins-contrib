@@ -1,0 +1,72 @@
+--- a/dsa/checks/dsa-check-packages
++++ b/dsa/checks/dsa-check-packages
+@@ -96,14 +96,26 @@ sub get_packages {
+ 
+ 	my $line;
+ 	my $pkgname = undef;
++	my $candidate_found = 0;
+ 	while (defined($line = shift @lines)) {
+ 		if ($line =~ /^([^ ]*):$/) {
+ 			$pkgname = $1;
+ 		} elsif ($line =~ /^ +Installed: (.*)$/) {
+ 			# etch dpkg -l does not print epochs, so use this info, it's better
+ 			$installed->{$pkgname}{'installed'} = $1;
++			# initialize security-update
++			$installed->{$pkgname}{'security-update'} = 0;
+ 		} elsif ($line =~ /^ +Candidate: (.*)$/) {
+ 			$installed->{$pkgname}{'candidate'} = $1;
++		} elsif ($line =~ /     ([^ ]+) [0-9]+/) {
++			# check if the next lines show the sources of our candidate
++			if ($1 eq $installed->{$pkgname}{'candidate'}) {
++				$candidate_found = 1;
++			} else {
++				$candidate_found = 0;
++			}
++		} elsif (($line =~ / +[0-9]+ [^ ]+\/debian-security.*\/updates\//) && $candidate_found ) {
++			$installed->{$pkgname}{'security-update'} = 1;
+ 		} elsif ($line =~ /^ +\*\*\*/) {
+ 			my @l;
+ 			@l = split(/ +/, $line);
+@@ -113,7 +125,7 @@ sub get_packages {
+ 		}
+ 	}
+ 
+-	my (%current, %obsolete, %outofdate);
++	my (%current, %obsolete, %outofdate, %security_outofdate);
+ 	for my $pkgname (keys %$installed) {
+ 		my $pkg = $installed->{$pkgname};
+ 
+@@ -123,7 +135,11 @@ sub get_packages {
+ 	       }
+ 			
+ 		if ($pkg->{'candidate'} ne $pkg->{'installed'}) {
+-			$outofdate{$pkgname} = $pkg;
++			if ($pkg->{'security-update'}) {
++				$security_outofdate{$pkgname} = $pkg;
++			} else {
++				$outofdate{$pkgname} = $pkg;
++			}
+ 			next;
+ 		};
+ 		if ($pkg->{'origin'} eq '/var/lib/dpkg/status') {
+@@ -135,6 +151,7 @@ sub get_packages {
+ 
+ 	$pkgs{'current'} = \%current;
+ 	$pkgs{'outofdate'} = \%outofdate;
++	$pkgs{'security_outofdate'} = \%security_outofdate;
+ 	$pkgs{'obsolete'} = \%obsolete;
+ 	return \%pkgs;
+ }
+@@ -270,6 +287,12 @@ my @reportform = (
+ 	  'short' => "%d pc",
+ 	  'perf' => "prg_conf=%d;1;;0",
+ 	  'status' => 'WARNING' },
++	{ 'key' => 'security_outofdate',
++	  'listpackages' => 1,
++	  'long' => "%d packages with outstanding security updates: %s",
++	  'short' => "%d security-updates",
++	  'perf' => "security_outdated=%d;;1;0",
++	  'status' => 'CRITICAL' },
+ 	);
+ 
+ my @longout;

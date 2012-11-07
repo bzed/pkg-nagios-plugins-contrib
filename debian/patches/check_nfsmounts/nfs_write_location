@@ -1,0 +1,20 @@
+--- a/check_nfsmounts/check_nfsmounts
++++ b/check_nfsmounts/check_nfsmounts
+@@ -23,6 +23,7 @@
+ 
+ use Nagios::Plugin qw(%ERRORS);
+ use Time::HiRes qw{time alarm};
++use Sys::Hostname;
+ use Getopt::Long;
+ use strict;
+ 
+@@ -107,7 +108,8 @@ foreach $dir (@dirs) {
+   if($pid==0) {
+     chdir $dir or &bad_mount($dir,$!);
+     if($writemode and exists($mountmodes{$dir}->{"rw"})) {
+-      open X,"> $dir/.nfscheck" or exit $?;
++      my $check_filename="$dir/.nfscheck_" . hostname;
++      open X,"> $check_filename" or exit $?;
+       print X $ENV{HOSTNAME}."\n".localtime()."\n"; # XXX Full disk may fail..
+       close X or exit $?;
+     }

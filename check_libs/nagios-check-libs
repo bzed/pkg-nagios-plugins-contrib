@@ -1,0 +1,198 @@
+#!/usr/bin/perl -w
+
+# Copyright (C) 2005, 2006, 2007, 2008, 2012 Peter Palfrader <peter@palfrader.org>
+#               2012 Uli Martens <uli@youam.net>
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+use strict;
+use English;
+use Getopt::Long;
+
+$ENV{'PATH'} = '/bin:/sbin:/usr/bin:/usr/sbin';
+delete @ENV{'IFS', 'CDPATH', 'ENV', 'BASH_ENV'};
+
+my $LSOF = '/usr/bin/lsof -F0';
+my $VERSION = '0.2012042101';
+
+# nagios exit codes
+my $OK = 0;
+my $WARNING = 1;
+my $CRITICAL = 2;
+my $UNKNOWN = 3;
+
+my $params;
+my $config;
+
+Getopt::Long::config('bundling');
+
+sub dief {
+	print STDERR @_;
+	exit $UNKNOWN;
+}
+
+if (!GetOptions (
+	'--help'	=> \$params->{'help'},
+	'--version'	=> \$params->{'version'},
+	'--quiet'       => \$params->{'quiet'},
+	'--verbose'	=> \$params->{'verbose'},
+	'--config=s'	=> \$params->{'config'},
+	)) {
+	dief ("$PROGRAM_NAME: Usage: $PROGRAM_NAME [--help|--version] [--verbose] [--quiet] [--config=<CONFIGFILE>]\n");
+};
+if ($params->{'help'}) {
+	print "$PROGRAM_NAME: Usage: $PROGRAM_NAME [--help|--version] [--verbose] [--quiet] [--config=<CONFIGFILE>]\n";
+	print "Reports processes that are linked against libraries that no longer exist.\n";
+	print "The optional config file can specify ignore rules - see the sample config file.\n";
+	exit (0);
+};
+if ($params->{'version'}) {
+	print "nagios-check-libs $VERSION\n";
+	print "nagios check for availability of debian (security) updates\n";
+	print "Copyright (c) 2005, 2006, 2007, 2008, 2012 Peter Palfrader <peter\@palfrader.org>\n";
+	exit (0);
+};
+
+if (! defined $params->{'config'}) {
+	$params->{'config'} = '/etc/nagios-plugins/check-libs.conf';
+} elsif (! -e $params->{'config'}) {
+	dief("Config file $params->{'config'} does not exist.\n");
+}
+
+if (-e $params->{'config'}) {
+	eval "use YAML::Syck; 1" or dief "you need YAML::Syck (libyaml-syck-perl) to load a config file";
+	open(my $fh, '<', $params->{'config'}) or dief "Cannot open config file $params->{'config'}: $!";
+	$config = LoadFile($fh);
+	close($fh);
+	if (!(ref($config) eq "HASH")) {
+		dief("Loaded config is not a hash!\n");
+	}
+} else {
+	$config = {
+		'ignorelist' => [
+			'$path =~ m#^/proc/#',
+			'$path =~ m#^/var/tmp/#',
+			'$path =~ m#^/SYS#',
+			'$path =~ m#^/drm$# # xserver stuff',
+			'$path =~ m#^/dev/zero#',
+			'$path =~ m#^/dev/shm/#',
+		]
+	};
+}
+
+if (! exists $config->{'ignorelist'}) {
+	$config->{'ignorelist'} = [];
+} elsif (! (ref($config->{'ignorelist'}) eq 'ARRAY')) {
+	dief("Config->ignorelist is not an array!\n");
+}
+
+
+my %processes;
+
+sub getPIDs($$) {
+	my ($user, $process) = @_;
+	return join(', ', sort keys %{ $processes{$user}->{$process} });
+};
+sub getProcs($) {
+	my ($user) = @_;
+
+	return join(', ', map { $_.' ('.getPIDs($user, $_).')' } (sort {$a cmp $b} keys %{ $processes{$user} }));
+};
+sub getUsers() {
+	return join('; ', (map { $_.': '.getProcs($_) } (sort {$a cmp $b} keys %processes)));
+};
+sub inVserver() {
+	my ($f, $key);
+	if (-e "/proc/self/vinfo" ) {
+		$f = "/proc/self/vinfo";
+		$key = "XID";
+	} else {
+		$f = "/proc/self/status";
+		$key = "s_context";
+	};
+	open(F, "< $f") or return 0;
+	while (<F>) {
+		my ($k, $v) = split(/: */, $_, 2);
+		if ($k eq $key) {
+			close F;
+			return ($v > 0);
+		};
+	};
+	close F;
+	return 0;
+}
+
+my $INVSERVER = inVserver();
+
+print STDERR "Running $LSOF -n\n" if $params->{'verbose'};
+open (LSOF, "$LSOF -n|") or dief ("Cannot run $LSOF -n: $!\n");
+my @lsof=<LSOF>;
+close LSOF;
+if ($CHILD_ERROR) { # program failed
+	dief("$LSOF -n returned with non-zero exit code: ".($CHILD_ERROR / 256)."\n");
+};
+
+my ($process, $pid, $user);
+LINE: for my $line (@lsof)  {
+	if ( $line =~ /^p/ ) {
+		my %fields = map { m/^(.)(.*)$/ ; $1 => $2 } grep { defined $_  and length $_ >1} split /\0/, $line;
+		$process = $fields{c};
+		$pid     = $fields{p};
+		$user    = $fields{L};
+		next;
+	}
+
+	unless ( $line =~ /^f/ ) {
+		dief("UNKNOWN strange line read from lsof\n");
+		# don't print it because it contains NULL characters...
+	}
+
+	my %fields = map { m/^(.)(.*)$/ ; $1 => $2 } grep { defined $_  and length $_ >1} split /\0/, $line;
+
+	my $fd    = $fields{f};
+	my $inode = $fields{i};
+	my $path  = $fields{n};
+	if ($path =~ m/\.dpkg-/ || $path =~ m/\(deleted\)/ || $path =~ /path inode=/ || $fd eq 'DEL') {
+		for my $i (@{$config->{'ignorelist'}}) {
+			my $ignore = eval($i);
+			next LINE if $ignore;
+		}
+		next if ($INVSERVER && ($process eq 'init') && ($pid == 1) && ($user eq 'root'));
+		if ( $params->{'verbose'} ) {
+			print STDERR "adding $process($pid) because of [$path]:\n";
+			print STDERR $line;
+		}
+		$processes{$user}->{$process}->{$pid} = 1;
+	};
+};
+
+
+
+my $message='';
+my $exit = $OK;
+if (keys %processes) {
+	$exit = $WARNING;
+	$message = 'The following processes have libs linked that were upgraded: '. getUsers()."\n";
+} else {
+	$message = "No upgraded libs linked in running processes\n" unless $params->{'quiet'};
+};
+
+print $message;
+exit $exit;

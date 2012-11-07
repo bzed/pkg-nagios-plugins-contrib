@@ -1,3 +1,82 @@
+nagios-plugins-contrib (4.20120702) unstable; urgency=low
+
+  * [bf291c63] check_backuppc: move backuppc to Suggests.
+    Thanks to Werner Detter (Closes: #679871)
+  * [0997dfd3] Auto update of debian/control
+
+ -- Bernd Zeimetz <bzed@debian.org>  Mon, 02 Jul 2012 19:28:52 +0200
+
+nagios-plugins-contrib (3.20120614) unstable; urgency=low
+
+  * [30fd20be] check_packages should return CRITICAL for outstanding security updates.
+  * [3cd5656f] Fix last patch; refresh others.
+  * [2c3c1626] Remove extra debug print statement.
+  * [4e43ec28] Fix a funky ? : related bug.
+  * [e9172807] Add a check_apt.cmd example config for check_multi.
+  * [15d58b48] Remove unneeded || COUNT(CRITICAL) > 0 in check_apt.cmd
+  * [ea2f8abc] check_ipmi_sensor: updating to 3.1
+  * [d405a206] check_ssl_cert: fix version number (was updated already).
+
+ -- Bernd Zeimetz <bzed@debian.org>  Thu, 14 Jun 2012 22:02:34 +0200
+
+nagios-plugins-contrib (2.20120529) unstable; urgency=low
+
+  * [c6b83cea] Fix email_delivery.cfg
+  * [f250c516] Merge pull request #5 from waja/master.
+    Add perl-doc at Suggests, as needed by check_email_delivery --help
+  * [9533beb7] Add check_webinject plugin.
+  * [05a3af45] Auto update of debian/copyright
+  * [255aa819] Auto update of debian/control
+  * [853905cf] Fix CLEANFILES in common.mk
+  * [3e75a059] Better webinject command definitions.
+  * [6275a3f3] check_raid should use cciss_vol_status if available.
+    Only use hpacucli if not.
+  * [9859f269] Add some missing version information.
+  * [d142da3c] Update check_raid to 1.107
+  * [942e9f23] Updating check_email_delivery.
+  * [749c40e1] Auto update of debian/control
+  * [c593192c] Add Enhances: nagios-plugins,.... to the package.
+  * [24486361] Merge pull request #6 from waja/master
+    add check_backuppc
+  * [8d634bb6] Better/fixed CLEANFILES target handling.
+    Please note that CLEANFILES must be defined before including
+    ../common.mk
+  * [558e31aa] Merge branch 'master' of
+    vasks.debian.org:/git/pkg-nagios/pkg-nagios-plugins-contrib.
+    Conflicts:
+    	check_backuppc/Makefile
+  * [dea493d7] Add (unfinished) DSA checks and check_libs from weaselutils.
+  * [5d0cf660] Finish integration of the check_libs plugin.
+  * [f2a3d5b6] Add (unfinished) control and copyright file for dsa checks.
+  * [f7c33de6] Auto update of debian/copyright
+  * [fd344412] Auto update of debian/control
+  * [8c9693ee] Updating check_hpasm to 4.5.2
+  * [3f0a95dc] Updating check_raid to rev1.119
+  * [5220084d] Update check_ssl_cert to 1.13.0
+  * [c2c83516] More progress on the DSA plugins
+  * [a9f80a8d] Implement a way to install cronjob scripts.
+    CRONJOBDIR := /usr/lib/nagios/cronjobs
+  * [a8dc3842] Finishing dsa check packaging.
+  * [de999e73] Add config location patch for check_libs.
+  * [336ad307] Auto update of debian/control
+  * [33b86286] Typo fix.
+  * [d0140fd4] Auto update of debian/control
+  * [9059ab99] Don't reset LD/C/CXX/CPPFLAGS when including common.mk
+  * [f0e986fa] Add snmp to check_printer's Recommends.
+  * [f993848c] Add missing recommends for DSA plugins.
+  * [80938fd9] Support checks written in Python.
+  * [cbf5f37f] Auto update of debian/control
+  * [6f5f3157] Updating changelog.
+  * [72492690] Fix location of check_packages in cron script.
+  * [68284bb0] Add patch to fix check_packages output.
+  * [fd32ac40] check_libs needs libyaml-syck-perl.
+  * [63d54efa] Updating changelog.
+  * [f29b76d6] Add check_zone_auth plugin.
+  * [0f95a649] Add check_whois plugin.
+  * [3562b848] Add check_zone_rrsig_expiration plugin.
+
+ -- Bernd Zeimetz <bzed@debian.org>  Tue, 29 May 2012 22:33:51 +0200
+
 nagios-plugins-contrib (1.20120228) unstable; urgency=low
 
   * [9079e12a] Add check-multipath.pl upstream version.

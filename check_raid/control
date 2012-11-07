@@ -1,7 +1,7 @@
 Homepage: http://cvs.pld-linux.org/cgi-bin/viewvc.cgi/cvs/packages/nagios-plugin-check_raid/check_raid?view=log
 Watch: http://cvs.pld-linux.org/cgi-bin/viewvc.cgi/cvs/packages/nagios-plugin-check_raid/check_raid?view=log <a name="(rev[^"]+)"></a>
 Suggests: cciss-vol-status, mpt-status
-Version: rev1.107
+Version: rev1.119
 Uploaders: Bernd Zeimetz <bzed@debian.org>
 Description: plugin to check sw/hw RAID status
  The plugin looks for any known types of RAID configurations,

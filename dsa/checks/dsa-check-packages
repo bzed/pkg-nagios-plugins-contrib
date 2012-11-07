@@ -1,0 +1,311 @@
+#!/usr/bin/perl
+
+# dsa-check-packages
+
+# checks for obsolete/local and upgradeable packages.
+#
+# packages for the obsolete/local check can be ignored, by
+# listing their full name in /etc/nagios/obsolete-packages-ignore
+# or by having a regex (starting a line with "/") that matches
+# the packagename in said file.
+#
+# Takes one optional argument, the location of the ignore file.
+
+
+# Copyright (C) 2008, 2009 Peter Palfrader <peter@palfrader.org>
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+use strict;
+use warnings;
+use English;
+
+my $IGNORE = "/etc/nagios/obsolete-packages-ignore";
+my $IGNORED = "/etc/nagios/obsolete-packages-ignore.d";
+
+my %CODE = (
+	'OK'            => 0,
+	'WARNING'       => 1,
+	'CRITICAL'      => 2,
+	'UNKNOWN'       => 3
+);
+my $EXITCODE = 'OK';
+sub record($) {
+	my ($newexit) = @_;
+	die "code $newexit not defined\n" unless defined $CODE{$newexit};
+
+	if ($CODE{$newexit} > $CODE{$EXITCODE}) {
+		$EXITCODE = $newexit;
+	};
+}
+
+
+
+sub get_packages {
+	$ENV{'COLUMNS'} = 1000;
+	$ENV{'LC_ALL'} = 'C';
+	open(F, "dpkg --print-architecture|") or die ("Cannot run dpkg --print-architecture: $!\n");
+	my $arch = <F>;
+	chomp($arch);
+	close(F);
+
+
+	open(F, "dpkg -l|") or die ("Cannot run dpkg -l: $!\n");
+	my @lines = <F>;
+	close(F);
+	chomp(@lines);
+
+	shift @lines while ($lines[0] !~ /\+\+\+/);
+	shift @lines;
+
+	my %pkgs;
+	for my $line (@lines) {
+		my ($state, $pkg, $version, undef) = split(/  */, $line);
+		$pkg =~ s/\Q:$arch\E$//;
+		$pkgs{$state}{$pkg} = { 'installed' => $version }
+	}
+
+	my $installed = $pkgs{'ii'};
+	delete $pkgs{'ii'};
+
+	open my $olderr, ">&STDERR"   or die "Can't dup STDERR: $!";
+	open     STDERR, ">/dev/null" or die "Can't dup STDOUT: $!";
+
+	open (F, "apt-cache policy ".(join(" ", keys(%$installed)))." |") or die ("Cannot run apt-cache policy: $!\n");
+	@lines = <F>;
+	close(F);
+	chomp(@lines);
+	open STDERR, ">&", $olderr  or die "Can't dup OLDERR: $!";
+
+	my $line;
+	my $pkgname = undef;
+	while (defined($line = shift @lines)) {
+		if ($line =~ /^([^ ]*):$/) {
+			$pkgname = $1;
+		} elsif ($line =~ /^ +Installed: (.*)$/) {
+			# etch dpkg -l does not print epochs, so use this info, it's better
+			$installed->{$pkgname}{'installed'} = $1;
+		} elsif ($line =~ /^ +Candidate: (.*)$/) {
+			$installed->{$pkgname}{'candidate'} = $1;
+		} elsif ($line =~ /^ +\*\*\*/) {
+			my @l;
+			@l = split(/ +/, $line);
+			$line = shift @lines;
+			@l = split(/ +/, $line);
+			$installed->{$pkgname}{'origin'} = $l[2];
+		}
+	}
+
+	my (%current, %obsolete, %outofdate);
+	for my $pkgname (keys %$installed) {
+		my $pkg = $installed->{$pkgname};
+
+		unless (defined($pkg->{'candidate'}) && defined($pkg->{'origin'})) {
+                        $obsolete{$pkgname} = $pkg;
+                        next;
+	       }
+			
+		if ($pkg->{'candidate'} ne $pkg->{'installed'}) {
+			$outofdate{$pkgname} = $pkg;
+			next;
+		};
+		if ($pkg->{'origin'} eq '/var/lib/dpkg/status') {
+			$obsolete{$pkgname} = $pkg;
+			next;
+		}
+		$current{$pkgname} = $pkg;
+	}
+
+	$pkgs{'current'} = \%current;
+	$pkgs{'outofdate'} = \%outofdate;
+	$pkgs{'obsolete'} = \%obsolete;
+	return \%pkgs;
+}
+
+sub load_ignores {
+	my ($ignorefiles, $require_file) = @_;
+
+	my @ignores;
+
+	for my $ignoreitem (@$ignorefiles) {
+		next if (!$require_file and ! -e $ignoreitem);
+
+		my @filestoopen;
+		if (-d $ignoreitem) {
+			opendir(DIR, $ignoreitem) or die ("Cannot open dir $ignoreitem: $!\n");
+			@filestoopen = readdir(DIR);
+			closedir(DIR);
+
+			@filestoopen = grep { -f ($ignoreitem.'/'.$_) } @filestoopen;
+			@filestoopen = grep { /^([a-z0-9_.-]+)+[a-z0-9]+$/i } @filestoopen;
+			@filestoopen = grep { !/dpkg-(old|dist|new|tmp)$/ } @filestoopen;
+			@filestoopen = map { ($ignoreitem.'/'.$_) } @filestoopen;
+		} else {
+			push @filestoopen, $ignoreitem;
+		}
+
+		for my $f (@filestoopen) {
+			open (F, "< $f") or die ("Cannot open $f: $!\n");
+			push @ignores, <F>;
+			close F;
+		}
+	}
+	chomp(@ignores);
+	return \@ignores;
+}
+
+sub check_ignore {
+	my ($pkg, $ignores) = @_;
+
+	my $ignore_this = 0;
+	for my $ignore (@$ignores) {
+		my $ig = $ignore;
+		return 1 if ($ig eq $pkg);
+		if (substr($ig,0,1) eq '/') {
+			substr($ig, 0, 1, '');
+			$ig =~ s,/$,,;
+			return 1 if ($pkg =~ /$ig/);
+		}
+	}
+	return 0
+}
+
+sub filter_ignored {
+	my ($packages, $ignores) = @_;
+
+	my $obs = $packages->{'obsolete'};
+
+	my (%ignored, %bad);
+	for my $pkg (keys %$obs) {
+		if (check_ignore($pkg, $ignores)) {
+			$ignored{$pkg} = $obs->{$pkg};
+		} else {
+			$bad{$pkg} = $obs->{$pkg};
+		};
+	}
+	delete $packages->{'obsolete'};
+	$packages->{'obsolete'} = \%bad;
+	$packages->{'obsolete-ignored'} = \%ignored;
+};
+
+sub usage {
+	my ($fd, $exit) = @_;
+	print $fd "Usage: $PROGRAM_NAME [<ignorefile|dir> [<ignorefile|dir> ...]]\n";
+	exit $exit;
+}
+
+my $ignorefiles = [$IGNORE, $IGNORED];
+my $ignorefile_userset = 0;
+if (@ARGV >= 1) {
+	usage(\*STDOUT, 0) if ($ARGV[0] eq "-h");
+	usage(\*STDOUT, 0) if ($ARGV[0] eq "--help");
+	$ignorefile_userset = 1;
+	$ignorefiles = \@ARGV;
+};
+
+my $ignores = load_ignores($ignorefiles, $ignorefile_userset);
+my $packages = get_packages();
+
+filter_ignored($packages, $ignores);
+
+
+
+my @reportform = (
+	{ 'key' => 'obsolete',
+	  'listpackages' => 1,
+	  'long' => "%d local or obsolete packages: %s",
+	  'short' => "%d obs/loc",
+	  'perf' => "obs_loc=%d;1;5;0",
+	  'status' => 'WARNING' },
+	{ 'key' => 'outofdate',
+	  'listpackages' => 1,
+	  'long' => "%d out of date packages: %s",
+	  'short' => "%d updates",
+	  'perf' => "outdated=%d;1;5;0",
+	  'status' => 'WARNING' },
+	{ 'key' => 'current',
+	  'listpackages' => 0,
+	  'long' => "%d packages current.",
+	  'short' => "%d ok",
+	  'perf' => "current=%d;;;0",
+	  'status' => 'OK' },
+	{ 'key' => 'obsolete-ignored',
+	  'listpackages' => 1,
+	  'long' => "%d whitelisted local or obsolete packages: %s",
+	  'short' => "%d obs/loc(ignored)",
+	  'perf' => "obs_ign=%d;;;0",
+	  'status' => 'OK' },
+	{ 'key' => 'rc',
+	  'listpackages' => 1,
+	  'long' => "%d packages removed but not purged: %s",
+	  'short' => "%d rc",
+	  'perf' => "rm_unprg=%d;;;0",
+	  'status' => 'OK' },
+	{ 'key' => 'hi',
+	  'listpackages' => 1,
+	  'long' => "%d packages on hold: %s",
+	  'short' => "%d hi",
+	  'perf' => "hold=%d;;;0",
+	  'status' => 'OK' },
+	{ 'key' => 'pc',
+	  'listpackages' => 1,
+	  'long' => "%d packages requested to be purged but conffiles still installed: %s",
+	  'short' => "%d pc",
+	  'perf' => "prg_conf=%d;1;;0",
+	  'status' => 'WARNING' },
+	);
+
+my @longout;
+my @perfout;
+my @shortout;
+for my $form (@reportform) {
+	my $pkgs = $packages->{$form->{'key'}};
+	delete $packages->{$form->{'key'}};
+	my $num = scalar keys %$pkgs;
+	push @perfout, sprintf($form->{'perf'}, $num);
+	next unless ($num > 0);
+	if ($form->{'listpackages'}) {
+		my $list = join(", ", keys %$pkgs);
+		push @longout, sprintf($form->{'long'}, $num, $list);
+	} else {
+		push @longout, sprintf($form->{'long'}, $num);
+	};
+	push @shortout, sprintf($form->{'short'}, $num);
+	record($form->{'status'});
+};
+if (scalar keys %$packages) {
+	record('WARNING');
+	unshift @shortout, "unk: ".join(", ", keys %$packages);
+	for my $status (sort {$b cmp $a} keys %$packages) {
+		my $pkgs = $packages->{$status};
+		my $list = join(", ", keys %$pkgs);
+		unshift @longout, "Unknown package status $status: $list";
+	};
+}
+
+my $shortout = $EXITCODE.": ".join(", ", @shortout);
+my $longout = join("\n", @longout);
+my $perfout = "|".join(" ", @perfout);
+
+print $shortout;
+print $longout,"\n";
+print $perfout,"\n";
+
+exit $CODE{$EXITCODE};

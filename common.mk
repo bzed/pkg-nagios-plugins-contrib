@@ -1,12 +1,13 @@
 
 # import buildflags
-CFLAGS := $(shell dpkg-buildflags --get CFLAGS)
-CPPFLAGS := $(shell dpkg-buildflags --get CPPFLAGS)
-CXXFLAGS := $(shell dpkg-buildflags --get CXXFLAGS)
-LDFLAGS := $(shell dpkg-buildflags --get LDFLAGS)
+CFLAGS += $(shell dpkg-buildflags --get CFLAGS)
+CPPFLAGS += $(shell dpkg-buildflags --get CPPFLAGS)
+CXXFLAGS += $(shell dpkg-buildflags --get CXXFLAGS)
+LDFLAGS += $(shell dpkg-buildflags --get LDFLAGS)
 
 # define common directories
 PLUGINDIR := /usr/lib/nagios/plugins
+CRONJOBDIR := /usr/lib/nagios/cronjobs
 CONFIGDIR := /etc/nagios-plugins/config
 INIDIR := /etc/nagios-plugins
 CONFIGFILES := $(wildcard *.cfg)
@@ -21,10 +22,10 @@ DOCDIR := /usr/share/doc/nagios-plugins-contrib/$(PLUGINNAME)
 
 # add some default files to clean
 # we actually need strip here. make is weird sometimes.
-CLEANFILES=$(strip $(wildcard *.o) $(wildcard *.a) $(wildcard *.so))
+CLEANEXTRAFILES := $(strip $(wildcard *.o) $(wildcard *.a) $(wildcard *.so))
 
 # build the stuff actually
-all:: $(PLUGIN) $(MANPAGES) $(INIFILES)
+all:: $(PLUGIN) $(MANPAGES) $(INIFILES) $(CRONJOBS)
 
 install::
 	install -d $(DESTDIR)$(PLUGINDIR)
@@ -49,8 +50,17 @@ ifdef DOCFILES
 	install -d $(DESTDIR)$(DOCDIR)
 	install -m 644 -o root -g root $(DOCFILES) $(DESTDIR)$(DOCDIR)
 endif
+ifdef CRONJOBS
+	install -d $(DESTDIR)$(CRONJOBDIR)
+	install -m 755 -o root -g root $(CRONJOBS) $(DESTDIR)$(CRONJOBDIR)
+endif
 
 clean::
-ifneq (,$(CLEANFILES))
+ifdef CLEANFILES
 	rm -f $(CLEANFILES)
 endif
+ifneq (,$(CLEANEXTRAFILES))
+	rm -f $(CLEANEXTRAFILES)
+endif
+
+.PHONY: clean

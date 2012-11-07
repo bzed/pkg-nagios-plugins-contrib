@@ -1,0 +1,225 @@
+#!/usr/bin/perl
+# nagios: -epn
+
+# $Id: check_whois,v 1.12 2011/10/18 22:10:04 wessels Exp $
+#
+# check_whois
+#
+# nagios plugin to check the expiration date of a domain.
+
+# Copyright (c) 2008, The Measurement Factory, Inc. All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 
+# Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+# Redistributions in binary form must reproduce the above copyright
+# notice, this list of conditions and the following disclaimer in the
+# documentation and/or other materials provided with the distribution.
+# Neither the name of The Measurement Factory nor the names of its
+# contributors may be used to endorse or promote products derived
+# from this software without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+# usage
+#
+# define command {
+#   command_name    check-whois
+#   command_line    /usr/local/libexec/nagios-local/check_whois $HOSTADDRESS$
+# }
+#
+# define service {
+#   name                   whois-service
+#   check_command          check-whois
+#   ...
+# }
+#
+# define host {
+#   use dns-zone
+#   host_name zone.example.com
+#   alias ZONE example.com
+# }
+#
+# define service {
+#   use whois-service
+#   host_name zone.example.com
+# }
+
+# AUTHORS and CONTRIBUTORS:
+#   Duane Wessels
+#   Matt Christian
+#   John Lines
+
+use strict;
+use warnings;
+
+use Getopt::Std;
+use Date::Manip;
+use POSIX qw(strftime);
+use Env '@PATH';
+
+my %opts;
+getopts('xds:', \%opts);
+
+my $string_found = 0;
+
+my $name = shift or die usage();
+$name =~ s/^zone\.//;
+my $whoiscmd = findwhois();
+print STDERR "Whois command = $whoiscmd\n" if $opts{d};
+grok($whoiscmd, $name);
+exit 0;
+
+sub findwhois {
+	# List of whois commands to find (in order)
+	my @whoiscmds = qw( jwhois whois );
+	foreach my $wc (@whoiscmds) {
+		if (grep { -x "$_/$wc" } @PATH) {
+			$wc .= ' -n ' if ($wc eq 'jwhois');
+			return $wc;
+		}
+	}
+	die "Could not find a whois command!\n";
+}
+
+sub grok {
+	my $whoiscmd = shift || die;
+        my $name = shift || die;
+	my $arg = $name;
+	if ($name =~ /\.name$/) {
+		# In order to get useful information out of
+		# the .NAME whois server, the query must
+		# be reformatted
+		$arg = "'domain = $name'";
+	}
+        open (CMD, "$whoiscmd $arg|") || die;
+        my $registrar = undef;
+        my $whoisservice = undef;
+        my $expires = undef;
+        my $status = '';
+	my $state = 0;
+        print STDERR "checking $name\n" if $opts{d};
+        while (<CMD>) {
+                tr/A-Z/a-z/;
+		print if $opts{d};
+                $registrar = $1 if (/registrar:\s*(\S.*)/);
+                if (!defined($registrar)) {
+                        $registrar = $1 if (/registrar id:\s*(\S.*)/);
+                        $registrar = $1 if (/registrar handle\.*:\s*(\S.*)/);
+                        $registrar = $1 if (/\s+(.*)\s*\[tag\s*=.*\]/);
+			#
+			# CIRA whois output
+			if ($name =~ /\.ca$/ && /^registrar:/) {
+				$_ = <CMD>;
+                		tr/A-Z/a-z/;
+                        	$registrar = $1 if (/name:\s+(.*)/);
+			}
+                }
+
+                if (!defined($whoisservice)) {
+                        $whoisservice = $1 if (/the\s+(\w+)\s+whois\s+database/);
+                        $whoisservice = $1 if (/^\s+(\w+)\s+whois\s+service/);
+                        $whoisservice = $1 if (/record\s+maintained\s+by:\s+(\S.*)/);
+                }
+
+                if (/expiration date:\s*(\d\d-\w\w\w-\d\d\d\d)/) {
+                        $expires = $1;
+                } elsif (/(record )?(will )?expires? on[ :](.*)\.?$/) {
+                        $expires = $3;
+                } elsif (/expires:\s+([-\w\s]+)/) {
+                        $expires = $1;
+                } elsif (/(domain )?expiration date:\s+(.*)/) {
+                        $expires = $2;
+                } elsif ($name =~ /\.gov\.uk$/ && /renewal date:/) {
+			chomp($_ = <CMD>);
+                	tr/A-Z/a-z/;
+			$expires = $_;
+                } elsif (/(expiry|renewal) date:\s+(.*)/) {
+                        $expires = $2;
+                }
+
+		if (defined $opts{s}) {
+			$string_found = 1 if (/$opts{s}/i);
+		}
+        }
+        close(CMD);
+
+	# Remove any trailing dot from the expire time
+	#
+	$expires =~ s/\.$// if defined $expires;
+
+	if (defined $registrar) {
+            $registrar = 'gandi' if ($registrar eq 'r42-lror');
+            $registrar = 'go daddy' if ($registrar =~ /go daddy/);
+            $registrar = 'go daddy' if ($registrar eq 'r91-lror');
+        } elsif (defined $whoisservice) {
+            $registrar = $whoisservice . ' whois service';
+	} elsif (defined $opts{x}) {
+	    $registrar = 'UNKNOWN';
+	} else {
+            critical("Didn't find Registrar");
+	}
+
+	my $t;
+	if (defined $expires) {
+            $t = UnixDate($expires, "%s");
+            critical("Invalid expiration time '$expires'") unless defined $t;
+            critical("Invalid expiration time '$expires'") if ($t < 0);
+            $expires = strftime("%Y-%m-%d", localtime($t));
+	} elsif (defined $opts{x}) {
+	    $t = time + (86400 * 90);
+	    $expires = 'UNKNOWN';
+	} else {
+            critical("Didn't find expiration timestamp");
+	}
+
+	if (defined $opts{s} && 0 == $string_found) {
+		critical ("String '$opts{s}' not found in whois output");
+	}
+
+        critical("Expires $expires at $registrar") if ($t - time < (86400*7));
+        warning ("Expires $expires at $registrar") if ($t - time < (86400*28));
+        success ("Expires $expires at $registrar");
+}       
+
+sub success {
+        output('OK', shift);
+        exit(0);
+}
+
+sub warning {
+        output('WARNING', shift);
+        exit(1);
+}
+
+sub critical {
+        output('CRITICAL', shift);
+        exit(2);
+}       
+
+sub output {
+        my $state = shift;
+        my $msg = shift;
+        printf "WHOIS %s: %s\n", $state, $msg;
+}       
+
+sub usage {
+	"usage: $0 [-xd] [-s string] domain\n".
+	"\t-d\tDebugging\n".
+	"\t-x\tDon't complain if Registrar cannot be determined.\n".
+	"\t-s str\tRequire that the string 'str' appear in the whois output\n";
+}

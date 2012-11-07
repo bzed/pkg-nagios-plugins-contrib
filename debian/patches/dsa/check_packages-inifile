@@ -1,0 +1,13 @@
+--- a/dsa/checks/dsa-check-packages
++++ b/dsa/checks/dsa-check-packages
+@@ -37,8 +37,8 @@ use strict;
+ use warnings;
+ use English;
+ 
+-my $IGNORE = "/etc/nagios/obsolete-packages-ignore";
+-my $IGNORED = "/etc/nagios/obsolete-packages-ignore.d";
++my $IGNORE = "/etc/nagios-plugins/obsolete-packages-ignore";
++my $IGNORED = "/etc/nagios-plugins/obsolete-packages-ignore.d";
+ 
+ my %CODE = (
+ 	'OK'            => 0,

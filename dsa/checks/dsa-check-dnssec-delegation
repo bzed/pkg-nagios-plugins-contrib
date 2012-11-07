@@ -1,0 +1,247 @@
+#!/usr/bin/perl
+
+# Copyright (c) 2010 Peter Palfrader <peter@palfrader.org>
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+use strict;
+use warnings;
+use English;
+use Net::DNS::Resolver;
+use Getopt::Long;
+use File::Basename;
+
+$SIG{'__DIE__'} = sub { print @_; exit 4; };
+
+my $RES = Net::DNS::Resolver->new;
+my $DLV = 'dlv.isc.org';
+my $params;
+
+sub get_tag_generic {
+	my $zone = shift;
+	my $type = shift;
+
+	my @result;
+	print "Querying $type $zone\n" if $params->{'verbose'};
+	my $pkt = $RES->send($zone, $type);
+	return () unless $pkt;
+	return () unless $pkt->answer;
+	for my $rr ($pkt->answer) {
+		next unless ($rr->type eq $type);
+		next unless (lc($rr->name) eq lc($zone));
+
+		# only handle KSKs, i.e. keys with the SEP flag set
+		next if ($type eq 'DNSKEY' && !($rr->is_sep));
+
+		push @result, $rr->keytag;
+	};
+	my %unique = ();
+	@result = sort {$a <=> $b} grep {!$unique{$_}++} @result;
+	return @result
+};
+
+sub get_dnskeytags {
+	my $zone = shift;
+	return get_tag_generic($zone, 'DNSKEY');
+};
+sub get_dstags {
+	my $zone = shift;
+	return get_tag_generic($zone, 'DS');
+};
+sub get_dlvtags {
+	my $zone = shift;
+	$zone .= ".".$DLV;
+	return get_tag_generic($zone, 'DLV');
+};
+sub has_dnskey_parent {
+	my $zone = shift;
+
+	my $potential_parent;
+	if ($zone =~ m/\./) {
+		$potential_parent = $zone;
+		$potential_parent =~ s/^[^.]+\.//;
+	} else {
+		$potential_parent = '.';
+	}
+
+	print "Querying DNSKEY $potential_parent\n" if $params->{'verbose'};
+	my $pkt = $RES->send($potential_parent, 'DNSKEY');
+	return undef unless $pkt;
+	return undef unless $pkt->header;
+
+	unless ($pkt->answer) {
+		return undef unless $pkt->authority;
+		for my $rr ($pkt->authority) {
+			next unless ($rr->type eq 'SOA');
+
+			$potential_parent = $rr->name;
+			print "Querying DNSKEY $potential_parent\n" if $params->{'verbose'};
+			$pkt = $RES->send($potential_parent, 'DNSKEY');
+			return undef unless $pkt;
+			last;
+		};
+	};
+
+	return (0, $potential_parent) unless $pkt->answer;
+	for my $rr ($pkt->answer) {
+		next unless ($rr->type eq 'DNSKEY');
+		return (1, $potential_parent);
+	};
+}
+sub get_parent_dnssec_status {
+	my $zone = shift;
+	my @result;
+
+	while (1) {
+		my ($status, $parent) = has_dnskey_parent($zone);
+		last unless defined $status;
+		push @result, ($status ? "yes" : "no") . ("($parent)");
+		$zone = $parent;
+		last if $zone eq "" || $zone eq '.';
+	};
+
+	return join(', ', @result);
+};
+
+sub usage {
+	my $fd = shift;
+	my $exit = shift;
+
+	print $fd "Usage: $PROGRAM_NAME [--dir <dir>] overview|check-dlv|check-ds|check-header zone [zone...]\n";
+	print $fd "       $PROGRAM_NAME --dir <dir> overview|check-dlv|check-ds|check-header\n";
+	print $fd "       $PROGRAM_NAME --help\n";
+	exit $exit;
+}
+
+sub what_to_check {
+	my $zone = shift;
+	my $zonefile = shift;
+
+	my $do_dlv = 0;
+	my $do_ds = 0;
+
+	open(F, "<", $zonefile) or die ("Cannot open zonefile $zonefile for $zone: $!\n");
+	while (<F>) {
+		if (/^[#;]\s*dlv-submit\s*=\s*yes\s*$/) { $do_dlv = 1; }
+		if (/^[#;]\s*ds-in-parent\s*=\s*yes\s*$/) { $do_ds = 1; }
+	}
+	close(F);
+
+	my @keys = ();
+	push @keys, 'dlv' if $do_dlv;
+	push @keys, 'ds' if $do_ds;
+	return @keys;
+}
+
+Getopt::Long::config('bundling');
+GetOptions (
+	'--help' => \$params->{'help'},
+	'--dir=s@' => \$params->{'dir'},
+	'--dlv=s' => \$params->{'dlv'},
+	'--verbose' => \$params->{'verbose'},
+) or usage(\*STDERR, 1);
+usage(\*STDOUT, 0) if ($params->{'help'});
+
+my $mode = shift @ARGV;
+usage(\*STDOUT, 0) unless (defined $mode && $mode =~ /^(overview|check-dlv|check-ds|check-header)$/);
+die ("check-header needs --dir") if ($mode eq 'check-header' && !defined $params->{'dir'});
+
+my %zones;
+if (scalar @ARGV) {
+	if (defined $params->{'dir'} && $mode ne 'check-header') {
+		warn "--dir option ignored"
+	}
+	%zones = map { $_ => $_} @ARGV;
+} else {
+	my $dirs = $params->{'dir'};
+	usage(\*STDOUT, 0) unless (defined $dirs);
+
+	for my $dir (@$dirs) {
+		chdir $dir or die "chdir $dir failed? $!\n";
+		opendir DIR, '.' or die ("Cannot opendir $dir\n");
+		for my $file (readdir DIR) {
+			next if ( -l "$file" );
+			next unless ( -f "$file" );
+			next if $file =~ /^(dsset|keyset)-/;
+
+			my $zone = $file;
+			if ($file =~ /\.zone$/) { # it's one of our yaml things
+				$zone = basename($file, '.zone');
+			};
+			$zones{$zone} = "$dir/$file";
+		}
+		closedir(DIR);
+	};
+};
+
+$DLV = $params->{'dlv'} if $params->{'dlv'};
+
+
+if ($mode eq 'overview') {
+	my %data;
+	for my $zone (keys %zones) {
+		$data{$zone} = { 'dnskey' => join(', ', get_dnskeytags($zone)),
+				 'ds'     => join(', ', get_dstags($zone)),
+				 'dlv'    => join(', ', get_dlvtags($zone)),
+				 'parent_dnssec' => get_parent_dnssec_status($zone) };
+	}
+
+	my $format = "%60s %-10s %-10s %-10s %-10s\n";
+	printf $format, "zone", "DNSKEY", "DS\@parent", "DLV", "dnssec\@parent";
+	printf $format, "-"x 60,  "-"x 10,  "-"x 10,  "-"x 10, "-"x 10;
+	for my $zone (sort {$a cmp $b} keys %data) {
+		printf $format, $zone,
+			$data{$zone}->{'dnskey'},
+			$data{$zone}->{'ds'},
+			$data{$zone}->{'dlv'},
+			$data{$zone}->{'parent_dnssec'};
+	}
+	exit(0);
+} elsif ($mode eq 'check-dlv' || $mode eq 'check-ds' || $mode eq 'check-header') {
+	my $key;
+	$key = 'dlv' if $mode eq 'check-dlv';
+	$key = 'ds' if $mode eq 'check-ds';
+	$key = 'per-zone' if $mode eq 'check-header';
+	die ("key undefined") unless $key;
+
+	my @warn;
+	my @ok;
+	for my $zone (sort {$a cmp $b} keys %zones) {
+		my @thiskeys = $key eq 'per-zone' ? what_to_check($zone, $zones{$zone}) : ($key);
+
+		my $dnskey = join(', ', get_dnskeytags($zone)) || '-';
+		for my $thiskey (@thiskeys) {
+			my $target = join(', ', $thiskey eq 'ds' ? get_dstags($zone) : get_dlvtags($zone)) || '-';
+
+			if ($dnskey ne $target) {
+				push @warn, "$zone ([$dnskey] != [$target])";
+			} else  {
+				push @ok, "$zone ($dnskey)";
+			};
+		}
+	}
+	print "WARNING: ", join(", ", @warn), "\n" if (scalar @warn);
+	print "OK: ", join(", ", @ok), "\n" if (scalar @ok);
+	exit (1) if (scalar @warn);
+	exit (0);
+} else {
+	die ("Invalid mode '$mode'\n");
+};
+

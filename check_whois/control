@@ -1,0 +1,9 @@
+Homepage: http://dns.measurement-factory.com/tools/nagios-plugins/check_whois.html
+Watch: http://dns.measurement-factory.com/tools/nagios-plugins/src/check_whois Id: check_whois,v ([0-9.]+)
+Uploaders: Bernd Zeimetz <bzed@debian.org>
+Description: plugin to check for the expiration of a domain.
+ The plugin may not yet work with all registrars, since their
+ output formats differ or there is no expiration date in the
+ whois output.
+Recommends: libdate-manip-perl
+Version: 1.12

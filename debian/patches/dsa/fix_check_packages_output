@@ -1,0 +1,11 @@
+--- a/dsa/checks/dsa-check-packages
++++ b/dsa/checks/dsa-check-packages
+@@ -326,7 +326,7 @@ my $shortout = $EXITCODE.": ".join(", ",
+ my $longout = join("\n", @longout);
+ my $perfout = "|".join(" ", @perfout);
+ 
+-print $shortout;
++print $shortout,"\n";
+ print $longout,"\n";
+ print $perfout,"\n";
+ 

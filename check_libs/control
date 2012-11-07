@@ -1,0 +1,7 @@
+Homepage: http://svn.noreply.org/cgi-bin/viewvc.cgi/weaselutils/trunk/?logsort=cvs&diff_format=s&sortby=file#dirlist
+Watch: http://svn.noreply.org/cgi-bin/viewvc.cgi/weaselutils/trunk/nagios-check-libs?logsort=cvs&diff_format=s&sortby=file&view=log <a name="rev([0-9]+)"></a>
+Uploaders: Bernd Zeimetz <bzed@debian.org>
+Description: plugin to report the usage of no longer existing
+ libraries by running processes
+Recommends: lsof, libyaml-syck-perl
+Version: 520

@@ -11,15 +11,16 @@ Vcs-Browser: http://git.debian.org/?p=pkg-nagios/pkg-nagios-plugins-contrib;a=su
 Package: nagios-plugins-contrib
 Architecture: any
 Depends: ${misc:Depends}
-Recommends: ${shlibs:Depends}, backuppc, libnagios-plugin-perl, libnagios-plugin-perl (>= 0.31), libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-ssleay-perl, liblocale-gettext-perl, liblwp-useragent-determined-perl, snmp, freeipmi-tools, libreadonly-perl, libnet-dns-perl, libnet-snmp-perl, openssl
-Suggests: perl-doc, cciss-vol-status, mpt-status, expect
+Recommends: ${shlibs:Depends}, ${python:Depends}, libnagios-plugin-perl, libnagios-plugin-perl (>= 0.31), libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-ssleay-perl, liblocale-gettext-perl, liblwp-useragent-determined-perl, snmp, freeipmi-tools, libipc-run-perl, lsof, libyaml-syck-perl, libdbd-mysql-perl, libreadonly-perl, libnet-dns-perl, libnet-snmp-perl, openssl, libwebinject-perl, libdate-manip-perl, ruby | ruby-interpreter, ${perl:Depends}
+Suggests: backuppc, perl-doc, cciss-vol-status, mpt-status, expect, nagios-plugin-check-multi, moreutils
 Enhances: nagios-plugins, nagios-plugins-basic, nagios-plugins-standard
 Description: Plugins for nagios compatible monitoring systems
  This package provides various plugins for Nagios compatible monitoring
  systems like Nagios and Icinga.
  It contains the following plugins:
  .
-   * check_backuppc (1.1.0): plugin for checking on the status of BackupPC backups
+   * check_backuppc (1.1.0): plugin for checking on the status of
+     BackupPC backups
    * check_email_delivery (0.7.1b): plugin to monitor email delivery
      Some typical uses of this plugin include:
        - check SMTP server
@@ -30,7 +31,7 @@ Description: Plugins for nagios compatible monitoring systems
        - monitor automated mailboxes
        - check email-to-FTP or other special email gateways
    * check_haproxy (rev135): plugin check the HAProxy statistics url
-   * check_hpasm (4.3): plugin to check the hardware health of
+   * check_hpasm (4.5.2): plugin to check the hardware health of
      HP Proliant Servers
      It either uses snmp or - if installed - the hpasm package locally.
      The plugin checks the health of
@@ -44,9 +45,11 @@ Description: Plugins for nagios compatible monitoring systems
      outside its normal parameters.
    * check_httpd_status (rev140): plugin checking Apache or Lighthttpd
      server-status page (using mod_status)
-   * check_ipmi_sensor (2.3): IPMI Sensor Monitoring Plugin
+   * check_ipmi_sensor (3.1): IPMI Sensor Monitoring Plugin
      Plugin to monitor the hardware status (fan speed, temperaturs,
      voltages, power usage, ...) of a server using IPMI.
+   * check_libs (520): plugin to report the usage of no longer existing
+     libraries by running processes
    * check_lm_sensors (3.1.1): plugin to monitor hardware sensors
      and disk temperatures
    * check_memcached (1.2): plugin to check memcached instances
@@ -56,14 +59,19 @@ Description: Plugins for nagios compatible monitoring systems
      limit.
      Hit/miss and evictions are measured over a 30 minute interval,
      using a memcached object to store the earlier statistics.
+   * check_memory (1.0): plugin to check for free memory
+     This plugin excludes the system cache and buffer, because
+     on some system with very stable memory usage it is perfectly
+     normal for system cache to fill in all available memory.
    * check_multipath (0.1.5): plugin to monitor the number of available and
      failed paths of multipath devices
    * check_mysql_health (2.1.7): plugin to check various parameters of a
      MySQL database
+   * check_nfsmounts: checks whether there are stale NFS mounts on the host
    * check_printer: plugin to check printer supply levels using SNMP
      It outputs performance data for all supplies
      found, for example toner and drum.
-   * check_raid (rev1.107): plugin to check sw/hw RAID status
+   * check_raid (rev1.119): plugin to check sw/hw RAID status
      The plugin looks for any known types of RAID configurations,
      and checks them all.
      .
@@ -94,7 +102,7 @@ Description: Plugins for nagios compatible monitoring systems
      Foundry Network, Linux (using lm-sensors), Extreme Networks,
      Juniper Networks, HP ProCurve, Netscreen, Citrix NetScaler
      and Transmode Systems hardware.
-   * check_ssl_cert (1.11.0): plugin to check the CA and validity of an
+   * check_ssl_cert (1.13.0): plugin to check the CA and validity of an
      X.509 certificate
    * check_webinject (1.69): plugin for testing web services
      It uses the WebInject Perl module for automated testing of
@@ -102,6 +110,31 @@ Description: Plugins for nagios compatible monitoring systems
      individual system components that have HTTP interfaces
      (JSP, ASP, CGI, PHP, AJAX, Servlets, HTML Forms,
      XML/SOAP Web Services, REST, etc).
+   * check_whois (1.12): plugin to check for the expiration of a domain.
+     The plugin may not yet work with all registrars, since their
+     output formats differ or there is no expiration date in the
+     whois output.
+   * check_zone_auth (1.13): plugin to ensure that the authoritative nameservers
+     for a given zone remain in sync.
+   * check_zone_rrsig_expiration (1.10): plugin to check for expiration of
+     signatures in dnssec-enabled zones.
+   * dsa: plugins from the Debian System Administrators
+     nagios plugins repository.
+     * check_cert_expire: check for certificate expiration
+       using openssl on the certificate file
+     * check_dnssec_delegation: check for correct DNSSEC
+       delegation
+     * check_entropy: check if there is enough entropy available.
+     * check_packages: replacement for check_apt; needs a cronjob
+       to update the apt database regularily
+     * check_running_kernel: check if a system was rebooted after
+       a kernel upgrade
+     * check_soas: check SOA records
+     * check_statusfile: deliver the content of a status file
+       as check result
+   * extras (1): various scripts and extras
+     Not a plugin, but a collection of various useful
+     event/obsession handlers and similar scripts.
  .
  Some scripts and binaries need more packages installed to work, which is
- implemented as recommands.
+ implemented as recommends.
