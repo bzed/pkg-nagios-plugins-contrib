@@ -20,3 +20,4 @@ check_rbl/spelling_errors
 check_haproxy/epn
 check_httpd_status/epn
 check_backuppc/use_nagios_plugins
+check_raid/3ware_fix_notpresent
