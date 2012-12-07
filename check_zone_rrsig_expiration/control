@@ -3,5 +3,5 @@ Watch: http://dns.measurement-factory.com/tools/nagios-plugins/src/check_zone_rr
 Uploaders: Bernd Zeimetz <bzed@debian.org>
 Description: plugin to check for expiration of
  signatures in dnssec-enabled zones.
-Recommends: libnet-dns-perl
+Recommends: libnet-dns-perl, libnet-dns-sec-perl
 Version: 1.10
