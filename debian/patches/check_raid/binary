@@ -1,0 +1,13 @@
+Index: check_raid/check_raid
+===================================================================
+--- check_raid.orig/check_raid	2013-01-28 12:47:07.807913303 +0100
++++ check_raid/check_raid	2013-01-28 12:48:02.748424922 +0100
+@@ -83,7 +83,7 @@
+ my $metastat = which('metastat');
+ my $lsvg = which('lsvg');
+ my $ipssend = which('ipssend');
+-my $tw_cli = which('tw_cli-9xxx') || which('tw_cli')
++my $tw_cli = which('tw_cli-9xxx') || which('tw_cli') || which('tw-cli');
+ my $arcconf = which('arcconf');
+ my $megarc = which('megarc');
+ my $cmdtool2 = which('CmdTool2');
