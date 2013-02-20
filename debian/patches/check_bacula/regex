@@ -1,0 +1,13 @@
+Index: check_bacula/check_bacula
+===================================================================
+--- check_bacula.orig/check_bacula	2013-01-28 12:44:48.314610944 +0100
++++ check_bacula/check_bacula	2013-01-28 12:45:41.347106656 +0100
+@@ -56,7 +56,7 @@
+         if child.expect_list([re.compile(r'Terminated Jobs:'), re.compile(r'Error: Client resource .* does not exist.')]):
+             raise RuntimeError('unknown client %s' % options.host)
+         child.expect(r'\n\*')
+-        r = re.compile(r'\s*(\d+)\s+(\S+)\s+(\S+)\s+(\d+\.\d+\s+[KMGTP]|0)\s+OK\s+(\S+\s+\S+)\s+%s' % re.escape(options.host))
++        r = re.compile(r'\s*(\d+)\s+(\S+)\s+(\S+)\s+(\d+\.\d+\s+[KMGTP]|0)\s+OK\s+(\S+\s+\S+)')
+         job_id = level = files = bytes = finished = None
+         for line in child.before.splitlines():
+             m = r.match(line)
