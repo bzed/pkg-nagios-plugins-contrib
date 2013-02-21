@@ -21,8 +21,9 @@
 #
 # $Id: $
 #
-# Copyright (C) 2011 Hinnerk Rümenapf, Trond H. Amundsen, Gunther Schlegel, Matija Nalis, 
-#                                      Bernd Zeimetz
+# Copyright (C) 2011-2013 
+# Hinnerk Rümenapf, Trond H. Amundsen, Gunther Schlegel, Matija Nalis, 
+# Bernd Zeimetz, Sven Anders
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -50,6 +51,9 @@
 #      0.1.3    minor improvements
 #      0.1.4    add hostname to "unknown error" message, improve help text
 #      0.1.5    add debian testcases and patch by Bernd Zeimetz
+#      0.1.6    Added checklunline test for "-" character, thanks to Sven Anders <s.anders@digitec.de> also for test data (testcase 22)
+#      0.1.7    Added test option
+#      0.1.8    Added Support for LUN names without HEX-ID (e.g. iSCSI LUNs)
 
 
 use strict;
@@ -73,9 +77,9 @@ use vars qw( $NAME $VERSION $AUTHOR $CONTACT $E_OK $E_WARNING $E_CRITICAL
 
 # === Version and similar info ===
 $NAME    = 'check-multipath.pl';
-$VERSION = '0.1.5'; # 23. FEB. 2012 
+$VERSION = '0.1.8   20. FEB. 2013';
 $AUTHOR  = 'Hinnerk Rümenapf';
-$CONTACT = 'hinnerk.ruemenapf@rrz.uni-hamburg.de  hinnerk.ruemenapf@gmx.de';
+$CONTACT = 'hinnerk.ruemenapf@uni-hamburg.de  hinnerk.ruemenapf@gmx.de';
 
 
 
@@ -349,6 +353,34 @@ $SIG{__WARN__} = sub { push @perl_warnings, [@_]; };
 ."`-+- policy='round-robin 0' prio=0 status=enabled\n"
 ."  `- #:#:#:# - #:# active faulty running\n",
 
+#22. "-" in LUN name (thanks to Sven Anders <s.anders@digitec.de>)
+"tex-lun4 (3600000e00d0000000002161200120000) dm-7 FUJITSU ,ETERNUS_DXL\n"
+."[size=1.2T][features=1 queue_if_no_path][hwhandler=0]\n"
+."\\_ round-robin 0 [prio=0][active]\n"
+." \\_ 7:0:1:4 sdt 65:48 [active][undef]\n"
+." \\_ 2:0:1:4 sdu 65:64 [active][undef]\n"
+."tex-lun3 (3600000e00d0000000002161200110000) dm-8 FUJITSU ,ETERNUS_DXL\n"
+."[size=1.0T][features=1 queue_if_no_path][hwhandler=0]\n"
+."\\_ round-robin 0 [prio=0][active]\n"
+." \\_ 2:0:1:3 sds 65:32 [active][undef]\n"
+." \\_ 7:0:1:3 sdr 65:16 [active][undef]\n",
+
+#23. LUN without HEX-ID (iSCSI) thanks to Ernest Beinrohr <Ernest.Beinrohr@axonpro.sk>
+"1STORAGE_server_target2 dm-2 IET,VIRTUAL-DISK\n"
+."size=1.0T features='0' hwhandler='0' wp=rw\n"
+."`-+- policy='round-robin 0' prio=0 status=active\n"
+."  |- 9:0:0:1  sdc 8:32 active undef running\n"
+."  `- 10:0:0:1 sdd 8:48 active undef running\n",
+
+#24. LUN without HEX-ID (iSCSI) thanks to Ernest Beinrohr <Ernest.Beinrohr@axonpro.sk>
+"1STORAGE_server_target2 dm-2 IET,VIRTUAL-DISK\n"
+."size=1.0T features='0' hwhandler='0' wp=rw\n"
+."`-+- policy='round-robin 0' prio=1 status=active\n"
+."  |- 9:0:0:1  sdc 8:32 active ready  running\n"
+."  `- 10:0:0:1 sdd 8:48 failed faulty running\n",
+
+
+
     );
 
 # Commands with path
@@ -412,19 +444,28 @@ OPTIONS:
                       -other-  use specifies string as linebreak symbol
 
   -d, --di            Run testcase instead of real check           [0]
+  -t, --test          Do not display testcase input, just result
+
   -h, --help          Display this message
 
 END_HELP
 
 # Version and license text
 $LICENSE = <<"END_LICENSE";
-$NAME $VERSION
-Copyright (C) 2011 $AUTHOR
+
+$NAME   $VERSION
+
+Copyright (C) 2011-2013 $AUTHOR
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
 This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.
 
-Written by $AUTHOR <$CONTACT>
+Written by
+$AUTHOR <$CONTACT>
+
+Thanks for contributions to
+Bernd Zeimetz, Sven Anders and others
+
 Based on work by 
 - Trond H. Amundsen <t.h.amundsen\@usit.uio.no>
 - Gunther Schlegel  <schlegel\@riege.com>
@@ -445,6 +486,7 @@ END_LICENSE
       'shortstate'    => 0,
       'linebreak'     => undef,
       'verbose'       => 0,
+      'test'          => 0, 
     );
 
 # Get options
@@ -459,6 +501,7 @@ GetOptions(#'t|timeout=i'      => \$opt{timeout},
 	   'S|short-state'    => \$opt{shortstate},
 	   'l|linebreak=s'    => \$opt{linebreak},
 	   'v|verbose'        => \$opt{verbose},
+	   't|test'           => \$opt{test},
 	  ) or do { print $USAGE; exit $E_UNKNOWN };
 
 # If user requested help
@@ -560,7 +603,11 @@ sub unknown_error {
 		
     my $hostname = qx('hostname');           # add hostname to error message
     chomp $hostname;
-    print "ERROR: $msg |Host: $hostname|\n";
+    if ($opt{"test"}) {
+	print "ERROR: $msg |TESTCASE|\n";
+    } else {
+	print "ERROR: $msg |Host: $hostname|\n";
+    }
     exit $E_UNKNOWN;
 }
 
@@ -606,7 +653,9 @@ sub get_multipath_text {
 	#print "-----\ndi=". $opt{"di"} ."\n-----\n[". $output ."]\n-----\n\n";
     } else {                                                      # TESTCASE
 	$output = $debugInput[$opt{"di"}];
-        print "=====\nTESTCASE di=". $opt{"di"} ."\n-----\n". $output ."=====\n";
+	if (!$opt{"test"} ) {
+	    print "=====\nTESTCASE di=". $opt{"di"} ."\n-----\n". $output ."=====\n";
+	} # if
     }
 
     $output =~ s/[\[\]\\]+/ /g;                                   # substitute special characters with space
@@ -627,8 +676,8 @@ sub checkLunLine {
     # mpathb (36000d774000045f655ea91cb4ea41d6f) dm-1 FALCON,IPSTOR DISK
     # mpathb (36000d774000045f655ea91cb4ea41d6f) dm-1 
     # MYVOLUME (36005076801810523100000000000006f)
-    #if ($textLine =~ m/^(\w+) \s+ \([0-9a-fA-F]+\) \s+ [\w\-\_]+/x) {
-    if ($textLine =~ m/^(\w+) \s+ \([0-9a-fA-F]+\)/x) {
+    # tex-lun4 (3600000e00d0000000002161200120000) dm-7 FUJITSU ,ETERNUS_DXL
+    if ($textLine =~ m/^([\w\-]+) \s+ \([0-9a-fA-F]+\)/x) {
 	$$rCurrentLun = $1;                           # do initialisations for new LUN
 	#report("named LUN $$rCurrentLun found", $E_OK);
 	$$rLunPaths{$$rCurrentLun} = 0;
@@ -640,7 +689,17 @@ sub checkLunLine {
 	#report("simple LUN $$rCurrentLun found", $E_OK);
 	$$rLunPaths{$$rCurrentLun} = 0;
 	return 1;
-    } else {
+    } 
+    # iscsi-LUN example
+    # 1STORAGE_server_target2 dm-2 IET,VIRTUAL-DISK
+    #elsif ($textLine =~ m/^([\w\-]+) \s+ [a-z]+\-\d+/x) {
+    elsif ($textLine =~ m/^([\w\-]+) \s+ [a-z]+\-\d+ \s+ [\w\-\,]+/x) {
+	$$rCurrentLun = $1;                           # do initialisations for new LUN
+	#report("LUN without HEX-ID $$rCurrentLun found", $E_OK);
+	$$rLunPaths{$$rCurrentLun} = 0;
+	return 1;
+    }
+    else {
 	return 0;
     } # if
 } # sub
