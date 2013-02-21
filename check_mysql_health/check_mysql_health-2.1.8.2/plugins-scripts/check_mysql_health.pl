@@ -295,6 +295,8 @@ my @params = (
     "socket|S=s",
     "username|u=s",
     "password|p=s",
+    "mycnf=s",
+    "mycnfgroup=s",
     "mode|m=s",
     "name=s",
     "name2=s",
@@ -425,8 +427,8 @@ if (exists $commandline{runas}) {
   $needs_restart = 1;
   # if the calling script has a path for shared libs and there is no --environment
   # parameter then the called script surely needs the variable too.
-  foreach my $important_env qw(LD_LIBRARY_PATH SHLIB_PATH 
-      ORACLE_HOME TNS_ADMIN ORA_NLS ORA_NLS33 ORA_NLS10) {
+  foreach my $important_env (qw(LD_LIBRARY_PATH SHLIB_PATH 
+      ORACLE_HOME TNS_ADMIN ORA_NLS ORA_NLS33 ORA_NLS10)) {
     if ($ENV{$important_env} && ! scalar(grep { /^$important_env=/ } 
         keys %{$commandline{environment}})) {
       $commandline{environment}->{$important_env} = $ENV{$important_env};
@@ -483,6 +485,11 @@ if (! exists $commandline{statefilesdir}) {
 }
 
 if (exists $commandline{name}) {
+  if ($^O =~ /MSWin/ && $commandline{name} =~ /^'(.*)'$/) {
+    # putting arguments in single ticks under Windows CMD leaves the ' intact
+    # we remove them
+    $commandline{name} = $1;
+  }
   # objects can be encoded like an url
   # with s/([^A-Za-z0-9])/sprintf("%%%02X", ord($1))/seg;
   if (($commandline{mode} ne "sql") || 
@@ -515,7 +522,6 @@ if ($commandline{mode} =~ /^my-([^\-.]+)/) {
   print_usage();
   exit 3;
 }
-
 my %params = (
     timeout => $TIMEOUT,
     mode => (
@@ -547,6 +553,12 @@ my %params = (
     password => $commandline{password} || 
         $ENV{NAGIOS__SERVICEMYSQL_PASS} ||
         $ENV{NAGIOS__HOSTMYSQL_PASS},
+    mycnf => $commandline{mycnf} || 
+        $ENV{NAGIOS__SERVICEMYSQL_MYCNF} ||
+        $ENV{NAGIOS__HOSTMYSQL_MYCNF},
+    mycnfgroup => $commandline{mycnfgroup} || 
+        $ENV{NAGIOS__SERVICEMYSQL_MYCNFGROUP} ||
+        $ENV{NAGIOS__HOSTMYSQL_MYCNFGROUP},
     warningrange => $commandline{warning},
     criticalrange => $commandline{critical},
     dbthresholds => $commandline{dbthresholds},

@@ -2,6 +2,18 @@
 # Changelog of the check_mysql_health plugin #
 ###############################################
 
+2.1.8.2 2012-08-08
+- bugfix in querycache-hitrate (div by 0 after db restart). (Thanks Gianluca Varisco)
+
+2.1.8.1 2012-01-21
+- bugfix in timeout-alarm handling under windows
+- fix warnings for newest perl versions
+
+2.1.8 2011-09-29
+- new parameters --mycnf and --mycnfgroup 
+- single ticks around the --name argument under Windows CMD will be removed auto
+matically
+
 2.1.7 2011-08-23
 - innodb modes now detect problems with the innodb engine
 

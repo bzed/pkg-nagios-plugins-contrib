@@ -112,8 +112,11 @@ sub init {
         100 * $self->{delta_qcache_hits} /
             ($self->{delta_com_select} + $self->{delta_qcache_hits}) :
         0;
-    $self->{querycache_hitrate} =
-        100 * $self->{qcache_hits} / ($self->{com_select} + $self->{qcache_hits});
+    $self->{querycache_hitrate} = 
+        ($self->{com_select} + $self->{qcache_hits}) > 0 ?
+        100 * $self->{qcache_hits} /
+            ($self->{com_select} + $self->{qcache_hits}) :
+        0;
     $self->{selects_per_sec} =
         $self->{delta_com_select} / $self->{delta_timestamp};
   } elsif ($params{mode} =~ /server::instance::querycachelowmemprunes/) {

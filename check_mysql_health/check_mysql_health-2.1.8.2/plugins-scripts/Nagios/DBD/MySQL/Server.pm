@@ -43,6 +43,8 @@ sub new {
     socket => $params{socket},
     username => $params{username},
     password => $params{password},
+    mycnf => $params{mycnf},
+    mycnfgroup => $params{mycnfgroup},
     timeout => $params{timeout},
     warningrange => $params{warningrange},
     criticalrange => $params{criticalrange},
@@ -311,7 +313,7 @@ sub add_nagios {
   my $message = shift;
   push(@{$self->{nagios}->{messages}->{$level}}, $message);
   # recalc current level
-  foreach my $llevel qw(CRITICAL WARNING UNKNOWN OK) {
+  foreach my $llevel (qw(CRITICAL WARNING UNKNOWN OK)) {
     if (scalar(@{$self->{nagios}->{messages}->{$ERRORS{$llevel}}})) {
       $self->{nagios_level} = $ERRORS{$llevel};
     }
@@ -855,6 +857,8 @@ sub new {
     socket => $params{socket},
     username => $params{username},
     password => $params{password},
+    mycnf => $params{mycnf},
+    mycnfgroup => $params{mycnfgroup},
     handle => undef,
   };
   bless $self, $class;
@@ -893,30 +897,42 @@ sub init {
       $self->{password} = time;
     }
   } else {
-    if (($self->{hostname} ne 'localhost') && (! $self->{username} || ! $self->{password})) {
-      $self->{errstr} = "Please specify hostname, username and password";
+    if (
+        ($self->{hostname} ne 'localhost' && (! $self->{username} || ! $self->{password})) && 
+        (! $self->{mycnf}) ) {
+      $self->{errstr} = "Please specify hostname, username and password or a .cnf file";
       return undef;
     }
     $self->{dsn} = "DBI:mysql:";
     $self->{dsn} .= sprintf "database=%s", $self->{database};
-    $self->{dsn} .= sprintf ";host=%s", $self->{hostname};
-    $self->{dsn} .= sprintf ";port=%s", $self->{port}
-        unless $self->{socket} || $self->{hostname} eq 'localhost';
-    $self->{dsn} .= sprintf ";mysql_socket=%s", $self->{socket} 
-        if $self->{socket};
+    if ($self->{mycnf}) {
+      $self->{dsn} .= sprintf ";mysql_read_default_file=%s", $self->{mycnf};
+      if ($self->{mycnfgroup}) {
+        $self->{dsn} .= sprintf ";mysql_read_default_group=%s", $self->{mycnfgroup};
+      }
+    } else {
+      $self->{dsn} .= sprintf ";host=%s", $self->{hostname};
+      $self->{dsn} .= sprintf ";port=%s", $self->{port}
+          unless $self->{socket} || $self->{hostname} eq 'localhost';
+      $self->{dsn} .= sprintf ";mysql_socket=%s", $self->{socket} 
+          if $self->{socket};
+    }
   }
   if (! exists $self->{errstr}) {
     eval {
       require DBI;
       use POSIX ':signal_h';
-      local $SIG{'ALRM'} = sub {
-        die "alarm\n";
-      };
-      my $mask = POSIX::SigSet->new( SIGALRM );
-      my $action = POSIX::SigAction->new(
-          sub { die "alarm\n" ; }, $mask);
-      my $oldaction = POSIX::SigAction->new();
-      sigaction(SIGALRM ,$action ,$oldaction );
+      if ($^O =~ /MSWin/) {
+        local $SIG{'ALRM'} = sub {
+          die "alarm\n";
+        };
+      } else {
+        my $mask = POSIX::SigSet->new( SIGALRM );
+        my $action = POSIX::SigAction->new(
+            sub { die "alarm\n" ; }, $mask);
+        my $oldaction = POSIX::SigAction->new();
+        sigaction(SIGALRM ,$action ,$oldaction );
+      }
       alarm($self->{timeout} - 1); # 1 second before the global unknown timeout
       if ($self->{handle} = DBI->connect(
           $self->{dsn},
@@ -1126,14 +1142,17 @@ sub init {
       }
   
       use POSIX ':signal_h';
-      local $SIG{'ALRM'} = sub {
-        die "alarm\n";
-      };
-      my $mask = POSIX::SigSet->new( SIGALRM );
-      my $action = POSIX::SigAction->new(
-          sub { die "alarm\n" ; }, $mask);
-      my $oldaction = POSIX::SigAction->new();
-      sigaction(SIGALRM ,$action ,$oldaction );
+      if ($^O =~ /MSWin/) {
+        local $SIG{'ALRM'} = sub {
+          die "alarm\n";
+        };
+      } else {
+        my $mask = POSIX::SigSet->new( SIGALRM );
+        my $action = POSIX::SigAction->new(
+            sub { die "alarm\n" ; }, $mask);
+        my $oldaction = POSIX::SigAction->new();
+        sigaction(SIGALRM ,$action ,$oldaction );
+      }
       alarm($self->{timeout} - 1); # 1 second before the global unknown timeout
   
       my $answer = $self->fetchrow_array(
@@ -1415,14 +1434,17 @@ sub init {
     eval {
       require DBI;
       use POSIX ':signal_h';
-      local $SIG{'ALRM'} = sub {
-        die "alarm\n";
-      };
-      my $mask = POSIX::SigSet->new( SIGALRM );
-      my $action = POSIX::SigAction->new(
-      sub { die "alarm\n" ; }, $mask);
-      my $oldaction = POSIX::SigAction->new();
-      sigaction(SIGALRM ,$action ,$oldaction );
+      if ($^O =~ /MSWin/) {
+        local $SIG{'ALRM'} = sub {
+          die "alarm\n";
+        };
+      } else {
+        my $mask = POSIX::SigSet->new( SIGALRM );
+        my $action = POSIX::SigAction->new(
+            sub { die "alarm\n" ; }, $mask);
+        my $oldaction = POSIX::SigAction->new();
+        sigaction(SIGALRM ,$action ,$oldaction );
+      }
       alarm($self->{timeout} - 1); # 1 second before the global unknown timeout
       if ($self->{handle} = DBI->connect(
           sprintf("DBI:SQLRelay:host=%s;port=%d;socket=%s", 
