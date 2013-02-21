@@ -1,3 +1,33 @@
+2012-12-07  Matteo Corti  <matteo.corti@id.ethz.ch>
+
+	* fixed	#122 (-N was always comparing the CN with 'localhost')
+
+2012-11-16  Matteo Corti  <matteo.corti@id.ethz.ch>
+
+	* simplified the sourcing of the script file for testing
+
+2012-10-11  Matteo Corti  <matteo.corti@id.ethz.ch>
+
+	* added some unit tests with shUnit2
+
+2012-09-19  Matteo Corti  <matteo.corti@id.ethz.ch>
+
+	* check_ssl_cert: improved the "No certificate returned" error message
+
+2012-07-13  Matteo Corti  <matteo.corti@id.ethz.ch>
+
+	* check_ssl_cert: added the number of days from or to expiration in the
+			  plugin output
+
+2012-07-11  Matteo Corti  <matteo.corti@id.ethz.ch>
+
+	* check_ssl_cert: fixed a bug with Perl date computation on some systems
+
+2012-07-06  Matteo Corti  <matteo.corti@id.ethz.ch>
+
+	* check_ssl_cert: performance data in days
+	* check_ssl_cert: long output (certificate attributes)
+
 2012-04-05  Matteo Corti  <matteo.corti@id.ethz.ch>
 
 	* check_ssl_cert: handle broken OpenSSL clients (-servername not working)

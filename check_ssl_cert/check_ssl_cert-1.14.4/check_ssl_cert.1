@@ -1,7 +1,7 @@
 .\" Process this file with
 .\" groff -man -Tascii foo.1
 .\"
-.TH "check_ssl_cert" 1 "April, 2012" "1.13.0" "USER COMMANDS"
+.TH "check_ssl_cert" 1 "July, 2012" "1.14.4" "USER COMMANDS"
 .SH NAME
 check_ssl_cert \- checks the validity of X.509 certificates
 .SH SYNOPSIS
@@ -41,6 +41,10 @@ local file path (works with -H localhost only)
 .TP
 .BR "-h,--help,-?"
 this help message
+.TP
+.BR "--long-output" " list"
+append the specified comma separated (no spaces) list of attributes to the plugin output on additional lines.
+Valid attributes are: enddate, startdate, subject, issuer, modulus, serial, hash, email, ocsp_uri and fingerprint. 'all' will include all the available attributes.
 .TP
 .BR "-i,--issuer" " issuer"
 pattern to match the issuer of the certificate
