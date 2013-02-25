@@ -1,6 +1,6 @@
---- pkg-nagios-plugins-contrib.orig/check_backuppc/src/check_backuppc	2007-03-18 18:54:26.000000000 +0100
-+++ pkg-nagios-plugins-contrib/check_backuppc/src/check_backuppc	2012-04-02 00:48:10.000000000 +0200
-@@ -32,7 +32,7 @@
+--- a/check_backuppc/src/check_backuppc
++++ b/check_backuppc/src/check_backuppc
+@@ -32,7 +32,7 @@ no utf8;
  
  # Nagios
  use lib "NAGIOS_LIB";
