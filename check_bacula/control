@@ -1,7 +1,0 @@
-Homepage: https://github.com/twpayne/nagios-plugin-bacula
-Watch: https://github.com/twpayne/nagios-plugin-bacula/commits/master
-Suggests: bacula-console
-Version: 46d86b2d5151ed6ae7f2fb963da6632cc9ccc073
-Uploaders: Dennis Hoppe <dennis.hoppe@debian-solutions.de>
-Description: plugin to check the status of
- Bacula backups
