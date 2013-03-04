@@ -1,0 +1,6 @@
+Uploaders: Bernd Zeimetz <bzed@debian.org>
+Build-Depends: libvarnishapi-dev, pkg-config
+Version: 1.1
+Homepage: http://repo.varnish-cache.org/source/
+Watch: http://repo.varnish-cache.org/source/ varnish-nagios-([0-9.]+)\.tar\.gz
+Description: plugin to monitor varnish instances

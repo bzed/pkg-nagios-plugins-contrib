@@ -1,8 +1,40 @@
-nagios-plugins-contrib (4.20120702~bpo60+1) squeeze-backports; urgency=low
+nagios-plugins-contrib (5.20130304~bpo60+1) squeeze-backports; urgency=low
 
   * Rebuild for squeeze-backports.
 
- -- Bernd Zeimetz <bzed@debian.org>  Thu, 02 Aug 2012 23:16:50 +0200
+ -- Bernd Zeimetz <bzed@debian.org>  Mon, 04 Mar 2013 15:29:27 +0100
+
+nagios-plugins-contrib (5.20130304) experimental; urgency=low
+
+  * [aa113517] Fix typos s/Recommands/Recommends/
+  * [8e2b3019] Ensure typoed fieldnames in control files are not ignored.
+  * [ecead75d] Add extras folder.
+  * [0423b2a4] Add check_memory.
+  * [48825157] Merge remote-tracking branch 'github/master'
+  * [90ba4bec] Better command example for send_nsca_host_or_service_check_result
+  * [a564c43d] Add check_nfsmounts.
+  * [dc3d5425] Add Recommends for check_nfsmounts.
+  * [bf12e2e0] Add check_apt for check_multi.
+  * [52d46e1a] Add perl dependencies automatically.
+  * [e77b2058] Fix building check_memcached in Ubuntu.
+  * [98c1f4c1] extras needs to Suggests only.
+  * [f84d3678] Add check_clamav.
+  * [05cca8f6] Merge branch 'master' of vasks.debian.org:/git/pkg-nagios/pkg-nagios-plugins-contrib
+  * [80415a76] Add some missing directories to the check-libs config.
+  * [08a91068] Add check_varnish
+  * [15385538] Fix watch line of check_clamav.
+  * [74bf1d94] Update check_raid to version 3.0
+  * [26209f4e] Update check_hpasm to 4.6.3
+  * [6cd0fa8f] Updating check_multipath to 0.1.8
+  * [34fa0ffc] Updating check_mysql_health to 2.1.8.2
+  * [9e3f357d] Updating check_ssl_cert to 1.14.4
+  * [6e6813a9] Refreshing patches.
+  * [b6f439c4] Remove unused check_varnish Makefile.
+  * [6151979b] Rename buggy auto-generated libexec directory.
+  * [4c08976d] Add pkg-config as check_varnish build dependency.
+  * [09060a70] Add --enable-stack-protector to default options.
+
+ -- Bernd Zeimetz <bzed@debian.org>  Mon, 04 Mar 2013 15:13:22 +0100
 
 nagios-plugins-contrib (4.20120702) unstable; urgency=low
 

@@ -1,7 +1,7 @@
 Homepage: http://labs.consol.de/lang/en/nagios/check_webinject/
 Watch: http://labs.consol.de/lang/en/nagios/check_webinject/ check_webinject-([0-9.]+)\.tar\.gz
 Uploaders: Bernd Zeimetz <bzed@debian.org>
-Recommands: libwebinject-perl
+Recommends: libwebinject-perl
 Description: plugin for testing web services
  It uses the WebInject Perl module for automated testing of
  web applications and web services. It can be used to check

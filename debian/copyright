@@ -47,6 +47,29 @@ http://n-backuppc.sourceforge.net/
 
 ------------------------------------------------------------------------------
 
+check_clamav:
+
+The plugin was downloaded from: 
+http://exchange.nagios.org/directory/Plugins/Anti-2DVirus/ClamAV/ClamAV-check-plugin/details
+
+  Copyright (c) 2005-2008 Darren Spruell <phatbuckett@gmail.com>
+  
+  Permission to use, copy, modify, and distribute this software for any
+  purpose with or without fee is hereby granted, provided that the above
+  copyright notice and this permission notice appear in all copies.
+  
+  THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+  WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+  MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+  ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+  
+  
+
+------------------------------------------------------------------------------
+
 check_email_delivery:
 
 The plugin was downloaded from: 
@@ -250,6 +273,31 @@ http://exchange.nagios.org/directory/Plugins/Websites,-Forms-and-Transactions/ch
 
 ------------------------------------------------------------------------------
 
+check_memory:
+
+The plugin was downloaded from: 
+https://www.monitoringexchange.org/inventory/Check-Plugins/Operating-Systems/Linux/check_memory
+
+  Copyright (C) 2007 Thomas Guyot-Sionnest <tguyot@gmail.com>
+  
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation; either version 2
+  of the License, or (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+  
+  
+
+------------------------------------------------------------------------------
+
 check_multipath:
 
 The plugin was downloaded from: 
@@ -300,6 +348,32 @@ http://labs.consol.de/lang/en/nagios/check_mysql_health/
 
 ------------------------------------------------------------------------------
 
+check_nfsmounts:
+
+The plugin was downloaded from: 
+http://exchange.nagios.org/directory/Plugins/Operating-Systems/Linux/check_nfsmounts/details
+
+  Author: Clint Byrum <clint@adicio.com>
+  
+     Copyright 2007 Adicio, Inc.
+  
+     This program is free software; you can redistribute it and/or modify
+     it under the terms of the GNU General Public License as published by
+     the Free Software Foundation; either version 3 of the License, or
+     (at your option) any later version.
+  
+     This program is distributed in the hope that it will be useful,
+     but WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+     GNU General Public License for more details.
+  
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+  
+  
+
+------------------------------------------------------------------------------
+
 check_printer:
 
 The plugin was downloaded from: 
@@ -339,7 +413,7 @@ https://www.secure-computing.net/svn/trunk/nagios/
 check_raid:
 
 The plugin was downloaded from: 
-http://cvs.pld-linux.org/cgi-bin/viewvc.cgi/cvs/packages/nagios-plugin-check_raid/check_raid?view=log
+https://github.com/glensc/nagios-plugin-check_raid
 
   2004-2006 Steve Shipway, university of auckland,
   2009-2012 Elan Ruusamäe <glen@pld-linux.org>
@@ -430,6 +504,39 @@ https://trac.id.ethz.ch/projects/nagios_plugins/wiki/check_ssl_cert
   
   This module is free software; you can redistribute it and/or modify it
   under the terms of GNU general public license (gpl) version 3.
+  
+
+------------------------------------------------------------------------------
+
+check_varnish:
+
+The plugin was downloaded from: 
+http://repo.varnish-cache.org/source/
+
+  
+  Copyright (c) 2007-2009 Linpro AS
+  All rights reserved.
+  
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions
+  are met:
+  1. Redistributions of source code must retain the above copyright
+     notice, this list of conditions and the following disclaimer.
+  2. Redistributions in binary form must reproduce the above copyright
+     notice, this list of conditions and the following disclaimer in the
+     documentation and/or other materials provided with the distribution.
+  
+  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED.  IN NO EVENT SHALL AUTHOR OR CONTRIBUTORS BE LIABLE
+  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+  OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+  HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+  SUCH DAMAGE.
   
 
 ------------------------------------------------------------------------------
@@ -603,4 +710,30 @@ http://anonscm.debian.org/gitweb/?p=mirror/dsa-nagios.git;a=tree;f=dsa-nagios-ch
   OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
   WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   
+  
+
+------------------------------------------------------------------------------
+
+extras:
+
+  
+  send_nsca_host_or_service_check_result:
+  
+      Based on the example in the icinga documentation.
+      Enhanced to handle service and host checks by
+      Bernd Zeimetz <bzed@debian.org>.
+  
+      Copyright (c) 1999-2009 Ethan Galstad (nagios@nagios.org)
+      Copyright (c) 2009-2010 Icinga Development Team (info@icinga.org)
+      Copyright (c) 2012 Bernd Zeimetz <bzed@debian.org>
+      
+      License:
+       
+       This program is free software; you can redistribute it and/or modify
+       it under the terms of the GNU General Public License version 2 as
+       published by the Free Software Foundation.
+      
+       On Debian systems, the complete text of the GNU General Public
+       License, version 2, can be found in /usr/share/common-licenses/GPL-2.
+      
   

@@ -1,7 +1,7 @@
-Homepage: http://cvs.pld-linux.org/cgi-bin/viewvc.cgi/cvs/packages/nagios-plugin-check_raid/check_raid?view=log
-Watch: http://cvs.pld-linux.org/cgi-bin/viewvc.cgi/cvs/packages/nagios-plugin-check_raid/check_raid?view=log <a name="(rev[^"]+)"></a>
+Homepage: https://github.com/glensc/nagios-plugin-check_raid
+Watch: https://github.com/glensc/nagios-plugin-check_raid "/glensc/nagios-plugin-check_raid/tree/([0-9.]+)"
 Suggests: cciss-vol-status, mpt-status
-Version: rev1.119
+Version: 3.0
 Uploaders: Bernd Zeimetz <bzed@debian.org>
 Description: plugin to check sw/hw RAID status
  The plugin looks for any known types of RAID configurations,
@@ -26,3 +26,4 @@ Description: plugin to check sw/hw RAID status
  - LSI MegaRaid via lsraid
  - Serveraid IPS via ipssend
  - Solaris software RAID via metastat
+ - Areca SATA RAID Support via cli64/cli32
