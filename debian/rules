@@ -41,6 +41,10 @@ dh_auto_install-%:
 	    export plugin="$*" ;\
 	    export options="--destdir=debian/$*" ;\
 	    $(DH_AUTO_CALL)
+	if [ -d debian/$*/usr/lib/nagios-plugins-contrib ]; then \
+	    mkdir -p debian/$*/usr/lib/nagios ;\
+	    mv debian/$*/usr/lib/nagios-plugins-contrib debian/$*/usr/lib/nagios/plugins ;\
+	fi
 	# add files to debian/nagios-plugins-contrib.install
 	set -e; find debian/$* -type f -printf '%h\n' | sort -u  |\
 	    while read dir; do \
