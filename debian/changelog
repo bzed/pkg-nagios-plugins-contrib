@@ -1,4 +1,4 @@
-nagios-plugins-contrib (5.20130304~bpo60+1) squeeze-backports; urgency=low
+nagios-plugins-contrib (5.20130304~bpo60+2) squeeze-backports; urgency=low
 
   * Rebuild for squeeze-backports.
 
