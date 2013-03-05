@@ -1,3 +1,4 @@
+check_raid/cciss_bugfix
 check_clamav/clamav_locations
 check_nfsmounts/perl_module
 check_nfsmounts/nfs_write_location
