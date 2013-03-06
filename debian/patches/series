@@ -1,4 +1,5 @@
 check_raid/cciss_bugfix
+check_raid/prefer_cciss_vol_status_over_hpacucli
 check_clamav/clamav_locations
 check_nfsmounts/perl_module
 check_nfsmounts/nfs_write_location
