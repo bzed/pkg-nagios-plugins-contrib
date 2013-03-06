@@ -1,10 +1,9 @@
-nagios-plugins-contrib (5.20130304) experimental; urgency=low
+nagios-plugins-contrib (5.20130307) experimental; urgency=low
 
   * [aa113517] Fix typos s/Recommands/Recommends/
   * [8e2b3019] Ensure typoed fieldnames in control files are not ignored.
   * [ecead75d] Add extras folder.
   * [0423b2a4] Add check_memory.
-  * [48825157] Merge remote-tracking branch 'github/master'
   * [90ba4bec] Better command example for send_nsca_host_or_service_check_result
   * [a564c43d] Add check_nfsmounts.
   * [dc3d5425] Add Recommends for check_nfsmounts.
@@ -26,9 +25,12 @@ nagios-plugins-contrib (5.20130304) experimental; urgency=low
   * [b6f439c4] Remove unused check_varnish Makefile.
   * [6151979b] Rename buggy auto-generated libexec directory.
   * [4c08976d] Add pkg-config as check_varnish build dependency.
+  * [05f09fee] Auto update of debian/copyright
+  * [9d462776] Auto update of debian/control
   * [09060a70] Add --enable-stack-protector to default options.
+  * [37896ae4] Add a cciss related bugfix to check_raid.
 
- -- Bernd Zeimetz <bzed@debian.org>  Mon, 04 Mar 2013 15:13:22 +0100
+ -- Bernd Zeimetz <bzed@debian.org>  Thu, 07 Mar 2013 00:31:10 +0100
 
 nagios-plugins-contrib (4.20120702) unstable; urgency=low
 
