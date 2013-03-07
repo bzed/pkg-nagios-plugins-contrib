@@ -1,3 +1,4 @@
+check_raid/tw-cli
 check_raid/cciss_bugfix
 check_raid/prefer_cciss_vol_status_over_hpacucli
 check_clamav/clamav_locations
