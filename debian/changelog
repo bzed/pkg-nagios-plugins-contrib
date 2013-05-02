@@ -1,3 +1,9 @@
+nagios-plugins-contrib (5.20130307~bpo70+1) wheezy-backports; urgency=low
+
+  * Rebuild for wheezy-backports.
+
+ -- Bernd Zeimetz <bzed@debian.org>  Thu, 02 May 2013 17:10:14 +0200
+
 nagios-plugins-contrib (5.20130307) experimental; urgency=low
 
   * [aa113517] Fix typos s/Recommands/Recommends/
