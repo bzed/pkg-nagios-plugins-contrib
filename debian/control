@@ -108,7 +108,7 @@ Description: Plugins for nagios compatible monitoring systems
      Foundry Network, Linux (using lm-sensors), Extreme Networks,
      Juniper Networks, HP ProCurve, Netscreen, Citrix NetScaler
      and Transmode Systems hardware.
-   * check_ssl_cert (1.14.4): plugin to check the CA and validity of an
+   * check_ssl_cert (1.14.6): plugin to check the CA and validity of an
      X.509 certificate
    * check_varnish (1.1): plugin to monitor varnish instances
    * check_webinject (1.69): plugin for testing web services
