@@ -1,0 +1,10 @@
+Homepage: http://exchange.nagios.org/directory/Plugins/Anti-2DVirus/ClamAV/ClamAV-check-plugin/details
+Watch: http://exchange.nagios.org/directory/Plugins/Anti-2DVirus/ClamAV/ClamAV-check-plugin/details <td>check_clamav plugin v([0-9.]+)</td>
+Uploaders: Bernd Zeimetz <bzed@debian.org>
+Description: plugin to check for clamav signature freshness
+ This script is used to compare the version and signature
+ level of the currently running clamd daemon with the latest
+ available versions listed in the TXT record for
+ current.cvd.clamav.net.
+Recommends: nagios-plugins-basic, libnet-dns-perl
+Version: 1.2

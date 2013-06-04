@@ -18,6 +18,9 @@ PLUGINS := $(shell find $(CURDIR) -mindepth 1 -maxdepth 1 -name .git -prune -o -
 DH_AUTO_CALL = 	  if [ -f $(CURDIR)/$$plugin/Makefile ]; then \
 			$$auto_command -O--sourcedirectory="$${plugin}" $$options; \
 		  elif [ -d $(CURDIR)/$$plugin/src ]; then \
+		  	if [ "$$auto_command" == "dh_auto_configure" ]; then \
+			    export options="$$options -- --enable-stack-protector" ;\
+			fi ;\
 			$$auto_command -O--sourcedirectory="$${plugin}/src" $$options; \
 		  else \
 			echo failed to build $$plugin; exit 255 ; \
@@ -41,6 +44,10 @@ dh_auto_install-%:
 	    export plugin="$*" ;\
 	    export options="--destdir=debian/$*" ;\
 	    $(DH_AUTO_CALL)
+	if [ -d debian/$*/usr/lib/nagios-plugins-contrib ]; then \
+	    mkdir -p debian/$*/usr/lib/nagios ;\
+	    mv debian/$*/usr/lib/nagios-plugins-contrib debian/$*/usr/lib/nagios/plugins ;\
+	fi
 	# add files to debian/nagios-plugins-contrib.install
 	set -e; find debian/$* -type f -printf '%h\n' | sort -u  |\
 	    while read dir; do \
