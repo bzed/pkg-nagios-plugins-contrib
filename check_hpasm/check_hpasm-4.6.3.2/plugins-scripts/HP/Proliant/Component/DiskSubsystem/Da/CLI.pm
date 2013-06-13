@@ -38,14 +38,14 @@ sub init {
     next unless /^status/;
     next if /^status\s*$/;
     s/^status\s*//;
-    if (/([\s\w]+) in Slot\s+(\d+)/) {
+    if (/(MSA[\s\w]+)\s+in\s+(\w+)/) { 
       $incontroller = 1;
       $slot = $2;
       $cntlindex++;
       $tmpcntl->{$slot}->{cpqDaCntlrIndex} = $cntlindex;
       $tmpcntl->{$slot}->{cpqDaCntlrModel} = $1;
       $tmpcntl->{$slot}->{cpqDaCntlrSlot} = $slot;
-    } elsif (/(MSA[\s\w]+)\s+in\s+(\w+)/) { 
+    } elsif (/([\s\w]+) in Slot\s+(\d+)/) {
       $incontroller = 1;
       $slot = $2;
       $cntlindex++;
@@ -55,7 +55,7 @@ sub init {
     } elsif (/Controller Status: (\w+)/) {
       $tmpcntl->{$slot}->{cpqDaCntlrBoardCondition} = lc $1;
       $tmpcntl->{$slot}->{cpqDaCntlrCondition} = lc $1;
-    } elsif (/Cache Status: ([\w\s]+\s*$)/) {
+    } elsif (/Cache Status: ([\w\s]+?)\s*$/) {
       # Cache Status: OK
       # Cache Status: Not Configured
       # Cache Status: Temporarily Disabled
@@ -92,15 +92,17 @@ sub init {
     next unless /^config/;
     next if /^config\s*$/;
     s/^config\s*//;
-    if (/([\s\w]+) in Slot\s+(\d+)/) {
-      if ($slot != $2) {
-        $cntlindex++;
-      }
-      $slot = $2;
-      $pdriveindex = 1;
-    } elsif (/(MSA[\s\w]+)\s+in\s+(\w+)/) {
+    if (/(MSA[\s\w]+)\s+in\s+(\w+)/) {
       $slot = $2;
       $cntlindex++;
+      $pdriveindex = 1;
+    } elsif (/([\s\w]+) in Slot\s+(\d+)/) {
+      #if ($slot ne $2 || ! $slot) {
+        $cntlindex++;
+        # 2012-12-15 das passt nicht zur oberen schleife
+        # ich habe keine ahnung, was der hintergrund fuer dieses if ist
+      #}
+      $slot = $2;
       $pdriveindex = 1;
     } elsif (/logicaldrive\s+(.+?)\s+\((.*)\)/) {
       # logicaldrive 1 (683.5 GB, RAID 5, OK)

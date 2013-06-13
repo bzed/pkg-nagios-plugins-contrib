@@ -111,6 +111,9 @@ sub new {
   }
   if ($self->{cpqHeTemperatureThresholdCelsius} == -99) {
     bless $self, 'HP::Proliant::Component::TemperatureSubsystem::SoSTemperature';
+  } elsif ($self->{cpqHeTemperatureThresholdCelsius} == 0) {
+    # taucht auf, seit man gen8 ueber das ilo abfragen kann
+    bless $self, 'HP::Proliant::Component::TemperatureSubsystem::SoSTemperature';
   }
   return $self;
 }

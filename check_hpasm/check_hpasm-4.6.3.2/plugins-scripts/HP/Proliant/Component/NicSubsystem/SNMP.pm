@@ -18,7 +18,7 @@ sub new {
     physical_nics => [],
   };
   bless $self, $class;
-  $self->overall_init();
+  $self->overall_init(%params);
   $self->init();
   return $self;
 }
