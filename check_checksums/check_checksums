@@ -61,6 +61,12 @@ __EOH__
     esac
 fi
 
+if dpkg --compare-versions `dpkg-query -W coreutils | awk '{print $2}'` ge 8.13; then
+    STRICT="--strict"
+else
+    STRICT=""
+fi
+
 RET=3
 OUT="UNKNOWN"
 tmp_out=`mktemp`
@@ -75,7 +81,7 @@ for t in md5 sha1 sha224 sha256 sha384 sha512; do
             RET=0
             OUT="OK"
         fi
-        ${tool} --quiet --strict --check ${fname} 1>>${tmp_out} 2>>${tmp_err}
+        ${tool} --quiet ${STRICT} --check ${fname} 1>>${tmp_out} 2>>${tmp_err}
         err=$?
 
         if [ ${err} -gt 0 ]; then
