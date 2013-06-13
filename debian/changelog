@@ -1,3 +1,34 @@
+nagios-plugins-contrib (7.20130613~bpo60+1) squeeze-backports; urgency=low
+
+  * Rebuild for squeeze-backports.
+
+ -- Bernd Zeimetz <bzed@debian.org>  Thu, 07 Mar 2013 00:51:26 +0100
+
+nagios-plugins-contrib (7.20130613) unstable; urgency=low
+
+  * [036816ff] Merge pull request #15 from evgeni/master
+    check_packages should find security updates on the official security mirror too
+  * [658a2e93] Add check_checksums nagios plugin.
+  * [9d5d2056] Updating check_raid.
+  * [e3ec1293] Updating check_ssl_cert to 1.14.6
+  * [779543ef] Updating check_hpasm to 4.6.3.2
+  * [0c838ee9] Updating check_multipath to 0.1.9
+  * [bec11251] Updating check_whois to 1.13
+  * [8e0a65d0] Refreshing patches.
+  * [6d8dff94] Auto update of debian/control
+  * [c0b88cdb] Auto update of debian/copyright
+
+ -- Bernd Zeimetz <bzed@debian.org>  Thu, 13 Jun 2013 14:17:09 +0200
+
+nagios-plugins-contrib (6.20130521) unstable; urgency=low
+
+  * [e68c82e1] check_raid: do not run hpacucli if cciss_vol_status is available.
+  * [4a1c57e8] Also support tw-cli as additional name for the 3ware binary.
+    Thanks to Dennis Hoppe
+  * [eb5e1c7c] Add /run/ to the check_libs ignore file.
+
+ -- Bernd Zeimetz <bzed@debian.org>  Tue, 21 May 2013 22:11:50 +0200
+
 nagios-plugins-contrib (5.20130307~bpo60+1) squeeze-backports; urgency=low
 
   * Rebuild for squeeze-backports.

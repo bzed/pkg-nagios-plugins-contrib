@@ -22,7 +22,7 @@
 +			} else {
 +				$candidate_found = 0;
 +			}
-+		} elsif (($line =~ / +[0-9]+ [^ ]+\/debian-security.*\/updates\//) && $candidate_found ) {
++		} elsif (($line =~ / +[0-9]+ [^ ]+\/(security\.([^ ]+\.)?debian\.org|debian-security).*\/updates\//) && $candidate_found ) {
 +			$installed->{$pkgname}{'security-update'} = 1;
  		} elsif ($line =~ /^ +\*\*\*/) {
  			my @l;
