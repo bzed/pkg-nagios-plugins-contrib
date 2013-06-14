@@ -1,8 +1,11 @@
-nagios-plugins-contrib (5.20130307~bpo70+1) wheezy-backports; urgency=low
+nagios-plugins-contrib (6.20130521) unstable; urgency=low
 
-  * Rebuild for wheezy-backports.
+  * [e68c82e1] check_raid: do not run hpacucli if cciss_vol_status is available.
+  * [4a1c57e8] Also support tw-cli as additional name for the 3ware binary.
+    Thanks to Dennis Hoppe
+  * [eb5e1c7c] Add /run/ to the check_libs ignore file.
 
- -- Bernd Zeimetz <bzed@debian.org>  Thu, 02 May 2013 17:10:14 +0200
+ -- Bernd Zeimetz <bzed@debian.org>  Tue, 21 May 2013 22:11:50 +0200
 
 nagios-plugins-contrib (5.20130307) experimental; urgency=low
 
