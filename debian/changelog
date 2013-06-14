@@ -14,7 +14,7 @@ nagios-plugins-contrib (7.20130614) unstable; urgency=low
   * [8c242d0f] Support pre-Wheezy versions of coretutils in check_checksums.
   * [59648a17] Fix src link for check_hpasm
 
- -- Bernd Zeimetz <bzed@debian.org>  Thu, 13 Jun 2013 14:17:09 +0200
+ -- Bernd Zeimetz <bzed@conthink>  Fri, 14 Jun 2013 10:26:36 +0200
 
 nagios-plugins-contrib (6.20130521) unstable; urgency=low
 
