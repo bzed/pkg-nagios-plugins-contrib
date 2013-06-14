@@ -1,4 +1,4 @@
-nagios-plugins-contrib (7.20130613) unstable; urgency=low
+nagios-plugins-contrib (7.20130614) unstable; urgency=low
 
   * [036816ff] Merge pull request #15 from evgeni/master
     check_packages should find security updates on the official security mirror too
@@ -11,6 +11,8 @@ nagios-plugins-contrib (7.20130613) unstable; urgency=low
   * [8e0a65d0] Refreshing patches.
   * [6d8dff94] Auto update of debian/control
   * [c0b88cdb] Auto update of debian/copyright
+  * [8c242d0f] Support pre-Wheezy versions of coretutils in check_checksums.
+  * [59648a17] Fix src link for check_hpasm
 
  -- Bernd Zeimetz <bzed@debian.org>  Thu, 13 Jun 2013 14:17:09 +0200
 
