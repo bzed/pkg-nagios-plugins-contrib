@@ -17,10 +17,15 @@ nagios-plugins-contrib (7.20130614) unstable; urgency=low
   * [8e0a65d0] Refreshing patches.
   * [6d8dff94] Auto update of debian/control
   * [c0b88cdb] Auto update of debian/copyright
-  * [8c242d0f] Support pre-Wheezy versions of coretutils in check_checksums.
+  * [3f296bdb] Updating changelog.
   * [59648a17] Fix src link for check_hpasm
+  * [8c242d0f] Support pre-Wheezy versions of coretutils in check_checksums.
+  * [69b55f78] Updating changelog.
+  * [7d3d2a06] Update release date in changelog (gah!).
+  * [768e463b] Merge pull request #16 from evgeni/master
+    check_libs: ignore /var/lib/postgresql/ and /var/log/
 
- -- Bernd Zeimetz <bzed@conthink>  Fri, 14 Jun 2013 10:26:36 +0200
+ -- Bernd Zeimetz <bzed@conthink>  Fri, 14 Jun 2013 10:31:43 +0200
 
 nagios-plugins-contrib (6.20130521) unstable; urgency=low
 
