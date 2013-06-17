@@ -1,0 +1,5 @@
+Version: 20130611
+Uploaders: Bernd Zeimetz <bzed@debian.org>
+Description: plugin to verify file checksums
+ against (local, not 100% secure) lists.
+ Supports md5 sha1 sha224 sha256 sha384 sha512 checksums.
