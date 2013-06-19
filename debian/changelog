@@ -6,6 +6,7 @@ nagios-plugins-contrib (7.20130614~bpo60+1) squeeze-backports; urgency=low
 
 nagios-plugins-contrib (7.20130614) unstable; urgency=low
 
+  [ Bernd Zeimetz ]
   * [036816ff] Merge pull request #15 from evgeni/master
     check_packages should find security updates on the official security mirror too
   * [658a2e93] Add check_checksums nagios plugin.
@@ -15,12 +16,21 @@ nagios-plugins-contrib (7.20130614) unstable; urgency=low
   * [0c838ee9] Updating check_multipath to 0.1.9
   * [bec11251] Updating check_whois to 1.13
   * [8e0a65d0] Refreshing patches.
-  * [6d8dff94] Auto update of debian/control
   * [c0b88cdb] Auto update of debian/copyright
-  * [8c242d0f] Support pre-Wheezy versions of coretutils in check_checksums.
   * [59648a17] Fix src link for check_hpasm
+  * [8c242d0f] Support pre-Wheezy versions of coretutils in check_checksums.
+  * [7d3d2a06] Update release date in changelog (gah!).
+  * [768e463b] Merge pull request #16 from evgeni/master
+    check_libs: ignore /var/lib/postgresql/ and /var/log/
+  * [2b9aace5] Bumping standards-Verison, no changes needed.
 
- -- Bernd Zeimetz <bzed@conthink>  Fri, 14 Jun 2013 10:26:36 +0200
+  [ Jan Wagner ]
+  * [3bb873e4] disable epn for check_rbl
+
+  [ Evgeni Golov ]
+  * [2a7ab4b8] check_libs: ignore /var/spool/
+
+ -- Bernd Zeimetz <bzed@debian.org>  Fri, 14 Jun 2013 20:53:49 +0200
 
 nagios-plugins-contrib (6.20130521) unstable; urgency=low
 
