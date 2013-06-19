@@ -1,8 +1,9 @@
-nagios-plugins-contrib (7.20130614~bpo60+1) squeeze-backports; urgency=low
+nagios-plugins-contrib (7.20130614~bpo60+1) squeeze-backports-sloppy; urgency=low
 
-  * Rebuild for squeeze-backports.
+  * Rebuild for squeeze-backports-sloppy.
+  * Update gbp.conf for the squeeze-backports branch. 
 
- -- Bernd Zeimetz <bzed@conthink>  Fri, 14 Jun 2013 10:28:02 +0200
+ -- Bernd Zeimetz <bzed@debian.org>  Thu, 20 Jun 2013 01:24:43 +0200
 
 nagios-plugins-contrib (7.20130614) unstable; urgency=low
 
@@ -40,13 +41,6 @@ nagios-plugins-contrib (6.20130521) unstable; urgency=low
   * [eb5e1c7c] Add /run/ to the check_libs ignore file.
 
  -- Bernd Zeimetz <bzed@debian.org>  Tue, 21 May 2013 22:11:50 +0200
-
-nagios-plugins-contrib (5.20130307~bpo60+1) squeeze-backports; urgency=low
-
-  * Rebuild for squeeze-backports.
-  * Update gbp.conf for the squeeze-backports branch. 
-
- -- Bernd Zeimetz <bzed@debian.org>  Thu, 07 Mar 2013 00:51:26 +0100
 
 nagios-plugins-contrib (5.20130307) experimental; urgency=low
 
