@@ -2,7 +2,7 @@ nagios-plugins-contrib (7.20130614~bpo60+1) squeeze-backports; urgency=low
 
   * Rebuild for squeeze-backports.
 
- -- Bernd Zeimetz <bzed@conthink>  Fri, 14 Jun 2013 10:33:12 +0200
+ -- Bernd Zeimetz <bzed@debian.org>  Wed, 19 Jun 2013 10:40:10 +0200
 
 nagios-plugins-contrib (7.20130614) unstable; urgency=low
 
