@@ -2,7 +2,7 @@ Source: nagios-plugins-contrib
 Section: net
 Priority: extra
 Maintainer: Debian Nagios Maintainer Group <pkg-nagios-devel@lists.alioth.debian.org>
-Uploaders: Jan Wagner <waja@cyconet.org>, Bernd Zeimetz <bzed@debian.org>
+Uploaders: Bernd Zeimetz <bzed@debian.org>, Jan Wagner <waja@cyconet.org>
 Build-Depends: debhelper (>= 8.0.0), python, python-debian, quilt (>= 0.46-7), autotools-dev, flex, libmemcached-dev, libvarnishapi-dev, pkg-config
 Standards-Version: 3.9.4
 Vcs-Git: git://git.debian.org/pkg-nagios/pkg-nagios-plugins-contrib
@@ -11,7 +11,7 @@ Vcs-Browser: http://git.debian.org/?p=pkg-nagios/pkg-nagios-plugins-contrib;a=su
 Package: nagios-plugins-contrib
 Architecture: any
 Depends: ${misc:Depends}
-Recommends: ${shlibs:Depends}, ${python:Depends}, libnagios-plugin-perl, nagios-plugins-basic, libnet-dns-perl, libnagios-plugin-perl (>= 0.31), libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-ssleay-perl, liblocale-gettext-perl, liblwp-useragent-determined-perl, snmp, freeipmi-tools, libipc-run-perl, lsof, libyaml-syck-perl, libdbd-mysql-perl, libreadonly-perl, libnet-snmp-perl, openssl, libwebinject-perl, libdate-manip-perl, libnet-dns-sec-perl, ruby | ruby-interpreter, ${perl:Depends}
+Recommends: ${shlibs:Depends}, ${python:Depends}, libsocket-perl, libnagios-plugin-perl, nagios-plugins-basic, libnet-dns-perl, libnagios-plugin-perl (>= 0.31), libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-ssleay-perl, liblocale-gettext-perl, liblwp-useragent-determined-perl, snmp, freeipmi-tools, libipc-run-perl, lsof, libyaml-syck-perl, libdbd-mysql-perl, libreadonly-perl, libnet-snmp-perl, openssl, libwebinject-perl, libdate-manip-perl, libnet-dns-sec-perl, ruby | ruby-interpreter, ${perl:Depends}
 Suggests: backuppc, perl-doc, cciss-vol-status, mpt-status, expect, nagios-plugin-check-multi, moreutils
 Enhances: nagios-plugins, nagios-plugins-basic, nagios-plugins-standard
 Description: Plugins for nagios compatible monitoring systems
@@ -19,6 +19,9 @@ Description: Plugins for nagios compatible monitoring systems
  systems like Nagios and Icinga.
  It contains the following plugins:
  .
+   * check_ajp (1): plugin to monitor the AJP ping response time
+     Should work with all application servers (Tomcat, JBoss,....)
+     which provide an AJPv13 connector.
    * check_backuppc (1.1.0): plugin for checking on the status of
      BackupPC backups
    * check_checksums (20130611): plugin to verify file checksums
