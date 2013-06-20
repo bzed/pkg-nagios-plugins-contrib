@@ -32,6 +32,32 @@ and the following files:
 The copyright information for the included plugins is listed below:
 
 
+check_ajp:
+
+The plugin was downloaded from: 
+http://blog.devnu11.net/projects/
+
+  Comment: Please send bug fixes and enhancements to <rmichel@devnu11.net>
+  
+  check_ajp - nagios plugin for jboss monitoring
+  Copyright (C) 2010  Michel Rode <rmichel@devnu11.net>
+  
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  
+
+------------------------------------------------------------------------------
+
 check_backuppc:
 
 The plugin was downloaded from: 
