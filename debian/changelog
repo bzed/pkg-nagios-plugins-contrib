@@ -1,3 +1,22 @@
+nagios-plugins-contrib (8.20130621) unstable; urgency=low
+
+  [ Jan Wagner ]
+  * [62bbdd2f] disable epn
+  * [c01cd192] fix typo in patches/check_rbl/epn
+
+  [ Bernd Zeimetz ]
+  * [a61aefc4] Add syslog output to check_checksums
+  * [62d55e7e] New plugin: check_ajp
+  * [5a00818c] Auto update of debian/control
+  * [eb29e6c6] Auto update of debian/copyright
+  * [cf6c7f44] Delete unused patch file check_raid/cciss_bugfix
+  * [a3e036b7] Fix an error message in check_raid if not using cciss_vol_status.
+    Use of uninitialized value in -x at /usr/lib/nagios/plugins/check_raid
+    line 2495.
+    Thanks to Stefan Kaltenbrunner
+
+ -- Bernd Zeimetz <bzed@debian.org>  Fri, 21 Jun 2013 12:58:43 +0200
+
 nagios-plugins-contrib (7.20130614) unstable; urgency=low
 
   [ Bernd Zeimetz ]
