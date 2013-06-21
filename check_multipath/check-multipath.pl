@@ -54,6 +54,7 @@
 #      0.1.6    Added checklunline test for "-" character, thanks to Sven Anders <s.anders@digitec.de> also for test data (testcase 22)
 #      0.1.7    Added test option
 #      0.1.8    Added Support for LUN names without HEX-ID (e.g. iSCSI LUNs)
+#      0.1.9    Added extraconfig option
 
 
 use strict;
@@ -77,7 +78,7 @@ use vars qw( $NAME $VERSION $AUTHOR $CONTACT $E_OK $E_WARNING $E_CRITICAL
 
 # === Version and similar info ===
 $NAME    = 'check-multipath.pl';
-$VERSION = '0.1.8   20. FEB. 2013';
+$VERSION = '0.1.9   06. MAR. 2013';
 $AUTHOR  = 'Hinnerk Rümenapf';
 $CONTACT = 'hinnerk.ruemenapf@uni-hamburg.de  hinnerk.ruemenapf@gmx.de';
 
@@ -434,14 +435,20 @@ OPTIONS:
   -h, --help          Display this help text
   -V, --version       Display version info
   -v, --verbose
-  -m, --min-paths     Low mark, less paths per LUN raise ERROR     [2]
+  -m, --min-paths     Low mark,  less paths per LUN are CRITICAL   [2]
   -o, --ok-paths      High mark, less paths per LUN raise WARNING  [4]
   -n, --no-multipath  Exitcode for no LUNs or no multipath driver  [warning]
 
   -l, --linebreak     Define end-of-line string:
                       REG      regular UNIX-Newline
                       HTML     <br/>
-                      -other-  use specifies string as linebreak symbol
+                      -other-  use specified string as linebreak symbol, e.g. ' '
+
+  -e, --extraconfig   Specify different low/high thresholds for LUNs:
+                      "<LUN>,<LOW>,<HIGH>:"  for each LUN with deviant thresholds
+                      e.g.  "iscsi_lun_01,2,2:dummyLun,1,1:paranoid_lun,8,16:"
+                            "oddLun,3,3:"
+                      Use option -v to see LUN names used by this plugin. 
 
   -d, --di            Run testcase instead of real check           [0]
   -t, --test          Do not display testcase input, just result
@@ -485,6 +492,7 @@ END_LICENSE
       'di'            => 0,
       'shortstate'    => 0,
       'linebreak'     => undef,
+      'extraconfig'   => '',
       'verbose'       => 0,
       'test'          => 0, 
     );
@@ -500,6 +508,7 @@ GetOptions(#'t|timeout=i'      => \$opt{timeout},
 	   's|state'          => \$opt{state},
 	   'S|short-state'    => \$opt{shortstate},
 	   'l|linebreak=s'    => \$opt{linebreak},
+	   'e|extraconfig=s'  => \$opt{extraconfig},
 	   'v|verbose'        => \$opt{verbose},
 	   't|test'           => \$opt{test},
 	  ) or do { print $USAGE; exit $E_UNKNOWN };
@@ -545,7 +554,36 @@ if (defined $opt{linebreak}) {
     else {
 	$linebreak = $opt{linebreak};
     }
-}
+} # if
+
+
+
+# extraconfig option
+my %extraconfig = ();
+
+if ($opt{extraconfig} ne '') {
+    if ($opt{extraconfig} !~ m!^(:?[\w\-]+,\d+,\d+:)+$!  ) {
+	unknown_error("Wrong usage of '--extraconfig' option: '"
+		      . $opt{extraconfig}
+		      . "' syntax error. See help information.");
+    } # if
+
+    while ( $opt{extraconfig} =~ m!(:?[\w\-]+),(\d+),(\d+):+!g ) {
+	my $name =$1;
+	my $crit =$2;
+	my $warn =$3;
+
+	if ($crit > $warn) {
+	    unknown_error("Error in '--extraconfig' option '"
+			  . $opt{extraconfig}
+			  . "' for LUN '$name': critical threshold ($crit) must not be higher than warning threshold ($warn).");
+	} # if
+
+	#print "\n ['$name', '$crit', '$warn' ] \n";
+	$extraconfig{$name} = {'warn' => $warn, 'crit' => $crit};
+    } # while 
+} # if
+
 
 
 # Check syntax of '--no-multipath' option
@@ -849,14 +887,25 @@ if (scalar keys %lunPaths == 0) {
 #
 foreach my $lunName ( sort {$a cmp $b} keys %lunPaths) {
     my $pathCount = $lunPaths{$lunName};
-    #print "$lunName: $pathCount\n";
+
+    my $warn = $opt{'ok-paths'};
+    my $crit = $opt{'min-paths'};
+
+    # 	$extraconfig{$name} = {'warn' => $warn, 'crit' => $crit};
+    if (defined ($extraconfig{$lunName}) ) {       # deviant thresholds from options?
+	$warn = ${$extraconfig{$lunName}}{'warn'};
+	$crit = ${$extraconfig{$lunName}}{'crit'};
+	#print "$lunName: $pathCount  EXTRA: crit=$crit, warn=$warn\n";
+    } else {	
+	#print "$lunName: $pathCount  STANDARD\n";
+    }# if
     
-    if ($pathCount < $opt{"min-paths"}){
-	report("LUN $lunName: less than $opt{'min-paths'} paths ($pathCount/$opt{'ok-paths'})!", $E_CRITICAL);
-    } elsif ($pathCount < $opt{"ok-paths"}){
-	report("LUN $lunName: less than $opt{'ok-paths'} paths ($pathCount/$opt{'ok-paths'}).", $E_WARNING);
+    if ($pathCount < $crit){
+	report("LUN $lunName: less than $crit paths ($pathCount/$warn)!", $E_CRITICAL);
+    } elsif ($pathCount < $warn){
+	report("LUN $lunName: less than $warn paths ($pathCount/$warn).", $E_WARNING);
     } else {
-	report("LUN $lunName: $pathCount/$opt{'ok-paths'}.", $E_OK);
+	report("LUN $lunName: $pathCount/$warn.", $E_OK);
     }
 } # foreach
 

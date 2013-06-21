@@ -1,8 +1,55 @@
-nagios-plugins-contrib (6.20130521~bpo70+1) wheezy-backports; urgency=low
+nagios-plugins-contrib (8.20130621~bpo70+1) wheezy-backports; urgency=low
 
   * Rebuild for wheezy-backports.
 
- -- Evgeni Golov <evgeni@debian.org>  Fri, 14 Jun 2013 23:19:47 +0200
+ -- Bernd Zeimetz <bzed@debian.org>  Fri, 21 Jun 2013 12:58:43 +0200
+
+nagios-plugins-contrib (8.20130621) unstable; urgency=low
+
+  [ Jan Wagner ]
+  * [62bbdd2f] disable epn
+  * [c01cd192] fix typo in patches/check_rbl/epn
+
+  [ Bernd Zeimetz ]
+  * [a61aefc4] Add syslog output to check_checksums
+  * [62d55e7e] New plugin: check_ajp
+  * [5a00818c] Auto update of debian/control
+  * [eb29e6c6] Auto update of debian/copyright
+  * [cf6c7f44] Delete unused patch file check_raid/cciss_bugfix
+  * [a3e036b7] Fix an error message in check_raid if not using cciss_vol_status.
+    Use of uninitialized value in -x at /usr/lib/nagios/plugins/check_raid
+    line 2495.
+    Thanks to Stefan Kaltenbrunner
+
+ -- Bernd Zeimetz <bzed@debian.org>  Fri, 21 Jun 2013 12:58:43 +0200
+
+nagios-plugins-contrib (7.20130614) unstable; urgency=low
+
+  [ Bernd Zeimetz ]
+  * [036816ff] Merge pull request #15 from evgeni/master
+    check_packages should find security updates on the official security mirror too
+  * [658a2e93] Add check_checksums nagios plugin.
+  * [9d5d2056] Updating check_raid.
+  * [e3ec1293] Updating check_ssl_cert to 1.14.6
+  * [779543ef] Updating check_hpasm to 4.6.3.2
+  * [0c838ee9] Updating check_multipath to 0.1.9
+  * [bec11251] Updating check_whois to 1.13
+  * [8e0a65d0] Refreshing patches.
+  * [c0b88cdb] Auto update of debian/copyright
+  * [59648a17] Fix src link for check_hpasm
+  * [8c242d0f] Support pre-Wheezy versions of coretutils in check_checksums.
+  * [7d3d2a06] Update release date in changelog (gah!).
+  * [768e463b] Merge pull request #16 from evgeni/master
+    check_libs: ignore /var/lib/postgresql/ and /var/log/
+  * [2b9aace5] Bumping standards-Verison, no changes needed.
+
+  [ Jan Wagner ]
+  * [3bb873e4] disable epn for check_rbl
+
+  [ Evgeni Golov ]
+  * [2a7ab4b8] check_libs: ignore /var/spool/
+
+ -- Bernd Zeimetz <bzed@debian.org>  Fri, 14 Jun 2013 20:53:49 +0200
 
 nagios-plugins-contrib (6.20130521) unstable; urgency=low
 

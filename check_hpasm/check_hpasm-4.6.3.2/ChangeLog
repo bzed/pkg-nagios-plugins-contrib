@@ -2,6 +2,13 @@
 # Changelog of the check_hpasm plugin #
 #######################################
 
+4.6.3.2 2013-03-19
+- fix a bug in proliant/gen8/ilo temperature thresholds (Thanks Kai Benninghoff and Stephane Loeuillet)
+
+4.6.3.1 2013-01-10
+- fix a bug in da disk in local mode
+- fix a bux in overall_init proliant nics (Thanks Fanming Jen)
+
 4.6.3 2012-11-25
 - gen8 should work now
 - fix the problem with -99 degrees

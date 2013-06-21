@@ -1,0 +1,108 @@
+#!/bin/bash
+#
+#    check_checksums - Nagios plugin to check file checksums
+#    against (local, not 100% secure) lists.
+#    Supports md5 sha1 sha224 sha256 sha384 sha512 checksums.
+#
+#
+#    Copyright (C) 2013 Bernd Zeimetz <b.zeimetz@conova.com>
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+umask 077
+
+if [ $# -gt 0 ]; then
+    case $1 in
+        -h|--help|help)
+            cat << __EOH__
+$0 - Nagios plugin to check file checksums
+------------------------------------------
+The plugin supports md5 sha1 sha224 sha256 sha384 sha512 checksums.
+As the lists are stored local it is not 100% secure.
+
+Usage:
+    For each file you want to monitor write the current checksum
+    into the stored file list. Use the checksum tool you prefer,
+    probably depending on your CPU power.
+
+        sha512sum /path/to/the/file >> /etc/nagios/check_checksums.sha512
+        sha384sum /path/to/the/file >> /etc/nagios/check_checksums.sha384
+        sha256sum /path/to/the/file >> /etc/nagios/check_checksums.sha256
+        sha224sum /path/to/the/file >> /etc/nagios/check_checksums.sha224
+        sha1sum   /path/to/the/file >> /etc/nagios/check_checksums.sha1
+        md5sum    /path/to/the/file >> /etc/nagios/check_checksums.md5
+
+    Set useful file permissions:
+        chown root:nagios /etc/nagios/check_checksums.*
+        chmod 0640 /etc/nagios/check_checksums.*
+
+    Run $0 in nrpe or nagios to check if the checksums are still the same.
+    It will return UNKNOWN if there is no checksum file at all.
+
+    To update *ALL* stored checksums please run
+    /usr/lib/nagios/update_checksums
+    and all checksum files will be updated. A copy of the original file will
+    be stored in /etc/nagios.
+
+__EOH__
+        exit 3
+        ;;
+    esac
+fi
+
+if dpkg --compare-versions `dpkg-query -W coreutils | awk '{print $2}'` ge 8.13; then
+    STRICT="--strict"
+else
+    STRICT=""
+fi
+
+RET=3
+OUT="UNKNOWN"
+tmp_out=`mktemp`
+tmp_err=`mktemp`
+trap "rm -f ${tmp_out} ${tmp_err}" EXIT
+
+for t in md5 sha1 sha224 sha256 sha384 sha512; do
+    fname="/etc/nagios/check_checksums.${t}"
+    tool="${t}sum"
+    if [ -f ${fname} ]; then
+        if [ ${RET} -eq 3 ]; then
+            RET=0
+            OUT="OK"
+        fi
+        ${tool} --quiet ${STRICT} --check ${fname} 1>>${tmp_out} 2>>${tmp_err}
+        err=$?
+
+        if [ ${err} -gt 0 ]; then
+            RET=2
+            OUT="CRITICAL"
+        fi
+    fi
+done
+
+if [ $RET -eq 0 ]; then
+    echo "OK - all checksums verified | failed=0;1;1;0;"
+else
+    echo -n "${OUT} - "
+    sed 's,WARNING: ,,' ${tmp_err} | tr '\n' '/'  | sed 's,/$,,'
+    echo
+    cat ${tmp_out}
+    count=`wc -l ${tmp_out}  | awk '{print $1}'`
+    echo "| failed=${count};1;1;0;"
+    /usr/bin/logger -p user.err -t check_checksums -f ${tmp_out}
+fi
+rm -f ${tmp_out} ${tmp_err}
+
+exit ${RET}
+
