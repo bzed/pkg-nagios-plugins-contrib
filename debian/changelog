@@ -1,4 +1,4 @@
-nagios-plugins-contrib (8.20130621) unstable; urgency=low
+nagios-plugins-contrib (8.20130628) unstable; urgency=low
 
   [ Jan Wagner ]
   * [62bbdd2f] disable epn
@@ -15,7 +15,7 @@ nagios-plugins-contrib (8.20130621) unstable; urgency=low
     line 2495.
     Thanks to Stefan Kaltenbrunner
 
- -- Bernd Zeimetz <bzed@debian.org>  Fri, 21 Jun 2013 12:58:43 +0200
+ -- Bernd Zeimetz <bzed@debian.org>  Fri, 28 Jun 2013 22:43:31 +0200
 
 nagios-plugins-contrib (7.20130614) unstable; urgency=low
 
