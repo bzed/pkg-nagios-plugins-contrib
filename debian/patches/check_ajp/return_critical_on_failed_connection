@@ -33,7 +33,7 @@
  sub xdie{
  	my $msg = shift;
  	printf STDERR "Usage: check_ajp --app ip.of.the.app [--port 8009 --warn 1 --crit 2 --timeout 5]\n\n";
-@@ -61,24 +69,22 @@ my $expected = pack 'C5'    # Format tem
+@@ -61,24 +69,23 @@ my $expected = pack 'C5'    # Format tem
      , 0x09                  # Type of packet. 9 = CPong reply.
  ;
  
@@ -56,6 +56,7 @@
 +	$sock->autoflush(1);
 +	print $sock $ping;
 +	$sock->recv($pong,5);
++        close $sock;
  	alarm(0);
  }; 
  
