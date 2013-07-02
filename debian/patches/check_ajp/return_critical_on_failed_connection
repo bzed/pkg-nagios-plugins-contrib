@@ -55,7 +55,7 @@
 +					PeerPort  => $port) || conndie($@);
 +	$sock->autoflush(1);
 +	print $sock $ping;
-+	$pong = <$sock>;
++	$sock->recv($pong,5);
  	alarm(0);
  }; 
  
