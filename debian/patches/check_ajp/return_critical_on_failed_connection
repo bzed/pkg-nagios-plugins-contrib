@@ -33,7 +33,18 @@
  sub xdie{
  	my $msg = shift;
  	printf STDERR "Usage: check_ajp --app ip.of.the.app [--port 8009 --warn 1 --crit 2 --timeout 5]\n\n";
-@@ -61,24 +69,23 @@ my $expected = pack 'C5'    # Format tem
+@@ -49,6 +57,10 @@ sub xdie{
+ 
+ GetOptions("app=s" => \$app, "port=s" => \$port, "warn=f" => \$warntime, "crit=f" => \$crittime, "timeout=f" => \$timeout);
+ 
++if ($app eq '') {
++    xdie('--app not given')
++}
++
+ my $ping = pack 'C5'    # Format template.
+     , 0x12, 0x34        # Magic number for server->container packets.
+     , 0x00, 0x01        # 2 byte int length of payload.
+@@ -61,24 +73,23 @@ my $expected = pack 'C5'    # Format tem
      , 0x09                  # Type of packet. 9 = CPong reply.
  ;
  
