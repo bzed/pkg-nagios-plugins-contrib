@@ -4,7 +4,7 @@ Priority: extra
 Maintainer: Debian Nagios Maintainer Group <pkg-nagios-devel@lists.alioth.debian.org>
 Uploaders: #AUTO_UPDATE_Uploaders#
 Build-Depends: debhelper (>= 8.0.0), python, python-debian, quilt (>= 0.46-7), #AUTO_UPDATE_Build-Depends#
-Standards-Version: 3.9.2
+Standards-Version: 3.9.4
 Vcs-Git: git://git.debian.org/pkg-nagios/pkg-nagios-plugins-contrib
 Vcs-Browser: http://git.debian.org/?p=pkg-nagios/pkg-nagios-plugins-contrib;a=summary
 

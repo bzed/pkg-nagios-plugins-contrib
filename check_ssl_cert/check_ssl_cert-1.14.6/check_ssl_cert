@@ -19,15 +19,15 @@
 # enable substitution with:
 #   $ svn propset svn:keywords "Id Revision HeadURL Source Date"
 #
-#   $Id: check_ssl_cert 1321 2012-12-07 07:24:19Z corti $
-#   $Revision: 1321 $
+#   $Id: check_ssl_cert 1336 2013-05-12 09:50:03Z corti $
+#   $Revision: 1336 $
 #   $HeadURL: https://svn.id.ethz.ch/nagios_plugins/check_ssl_cert/check_ssl_cert $
-#   $Date: 2012-12-07 08:24:19 +0100 (Fri, 07 Dec 2012) $
+#   $Date: 2013-05-12 11:50:03 +0200 (Sun, 12 May 2013) $
 
 ################################################################################
 # Constants
 
-VERSION=1.14.4
+VERSION=1.14.6
 SHORTNAME="SSL_CERT"
 
 VALID_ATTRIBUTES=",startdate,enddate,subject,issuer,modulus,serial,hash,email,ocsp_uri,fingerprint,"
@@ -78,7 +78,7 @@ usage() {
     echo "   -o,--org org           pattern to match the organization of the certificate"
     echo "      --openssl path      path of the openssl binary to be used"
     echo "   -p,--port port         TCP port"
-    echo "   -P,--protocol protocol use the specific protocol {http|smtp|pop3|imap|ftp}"
+    echo "   -P,--protocol protocol use the specific protocol {http|smtp|pop3|imap|ftp|xmpp}"
     echo "                          http:               default"
     echo "                          smtp,pop3,imap,ftp: switch to TLS"
     echo "   -s,--selfsigned        allows self-signed certificates"
@@ -145,7 +145,7 @@ unknown() {
 #   $1 timeout in seconds
 #   $2 command
 # Returns 1 if timed out 0 otherwise
-timeout() {
+exec_with_timeout() {
 
     time=$1
 
@@ -153,7 +153,12 @@ timeout() {
     # (spawn accepts one command)
     command="/bin/sh -c \"$2\""
 
-    if [ -n "${EXPECT}" ] ; then
+    if [ -n "${TIMEOUT_BIN}" ] ; then
+    
+        eval "${TIMEOUT_BIN} $time $command"
+
+    elif [ -n "${EXPECT}" ] ; then
+
         expect -c "set echo \"-noecho\"; set timeout $time; spawn -noecho $command; expect timeout { exit 1 } eof { exit 0 }"    
 
         if [ $? = 1 ] ; then
@@ -191,13 +196,13 @@ check_required_prog() {
 fetch_certificate() {
 
     # check if a protocol was specified (if not HTTP switch to TLS)
-    if [ -n "${PROTOCOL}" -a "${PROTOCOL}" != "http" -a "${PROTOCOL}" != "https" ] ; then
+    if [ -n "${PROTOCOL}" ] && [ "${PROTOCOL}" != "http" ] && [ "${PROTOCOL}" != "https" ] ; then
         
         case "${PROTOCOL}" in
             
-            smtp|pop3|imap|ftp)
+            smtp|pop3|imap|ftp|xmpp)
 
-timeout $TIMEOUT "echo 'Q' | $OPENSSL s_client ${CLIENT} ${CLIENTPASS} -starttls ${PROTOCOL} -connect $HOST:$PORT ${SERVERNAME} -verify 6 ${ROOT_CA} 2> ${ERROR} 1> ${CERT}"
+exec_with_timeout $TIMEOUT "echo 'Q' | $OPENSSL s_client ${CLIENT} ${CLIENTPASS} -starttls ${PROTOCOL} -connect $HOST:$PORT ${SERVERNAME} -verify 6 ${ROOT_CA} 2> ${ERROR} 1> ${CERT}"
 ;;
 
 *)
@@ -210,7 +215,7 @@ elif [ -n "${FILE}" ] ; then
 
 if [ "${HOST}" = "localhost" ] ; then
     
-    timeout $TIMEOUT "/bin/cat '${FILE}' 2> ${ERROR} 1> ${CERT}"
+    exec_with_timeout $TIMEOUT "/bin/cat '${FILE}' 2> ${ERROR} 1> ${CERT}"
     
 else
     
@@ -220,7 +225,7 @@ fi
 
 else
 
-timeout $TIMEOUT "echo 'Q' | $OPENSSL s_client ${CLIENT} ${CLIENTPASS} -connect $HOST:$PORT ${SERVERNAME} -verify 6 ${ROOT_CA} 2> ${ERROR} 1> ${CERT}"
+exec_with_timeout $TIMEOUT "echo 'Q' | $OPENSSL s_client ${CLIENT} ${CLIENTPASS} -connect $HOST:$PORT ${SERVERNAME} -verify 6 ${ROOT_CA} 2> ${ERROR} 1> ${CERT}"
 
 fi
 
@@ -414,7 +419,7 @@ main() {
         usage "No host specified"
     fi
 
-    if [ -n "${ALTNAMES}" -a -z "${COMMON_NAME}" ] ; then
+    if [ -n "${ALTNAMES}" ] && [ -z "${COMMON_NAME}" ] ; then
         unknown "--altnames requires a common name to match (--cn or --host-cn)"
     fi
 
@@ -449,7 +454,7 @@ main() {
         fi
     fi
     
-    if [ -n "${CRITICAL}" -a -n "${WARNING}" ] ; then
+    if [ -n "${CRITICAL}" ] && [ -n "${WARNING}" ] ; then
         if [ ${WARNING} -le ${CRITICAL} ] ; then
             unknown "--warning (${WARNING}) is less than or equal to --critical (${CRITICAL})"
         fi
@@ -485,14 +490,33 @@ main() {
     # Expect (optional)
     EXPECT=$(which expect 2> /dev/null)
     test -x "${EXPECT}" || EXPECT=""
-    if [ -z "${EXPECT}" -a -n "${VERBOSE}" ] ; then
-        echo "Expect not found: disabling timeouts"
+    if [  -n "${VERBOSE}" ] ; then
+        if [ -z "${EXPECT}" ] ; then
+            echo "expect not available"
+        else
+            echo "expect available (${EXPECT})"
+        fi
+    fi
+
+    # Timeout (optional)
+    TIMEOUT_BIN=$(which timeout 2> /dev/null)
+    test -x "${TIMEOUT_BIN}" || TIMEOUT_BIN=""
+    if [  -n "${VERBOSE}" ] ; then
+        if [ -z "${TIMEOUT_BIN}" ] ; then
+            echo "timeout not available"
+        else
+            echo "timeout available (${TIMEOUT_BIN})"
+        fi
+    fi
+
+    if [ -z "${TIMEOUT_BIN}" ] && [ -z "${EXPECT}" ] && [ -n "${VERBOSE}" ] ; then
+        echo "disabling timeouts"
     fi
 
     # Perl with Date::Parse (optional)
     PERL=$(which perl 2> /dev/null)
     test -x "${PERL}" || PERL=""
-    if [ -z "${PERL}" -a -n "${VERBOSE}" ] ; then
+    if [ -z "${PERL}" ] && [ -n "${VERBOSE}" ] ; then
         echo "Perl not found: disabling date computations"    
     fi
     if ! ${PERL} -e "use Date::Parse;" > /dev/null 2>&1 ; then
@@ -511,7 +535,13 @@ main() {
     #
     SERVERNAME=
     if ${OPENSSL} s_client not_a_real_option 2>&1 | grep -q -- -servername ; then
-        SERVERNAME="-servername ${HOST}"
+
+        if [ -n "${COMMON_NAME}" ] ; then
+            SERVERNAME="-servername ${COMMON_NAME}"
+        else
+            SERVERNAME="-servername ${HOST}"
+        fi
+
     else
         if [ -n "${VERBOSE}" ] ; then
             echo "'${OPENSSL} s_client' does not support '-servername': disabling virtual server support"
@@ -818,7 +848,7 @@ EOF
     
     # if --altnames was specified we show the specified CN instead of
     # the certificate CN
-    if [ -n "${ALTNAMES}" -a -n "${COMMON_NAME}" ] ; then
+    if [ -n "${ALTNAMES}" ] && [ -n "${COMMON_NAME}" ] ; then
         CN=${COMMON_NAME}
     fi
     

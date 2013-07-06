@@ -4,7 +4,7 @@ Priority: extra
 Maintainer: Debian Nagios Maintainer Group <pkg-nagios-devel@lists.alioth.debian.org>
 Uploaders: Jan Wagner <waja@cyconet.org>, Bernd Zeimetz <bzed@debian.org>
 Build-Depends: debhelper (>= 8.0.0), python, python-debian, quilt (>= 0.46-7), autotools-dev, flex, libmemcached-dev, libvarnishapi-dev, pkg-config
-Standards-Version: 3.9.2
+Standards-Version: 3.9.4
 Vcs-Git: git://git.debian.org/pkg-nagios/pkg-nagios-plugins-contrib
 Vcs-Browser: http://git.debian.org/?p=pkg-nagios/pkg-nagios-plugins-contrib;a=summary
 
@@ -21,6 +21,9 @@ Description: Plugins for nagios compatible monitoring systems
  .
    * check_backuppc (1.1.0): plugin for checking on the status of
      BackupPC backups
+   * check_checksums (20130611): plugin to verify file checksums
+     against (local, not 100% secure) lists.
+     Supports md5 sha1 sha224 sha256 sha384 sha512 checksums.
    * check_clamav (1.2): plugin to check for clamav signature freshness
      This script is used to compare the version and signature
      level of the currently running clamd daemon with the latest
@@ -36,7 +39,7 @@ Description: Plugins for nagios compatible monitoring systems
        - monitor automated mailboxes
        - check email-to-FTP or other special email gateways
    * check_haproxy (rev135): plugin check the HAProxy statistics url
-   * check_hpasm (4.6.3): plugin to check the hardware health of
+   * check_hpasm (4.6.3.2): plugin to check the hardware health of
      HP Proliant Servers
      It either uses snmp or - if installed - the hpasm package locally.
      The plugin checks the health of
@@ -68,7 +71,7 @@ Description: Plugins for nagios compatible monitoring systems
      This plugin excludes the system cache and buffer, because
      on some system with very stable memory usage it is perfectly
      normal for system cache to fill in all available memory.
-   * check_multipath (0.1.8): plugin to monitor the number of available and
+   * check_multipath (0.1.9): plugin to monitor the number of available and
      failed paths of multipath devices
    * check_mysql_health (2.1.8.2): plugin to check various parameters of a
      MySQL database
@@ -108,7 +111,7 @@ Description: Plugins for nagios compatible monitoring systems
      Foundry Network, Linux (using lm-sensors), Extreme Networks,
      Juniper Networks, HP ProCurve, Netscreen, Citrix NetScaler
      and Transmode Systems hardware.
-   * check_ssl_cert (1.14.4): plugin to check the CA and validity of an
+   * check_ssl_cert (1.14.6): plugin to check the CA and validity of an
      X.509 certificate
    * check_varnish (1.1): plugin to monitor varnish instances
    * check_webinject (1.69): plugin for testing web services
@@ -117,7 +120,7 @@ Description: Plugins for nagios compatible monitoring systems
      individual system components that have HTTP interfaces
      (JSP, ASP, CGI, PHP, AJAX, Servlets, HTML Forms,
      XML/SOAP Web Services, REST, etc).
-   * check_whois (1.12): plugin to check for the expiration of a domain.
+   * check_whois (1.13): plugin to check for the expiration of a domain.
      The plugin may not yet work with all registrars, since their
      output formats differ or there is no expiration date in the
      whois output.

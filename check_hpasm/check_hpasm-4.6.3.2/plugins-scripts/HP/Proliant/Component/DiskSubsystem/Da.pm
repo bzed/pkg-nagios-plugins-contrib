@@ -342,8 +342,10 @@ use constant { OK => 0, WARNING => 1, CRITICAL => 2, UNKNOWN => 3 };
 
 sub dump {
   my $self = shift;
-  printf "[LOGICAL_DRIVE]\n";
-  foreach (qw(cntrlcpqDaCntlrIndex cpqDaCntlrIndex size level status condition)) {
+  printf "[SPARE_DRIVE]\n";
+  foreach (qw(cpqDaPhyDrvCntlrIndex cpqDaPhyDrvIndex cpqDaPhyDrvBay
+      cpqDaPhyDrvBusNumber cpqDaPhyDrvSize cpqDaPhyDrvStatus
+      cpqDaPhyDrvCondition)) {
     printf "%s: %s\n", $_, $self->{$_};
   }
   printf "\n";
