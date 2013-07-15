@@ -47,7 +47,9 @@ Usage:
         chown root:nagios /etc/nagios/check_checksums.*
         chmod 0640 /etc/nagios/check_checksums.*
 
-    Run $0 in nrpe or nagios to check if the checksums are still the same.
+    Run
+      $0
+    in nrpe or nagios to check if the checksums are still the same.
     It will return UNKNOWN if there is no checksum file at all.
 
     To update *ALL* stored checksums please run
