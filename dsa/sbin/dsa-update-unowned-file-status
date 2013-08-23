@@ -31,7 +31,7 @@ if command -v ionice >/dev/null 2>&1; then
 	prefix="ionice -c 3 -t"  # idle priority, ignore errors
 fi
 
-$prefix find / -fstype proc -prune -o -nouser | head -n "$CUTOFF" > "$tmp"
+$prefix find / -ignore_readdir_race \( -fstype proc -o -fstype sysfs \) -prune -o -nouser | head -n "$CUTOFF" > "$tmp"
 
 if [ -s "$tmp" ]; then
 	echo "WARN"
