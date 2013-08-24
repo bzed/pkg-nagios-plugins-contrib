@@ -1,0 +1,103 @@
+#!/usr/bin/perl -w
+#
+# History:
+# 	2010-11-05	First release (v1)
+#
+# Comment: Please send bug fixes and enhancements to <rmichel@devnu11.net>
+#
+# check_ajp - nagios plugin for jboss monitoring
+# Copyright (C) 2010  Michel Rode <rmichel@devnu11.net>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+#
+# Usage: ./check_ajp --app ip.of.the.app [--port 8009 --warn 1 --crit 2 --timeout 5]
+# 
+
+use warnings;
+use strict;
+use Getopt::Long;
+use Socket;
+use Time::HiRes 'time';
+
+my $app = '';
+my $port = '8009';
+my $warntime = '1.5';
+my $crittime = '3';
+my $timeout = '10';
+
+my ($iaddr, $paddr, $proto, $sock, $time1, $time2);
+my $pong = 'null';
+
+sub xdie{
+	my $msg = shift;
+	printf STDERR "Usage: check_ajp --app ip.of.the.app [--port 8009 --warn 1 --crit 2 --timeout 5]\n\n";
+	printf STDERR "ERROR: $msg\n";
+	exit 3;
+}
+
+GetOptions("app=s" => \$app, "port=s" => \$port, "warn=f" => \$warntime, "crit=f" => \$crittime, "timeout=f" => \$timeout);
+
+my $ping = pack 'C5'    # Format template.
+    , 0x12, 0x34        # Magic number for server->container packets.
+    , 0x00, 0x01        # 2 byte int length of payload.
+    , 0x0A              # Type of packet. 10 = CPing.
+;
+
+my $expected = pack 'C5'    # Format template.
+    , 0x41, 0x42            # Magic number for container->server packets.
+    , 0x00, 0x01            # 2 byte int length of payload.
+    , 0x09                  # Type of packet. 9 = CPong reply.
+;
+
+$iaddr = inet_aton($app) || xdie("No host given !");
+$paddr = sockaddr_in($port, $iaddr) || xdie("Wrong port !");
+$proto = getprotobyname 'tcp';
+
+$time1 = time();
+
+eval {
+	local $SIG{ALRM} = sub { die "alarm\n" };
+	alarm($timeout);
+	socket $sock, PF_INET, SOCK_STREAM, $proto || xdie("socket !");
+	connect $sock, $paddr  || xdie("connect !");
+	syswrite $sock, $ping || xdie("syswrite !");
+	sysread $sock, $pong, 5 || xdie("sysread !");
+	alarm(0);
+}; 
+
+if ($@) {
+	die unless $@ eq "alarm\n";
+	$time2 = (time() - $time1);
+	printf "CRITICAL - AJP - Timeout after %1.0fs\n",$time2;
+	exit 2;
+} else {
+	$time2 = (time() - $time1);
+
+	if ($pong eq $expected) {
+		if ($time2 >= $crittime) {
+			printf "CRITICAL - AJP - %3.5f seconds response time|time=%3.6fs;;;0.000000;%2.6f\n",$time2,$time2,$timeout;
+			exit 2;
+		} elsif ($time2 >= $warntime) {
+			printf "WARNING - AJP - %3.5f seconds response time|time=%3.6fs;;;0.000000;%2.6f\n",$time2,$time2,$timeout;
+			exit 1;
+		} else {
+		        printf "OK - AJP - %3.5f seconds response time|time=%3.6fs;;;0.000000;%2.6f\n",$time2,$time2,$timeout;
+		        exit 0;
+		}
+	} else {
+	        printf "UNKNOWN - AJP - %3.5f seconds response time|time=%3.6fs;;;0.000000;%2.6f\n",$time2,$time2,$timeout;
+	        exit 3;
+	}
+}

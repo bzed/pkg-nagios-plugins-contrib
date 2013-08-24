@@ -5,7 +5,7 @@
 
 # Copyright 2008,2009,2011 Peter Palfrader
 # Copyright 2009 Stephen Gran
-# Copyright 2010 Uli Martens
+# Copyright 2010,2012,2013 Uli Martens
 # Copyright 2011 Alexander Reichle-Schmehl
 #
 # Permission is hereby granted, free of charge, to any person obtaining
@@ -121,35 +121,41 @@ get_avail() {
 	return 1
 }
 
+cat_vmlinux() {
+	local image header filter hdroff
+
+	image="$1"
+	header="$2"
+	filter="$3"
+	hdroff="$4"
+
+	off=`get_offset "$image" $header`
+	local ret="$?"
+	if [ "$ret" != 0 ]; then
+		# not found, exit
+		return 1
+	fi
+
+	(if [ "$off" != 0 ]; then
+	   dd ibs="$((off+hdroff))" skip=1 count=0
+	 fi &&
+	 dd bs=512k) < "$image"  2>/dev/null | $filter 2>/dev/null
+	return 0
+}
+
 get_image_linux() {
-	local image GZHDR1 GZHDR2 LZHDR off
+	local image
 
 	image="$1"
 
-	GZHDR1="\x1f\x8b\x08\x00"
-	GZHDR2="\x1f\x8b\x08\x08"
-	LZHDR="\x00\x00\x00\x02\xff"
-
-	off=`get_offset "$image" $GZHDR1`
-	[ "$?" != "0" ] && off="-1"
-	if [ "$off" -eq "-1" ]; then
-		off=`get_offset "$image" $GZHDR2`
-		[ "$?" != "0" ] && off="-1"
-	fi
-	if [ "$off" -eq "0" ]; then
-		zcat < "$image"
-		return
-	elif [ "$off" -ne "-1" ]; then
-		(dd ibs="$off" skip=1 count=0 && dd bs=512k) < "$image"  2>/dev/null | zcat 2>/dev/null
-		return
-	fi
-
-	off=`get_offset "$image" $LZHDR`
-	[ "$?" != "0" ] && off="-1"
-	if [ "$off" -ne "-1" ]; then
-		(dd ibs="$[off-1]" skip=1 count=0 && dd bs=512k) < "$image" 2>/dev/null | lzcat 2>/dev/null
-		return
-	fi
+	# gzip compressed image
+	if cat_vmlinux "$image" "\x1f\x8b\x08\x00"      "zcat"   0; then return; fi
+	if cat_vmlinux "$image" "\x1f\x8b\x08\x08"      "zcat"   0; then return; fi
+	# lzma compressed image
+	if cat_vmlinux "$image" "\x00\x00\x00\x02\xff"  "xzcat" -1; then return; fi
+	if cat_vmlinux "$image" "\x00\x00\x00\x04\xff"  "xzcat" -1; then return; fi
+	# xz compressed image
+	if cat_vmlinux "$image" "\xfd\x37\x7a\x58\x5a " "xzcat"  0; then return; fi
 
 	echo "ERROR: Unable to extract kernel image." 2>&1
 	exit 1
@@ -164,12 +170,19 @@ freebsd_check_running_version() {
 
 	local q='@\(#\)FreeBSD '"$r $v"
 
-	if zcat "$imagefile" | strings | egrep -q "$q"; then
+	if zcat "$imagefile" | $STRINGS | egrep -q "$q"; then
 		echo "OK"
 	else
 		echo "not OK"
 	fi
 }
+
+STRINGS="";
+if [ -x "$(which strings)" ]; then
+	STRINGS="$(which strings)"
+elif [ -x "$(which busybox)" -a "$( echo foobar | $(which busybox) strings 2>/dev/null)" = "foobar" ]; then
+	STRINGS="$(which busybox) strings"
+fi
 
 searched=""
 for on_disk in \
@@ -178,12 +191,12 @@ for on_disk in \
 	"/boot/kfreebsd-`uname -r`.gz"; do
 
 	if [ -e "$on_disk" ]; then
-		if [ ! -x "$(which strings)" ]; then
-			echo "UNKNOWN: 'strings' command missing, perhaps install binutils?"
+		if [ -z "$STRINGS" ]; then
+			echo "UNKNOWN: 'strings' command missing, perhaps install binutils or busybox?"
 			exit $UNKNOWN
 		fi
 		if [ "${on_disk/vmlinu}" != "$on_disk" ]; then
-			on_disk_version="`get_image_linux "$on_disk" | strings | grep 'Linux version' | head -n1`"
+			on_disk_version="`get_image_linux "$on_disk" | $STRINGS | grep 'Linux version' | head -n1`"
 			if [ -x /usr/bin/lsb_release ] ; then
 				vendor=$(lsb_release -i -s)
 				if [ -n "$vendor" ] && [ "xDebian" != "x$vendor" ] ; then
@@ -191,13 +204,13 @@ for on_disk in \
 				fi
 			fi
 			[ -z "$on_disk_version" ] || break
-			on_disk_version="`cat "$on_disk" | strings | grep 'Linux version' | head -n1`"
+			on_disk_version="`cat "$on_disk" | $STRINGS | grep 'Linux version' | head -n1`"
 			[ -z "$on_disk_version" ] || break
 
 			echo "UNKNOWN: Failed to get a version string from image $on_disk"
 			exit $UNKNOWN
 		else
-			on_disk_version="$(zcat $on_disk | strings | grep Debian | head -n 1 | sed -e 's/Debian [[:alnum:]]\+ (\(.*\))/\1/')"
+			on_disk_version="$(zcat $on_disk | $STRINGS | grep Debian | head -n 1 | sed -e 's/Debian [[:alnum:]]\+ (\(.*\))/\1/')"
 		fi
 	fi
 	searched="$searched $on_disk"

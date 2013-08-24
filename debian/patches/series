@@ -1,9 +1,9 @@
+check_ajp/return_critical_on_failed_connection
 check_raid/prefer_cciss_vol_status_over_hpacucli
 check_clamav/clamav_locations
 check_nfsmounts/perl_module
 check_nfsmounts/nfs_write_location
 dsa/security_updates_critical
-dsa/fix_check_packages_output
 dsa/check_packages_location
 check_libs/config_location
 check_libs/config_path
@@ -23,3 +23,4 @@ check_rbl/spelling_errors
 check_haproxy/epn
 check_httpd_status/epn
 check_backuppc/use_nagios_plugins
+dsa/epn

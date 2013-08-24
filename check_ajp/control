@@ -1,0 +1,8 @@
+Version: 1
+Uploaders: Bernd Zeimetz <bzed@debian.org>
+Description: plugin to monitor the AJP ping response time
+ Should work with all application servers (Tomcat, JBoss,....)
+ which provide an AJPv13 connector.
+Homepage: http://blog.devnu11.net/projects/
+Watch: http://blog.devnu11.net/projects/ <p>v([0-9]*) &#8211; md5: 
+Recommends: libsocket-perl

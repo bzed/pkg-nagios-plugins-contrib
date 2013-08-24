@@ -1,9 +1,51 @@
-nagios-plugins-contrib (7.20130614~bpo60+1) squeeze-backports-sloppy; urgency=low
+nagios-plugins-contrib (8.20130824~bpo60+1) squeeze-backports-sloppy; urgency=low
 
   * Rebuild for squeeze-backports-sloppy.
   * Update gbp.conf for the squeeze-backports branch. 
 
- -- Evgeni Golov <evgeni@debian.org>  Thu, 27 Jun 2013 16:55:41 +0200
+ -- Bernd Zeimetz <bzed@debian.org>  Sat, 24 Aug 2013 18:33:44 +0200
+
+nagios-plugins-contrib (8.20130824) unstable; urgency=low
+
+  [ Jan Wagner ]
+  * [3bce1c4b] Merge remote-tracking branch 'debian/master'
+  * [bcf6f1d9] Merge remote-tracking branch 'bzed/master'
+  * [d436ca0e] Fixing check_raid for 3ware controllers when reporting "NOT-PRESENT" (Closes: #692598)
+  * [8f55cc69] add patch check_raid/3ware_fix_notpresent
+  * [506000a8] Merge remote-tracking branch 'bzed/master'
+  * [62bbdd2f] disable epn
+  * [6c73c15b] Auto update of debian/control
+  * [5e43a9ae] update check_ssl_cert
+  * [ad1c463d] update check_ssl_cert
+  * [4975ff97] Revert "Fixing check_raid for 3ware controllers when reporting "NOT-PRESENT""
+    This reverts commit d436ca0e6a4e3147265627afd256856c9fab3836.
+  * [f6c71f97] drop removed patch
+  * [4e52a4ad] Merge remote-tracking branch 'bzed/master'
+  * [c01cd192] fix typo in patches/check_rbl/epn
+
+  [ Bernd Zeimetz ]
+  * [a61aefc4] Add syslog output to check_checksums
+  * [62d55e7e] New plugin: check_ajp
+  * [5a00818c] Auto update of debian/control
+  * [eb29e6c6] Auto update of debian/copyright
+  * [cf6c7f44] Delete unused patch file check_raid/cciss_bugfix
+  * [a3e036b7] Fix an error message in check_raid if not using cciss_vol_status.
+    Use of uninitialized value in -x at /usr/lib/nagios/plugins/check_raid
+    line 2495.
+    Thanks to Stefan Kaltenbrunner
+  * [6dddc838] Updating changelog.
+  * [192396b7] Fix check_ajp to return CRITICAL on connection errors.
+  * [d8d41faf] Add config file for check_ajp.
+  * [4e092c04] Read 5 bytes only - thats all an AJP pong needs.
+  * [26cb156f] Be nice and close the AJP connection socket.
+  * [ccc8f7d6] check_ajp: print an error message if --app is not specified.
+  * [915d3708] Add -epn to check_packages.
+    Thanks to Salvatore Bonaccorso (Closes: #691012)
+  * [240ca0fc] Updating date/version in changelog.
+  * [8534630e] Update DSA nagios checks/scripts
+  * [5078ff97] Refresh patches for new dsa plugin versions
+
+ -- Bernd Zeimetz <bzed@debian.org>  Sat, 24 Aug 2013 00:06:27 +0200
 
 nagios-plugins-contrib (7.20130614) unstable; urgency=low
 

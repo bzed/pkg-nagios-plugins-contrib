@@ -74,8 +74,15 @@ if not returnvalue in NAGIOS_STATUS:
     print "UNKNOWN: %s has invalid return value: %s."%(statusfile, returnvalue)
     sys.exit(NAGIOS_STATUS['UNKNOWN'])
 
+linecnt = 0
 for line in status:
     print line,
+    linecnt += 1
+
+if linecnt == 0:
+    print "Found no output.  Something is probably wrong"
+    sys.exit(NAGIOS_STATUS['UNKNOWN'])
+
 sys.exit(NAGIOS_STATUS[returnvalue])
 
 # vim:set et:

@@ -1,0 +1,79 @@
+--- a/check_ajp/check_ajp
++++ b/check_ajp/check_ajp
+@@ -7,6 +7,7 @@
+ #
+ # check_ajp - nagios plugin for jboss monitoring
+ # Copyright (C) 2010  Michel Rode <rmichel@devnu11.net>
++# Copyright (C) 2013  Bernd Zeimetz <b.zeimetz@conova.com>
+ #
+ # This program is free software: you can redistribute it and/or modify
+ # it under the terms of the GNU General Public License as published by
+@@ -30,6 +31,8 @@ use strict;
+ use Getopt::Long;
+ use Socket;
+ use Time::HiRes 'time';
++use IO::Socket;
++
+ 
+ my $app = '';
+ my $port = '8009';
+@@ -37,9 +40,14 @@ my $warntime = '1.5';
+ my $crittime = '3';
+ my $timeout = '10';
+ 
+-my ($iaddr, $paddr, $proto, $sock, $time1, $time2);
++my ($sock, $time1, $time2);
+ my $pong = 'null';
+ 
++sub conndie{
++	my $msg = shift;
++	print "CRITICAL : $msg\n";
++	exit 2;
++}
+ sub xdie{
+ 	my $msg = shift;
+ 	printf STDERR "Usage: check_ajp --app ip.of.the.app [--port 8009 --warn 1 --crit 2 --timeout 5]\n\n";
+@@ -49,6 +57,10 @@ sub xdie{
+ 
+ GetOptions("app=s" => \$app, "port=s" => \$port, "warn=f" => \$warntime, "crit=f" => \$crittime, "timeout=f" => \$timeout);
+ 
++if ($app eq '') {
++    xdie('--app not given')
++}
++
+ my $ping = pack 'C5'    # Format template.
+     , 0x12, 0x34        # Magic number for server->container packets.
+     , 0x00, 0x01        # 2 byte int length of payload.
+@@ -61,24 +73,23 @@ my $expected = pack 'C5'    # Format tem
+     , 0x09                  # Type of packet. 9 = CPong reply.
+ ;
+ 
+-$iaddr = inet_aton($app) || xdie("No host given !");
+-$paddr = sockaddr_in($port, $iaddr) || xdie("Wrong port !");
+-$proto = getprotobyname 'tcp';
+-
+ $time1 = time();
+ 
+ eval {
+ 	local $SIG{ALRM} = sub { die "alarm\n" };
+ 	alarm($timeout);
+-	socket $sock, PF_INET, SOCK_STREAM, $proto || xdie("socket !");
+-	connect $sock, $paddr  || xdie("connect !");
+-	syswrite $sock, $ping || xdie("syswrite !");
+-	sysread $sock, $pong, 5 || xdie("sysread !");
++	$sock = IO::Socket::INET->new(Proto => "tcp",
++					PeerAddr  => $app,
++					PeerPort  => $port) || conndie($@);
++	$sock->autoflush(1);
++	print $sock $ping;
++	$sock->recv($pong,5);
++        close $sock;
+ 	alarm(0);
+ }; 
+ 
+ if ($@) {
+-	die unless $@ eq "alarm\n";
++	conndie($@) unless $@ eq "alarm\n";
+ 	$time2 = (time() - $time1);
+ 	printf "CRITICAL - AJP - Timeout after %1.0fs\n",$time2;
+ 	exit 2;

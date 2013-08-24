@@ -7,7 +7,7 @@
 -# register
 -push(@utils::plugins, __PACKAGE__);
 +# register if cciss_vol_status is not available
-+if (! -x utils::which('cciss_vol_status')) {
++if (! utils::which('cciss_vol_status')) {
 +	push(@utils::plugins, __PACKAGE__);
 +}
  
