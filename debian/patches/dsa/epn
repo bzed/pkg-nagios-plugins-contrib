@@ -1,0 +1,8 @@
+--- a/dsa/checks/dsa-check-packages
++++ b/dsa/checks/dsa-check-packages
+@@ -1,4 +1,5 @@
+ #!/usr/bin/perl
++# nagios: -epn
+ 
+ # dsa-check-packages
+ 

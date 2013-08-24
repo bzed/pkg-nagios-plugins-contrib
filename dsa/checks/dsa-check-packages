@@ -61,54 +61,82 @@ sub record($) {
 sub get_packages {
 	$ENV{'COLUMNS'} = 1000;
 	$ENV{'LC_ALL'} = 'C';
-	open(F, "dpkg --print-architecture|") or die ("Cannot run dpkg --print-architecture: $!\n");
-	my $arch = <F>;
-	chomp($arch);
-	close(F);
-
-
-	open(F, "dpkg -l|") or die ("Cannot run dpkg -l: $!\n");
+	open(F, "dpkg -l|") or die ("Cannot run dpkg: $!\n");
 	my @lines = <F>;
 	close(F);
 	chomp(@lines);
 
-	shift @lines while ($lines[0] !~ /\+\+\+/);
-	shift @lines;
+	my $line;
+	my $has_arch = 0;
+	while (defined($line = shift @lines) && ($line !~ /\+\+\+/)) {
+		if ($line =~ /Architecture/) { $has_arch = 1; }
+	}
 
 	my %pkgs;
-	for my $line (@lines) {
-		my ($state, $pkg, $version, undef) = split(/  */, $line);
-		$pkg =~ s/\Q:$arch\E$//;
-		$pkgs{$state}{$pkg} = { 'installed' => $version }
+	for $line (@lines) {
+		my ($state, $pkg, $version, $arch, undef) = split(/  */, $line);
+		$arch = '' unless $has_arch;
+		$pkgs{$state}{$pkg} = { 'installed' => $version, arch => $arch }
 	}
 
 	my $installed = $pkgs{'ii'};
 	delete $pkgs{'ii'};
 
+	my @installed_packages = keys(%$installed);
+	my @cmd = ("apt-cache", "policy", @installed_packages);
+
 	open my $olderr, ">&STDERR"   or die "Can't dup STDERR: $!";
 	open     STDERR, ">/dev/null" or die "Can't dup STDOUT: $!";
-
-	open (F, "apt-cache policy ".(join(" ", keys(%$installed)))." |") or die ("Cannot run apt-cache policy: $!\n");
+	open (F, "-|", @cmd) or die ("Cannot run apt-cache policy: $!\n");
 	@lines = <F>;
 	close(F);
-	chomp(@lines);
 	open STDERR, ">&", $olderr  or die "Can't dup OLDERR: $!";
+	chomp(@lines);
 
-	my $line;
 	my $pkgname = undef;
 	while (defined($line = shift @lines)) {
 		if ($line =~ /^([^ ]*):$/) {
+			# when we have multi-arch capable fu, we require that
+			# apt-cache policy output is in the same order as its
+			# arguments.
+			#
+			# We needs thi, because the output block in apt-cache
+			# policy does not show the arch:
+			#
+			# | weasel@stanley:~$ apt-cache policy libedit2:amd64
+			# | libedit2:
+			# |   Installed: 2.11-20080614-5
+			# |   Candidate: 2.11-20080614-5
+			#
+			# We replace the package name in the output with the
+			# one we asked for ($pkg:$arch) - but to match this up
+			# sanely we need the order to be correct.
+			#
+			# For squeeze systems (no m-a), apt-cache policy output
+			# is all different.
 			$pkgname = $1;
+			if ($has_arch) {
+				my $from_list = shift @installed_packages;
+				next if ($pkgname eq $from_list); # no :$arch in pkgname we asked for
+
+				my $ma_fix_pkgname = $pkgname.':'.$installed->{$from_list}->{'arch'};
+				my $ma_fix_from_list = $from_list.':'.$installed->{$from_list}->{'arch'};
+
+				if ($pkgname eq $ma_fix_from_list || # e.g. ia32-libs-i386.  dpkg -l: ia32-libs-i386, apt-cache policy: ia32-libs-i386:i386
+				    $ma_fix_pkgname eq $from_list) {
+					$pkgname = $from_list;
+				} else {
+					die "Unexpected order mismatch in apt-cache policy output (apt-cache policy name: $pkgname - dpkg -l name: $from_list)\n";
+				}
+			}
 		} elsif ($line =~ /^ +Installed: (.*)$/) {
 			# etch dpkg -l does not print epochs, so use this info, it's better
 			$installed->{$pkgname}{'installed'} = $1;
 		} elsif ($line =~ /^ +Candidate: (.*)$/) {
 			$installed->{$pkgname}{'candidate'} = $1;
 		} elsif ($line =~ /^ +\*\*\*/) {
-			my @l;
-			@l = split(/ +/, $line);
 			$line = shift @lines;
-			@l = split(/ +/, $line);
+			my @l = split(/ +/, $line);
 			$installed->{$pkgname}{'origin'} = $l[2];
 		}
 	}
@@ -118,10 +146,10 @@ sub get_packages {
 		my $pkg = $installed->{$pkgname};
 
 		unless (defined($pkg->{'candidate'}) && defined($pkg->{'origin'})) {
-                        $obsolete{$pkgname} = $pkg;
-                        next;
-	       }
-			
+			$obsolete{$pkgname} = $pkg;
+			next;
+		}
+
 		if ($pkg->{'candidate'} ne $pkg->{'installed'}) {
 			$outofdate{$pkgname} = $pkg;
 			next;
@@ -304,7 +332,7 @@ my $shortout = $EXITCODE.": ".join(", ", @shortout);
 my $longout = join("\n", @longout);
 my $perfout = "|".join(" ", @perfout);
 
-print $shortout;
+print $shortout,"\n";
 print $longout,"\n";
 print $perfout,"\n";
 
