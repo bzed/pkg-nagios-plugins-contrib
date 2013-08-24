@@ -100,6 +100,7 @@ else
     cat ${tmp_out}
     count=`wc -l ${tmp_out}  | awk '{print $1}'`
     echo "| failed=${count};1;1;0;"
+    /usr/bin/logger -p user.err -t check_checksums -f ${tmp_out}
 fi
 rm -f ${tmp_out} ${tmp_err}
 
