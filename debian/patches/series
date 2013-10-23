@@ -20,6 +20,7 @@ check_lm_sensors/interpreter
 check_rbl/interpreter
 check_rbl/epn
 check_rbl/spelling_errors
+check_rbl/fix_encoding_podfile
 check_haproxy/epn
 check_httpd_status/epn
 check_backuppc/use_nagios_plugins
