@@ -2,8 +2,17 @@
     This file is the for the Flex code-generator: http://flex.sourceforge.net/
     It also requires libmemcached: http://libmemcached.org/libMemcached.html
 
+    For yum based distributions, eg Red Hat/Fedora/SuSE/Mageia
+        yum install gcc flex glibc-devel libmemcached-devel
+
+    For apt based distributions, eg Debian/Ubuntu
+        apt-get install gcc make flex libc6-dev libmemcached-dev
+
     Build it using:
         make LDFLAGS=-lmemcached check_memcached
+    or
+        make LDFLAGS="-lmemcached -lpthread" check_memcached
+    (depending on your Linux distro)
 
     This program was initially developed by Lonely Planet for internal use
     and has kindly been made available to the Open Source community for
@@ -17,7 +26,7 @@
     Or in other words:
         Test it yourself, and make sure it works for YOU.
 
-    Author: George Hansper       e-mail:  George.Hansper@lonelyplanet.com.au
+    Author: George Hansper       e-mail:  george@hansper.id.au
 
 */
 %{
@@ -53,6 +62,7 @@ static int  default_port = 11211;
 static int  max_n_stats = 30;
 static int  min_stats_interval = 30;		/* Compare stats at least 30 minutes old, at least */
 static int  verbose=0;
+static int  perfstats_for_rrdtool=0;
 static double min_hit_miss = 2.0;
 static uint64_t max_evictions = 10;
 static double  timeout=1.0;
@@ -85,7 +95,7 @@ static uint64_t *save_to;
 /* --------------------------- functions() ------------------------------ */
 void usage();
 int check_memcached();
-char * get_new_stats(memcached_st*);
+char * get_current_stats(memcached_st*);
 char * update_stats_obj(char *, size_t , char *);
 
 /* ===================================================================================== */
@@ -156,7 +166,7 @@ int main(int argc, char **argv) {
 	int result;
 	int arg_error = 0;
 	argv0 = argv[0];
-	while ( ( opt_c = getopt(argc, argv, "hvH:p:w:c:t:T:n:E:k:K:") ) != -1 ) {
+	while ( ( opt_c = getopt(argc, argv, "hvrH:p:w:c:t:T:n:E:k:K:") ) != -1 ) {
 		switch( opt_c ) {
 		case 'H':
 			/* Hostname or IP address - support for comma-separated list */
@@ -209,6 +219,9 @@ int main(int argc, char **argv) {
 		case 't':
 			timeout = strtod(optarg,NULL);
 			break;
+		case 'r':
+			perfstats_for_rrdtool=1;
+			break;
 		case 'c':
 			/* Ignored - for now */
 			break;
@@ -248,7 +261,7 @@ int check_memcached() {
 	size_t			object_size;
 	char			new_stats;
 	int			n;
-	char			*new_item;
+	char			*current_stats_str;
 	double			hit_miss;
 	char			*nagios_service_tmp;
 	char			*nagios_service_output;	/* error/warning message */
@@ -281,7 +294,7 @@ int check_memcached() {
 		timeout);
 	/* ----------------------------------------------------------------------------------------- */
 	/* Get the stats from this server */
-	new_item = get_new_stats(my_memcached);
+	current_stats_str = get_current_stats(my_memcached);
 
 	/* ----------------------------------------------------------------------------------------- */
 	/* Get our data (if it's there) */
@@ -305,9 +318,9 @@ int check_memcached() {
 	print_debug("Found %d items in stats history\n",obj_n_stats);
 	print_debug("Best stats:\ntime=%llu cmd_get=%llu cmd_set=%llu get_hits=%llu get_misses=%llu evictions=%llu\n",
 		obj_time,obj_cmd_get,obj_cmd_set,obj_get_hits,obj_get_misses,obj_evictions);
-	print_debug("New stats\n%s\n",new_item);
+	print_debug("New stats\n%s\n",current_stats_str);
 
-	new_object = update_stats_obj(object, object_size, new_item);
+	new_object = update_stats_obj(object, object_size, current_stats_str);
 	
 	/* ----------------------------------------------------------------------------------------- */
 	/* Store new data if it's at least 1 minute newer */
@@ -368,22 +381,20 @@ int check_memcached() {
 						hit_miss
 						);
 				free ( nagios_service_tmp );
-			/*
 			} else {
 				str_bytes = asprintf(&nagios_service_output,
-						"%shit/miss: %1.1f; ",
+						"%shit/miss=%1.1f; ",
 						nagios_service_tmp,
 						hit_miss
 						);
-			*/
 			}
-		/*
 		} else {
-			str_bytes = asprintf(&nagios_service_output,"%shit/miss: %llu/0; ",
+			hit_miss = 0;
+			str_bytes = asprintf(&nagios_service_output,"%shit/miss=%llu/0; ",
 						nagios_service_tmp,
 						stats.get_hits - obj_get_hits
 			);
-		*/
+			free ( nagios_service_tmp );
 		}
 
 		nagios_service_tmp = nagios_service_output;
@@ -398,10 +409,10 @@ int check_memcached() {
 		free ( nagios_service_tmp );
 	}
 	/* Add the performance data */
-	/* Remove trailing newline from new_item */
-	n = strlen(new_item);
-	if ( n > 1 && *(new_item+n-1) == '\n' ) {
-		*(new_item+n-1) = '\0';
+	/* Remove trailing newline from current_stats_str */
+	n = strlen(current_stats_str);
+	if ( n > 1 && *(current_stats_str+n-1) == '\n' ) {
+		*(current_stats_str+n-1) = '\0';
 	}
 	if ( str_bytes == -1 ) {
 		puts(memory_error_message);
@@ -409,12 +420,41 @@ int check_memcached() {
 	}
 	
 	/* Delta times may not apply if no suitable object found. Also, if NO object exists yet, there is nothing to calculate */
-	if ( obj_time == 0 ) {
-		nagios_perfdata = new_item;
+	if ( perfstats_for_rrdtool == 1 ) {
+		if ( obj_time == 0 ) {
+			/* No performance stats available (yet) */
+			nagios_perfdata = "";
+		} else {
+			/*
+			str_bytes = asprintf(&nagios_perfdata, 
+				"%s delta_time_s=%lu gets_per_min=%llu sets_per_min=%llu hits_per_min=%llu misses_per_min=%llu evictions_per_min=%llu",
+				current_stats_str,
+				(uint32_t) ( stats.time - obj_time ),
+				60 * ( stats.cmd_get - obj_cmd_get) / ( stats.time - obj_time ),
+				60 * ( stats.cmd_set - obj_cmd_set  )/ ( stats.time - obj_time ),
+				60 * ( stats.get_hits - obj_get_hits ) / ( stats.time - obj_time ),
+				60 * ( stats.get_misses - obj_get_misses ) / ( stats.time - obj_time ),
+				60 * ( stats.evictions - obj_evictions ) / ( stats.time - obj_time )
+				);
+			*/
+			str_bytes = asprintf(&nagios_perfdata, 
+				"gets_per_min=%.2f sets_per_min=%.2f hits_per_min=%.2f misses_per_min=%.2f evictions_per_min=%.2f hit_miss_ratio=%.2f",
+				60.0 * ( stats.cmd_get - obj_cmd_get) / ( stats.time - obj_time ),
+				60.0 * ( stats.cmd_set - obj_cmd_set  )/ ( stats.time - obj_time ),
+				60.0 * ( stats.get_hits - obj_get_hits ) / ( stats.time - obj_time ),
+				60.0 * ( stats.get_misses - obj_get_misses ) / ( stats.time - obj_time ),
+				60.0 * ( stats.evictions - obj_evictions ) / ( stats.time - obj_time ),
+				/* Hit/Miss ratio */
+				0. + hit_miss
+				);
+		}
+
+	} else if ( obj_time == 0 ) {
+		nagios_perfdata = "";
 	} else {
 		str_bytes = asprintf(&nagios_perfdata, 
 			"%s delta_time=%lu delta_cmd_get=%llu delta_cmd_set=%llu delta_get_hits=%llu delta_get_misses=%llu delta_evictions=%llu",
-			new_item,
+			current_stats_str,
 			(uint32_t) ( stats.time - obj_time ),
 			stats.cmd_get - obj_cmd_get,
 			stats.cmd_set - obj_cmd_set,
@@ -446,7 +486,7 @@ int check_memcached() {
 		print_v("\nNo misses - very good\n");
 	}
 
-	print_v("\nHistory object '%s':\n%s\nNew stats:\n%s (%sstored)\n",memcached_key,object,new_item,
+	print_v("\nHistory object '%s':\n%s\nNew stats:\n%s (%sstored)\n",memcached_key,object,current_stats_str,
 		new_object== NULL? "not ":"");
 
 	memcached_free(my_memcached);
@@ -455,11 +495,11 @@ int check_memcached() {
 }
 
 /* ==================================================================================================== */
-char *get_new_stats(memcached_st  *my_memcached) {
+char *get_current_stats(memcached_st  *my_memcached) {
 	memcached_return	error;
 	int			str_bytes;
-	char			* new_item_format;
-	char			* new_item;
+	char			* current_stats_str_format;
+	char			* current_stats_str;
 	memcached_stat_st	*stats_array;
 
 	/* error = memcached_stat_servername(&stats, NULL, hostname, port); - cannot set timeout, but gives better error responses :-( */
@@ -474,9 +514,9 @@ char *get_new_stats(memcached_st  *my_memcached) {
 	stats = stats_array[0];
 	free(stats_array);
 
-	new_item_format = "time=%lu cmd_get=%llu cmd_set=%llu get_hits=%llu get_misses=%llu evictions=%llu\n";
+	current_stats_str_format = "time=%lu cmd_get=%llu cmd_set=%llu get_hits=%llu get_misses=%llu evictions=%llu\n";
 
-	str_bytes = asprintf(&new_item,new_item_format,
+	str_bytes = asprintf(&current_stats_str,current_stats_str_format,
 			stats.time,stats.cmd_get,stats.cmd_set,stats.get_hits,stats.get_misses,stats.evictions);
 
 	obj_time_oldest = stats.time;
@@ -486,20 +526,20 @@ char *get_new_stats(memcached_st  *my_memcached) {
 		exit(2);
 	}
 
-	return(new_item);
+	return(current_stats_str);
 }
 
 /* ==================================================================================================== */
-char * update_stats_obj(char *object, size_t object_size, char *new_item) {
+char * update_stats_obj(char *object, size_t object_size, char *current_stats_str) {
 	int	obj_offset;
 	char	*new_object;
 	size_t	new_object_size;
 	size_t	graft_offset;
 	int	graft_size;
 	char	*s;
-	if ( stats.time < obj_time_last + 60 ) {
+	if ( stats.time < obj_time_last + 30 ) {
 		/* Only store new stats if at least 1 minute has passed since the last stats were stored */
-		print_debug("New stats are less than minute newer than last entry - not stored\n");
+		print_v("New stats are less than 30s newer than last entry - not stored\n");
 		return(NULL);
 	}
 	/* Prune stats from the start of the object */
@@ -519,7 +559,7 @@ char * update_stats_obj(char *object, size_t object_size, char *new_item) {
 	print_debug("Prune %d items / %d chars from start of object\nNew:\n%s\n",obj_n_prune,obj_offset,object+obj_offset);
 	*/
 	/* Add extra 2 chars for trailing \n\0 */
-	new_object_size = object_size - obj_offset + (size_t) ( (strlen(new_item)+ 2) * sizeof(char));
+	new_object_size = object_size - obj_offset + (size_t) ( (strlen(current_stats_str)+ 2) * sizeof(char));
 	new_object = malloc(new_object_size * sizeof(char) );
 	if (new_object == NULL ) {
 		puts(memory_error_message);
@@ -543,7 +583,7 @@ char * update_stats_obj(char *object, size_t object_size, char *new_item) {
 		/* Add \n\0 to end of buffer */
 		strcpy(++s,"\n");
 	}
-	strcat(s,new_item);
+	strcat(s,current_stats_str);
 	return(new_object);
 	print_debug("New Object is:\n%s\nNew size:  %d\nReal size: %d\n",new_object, new_object_size, (strlen(new_object)+1));
 	return(new_object);
@@ -553,7 +593,7 @@ char * update_stats_obj(char *object, size_t object_size, char *new_item) {
 
 void usage() {
 	puts("Usage:");
-	printf("\t%s -H hostname[:port] [-v] [-p port] [-t time_out] [-w min_hit_miss] [-n max_stats] [-T min_stats_interval] [-E max_evictions] [-k key] [-K key_expiry_time]\n", argv0);
+	printf("\t%s -H hostname[:port] [-v] [-p port] [-t time_out] [-w min_hit_miss] [-n max_stats] [-T min_stats_interval] [-E max_evictions] [-k key] [-K key_expiry_time] [-r]\n", argv0);
 	printf("\t-H  ... Hostname or IP address (required)\n\t        optional \":port\" overrides -p\n");
 	printf("\t-p  ... Port number (default: %u)\n",default_port);
 	printf("\t-v  ... verbose messages\n");
@@ -564,9 +604,10 @@ void usage() {
 	printf("\t-t  ... timeout in seconds (default: %1.1f)\n",timeout);
 	printf("\t-k  ... key name for history object (default: %s)\n",memcached_key);
 	printf("\t-K  ... expiry time in seconds for history object (default: %u)\n",memcache_stats_object_expiry_time);
+	printf("\t-r  ... output performance statistics as rate-per-minute figures (better suited to pnp4nagios)\n");
 	printf("\nExample:\n");
 	printf("\t%s -H 192.168.1.1 -p 11212 -w 10 -E 5 -t 0.3 -T 10 -n 10\n",argv0);
-	printf("\nNote: the history object \"%s\" will not be updated if the new stats are less than a minute old\n",memcached_key);
+	printf("\nNote: the history object \"%s\" will not be updated if the new stats are less than 30 seconds old\n",memcached_key);
 	printf(  "      compared to the most recent stats in the \"%s\" object\n",memcached_key);
 	
 }
