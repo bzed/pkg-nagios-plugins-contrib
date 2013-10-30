@@ -1,0 +1,4 @@
+Uploaders: Bernd Zeimetz <bzed@debian.org>
+Description: Plugin to monitor graphite metrics
+Homepage: https://github.com/disqus/nagios-plugins
+Recommends: python
