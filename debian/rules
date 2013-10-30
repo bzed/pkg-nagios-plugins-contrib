@@ -84,6 +84,7 @@ override_dh_auto_test:
 	# nothign to do right now.
 
 override_dh_python2:
+	dh_python2
 	dh_python2 usr/lib/nagios/plugins usr/lib/nagios/cronjobs
 
 CONTROL_FILES := $(shell for p in $(PLUGINS); do echo $$p/control; done)
