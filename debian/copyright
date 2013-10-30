@@ -141,6 +141,20 @@ http://buhacoff.net/software/check_email_delivery/
 
 ------------------------------------------------------------------------------
 
+check_graphite:
+
+The plugin was downloaded from: 
+https://github.com/disqus/nagios-plugins
+
+  Copyright: (c) 2012 DISQUS.
+  License: Apache License 2.0, see LICENSE for more details.
+  
+  On Debian systems, a copy of the Apache License 2.0 can be found in
+  /usr/share/common-licenses/Apache-2.0
+  
+
+------------------------------------------------------------------------------
+
 check_haproxy:
 
 The plugin was downloaded from: 
