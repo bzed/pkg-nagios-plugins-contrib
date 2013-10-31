@@ -7,7 +7,7 @@ export DH_VERBOSE=1
 PLUGINS := $(shell find $(CURDIR) -mindepth 1 -maxdepth 1 -name .git -prune -o -name .pc -prune -o -name debian -prune -o -type d -printf '%f\n' | sort)
 
 %:
-	dh $@ --with quilt,python2 --parallel
+	dh $@ --with quilt,python2,autotools_dev --parallel
 
 # Here follows a small shell snipped to call dh_auto_* for all plugins
 # Currently
@@ -15,16 +15,16 @@ PLUGINS := $(shell find $(CURDIR) -mindepth 1 -maxdepth 1 -name .git -prune -o -
 #   we run dh_auto_$(1) with -O--sourcedirectory="$$plugin"
 # - if $${plugin}/src exists, we run dh_auto_$(1) on that directory
 # - else: fail :)
-DH_AUTO_CALL = 	  if [ -f $(CURDIR)/$$plugin/Makefile ]; then \
+DH_AUTO_CALL = 	if [ "$$auto_command" == "dh_auto_configure" ]; then \
+		    export options="$$options -- --enable-stack-protector" ;\
+		fi ;\
+		if [ -f $(CURDIR)/$$plugin/Makefile ]; then \
 			$$auto_command -O--sourcedirectory="$${plugin}" $$options; \
-		  elif [ -d $(CURDIR)/$$plugin/src ]; then \
-		  	if [ "$$auto_command" == "dh_auto_configure" ]; then \
-			    export options="$$options -- --enable-stack-protector" ;\
-			fi ;\
+		elif [ -d $(CURDIR)/$$plugin/src ]; then \
 			$$auto_command -O--sourcedirectory="$${plugin}/src" $$options; \
-		  else \
+		else \
 			echo failed to build $$plugin; exit 255 ; \
-		  fi
+		fi
 
 PACKAGING_HELPER = /usr/bin/python $(CURDIR)/debian/packaging-helper.py
 
