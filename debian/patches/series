@@ -19,9 +19,10 @@ check_lm_sensors/manpage_whatis_fix
 check_lm_sensors/spelling_errors
 check_lm_sensors/interpreter
 check_rbl/interpreter
-check_rbl/epn
 check_rbl/spelling_errors
+check_rbl/disable_solid.net
 check_haproxy/epn
 check_httpd_status/epn
 check_backuppc/use_nagios_plugins
 dsa/epn
+check_rbl/disable_solid.net

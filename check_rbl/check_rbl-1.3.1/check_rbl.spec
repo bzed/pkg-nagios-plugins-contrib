@@ -1,12 +1,12 @@
 ################################################################################
 # File version information:
-# $Id: check_rbl.spec 1264 2011-07-11 05:45:43Z corti $
-# $Revision: 1264 $
+# $Id: check_rbl.spec 1344 2013-09-26 06:26:05Z corti $
+# $Revision: 1344 $
 # $HeadURL: https://svn.id.ethz.ch/nagios_plugins/check_rbl/check_rbl.spec $
-# $Date: 2011-07-11 07:45:43 +0200 (Mon, 11 Jul 2011) $
+# $Date: 2013-09-26 08:26:05 +0200 (Thu, 26 Sep 2013) $
 ################################################################################
 
-%define version          1.3.0
+%define version          1.3.1
 %define release          0
 %define sourcename       check_rbl
 %define packagename      nagios-plugins-check-rbl
