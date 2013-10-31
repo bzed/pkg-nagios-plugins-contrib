@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # nagios: -epn
 
-# $Id: check_whois,v 1.13 2012/12/14 23:57:50 wessels Exp $
+# $Id: check_whois,v 1.14 2013/09/30 17:24:45 wessels Exp $
 #
 # check_whois
 #
@@ -172,6 +172,23 @@ sub grok {
 	    $registrar = 'UNKNOWN';
 	} else {
             critical("Didn't find Registrar");
+	}
+
+	# Date::Manip doesn't like the DD-MM-YYYY format, so we reformat it
+	# as YYYY-MM-DD.  Also month might not be numeric.
+	#
+	if ($expires =~ /-\w+-\d\d\d\d$/) {
+		my @p = split(/-/, $expires);
+		if ($p[1] =~ /^[a-zA-Z]+$/ || $p[0] > 12) {
+			# DD-MM-YYYY
+			$expires = join('-', $p[2], $p[1], $p[0]);
+		} elsif ($p[0] =~ /^[a-zA-Z]+$/ || $p[1] > 12) {
+			# MM-DD-YYYY
+			$expires = join('-', $p[2], $p[0], $p[1]);
+		} else {
+			# Unknown, assume DD-MM-YYYY
+			$expires = join('-', $p[2], $p[1], $p[0]);
+		}
 	}
 
 	my $t;
