@@ -117,6 +117,21 @@ http://exchange.nagios.org/directory/Plugins/Anti-2DVirus/ClamAV/ClamAV-check-pl
 
 ------------------------------------------------------------------------------
 
+check_cups:
+
+The plugin was downloaded from: 
+https://www.monitoringexchange.org/inventory/Check-Plugins/Hardware/Devices/Printer/check_cups
+
+  Copyright (C) Steve Huff <shuff@hmdc.harvard.edu>
+  
+  This Nagios plugin is free software, and comes with ABSOLUTELY NO WARRANTY. 
+  It may be used, redistributed and/or modified under the terms of the GNU 
+  General Public Licence (see http://www.fsf.org/licensing/licenses/gpl.txt).
+  
+  
+
+------------------------------------------------------------------------------
+
 check_email_delivery:
 
 The plugin was downloaded from: 
