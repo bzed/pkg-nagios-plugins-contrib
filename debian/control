@@ -11,7 +11,7 @@ Vcs-Browser: http://git.debian.org/?p=pkg-nagios/pkg-nagios-plugins-contrib;a=su
 Package: nagios-plugins-contrib
 Architecture: any
 Depends: ${misc:Depends}
-Recommends: ${shlibs:Depends}, ${python:Depends}, libsocket-perl, libnagios-plugin-perl, nagios-plugins-basic, libnet-dns-perl, libnagios-plugin-perl (>= 0.31), libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-ssleay-perl, python, liblocale-gettext-perl, liblwp-useragent-determined-perl, snmp, freeipmi-tools, libipc-run-perl, lsof, libyaml-syck-perl, libdbd-mysql-perl, libreadonly-perl, libnet-snmp-perl, openssl, libwebinject-perl, libdate-manip-perl, libnet-dns-sec-perl, ruby | ruby-interpreter, ${perl:Depends}
+Recommends: ${shlibs:Depends}, ${python:Depends}, libsocket-perl, libnagios-plugin-perl, nagios-plugins-basic, libnet-dns-perl, libdate-manip-perl, libnagios-plugin-perl (>= 0.31), libnet-cups-perl, libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-ssleay-perl, python, liblocale-gettext-perl, liblwp-useragent-determined-perl, snmp, freeipmi-tools, libipc-run-perl, lsof, libyaml-syck-perl, libdbd-mysql-perl, libreadonly-perl, libnet-snmp-perl, openssl, libwebinject-perl, libnet-dns-sec-perl, ruby | ruby-interpreter, ${perl:Depends}
 Suggests: backuppc, perl-doc, cciss-vol-status, mpt-status, expect, nagios-plugin-check-multi, moreutils
 Enhances: nagios-plugins, nagios-plugins-basic, nagios-plugins-standard
 Description: Plugins for nagios compatible monitoring systems
@@ -32,6 +32,10 @@ Description: Plugins for nagios compatible monitoring systems
      level of the currently running clamd daemon with the latest
      available versions listed in the TXT record for
      current.cvd.clamav.net.
+   * check_cups (0.2): plugin to check queues on a remote CUPS server
+     This plugin is monitoring of queues on a remote CUPS server,
+     which means that it doesn't need to be installed on the print
+     server and run via NRPE.
    * check_email_delivery (0.7.1b): plugin to monitor email delivery
      Some typical uses of this plugin include:
        - check SMTP server
@@ -64,7 +68,7 @@ Description: Plugins for nagios compatible monitoring systems
      libraries by running processes
    * check_lm_sensors (3.1.1): plugin to monitor hardware sensors
      and disk temperatures
-   * check_memcached (1.2): plugin to check memcached instances
+   * check_memcached (1.3): plugin to check memcached instances
      It will give a critical message if a partiular memcached host is
      inaccessible and generate a warning if the hit/miss ratio falls
      below a given threshold or the number of evictions exceeds a given
@@ -83,7 +87,7 @@ Description: Plugins for nagios compatible monitoring systems
    * check_printer: plugin to check printer supply levels using SNMP
      It outputs performance data for all supplies
      found, for example toner and drum.
-   * check_raid (3.0): plugin to check sw/hw RAID status
+   * check_raid (3.0.1+ba57f5f): plugin to check sw/hw RAID status
      The plugin looks for any known types of RAID configurations,
      and checks them all.
      .
@@ -115,16 +119,16 @@ Description: Plugins for nagios compatible monitoring systems
      Foundry Network, Linux (using lm-sensors), Extreme Networks,
      Juniper Networks, HP ProCurve, Netscreen, Citrix NetScaler
      and Transmode Systems hardware.
-   * check_ssl_cert (1.14.6): plugin to check the CA and validity of an
+   * check_ssl_cert (1.15.0): plugin to check the CA and validity of an
      X.509 certificate
    * check_varnish (1.1): plugin to monitor varnish instances
-   * check_webinject (1.69): plugin for testing web services
+   * check_webinject (1.80): plugin for testing web services
      It uses the WebInject Perl module for automated testing of
      web applications and web services. It can be used to check
      individual system components that have HTTP interfaces
      (JSP, ASP, CGI, PHP, AJAX, Servlets, HTML Forms,
      XML/SOAP Web Services, REST, etc).
-   * check_whois (1.13): plugin to check for the expiration of a domain.
+   * check_whois (1.14): plugin to check for the expiration of a domain.
      The plugin may not yet work with all registrars, since their
      output formats differ or there is no expiration date in the
      whois output.
