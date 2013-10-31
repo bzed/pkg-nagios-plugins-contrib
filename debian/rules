@@ -30,7 +30,7 @@ PACKAGING_HELPER = /usr/bin/python $(CURDIR)/debian/packaging-helper.py
 
 
 clean: $(PLUGINS:%=clean-%) debian/copyright debian/control
-	dh $@ --with quilt,python2 --parallel
+	dh $@ --with quilt,python2,autotools_dev --parallel
 	rm -f debian/nagios-plugins-contrib.install
 	rm -f debian/README.Debian.plugins
 
