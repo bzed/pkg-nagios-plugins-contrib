@@ -26,3 +26,4 @@ check_httpd_status/epn
 check_backuppc/use_nagios_plugins
 dsa/epn
 check_cups/epn
+check_snmp_time/epn
