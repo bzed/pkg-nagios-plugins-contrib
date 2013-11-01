@@ -11,7 +11,7 @@ Vcs-Browser: http://git.debian.org/?p=pkg-nagios/pkg-nagios-plugins-contrib;a=su
 Package: nagios-plugins-contrib
 Architecture: any
 Depends: ${misc:Depends}
-Recommends: ${shlibs:Depends}, ${python:Depends}, libsocket-perl, libnagios-plugin-perl, nagios-plugins-basic, libnet-dns-perl, libnagios-plugin-perl (>= 0.31), libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-ssleay-perl, python, liblocale-gettext-perl, liblwp-useragent-determined-perl, snmp, freeipmi-tools, libipc-run-perl, lsof, libyaml-syck-perl, libdbd-mysql-perl, libreadonly-perl, libnet-snmp-perl, openssl, libwebinject-perl, libdate-manip-perl, libnet-dns-sec-perl, ruby | ruby-interpreter, ${perl:Depends}
+Recommends: ${shlibs:Depends}, ${python:Depends}, libsocket-perl, libnagios-plugin-perl, nagios-plugins-basic, libnet-dns-perl, libdate-manip-perl, libnagios-plugin-perl (>= 0.31), libnet-cups-perl, libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-ssleay-perl, python, liblocale-gettext-perl, liblwp-useragent-determined-perl, snmp, freeipmi-tools, libipc-run-perl, lsof, libyaml-syck-perl, libdbd-mysql-perl, libreadonly-perl, libnet-snmp-perl, openssl, libwebinject-perl, libnet-dns-sec-perl, ruby | ruby-interpreter, ${perl:Depends}
 Suggests: backuppc, perl-doc, cciss-vol-status, mpt-status, expect, nagios-plugin-check-multi, moreutils
 Enhances: nagios-plugins, nagios-plugins-basic, nagios-plugins-standard
 Description: Plugins for nagios compatible monitoring systems
@@ -32,6 +32,10 @@ Description: Plugins for nagios compatible monitoring systems
      level of the currently running clamd daemon with the latest
      available versions listed in the TXT record for
      current.cvd.clamav.net.
+   * check_cups (0.2): plugin to check queues on a remote CUPS server
+     This plugin is monitoring of queues on a remote CUPS server,
+     which means that it doesn't need to be installed on the print
+     server and run via NRPE.
    * check_email_delivery (0.7.1b): plugin to monitor email delivery
      Some typical uses of this plugin include:
        - check SMTP server

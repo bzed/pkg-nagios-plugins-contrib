@@ -1,0 +1,8 @@
+Homepage: https://www.monitoringexchange.org/inventory/Check-Plugins/Hardware/Devices/Printer/check_cups
+Uploaders: Jan Wagner <waja@cyconet.org>
+Description: plugin to check queues on a remote CUPS server
+ This plugin is monitoring of queues on a remote CUPS server,
+ which means that it doesn't need to be installed on the print
+ server and run via NRPE.
+Recommends: libdate-manip-perl, libnagios-plugin-perl (>= 0.31), libnet-cups-perl
+Version: 0.2
