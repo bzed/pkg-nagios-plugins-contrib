@@ -27,3 +27,4 @@ check_backuppc/use_nagios_plugins
 dsa/epn
 check_cups/epn
 check_webinject/epn
+check_snmp_time/epn
