@@ -1,0 +1,5 @@
+Homepage: https://raw.github.com/nagios-plugins/nagios-plugins/ba7615631add0b610ada6a819d6c8f8c46a2d36d/contrib/check_bgpstate.pl
+Recommends: libnet-snmp-perl, whois
+Version: 1.0
+Uploaders: Jan Wagner <waja@cyconet.org>
+Description: plugin to check all BGP session on Cisco routers
