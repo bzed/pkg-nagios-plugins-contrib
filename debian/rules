@@ -5,6 +5,7 @@
 export DH_VERBOSE=1
 
 PLUGINS := $(shell find $(CURDIR) -mindepth 1 -maxdepth 1 -name .git -prune -o -name .pc -prune -o -name debian -prune -o -type d -printf '%f\n' | sort)
+PKGNAME = nagios-plugins-contrib
 
 %:
 	dh $@ --with quilt,python2,autotools_dev --parallel
@@ -31,7 +32,7 @@ PACKAGING_HELPER = /usr/bin/python $(CURDIR)/debian/packaging-helper.py
 
 clean: $(PLUGINS:%=clean-%) debian/copyright debian/control
 	dh $@ --with quilt,python2,autotools_dev --parallel
-	rm -f debian/nagios-plugins-contrib.install
+	rm -f debian/$(PKGNAME).install
 	rm -f debian/README.Debian.plugins
 
 clean-%:
@@ -44,15 +45,15 @@ dh_auto_install-%:
 	    export plugin="$*" ;\
 	    export options="--destdir=debian/$*" ;\
 	    $(DH_AUTO_CALL)
-	if [ -d debian/$*/usr/lib/nagios-plugins-contrib ]; then \
+	if [ -d debian/$*/usr/lib/$(PKGNAME) ]; then \
 	    mkdir -p debian/$*/usr/lib/nagios ;\
-	    mv debian/$*/usr/lib/nagios-plugins-contrib debian/$*/usr/lib/nagios/plugins ;\
+	    mv debian/$*/usr/lib/$(PKGNAME) debian/$*/usr/lib/nagios/plugins ;\
 	fi
-	# add files to debian/nagios-plugins-contrib.install
+	# add files to debian/$(PKGNAME).install
 	set -e; find debian/$* -type f -printf '%h\n' | sort -u  |\
 	    while read dir; do \
 	        echo "$$dir/* `echo $$dir | sed 's,debian/$*/,,'`" ;\
-	    done >> debian/nagios-plugins-contrib.install
+	    done >> debian/$(PKGNAME).install
 	# create shlibdeps for the plugin into a temp file
 	set -e; \
 	   opts=`find debian/$* -type f -exec file {} \; |\
