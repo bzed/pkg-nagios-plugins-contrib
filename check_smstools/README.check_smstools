@@ -1,0 +1,45 @@
+check_smstools
+--------------
+
+Depends:
+--------
+- Nagios::Plugin
+- smstools3
+
+Usage:
+------
+The plugin can be used to monitor a gsm modem used together with smstools.
+For this to work it relies on a smstools feature which should be available
+since version 3.1 called regular_run_cmd.
+
+So the following change is needed in the modem section of
+the modem that is to be monitored:
+
+regular_run_cmd = AT+CSQ
+regular_run_cmd = AT+CREG?
+regular_run_cmd = AT+COPS?
+regular_run_interval = 60
+regular_run_statfile = /var/log/smstools/smsd_stats/modem_status
+
+The interval and the file can of course be adjusted. However the file given
+above is the default file used by the plugin. If it is changed then the plugin
+needs to be called with --stat-file <filename>. The commands however are
+required, except for the AT+COPS? command. This is only for operator detection
+and can be disabled, if one isn't interested what operator the modem is
+registered to.
+
+Known Bugs:
+-----------
+Currently the script does not work with the embedded perl interpreter for unknown reasons.
+Therefore it contains a
+
+# nagios: -epn
+
+header, which causes nagios to not use the embedded perl interpreter for it.
+
+License:
+-------
+This plugin is licensed under the terms of the GPL v2 or later. See COPYING for details.
+Author:
+------
+Patrick Schoenfeld <schoenfeld@debian.org>

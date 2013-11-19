@@ -1,0 +1,6 @@
+Homepage: http://exchange.nagios.org/directory/Plugins/Hardware/Mobile-Devices/check_smstools/details
+Uploaders: Bernd Zeimetz <bzed@debian.org>
+Description: plugin to check GSM Modems using smstools
+ check_smstools is a plugin to monitor a GSM modem
+ signal quality and registration status with smstools.
+Suggests: smstools (>= 3~)

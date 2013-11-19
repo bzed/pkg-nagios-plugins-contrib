@@ -1,0 +1,241 @@
+#!/usr/bin/perl
+
+#
+# Retrieves the status of an SMS Modem via smstools3.
+#
+
+# Author: Patrick Schoenfeld <schoenfeld@debian.org>
+# This file is licensed under the terms of the GPL v2 or later.
+# See the file COPYING for details.
+
+# Currently this plugin does not work with nagios embedded perl
+# nagios: -epn
+
+use strict;
+use warnings;
+use Nagios::Plugin;
+use POSIX;
+
+# Define regular expressions used to find the correct lines from
+# the status file
+my $signal_command = 'AT\+CSQ';
+my $registration_status_command = 'AT\+CREG\?';
+my $operator_command = 'AT\+COPS\?';
+
+# Define a regular expression that is used to check against
+# the answer of the modem to the AT+CREG? command in order
+# to determine registration status of the modem
+my $registration_status_expect = '.,1';
+
+# Define the default path of the status file
+my $status_file = '/var/log/smstools/smsd_stats/modem_status';
+
+# Default Threshoulds
+my $warning_lvl = 12;	# WARNING, if signal level < threshould
+my $critical_lvl = 10;	# CRITICAL, if signal level < threshould
+my $maxage = 60;	# CRIRTICAL, if status file is more then x seconds old
+
+# Status variables
+my $siglvl;
+my $sigdbm;
+my $operator;
+my $expected_operator;
+my $registration_status;
+my $timestamp;
+my $np;
+
+sub init_plugin {
+	$np = Nagios::Plugin->new(usage => "usage: %s");
+
+	$np->add_arg(
+		spec => 'warning|w=f',
+		help => 'the signal level (as a positive float between 0..32) at which' .
+			'to emit a WARNING state if the signal level is below this value'
+	);
+
+	$np->add_arg(
+		spec => 'critical|c=f',
+		help => 'the signal level (as a positive float between 0..32) at which to ' .
+			'emit a CRITICAL state if the signal level is below this value'
+	);
+
+	$np->add_arg(
+		spec => 'max-age=i',
+		help => 'specify the maximum tolerated age of the status file in seconds'
+	);
+
+	$np->add_arg(
+		spec => 'status-file=s',
+		help => 'specifies the file which is checked for the status information'
+	);
+
+	$np->add_arg(
+		spec => 'expected-operator=s',
+		help => 'Specifies an operator that is expected. If the registered operator ' .
+			'is not the same as specified here, the plugin will exit with a ' .
+			'CRITICAL state'
+	);
+
+	$np->add_arg(
+		spec => 'debug|d',
+		help => 'Enable debug mode'
+	);
+
+	$np->getopts;
+
+	if ($np->opts->warning) {
+		$warning_lvl = $np->opts->warning;
+	}
+
+	if ($np->opts->critical) {
+		$critical_lvl = $np->opts->critical;
+	}
+
+	if ($np->opts->get('status-file')) {
+		$status_file = $np->opts->get('status-file');
+	}
+
+	if ($np->opts->get('max-age')) {
+		$maxage = $np->opts->get('max-age');
+	}
+
+	if ($np->opts->get('expected-operator')) {
+		$expected_operator = $np->opts->get('expected-operator');
+	}
+	if ($critical_lvl > $warning_lvl) {
+		$np->nagios_die("Critical level ($critical_lvl) is higher then the warning level ($warning_lvl)");
+	}
+
+	# Test if status_file is readable	
+	unless (-r $status_file)
+	{
+		$np->nagios_die("Unable to read modem status file");
+	}
+}
+
+sub parse_logline {
+	my $line = shift;
+	my %result;
+
+	# Use the line without the timestamp
+	$line = substr($line, 22);
+	$line =~ s/://g;
+
+	# Split line into an array
+	my @line = split(/\s/, $line);
+
+	# Modem
+	chomp $line[1];
+	$result{'modem'} = $line[1];
+
+	# Command
+	$result{'cmd'} = $line[3];
+
+	# Answer
+	$result{'answer'} = $line[5];
+
+	return %result;
+}
+
+sub process_statusfile {
+	open(STATUS_FILE, "< $status_file") or $np->nagios_die("Unable to open modem status file");
+
+	# Check status file freshness
+	my $fileage = (stat(STATUS_FILE))[9];
+	my $fileage_difference = time() - $fileage;
+
+	if ($fileage_difference > $maxage) {
+		$np->nagios_exit(CRITICAL, "Status file has not changed since $maxage seconds\n");
+	}
+
+	while(<STATUS_FILE>) {
+		my %result = parse_logline($_);
+
+		unless ($registration_status) {
+			if ($result{'cmd'} =~ /$registration_status_command/) {
+				$registration_status = $result{'answer'};
+			}
+		}
+
+		unless ($siglvl) {
+			if ($result{'cmd'} =~ /$signal_command/) {
+				$siglvl = $result{'answer'};
+				$siglvl =~ s/,/./g;
+				$sigdbm = (2*$siglvl) - 113;
+			}
+		}
+
+		unless ($operator) {
+			if ($result{'cmd'} =~ /$operator_command/) {
+				$operator = $result{'answer'};
+				$operator =~ s/0,0,"//g;
+			}
+		}
+		# No need to parse the rest of the file, if signal
+		# and registration status are known
+		if ($siglvl and $registration_status and $operator) {
+			last;
+		}
+	}
+
+	close(STATUS_FILE);
+}
+
+sub check_registration {
+	unless ($registration_status) {
+		$np->nagios_die("Unable to determine modem registration status.");
+	}
+
+	unless ($registration_status =~ /$registration_status_expect/) {
+		$np->nagios_exit(CRITICAL, "Modem is not registered to a GSM network.");
+	}
+}
+
+sub check_signal {
+	unless ($siglvl) {
+		$np->nagios_die("Unable to determine the modem signal strength.");
+	}
+
+	if (($siglvl < 0) or ($siglvl > 31)) {
+		$np->nagios_die("Unable to determine the modem signal strength.");
+	}
+
+	# Add performance data information
+	$np->add_perfdata(
+		label => 'level',
+		value => $siglvl
+	);
+
+	$np->add_perfdata(
+		label => 'dBm',
+		value => $sigdbm
+	);
+
+	if ($siglvl <= $critical_lvl) {
+		$np->nagios_exit(CRITICAL, "Modem is registered ($operator), but signal quality ($siglvl) is below threshould.");
+	}
+
+	if ($siglvl <= $warning_lvl) {
+		$np->nagios_exit(WARNING, "Modem is registered ($operator), but signal quality ($siglvl) is below threshould.");
+	}
+
+	# If we get here we can exit with OK
+	$np->nagios_exit(OK, "Modem is registered ($operator). Signal quality is $siglvl / $sigdbm dBm.");
+}
+
+sub check_operator {
+	unless ($operator) {
+		$operator = "Unknown Operator";
+	}
+
+	if ($expected_operator) {
+		if ($operator ne $expected_operator) {
+			$np->nagios_exit(CRITICAL, "Modem is registered to $operator while $expected_operator is expected.");
+		}
+	}
+}
+init_plugin;
+process_statusfile;
+check_registration;
+check_operator;
+check_signal;
