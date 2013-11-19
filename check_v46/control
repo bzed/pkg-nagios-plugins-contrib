@@ -1,0 +1,10 @@
+Watch: https://gitorious.org/nagios-monitoring-tools/nagios-monitoring-tools/commits/master/feed.atom <updated>([^>]+)</updated>
+Version: 2013-08-26T07:33:11Z
+Homepage: https://gitorious.org/nagios-monitoring-tools/nagios-monitoring-tools/
+Uploaders: Bernd Zeimetz <bzed@debian.org>
+Description: ipv4/ipv6 Nagios plugin wrapper
+ Nagios plugin wrapper for running the actual plugin for both / either of
+ IPv6 and/or IPv4.  The worst result of the actual plugin runs will be
+ the wrapper return value, that is, result will be OK only if all checks
+ returned OK.  Compatible with any plugin with standard command line options
+ -6/-4.
