@@ -1,0 +1,9 @@
+--- a/check_v46/check_v46
++++ b/check_v46/check_v46
+@@ -1,4 +1,6 @@
+ #!/usr/bin/perl
++# nagios: -epn
++#
+ #
+ # check_v46
+ # Nagios plugin wrapper for running the actual plugin for both / either of
