@@ -1,3 +1,57 @@
+nagios-plugins-contrib (9.20140106) unstable; urgency=low
+
+  [ Bernd Zeimetz ]
+  * [63ddfa7a] Make checksum file readable for nagios.
+  * [583b6cde] Avoid line overflows due to expansion of $0.
+  * [9895bf1b] Merge pull request #18 from waja/solid.net
+    solid.net seems expired (maybe come back in the future)
+  * [31a0dc1f] Fix POD encoding in check_rbl.
+    Thanks to David Suárez (Closes: #724175)
+  * [a58ff4e7] Run dh_python2 for plugins and normal modules.
+  * [cd30e982] Add check_graphite.
+  * [e234911d] Auto update of debian/copyright
+  * [cb276d08] Auto update of debian/control
+  * [9dc17c93] Merge remote-tracking branch 'github/master'
+  * [4e577da9] Revert accidentally merged, duplicated bugfix.
+    This reverts commit 98008e4aea3687cff8c7ab3f871809e219591cde.
+  * [e8387d2a] Merge pull request #23 from waja/update_check_rbl_1.3.1.
+    Update check rbl 1.3.1
+  * [826a436e] Merge pull request #24 from waja/update_check_webinject_1.80.
+    Update check_webinject to 1.80
+  * [5c2907b0] Merge pull request #25 from waja/update_check_whois_1.14.
+    Update check_whois to 1.14
+  * [e8c11f0a] Merge pull request #26 from waja/fix_check_rbl_patch.
+    Remove accidently double added check_rbl/disable_solid.net in patch seri...
+  * [bfb67e88] Use dh --with autotools_dev. (Closes: #727468)
+  * [363af25f] Auto update of debian/control
+  * [952811b3] Run dh --with autotools_dev in the clean target, too.
+  * [8898d503] Merge pull request #27 from waja/check_cups.
+    Check cups
+  * [8abc4359] Merge pull request #28 from waja/check_mongodb.
+    Add check_mongodb plugin
+  * [423e59f0] Merge pull request #30 from waja/fix_check_rbl.
+    Fix version of check_rbl in control file
+  * [00be70e5] Merge pull request #33 from waja/check_bgpstate.
+    Add check_bgpstate plugin
+  * [9591a3ca] Merge pull request #29 from waja/check_drbd.
+    Add check_drdb plugin
+  * [5f531a44] Merge pull request #32 from waja/fix_check_webinject_epn.
+    Disable epn for check_webinject, cause it leaves temp files around
+  * [ef8ba64d] Remove 'read LICENSE ...' from check_graphite/copyright
+
+  [ Jan Wagner ]
+  * [5c207ef5] Add check_snmp_time plugin
+
+  [ Bernd Zeimetz ]
+  * [a6165e60] Merge remote-tracking branch 'origin/master'
+  * [de5770f4] Merge remote-tracking branch 'github/master'
+  * [41c9df6a] Merge pull request #38 from evgeni/ignore-ganeti
+    check_libs: ignore /var/lib/ganeti/
+  * [4badebed] Merge pull request #37 from evgeni/check-raid-305.
+    Update check_raid to 3.0.5
+
+ -- Bernd Zeimetz <bzed@debian.org>  Mon, 06 Jan 2014 12:56:27 +0100
+
 nagios-plugins-contrib (8.20130824) unstable; urgency=low
 
   [ Jan Wagner ]
