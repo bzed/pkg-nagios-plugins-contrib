@@ -73,6 +73,21 @@ http://n-backuppc.sourceforge.net/
 
 ------------------------------------------------------------------------------
 
+check_bgpstate:
+
+The plugin was downloaded from: 
+https://raw.github.com/nagios-plugins/nagios-plugins/ba7615631add0b610ada6a819d6c8f8c46a2d36d/contrib/check_bgpstate.pl
+
+  C) 2000 Christoph Kron <ck@zet.net>
+  
+  License: GPL-2
+  
+    On Debian systems, the complete text of the GNU General
+    Public License version 1 can be found in "/usr/share/common-licenses/GPL-2".
+  
+
+------------------------------------------------------------------------------
+
 check_checksums:
 
   Copyright (C) 2013 Bernd Zeimetz <b.zeimetz@conova.com>
@@ -132,6 +147,22 @@ https://www.monitoringexchange.org/inventory/Check-Plugins/Hardware/Devices/Prin
 
 ------------------------------------------------------------------------------
 
+check_drbd:
+
+The plugin was downloaded from: 
+https://www.monitoringexchange.org/inventory/Check-Plugins/Operating-Systems/Linux/check_drbd
+
+  Copyright (C) Brandon Lee Poyner <bpoyner@ccac.edu>
+  
+  The nagios plugins come with ABSOLUTELY NO WARRANTY. You may redistribute
+  copies of the plugins under the terms of the GNU General Public License.
+  
+  On Debian systems, the complete text of the GNU General
+  Public License version 1 can be found in "/usr/share/common-licenses/GPL-1".
+  
+
+------------------------------------------------------------------------------
+
 check_email_delivery:
 
 The plugin was downloaded from: 
@@ -162,7 +193,7 @@ The plugin was downloaded from:
 https://github.com/disqus/nagios-plugins
 
   Copyright: (c) 2012 DISQUS.
-  License: Apache License 2.0, see LICENSE for more details.
+  License: Apache License 2.0
   
   On Debian systems, a copy of the Apache License 2.0 can be found in
   /usr/share/common-licenses/Apache-2.0
@@ -374,6 +405,20 @@ https://www.monitoringexchange.org/inventory/Check-Plugins/Operating-Systems/Lin
 
 ------------------------------------------------------------------------------
 
+check_mongodb:
+
+The plugin was downloaded from: 
+https://github.com/mzupan/nagios-plugin-mongodb
+
+  Copyright: (c) 2012, Mike Zupan <mike@zcentric.com>
+  License: BSD
+  
+  On Debian systems, a copy of the BSD License can be found in
+  /usr/share/common-licenses/BSD
+  
+
+------------------------------------------------------------------------------
+
 check_multipath:
 
 The plugin was downloaded from: 
@@ -492,7 +537,7 @@ The plugin was downloaded from:
 https://github.com/glensc/nagios-plugin-check_raid
 
   2004-2006 Steve Shipway, university of auckland,
-  2009-2012 Elan Ruusamäe <glen@pld-linux.org>
+  2009-2013 Elan Ruusamäe <glen@pld-linux.org>
   
   License: GPL v2
   
@@ -530,6 +575,17 @@ https://svn.id.ethz.ch/projects/nagios_plugins/wiki/check_rbl
 
 ------------------------------------------------------------------------------
 
+check_smstools:
+
+The plugin was downloaded from: 
+http://exchange.nagios.org/directory/Plugins/Hardware/Mobile-Devices/check_smstools/details
+
+  Author: Patrick Schoenfeld <schoenfeld@debian.org>
+  This file is licensed under the terms of the GPL v2 or later.
+  
+
+------------------------------------------------------------------------------
+
 check_snmp_environment:
 
 The plugin was downloaded from: 
@@ -552,6 +608,22 @@ http://exchange.nagios.org/directory/Plugins/Hardware/Network-Gear/Cisco/Check-v
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>
   
+  
+
+------------------------------------------------------------------------------
+
+check_snmp_time:
+
+The plugin was downloaded from: 
+https://raw.github.com/mludvig/nagios-plugins/master/check_snmp_time.pl
+
+  (c) 2007 Karl Bolingbroke
+  (c) 2010 Frank Migge <support@frank4dd.com>
+  
+  License: GPL-1
+  
+    On Debian systems, the complete text of the GNU General
+    Public License version 1 can be found in "/usr/share/common-licenses/GPL-1".
   
 
 ------------------------------------------------------------------------------
@@ -580,6 +652,31 @@ https://trac.id.ethz.ch/projects/nagios_plugins/wiki/check_ssl_cert
   
   This module is free software; you can redistribute it and/or modify it
   under the terms of GNU general public license (gpl) version 3.
+  
+
+------------------------------------------------------------------------------
+
+check_v46:
+
+The plugin was downloaded from: 
+https://gitorious.org/nagios-monitoring-tools/nagios-monitoring-tools/
+
+  2012-02, 2012-03 Ville.Mattila@csc.fi
+  Copyright (C) 2012-2013 CSC - IT Center for Science Ltd.
+  
+  This program is free software; you can redistribute it and/or modify it under
+  the terms of the GNU General Public License as published by the Free Software
+  Foundation; either version 3 of the License, or (at your option) any later
+  version.
+  
+  This program is distributed in the hope that it will be useful, but WITHOUT
+  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+  FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+  details.
+  
+  You should have received a copy of the GNU General Public License along with
+  this program; if not, see <http://www.gnu.org/licenses/>.
+  
   
 
 ------------------------------------------------------------------------------
