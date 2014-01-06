@@ -1,7 +1,7 @@
 Homepage: https://github.com/glensc/nagios-plugin-check_raid
 Watch: https://github.com/glensc/nagios-plugin-check_raid "/glensc/nagios-plugin-check_raid/tree/([0-9.]+)"
 Suggests: cciss-vol-status, mpt-status
-Version: 3.0.3
+Version: 3.0.5+1c85001e
 Uploaders: Bernd Zeimetz <bzed@debian.org>
 Description: plugin to check sw/hw RAID status
  The plugin looks for any known types of RAID configurations,
