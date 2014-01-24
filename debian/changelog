@@ -1,3 +1,9 @@
+nagios-plugins-contrib (9.20140106~bpo70+1) wheezy-backports; urgency=medium
+
+  * Rebuild for wheezy-backports.
+
+ -- Evgeni Golov <evgeni@debian.org>  Fri, 24 Jan 2014 12:15:42 +0100
+
 nagios-plugins-contrib (9.20140106) unstable; urgency=low
 
   [ Bernd Zeimetz ]
