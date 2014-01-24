@@ -1,0 +1,8 @@
+--- a/check_cups/check_cups
++++ b/check_cups/check_cups
+@@ -1,4 +1,5 @@
+ #!/usr/bin/perl
++# nagios: -epn
+ 
+ =head1 NAME
+ 

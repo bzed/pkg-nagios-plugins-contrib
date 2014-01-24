@@ -1,0 +1,617 @@
+#!/usr/bin/perl
+
+=head1 NAME
+
+check_cups - monitor CUPS queues
+
+=head1 AUTHOR
+
+Steve Huff <shuff@hmdc.harvard.edu>
+
+=head1 SYNOPSIS
+
+Polls a CUPS server to discover queues, then reports on queue status.
+
+=head1 REQUIRES
+
+Perl5.004, strict, warnings, Data::Dumper, Nagios::Plugin, Net::CUPS, Date::Manip, POSIX
+
+=head1 EXPORTS
+
+Nothing
+
+=head1 DESCRIPTION
+
+C<check_cups> polls the specified CUPS server and discovers print queues.  It tests against a queue length threshold and an age of the oldest job in the queue threshold.
+
+Performance data (queue length and maximum queue age) is provided.
+
+Future development plans include the option to specify the number of expected print queues.
+
+=cut
+
+# these need to be outside the BEGIN
+use strict;
+use warnings;
+
+# see this page for an explanation regarding the levels of warnings:
+# http://search.cpan.org/~rgarcia/perl-5.6.2/pod/perllexwarn.pod
+no warnings qw( redefine prototype );
+
+BEGIN {
+
+    # use Opsview libs
+    use lib '/usr/local/nagios/perl/lib';
+    use lib '/usr/local/nagios/lib';
+
+    use Nagios::Plugin;
+
+    use Data::Dumper;
+
+    use Date::Manip;
+    use POSIX qw( strftime );
+
+    use Net::CUPS;
+
+    # reregister interrupt
+    $SIG{INT}      = \&DoInterrupt;
+
+} ## end BEGIN
+
+########################################################################
+# IMPORTANT VARIABLES
+#
+# default values
+my( $timeout, $verbose );
+my $WARNINGJOBS     = 6;
+my $CRITICALJOBS    = 10;
+my $WARNINGAGE      = '20 minutes';
+my $CRITICALAGE     = '1 hour';
+
+#
+########################################################################
+
+#
+# MAIN
+#
+
+# instantiate the Nagios::Plugin object
+my( $usagemsg ) = <<USAGE;
+Usage: %s -H <hostname> [-w <number of queued jobs>] [-c <number of queued jobs>] [-W <age of oldest job in queue>] [-C <age of oldest job in queue>] [-t timeout] [-v|d] [-h]
+USAGE
+my( $blurb ) = <<BLURB;
+check_cups polls the specified CUPS server and discovers print queues.  It tests against a queue length threshold and an age of the oldest job in the queue threshold.
+
+Performance data (queue length and maximum queue age) is provided.
+
+Future development plans include the option to specify the number of expected print queues.
+BLURB
+my( $license ) = <<LICENSE;
+This Nagios plugin is free software, and comes with ABSOLUTELY NO WARRANTY. 
+It may be used, redistributed and/or modified under the terms of the GNU 
+General Public Licence (see http://www.fsf.org/licensing/licenses/gpl.txt).
+
+This plugin was written at The Harvard-MIT Data Center
+(http://www.hmdc.harvard.edu) by Steve Huff (<shuff\@hmdc.harvard.edu>).
+LICENSE
+my( $plugin ) = Nagios::Plugin->new( 
+                                    shortname   => 'check_cups',
+                                    usage       => $usagemsg,
+                                    version     => '0.2',
+                                    blurb       => $blurb,
+                                    license     => $license,
+                                );
+
+=head2 Plugin Metadata
+
+Metadata is documented in L<Nagios::Plugin> and L<Nagios::Plugin::Getopt>.
+
+Other available options of interest include C<url>, C<extra>, and C<timeout>.
+
+=cut
+
+# add the additional options
+$plugin->add_arg( 
+                 spec       => 'hostname|H=s', 
+                 help       => [ 
+                                "Hostname to query",
+                                "IP address to query",
+                               ],
+                 label      => [ 'HOSTNAME', 'IP' ],
+                 required   => 1,
+             ); 
+            
+# queued jobs
+$plugin->add_arg( 
+                 spec       => 'warning|w=i', 
+                 help       => "Warning threshold in number of queued jobs (default $WARNINGJOBS)",
+                 default    => $WARNINGJOBS,
+                 label      => [ 'QUEUED JOBS' ],
+                 required   => 0,
+             ); 
+            
+$plugin->add_arg( 
+                 spec       => 'critical|c=i', 
+                 help       => "Critical threshold in number of queued jobs (default $CRITICALJOBS)",
+                 default    => $CRITICALJOBS,
+                 label      => [ 'QUEUED JOBS' ],
+                 required   => 0,
+             ); 
+            
+# job age
+$plugin->add_arg( 
+                 spec       => 'warningage|W=s', 
+                 help       => "Warning threshold of job age (default '$WARNINGAGE')",
+                 default    => $WARNINGAGE,
+                 label      => [ 'TIME SPECIFICATION' ],
+                 required   => 0,
+             ); 
+            
+$plugin->add_arg( 
+                 spec       => 'criticalage|C=s', 
+                 help       => "Critical threshold of job age (default '$CRITICALAGE')",
+                 default    => $CRITICALAGE,
+                 label      => [ 'TIME SPECIFICATION' ],
+                 required   => 0,
+             ); 
+            
+=head2 Plugin Options
+
+Refer to L<Nagios::Plugin::Getopt> for option specifications - they differ slightly from pure L<Getopt::Long>-style option specifications.
+
+A number of standard options (C<--help>, C<--version>, C<--usage>, C<--timeout>, and C<--verbose>) are implemented by default, thanks to the arguments passed to C<Nagios::Plugin->new()>, and do not need to be specified.  Moreover, if you attempt to override them, you will simply create two such options, which produces confusing C<--help> output and unexpected behavior.
+            
+=cut
+
+# parse options
+$plugin->getopts;
+
+my( $opts ) = $plugin->opts;
+
+# declare variables
+my( $server, $queues, $warningjobs, $criticaljobs, $warningage, $criticalage );
+
+# every variable must have a value
+$server = $opts->get( 'hostname' );
+$timeout = $opts->get( 'timeout' );  # See above: option provided by default
+$verbose = $opts->get( 'verbose' );  # See above: option provided by default
+$warningjobs = $opts->get( 'warning' );
+$criticaljobs = $opts->get( 'critical' );
+$warningage = $opts->get( 'warningage' );
+$criticalage = $opts->get( 'criticalage' );
+
+# sanity check
+defined( $server )
+    or $plugin->nagios_die( "No value provided for --hostname!" );
+
+# parse time differentials
+my( $nowdate ) = ParseDate( 'now' );
+
+my( $warningdelta ) = ParseDateDelta( $warningage );
+unless( defined( $warningdelta ) ) {
+
+    $plugin->nagios_die( "'$warningage' is not a valid time specification!" );
+}
+
+my( $criticaldelta ) = ParseDateDelta( $criticalage );
+unless( defined( $criticaldelta ) ) {
+
+    $plugin->nagios_die( "'$criticalage' is not a valid time specification!" );
+}
+
+my( $warningminutes ) = sprintf( '%d', Delta_Format( $warningdelta, 'approx', 0, '%mt' ) );
+my( $criticalminutes ) = sprintf( '%d', Delta_Format( $criticaldelta, 'approx', 0, '%mt' ) );
+
+# critical thresholds must be greater than warning thresholds
+if ( $warningjobs >= $criticaljobs ) {
+
+    $plugin->nagios_die( "Job number warning threshold ($warningjobs) must be less than critical threshold ($criticaljobs)." );
+}
+
+if ( $warningminutes >= $criticalminutes ) {
+
+    $plugin->nagios_die( "Job age warning threshold ($warningage) must be less than critical threshold ($criticalage)." );
+}
+
+=head2 Testing and Exit Status
+
+The basic methodology of a Nagios plugin is as follows:
+
+=over
+
+=item 1.
+
+Run some sort of test.
+
+=item 2.
+
+Validate the result against provided (or default) thresholds.
+
+=item 3.
+
+Exit with the appropriate error code, optionally outputting text.
+
+=back
+
+Running the test is up to you.  
+
+The function to use for validating the result is C<Nagios::Plugin::check_threshold()> (see L<Nagios::Plugin::Threshold> and L<Nagios::Plugin::Range> for details and specifications), which returns a value appropriate for use as an exit code.
+
+The functions to use for exiting are C<Nagios::Plugin::nagios_exit()> and C<Nagios::Plugin::nagios_die()>.  C<nagios_exit()> is the general-purpose exit function, while C<nagios_die()> should be used for any unexpected exits and indicates that something went wrong with the plugin's operation.
+
+=head3 Return String
+
+The plugin return string performs two functions:
+
+=over
+
+=item 1.
+
+It communicates in human-readable format more details about what exactly has gone wrong (e.g. "Disk usage on '/var' is at 92% (threshold 90%)").
+
+=item 2.
+
+It (optionally) communicates in machine-readable format performance data which can be aggregated by tools such as Nagiosgraph (e.g. '| time=0.042745s;5.000000;10.000000;0.000000 size=2162B;;;0').  See L<Nagios::Plugin::Performance> for details and specifications; the function to use is C<Nagios::plugin::add_perfdata()>.
+
+=back
+
+The plugin string will automatically be populated with the plugin name and the exit status (e.g. "check_snmp_disk OK - "); everything after the "- " is what you provide with the message arguments to C<nagios_exit()> or C<nagios_die()>.  C<add_perfdata()> takes care of appending the "|" and properly formatting performance data.
+
+=cut
+
+# begin tracking status and message
+my( $status, $message ) = ( OK, '' );
+
+# do some test, with a timeout
+alarm $timeout; # the heavy lifting is done in Nagios::Plugin::Getopt
+my( $result ) = doTest( $server );
+alarm 0;
+
+# validate the result, queue by queue
+my( %ok, %warning, %critical, %unknown );
+
+debug( "Analyzing results..." );
+foreach my $queuename ( keys( %{$result} ) ) {
+
+    # FIXME - allow per-queue overrides
+
+    my( $queue ) = $result->{$queuename};
+
+    my( $age, $jobs ) = ( $queue->{delta}, $queue->{numjobs} );
+    # sanitize values
+    defined( $age ) or $age = 0;
+    defined( $jobs ) or $jobs = 0;
+
+    my( $agestatus ) = $plugin->check_threshold(
+                                                check       => $age,
+                                                warning     => $warningminutes,
+                                                critical    => $criticalminutes,
+                                               );
+
+    my( $jobsstatus ) = $plugin->check_threshold(
+                                                 check      => $jobs,
+                                                 warning    => $warningjobs,
+                                                 critical   => $criticaljobs,
+                                                );
+
+    # sort the queue appropriately
+    if ( $agestatus == CRITICAL or $jobsstatus == CRITICAL ) {
+
+        $critical{$queuename} = { age => $age, jobs => $jobs };
+    }
+    elsif ( $agestatus == WARNING or $jobsstatus == WARNING ) {
+
+        $warning{$queuename} = { age => $age, jobs => $jobs };
+    }
+    elsif ( $agestatus == UNKNOWN or $jobsstatus == UNKNOWN ) {
+
+        $unknown{$queuename} = { age => $age, jobs => $jobs };
+    }
+    else {
+
+        $ok{$queuename} = { age => $age, jobs => $jobs };
+    }
+    
+    # add performance data
+    $plugin->add_perfdata(
+                          label     => $queuename . "_jobs",
+                          value     => $jobs,
+                          uom       => undef,
+                          warning   => $warningjobs,
+                          critical  => $criticaljobs,
+                         );
+
+    # add performance data
+    $plugin->add_perfdata(
+                          label     => $queuename . "_age",
+                          value     => $age,
+                          uom       => undef,
+                          warning   => $warningminutes,
+                          critical  => $criticalminutes,
+                         );
+}
+
+# figure out our status
+if ( scalar( keys( %critical ) ) ) {
+
+    debug( Data::Dumper->Dump( [\%critical], [qw(*critical)] ), 3 );
+
+    $status = CRITICAL;
+
+    foreach my $queue ( sort( keys( %critical ) ) ) {
+
+        $message .= "$queue ( ";
+
+        my( $age, $jobs ) = ( $critical{$queue}->{age}, $critical{$queue}->{jobs} );
+
+        my( $prettyage ) = prettyDelta( ParseDateDelta( "$age minutes" ) );
+
+        my( @messages );
+
+        if ( $age > $criticalminutes ) {
+
+            push( @messages, "job $prettyage old" );
+        }
+        if ( $jobs > $criticaljobs ) {
+
+            push( @messages, "$jobs queued jobs" );
+        }
+
+        $message .= join( ',', @messages );
+
+        $message .= ' ) ';
+    }
+}
+elsif ( scalar( keys( %warning ) ) ) {
+
+    debug( Data::Dumper->Dump( [\%warning], [qw(*warning)] ), 3 );
+
+    $status = WARNING;
+
+    foreach my $queue ( sort( keys( %warning ) ) ) {
+
+        $message .= "$queue ( ";
+
+        my( $age, $jobs ) = ( $warning{$queue}->{age}, $warning{$queue}->{jobs} );
+
+        my( $prettyage ) = prettyDelta( parseDateDelta( "$age minutes" ) );
+
+        my( @messages );
+
+        if ( $age > $warningminutes ) {
+
+            push( @messages, "job $prettyage old" );
+        }
+        if ( $jobs > $warningjobs ) {
+
+            push( @messages, "$jobs queued jobs" );
+        }
+
+        $message .= join( ',', @messages );
+
+        $message .= ' ) ';
+    }
+}
+elsif ( scalar( keys( %unknown ) ) ) {
+
+    debug( Data::Dumper->Dump( [\%unknown], [qw(*unknown)] ), 3 );
+
+    $status = UNKNOWN;
+
+    $message .= 'Unable to determine status: ';
+
+    $message .= join( ',', sort( keys( %unknown ) ) );
+}
+else {
+
+    debug( Data::Dumper->Dump( [\%ok], [qw(*ok)] ), 3 );
+
+    $message .= 'All queues within parameters.';
+}
+
+# exit with appropriate return values
+$plugin->nagios_exit( $status, $message );
+
+################################################################################
+#                                                                              #
+# doTest - poll server for printers
+#                                                                              #
+################################################################################
+sub doTest( $ ) {
+
+    my( $host ) = @_;
+
+    my( %queues );
+
+    debug( "Creating Net::CUPS object...", 2 );
+    my( $cups ) = Net::CUPS->new();
+
+    unless ( defined( $cups ) ) {
+
+        debug( "Unable to create Net::CUPS object: $!" );
+        return( undef );
+    }
+
+    debug( "Setting server to '$host'...", 2 );
+    $cups->setServer( $host );
+
+    debug( "Polling for queues...", 1 );
+    foreach my $queue ( $cups->getDestinations() ) {
+
+        my( $name ) = $queue->getName();
+
+        if ( defined( $name ) ) {
+
+            $queues{$name} = { destination => $queue };
+            debug( "Found queue '$name'.", 3 );
+        }
+        else {
+
+            debug( "Unable to determine queue name!" );
+        }
+    }
+
+    debug( "Parsing queues...", 1 );
+    my( $now ) = strftime( '%s', localtime() );
+
+    foreach my $queue ( keys( %queues ) ) {
+
+        my( $destination ) = $queues{$queue}->{destination};
+
+        my( @jobs ) = $destination->getJobs( 0, 0 );
+        ( @jobs ) or ( @jobs ) = ();
+
+        foreach my $jobid ( @jobs ) {
+
+            my( $job ) = \%{$destination->getJob( $jobid )};
+            $queues{$queue}->{jobs}->{$jobid} = $job;
+
+            my( $delta ) = deltaMinutes( $job->{creation_time}, $now );
+
+            # track the largest delta in the queue
+            if ( ( ! exists( $queues{$queue}->{delta} ) ) || 
+                 ( $delta > $queues{$queue}->{delta} ) ) {
+
+                $queues{$queue}->{delta} = $delta;
+            }
+        }
+        $queues{$queue}->{numjobs} = keys( %{$queues{$queue}->{jobs}} );
+    }
+    debug( Data::Dumper->Dump( [\%queues], [qw(*queues)] ), 3 );
+
+    return( \%queues );
+}
+
+################################################################################
+#                                                                              #
+# deltaMinutes - determine the delta in days between two datestamps
+#                                                                              #
+################################################################################
+sub deltaMinutes( $$ ) {
+
+    my( $lesser, $greater ) = sort( @_ );
+    debug( "Received '$lesser', '$greater'.", 3 );
+
+    my( $lesserdate ) = ParseDateString( "epoch $lesser" );
+    my( $greaterdate ) = ParseDateString( "epoch $greater" );
+
+    my( $delta ) = DateCalc( $lesserdate, $greaterdate );
+
+    my( $deltaminutes ) = sprintf( '%d', Delta_Format( $delta, 'approx', 0, '%mt' ) );
+    defined( $deltaminutes ) or $deltaminutes = 0;
+
+    debug( "Delta: $deltaminutes minutes.", 3 );
+    return( $deltaminutes );
+}
+
+################################################################################
+#                                                                              #
+# prettyDelta - display time delta in sensible format
+#                                                                              #
+################################################################################
+sub prettyDelta( $ ) {
+
+    my( $delta ) = @_;
+
+    debug( "Delta: '$delta'", 3 );
+
+    # parse the delta
+    my( $days, $hours, $minutes ) = Delta_Format( 
+                                        $delta, 'approx', 0, ( qw(
+                                                                  %dh
+                                                                  %hv
+                                                                  %mv
+                                                                 ) )
+                                                );
+
+    debug( "\$days: $days\n\$hours: $hours\n\$minutes: $minutes", 3 );
+
+    # assemble the string
+    my( $pretty );
+
+    # a day or more?
+    if ( $days ) {
+
+        $pretty .= "$days day";
+
+        if ( $days > 1 ) { 
+
+            $pretty .= "s";
+        }
+    }
+
+    # hours?
+    if ( $hours ) {
+
+        if ( $days ) {
+
+            if ( $minutes ) {
+
+                $pretty .= ", ";
+            }
+            else {
+
+                $pretty .= " and ";
+            }
+        }
+
+        $pretty .= "$hours hour";
+
+        if ( $hours > 1 ) {
+
+            $pretty .= "s";
+        }
+    }
+
+    # minutes?
+    if ( $minutes ) {
+
+        if ( $days && $hours ) {
+
+            $pretty .= ",";
+        }
+
+        if ( $days || $hours ) {
+
+            $pretty .= " and ";
+        }
+
+        $pretty .= "$minutes minute";
+
+        if ( $minutes > 1 ) {
+
+            $pretty .= "s";
+        }
+    }
+
+    debug( "\$pretty: '$pretty'", 3 );
+    return( $pretty );
+}
+
+################################################################################
+#                                                                              #
+# debug - print debug info
+#                                                                              #
+################################################################################
+sub debug( $;$ ) {
+
+    my( $message, $level ) = @_;
+
+    defined( $level ) or $level = 1;
+
+    if ( $verbose >= $level ) { 
+        
+        chomp $message;
+        print "$message\n";
+    }
+}
+
+################################################################################
+#                                                                              #
+# DoInterrupt - handle SIGINT and clean up
+#                                                                              #
+################################################################################
+sub DoInterrupt {
+
+    $plugin->nagios_die( "Interrupt received" );
+}

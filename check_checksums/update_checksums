@@ -27,6 +27,7 @@ for t in md5 sha1 sha224 sha256 sha384 sha512; do
     if [ -f ${fname} ]; then
         tmp=`mktemp`
         chown root:nagios ${tmp}
+        chmod 640 ${tmp}
 
         trap "rm -f ${tmp}" EXIT
 

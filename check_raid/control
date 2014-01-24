@@ -1,7 +1,7 @@
 Homepage: https://github.com/glensc/nagios-plugin-check_raid
 Watch: https://github.com/glensc/nagios-plugin-check_raid "/glensc/nagios-plugin-check_raid/tree/([0-9.]+)"
 Suggests: cciss-vol-status, mpt-status
-Version: 3.0
+Version: 3.0.5
 Uploaders: Bernd Zeimetz <bzed@debian.org>
 Description: plugin to check sw/hw RAID status
  The plugin looks for any known types of RAID configurations,
@@ -14,6 +14,7 @@ Description: plugin to check sw/hw RAID status
  - HP Smart Array Controllers and MSA Controllers via hpacucli
  - HP Smart Array (MSA1500) via serial line
  - Linux 3ware SATA RAID via tw_cli
+ - Linux Device Mapper RAID via dmraid
  - Linux DPT/I2O hardware RAID controllers via /proc/scsi/dpt_i2o
  - Linux GDTH hardware RAID controllers via /proc/scsi/gdth
  - Linux LSI MegaRaid hardware RAID via CmdTool2
