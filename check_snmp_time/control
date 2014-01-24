@@ -1,0 +1,12 @@
+Homepage: https://raw.github.com/mludvig/nagios-plugins/master/check_snmp_time.pl
+Watch: https://raw.github.com/mludvig/nagios-plugins/master/check_snmp_time.pl Version='([0-9.]+)';
+Recommends: libnet-snmp-perl (>= 5), libtimedate-perl
+Version: 1.1
+Uploaders: Jan Wagner <waja@cyconet.org>
+Description: plugin to check the time on a server using SNMP
+ This plugin queries the remote systems time through SNMP and compares
+ it against the local time on the Nagios server. This identifies systems
+ with no correct time set and sends alarms if the time is off to far.
+ HOST-RESOURCES-MIB::hrSystemDate.0 used here returns 8 or 11 byte octets.
+ SNMP translation needs to be switched off and we need to convert the
+ received SNMP data into readable strings.

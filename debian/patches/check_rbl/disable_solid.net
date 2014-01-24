@@ -1,0 +1,11 @@
+--- a/check_rbl/src/check_rbl.ini
++++ b/check_rbl/src/check_rbl.ini
+@@ -36,7 +36,7 @@
+ server=blacklist.sci.kun.nl
+ server=bl.technovision.dk
+ server=dnsbl.kempt.net
+-server=dnsbl.solid.net
++;server=dnsbl.solid.net ; domain offline
+ server=dul.ru
+ server=forbidden.icm.edu.pl
+ server=hil.habeas.com

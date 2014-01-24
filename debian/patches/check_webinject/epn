@@ -1,0 +1,9 @@
+--- a/check_webinject/check_webinject
++++ b/check_webinject/check_webinject
+@@ -1,5 +1,5 @@
+ #!/usr/bin/perl
+-# nagios: +epn
++# nagios: -epn
+ 
+ package Webinject;
+ 

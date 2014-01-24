@@ -6,4 +6,4 @@ Description: plugin to check for the expiration of a domain.
  output formats differ or there is no expiration date in the
  whois output.
 Recommends: libdate-manip-perl
-Version: 1.13
+Version: 1.14

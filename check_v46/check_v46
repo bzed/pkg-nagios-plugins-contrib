@@ -1,0 +1,318 @@
+#!/usr/bin/perl
+#
+# check_v46
+# Nagios plugin wrapper for running the actual plugin for both / either of
+# IPv6 and/or IPv4.  The worst result of the actual plugin runs will be
+# the wrapper return value, that is, result will be OK only if all checks
+# returned OK.  Compatible with any plugin with standard command line options
+# -6/-4.
+#
+# 2012-02, 2012-03 Ville.Mattila@csc.fi
+# Copyright (C) 2012-2013 CSC - IT Center for Science Ltd.
+#
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation; either version 3 of the License, or (at your option) any later
+# version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this program; if not, see <http://www.gnu.org/licenses/>.
+
+use strict;
+use warnings FATAL => qw(all);
+use File::Basename;
+use Getopt::Long;
+use Socket;     # AF_INET, AF_INET6
+use Socket6;    # getaddrinfo(), getnameinfo()
+
+my %ERRORS = (
+    'OK'       => 0,
+    'WARNING'  => 1,
+    'CRITICAL' => 2,
+    'UNKNOWN'  => 3,
+);
+
+my %ERRSTR = reverse %ERRORS;
+
+$SIG{__DIE__}  = sub { die( basename($0) . ": Error: " . $_[0] ); };
+$SIG{__WARN__} = sub { print STDERR basename($0) . ": Warning: " . $_[0]; };
+
+Getopt::Long::Configure('bundling');
+Getopt::Long::Configure('pass_through');
+my %opts;
+GetOptions( \%opts,
+    "debug-wrapper",
+    "help|h",
+    "hostname|H=s",
+    "IP-address|I=s",	# support 'check_http -I'
+    "use-ipv4|4",
+    "use-ipv6|6",
+    "ipv4-address|a=s",
+    "ipv6-address|A=s",
+    ) or die "Problems parsing command line: $!\n";
+
+if ( $opts{help} ) {
+    usage();
+    exit 0;
+}
+
+# Sanity checks for command line options
+if (!scalar @ARGV) {
+    die("Nothing to do. Try '".basename($0)." -h'.\n");
+}
+if (!defined($opts{hostname}) && !defined($opts{'IP-address'}) &&
+    !(defined($opts{'ipv4-address'}) ||
+    defined($opts{'ipv6-address'}))) {
+    die("No host/address specified. Try '".basename($0)." -h'.\n");
+}
+if ( $opts{'use-ipv4'} && $opts{'use-ipv6'} ) {
+    die("Please specify either or none of --use-ipv4 or --use-ipv6, not both.\n");
+}
+
+my $plugin_prog = shift(@ARGV);
+
+# Do both IPv4 and IPv6 checks by default, skipping
+# IPv6 in case -4 was specified skipping IPv4 in case
+# of -6.
+my @protocols = ();
+if ( $opts{'use-ipv6'} ) {
+    push @protocols, "IPv6";
+}
+elsif ( $opts{'use-ipv4'} ) {
+    push @protocols, "IPv4";
+}
+else {
+    # No address family selected.
+    push @protocols, qw(IPv6 IPv4);
+}
+
+my $out;
+my $rv;
+my @checked;
+foreach my $p (@protocols) {
+
+    # Use the address specified as --ipv6-address or --ipv4-address argument
+    # or, in case addresses were not specified, resolve --IP-address or
+    # --hostname instead.
+
+    # Resolve.
+    my @addresses = ();
+    my $addr_optname = '--hostname';
+    my $optname;
+    my $af;
+    if ( $p eq 'IPv6' ) {
+        $optname = 'ipv6-address';
+        $af      = AF_INET6;
+    }
+    elsif ( $p eq 'IPv4' ) {
+        $optname = 'ipv4-address';
+        $af      = AF_INET;
+    }
+    else {
+        die "Protocol '$p' is not supported.\n";
+    }
+
+    if ( defined($opts{$optname}) ) {
+
+        # --ipvX-address was specified on command line.
+        push @addresses, split( ',', $opts{$optname} );
+    }
+    elsif ( defined($opts{'IP-address'}) && resolve_address( $opts{'IP-address'} , $af ) ) {
+	# $opts{'IP-address'} has an $af address.  Pass it to plugin.
+	@addresses = ( $opts{'IP-address'} );
+	$addr_optname = '--IP-address';
+    }
+    elsif ( resolve_address( $opts{hostname}, $af ) ) {
+
+        # $opts{hostname} has an $af address.  Pass it to plugin.
+        @addresses = ( $opts{hostname} );
+    }
+    else {
+
+        # Neither $opts{'IP-address'} nor $opts{hostname} resolve for $af.
+        next;
+    }
+
+    my @plugin_args = @ARGV;
+
+    # Insert -6 or -4 as first arg for plugin command.
+    unshift(@plugin_args, ( $p eq "IPv6" ) ? "-6" : "-4");
+
+    # Pass through --hostname option as-is if --IP-address was also specified.
+    if (defined($opts{'IP-address'}) && defined($opts{hostname})) {
+	push(@plugin_args, '--hostname', $opts{hostname});
+    }
+
+    my $an = 1;
+    foreach my $a (@addresses) {
+        my @addr_args = ( $addr_optname, $a );
+        debug(
+            "Running '$plugin_prog " . join( " ", @plugin_args, @addr_args ) );
+        open( PLUGIN, "-|", $plugin_prog, @plugin_args, @addr_args )
+          or die "Problems executing plugin.\n";
+        push(@checked, $a);
+
+        my $first = <PLUGIN>;
+        chomp($first);
+        debug( "Plugin output 1st line: '" . $first . "'" );
+
+        # Strip off performance data from the $first line of plugin
+        # output.
+        $first =~ s/^([^\|]+)\|(.*)/$1/;
+        $out->{$p}->{$a}->{first} = $first;
+
+        # Add lc($p) as prefix to performance data labels, e.g.
+        # 'loss' becomes 'ipv6_loss' etc.
+        my $perfdata = $2;
+        if ( defined($perfdata) ) {
+            my $label_prefix = lc($p);
+            $label_prefix .= "_a" . $an if ( @addresses );
+            $perfdata =~ s/(^|\s+)([^=]+)/$1${label_prefix}_$2/g;
+            debug( "Reformatted performance data: '" . $perfdata . "'" );
+            $out->{$p}->{$a}->{perfdata} = $perfdata;
+        }
+
+        # Store the rest of plugin output lines.
+        while (<PLUGIN>) {
+            chomp;
+            push(@{ $out->{$p}->{$a}->{multiline} }, $_);
+            debug( "Plugin multiline output: '" . $_ . "'" );
+        }
+
+        close(PLUGIN);
+
+        # Store plugin command return value.
+        my $plugin_rv = ( $? >> 8 );
+        $rv->{$p}->{$a} = $plugin_rv;
+        debug("Plugin result: ".$plugin_rv." (".$ERRSTR{$plugin_rv}.")");
+
+        $an++;
+    }
+}
+
+if ( !@checked ) {
+    print "UNKNOWN: No " . join( ", ", @protocols ) . " address to check.\n";
+    exit $ERRORS{UNKNOWN};
+}
+
+my @status_summary = ();
+my @status_details = ();
+my @perfdata       = ();
+my $worst_rv       = undef;
+foreach my $p ( sort { $b cmp $a } keys %$rv ) {
+    foreach my $a ( sort keys %{ $rv->{$p} } ) {
+        if ( !defined $worst_rv || $worst_rv < $rv->{$p}->{$a} ) {
+            $worst_rv = $rv->{$p}->{$a};
+        }
+        push(@status_summary, "$p/$a " . $ERRSTR{ $rv->{$p}->{$a} });
+        push(@perfdata,       $out->{$p}->{$a}->{perfdata})
+          if ( defined $out->{$p}->{$a}->{perfdata} );
+        push(@status_details, "$p/$a:");
+        push(@status_details, $out->{$p}->{$a}->{first});
+        push(@status_details, @{ $out->{$p}->{$a}->{multiline} })
+          if ( defined $out->{$p}->{$a}->{multiline} );
+    }
+}
+
+print $ERRSTR{$worst_rv} . ": " . join( ", ", @status_summary );
+print " | " . join( " ", @perfdata ) if ( @perfdata );
+print "\n";
+print "Status details:\n";
+print $_. "\n" foreach (@status_details);
+
+exit $worst_rv;
+
+sub resolve_address {
+    my ( $hostname, @address_families ) = @_;
+    if (!defined($hostname)) {
+        return ();
+    }
+
+    $hostname = lc($hostname);
+
+    @address_families = ( AF_INET6, AF_INET )
+      unless ( scalar @address_families );
+
+    my @addrs = ();
+    foreach my $af (@address_families) {
+        my @res = getaddrinfo( $hostname, 'daytime', $af, SOCK_STREAM );
+        while ( scalar(@res) >= 5 ) {
+            my ( $family, $socktype, $proto, $saddr, $canonname ) =
+              @res[ 0 .. 4 ];
+            @res = @res[ 5 .. ($#res) ];
+            my ( $address, $port ) =
+              getnameinfo( $saddr, NI_NUMERICHOST | NI_NUMERICSERV );
+            push @addrs, $address;
+        }
+    }
+    return @addrs;    # NB: unsorted!
+}
+
+sub usage {
+    my $ME = basename($0);
+    print <<"AMEN";
+Usage: $ME -H <host> [--use-ipv4|--use-ipv6] [<other options>] \
+  <plugin> [<other plugin args>]
+Options:
+  -H, --hostname <host|address>
+	Hostname or IPv6/IPv4 address to connect to.
+  -I, --IP-address <host|address>
+	IPv6 or IPv4 address or hostname, preferred over --hostname.
+	Use this with the check_http plugin if you need to specify
+	both --IP-address and --hostname for it.
+  -4, --use-ipv4
+	Check IPv4 only.
+  -6, --use-ipv6
+	Check IPv6 only.
+  -a, --ipv4-address=a.b.c.d,e.f.g.h
+  	Check IPv4 using addresses a.b.c.d and e.f.g.h;
+	plugin will be run with the address as --hostname 
+	option argument (replacing the original argument of
+	--hostname).
+  -A, --ipv6-address=A::B,C::D
+	Check IPv6 using addresses A::B and C::D; see -a above
+	for notes on plugin --hostname option handling.
+  <plugin>
+	Path to the actual plugin program to run.
+  <other plugin args>
+	Any command line arguments besides -H, -4, -6, -a and -A
+	will be passed as-is to the <plugin>.
+
+  The order of options is not relevant, e.g.
+  '$ME -H <host> <plugin>' is effectively the same as
+  '$ME <plugin> -H <host>'.
+
+Examples:
+  $ME check_ssh -H host.example.org
+  - "Automatic dual stack test":  Run check_ssh for IPv6 only if
+    the system resolver returns an IPv6 address and likewise for 
+    IPv4.
+  $ME check_ssh -H host.example.org -4
+  - Run IPv4 check only.
+  $ME check_ssh -H host.example.org -6
+  - Run IPv6 check only.
+  $ME check_ssh -H host.example.org -a a.b.c.d
+  - Pass "--hostname a.b.c.d" to check_ssh when checking IPv4
+    and have IPv6 checks run automatically as in the first example.
+  $ME check_ssh -H host.example.org -6 -A A::B
+  - IPv6 checking only, skip resolving host.example.org and
+    just pass "--hostname A::B" to check_ssh.
+  $ME check_http -I vhost.example.org -H lb-01.example.org
+  - Check the HTTP virtual host vhost.example at load balancer node
+    lb-01.
+AMEN
+}
+
+sub debug {
+    my ($msg) = @_;
+
+    return unless ( $opts{'debug-wrapper'} );
+
+    chomp $msg;
+    print STDERR "debug: " . $msg . "\n";
+}

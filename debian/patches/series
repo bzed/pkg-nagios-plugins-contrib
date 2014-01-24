@@ -1,3 +1,5 @@
+check_v46/no_epn
+check_rbl/pod_encoding_fix
 check_ajp/return_critical_on_failed_connection
 check_raid/prefer_cciss_vol_status_over_hpacucli
 check_clamav/clamav_locations
@@ -18,9 +20,12 @@ check_lm_sensors/manpage_whatis_fix
 check_lm_sensors/spelling_errors
 check_lm_sensors/interpreter
 check_rbl/interpreter
-check_rbl/epn
 check_rbl/spelling_errors
+check_rbl/disable_solid.net
 check_haproxy/epn
 check_httpd_status/epn
 check_backuppc/use_nagios_plugins
 dsa/epn
+check_cups/epn
+check_webinject/epn
+check_snmp_time/epn

@@ -1,0 +1,7 @@
+Homepage: https://www.monitoringexchange.org/inventory/Check-Plugins/Operating-Systems/Linux/check_drbd
+Watch: https://www.monitoringexchange.org/inventory/Check-Plugins/Operating-Systems/Linux/check_drbd >check_drbd v([0-9.]+)</div>
+Uploaders: Jan Wagner <waja@cyconet.org>
+Description: plugin to check DRBD device states
+ This plugin is for checking DRBD device states. It parses the
+ /proc/drbd device and analyses the output.
+Version: 0.5.3
