@@ -16,7 +16,7 @@ PKGNAME = nagios-plugins-contrib
 #   we run dh_auto_$(1) with -O--sourcedirectory="$$plugin"
 # - if $${plugin}/src exists, we run dh_auto_$(1) on that directory
 # - else: fail :)
-DH_AUTO_CALL = 	if [ "$$auto_command" == "dh_auto_configure" ]; then \
+DH_AUTO_CALL = 	if [ "$$auto_command" = "dh_auto_configure" ]; then \
 		    export options="$$options -- --enable-stack-protector" ;\
 		fi ;\
 		if [ -f $(CURDIR)/$$plugin/Makefile ]; then \
