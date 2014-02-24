@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-####################### check_apachestatus_auto.pl #######################
+####################### check_httpd_status.pl #######################
 # Version : 1.3
 # Date : 06 Aug 2010
 #
@@ -344,7 +344,7 @@ my %WorkerStates = ();
 map( $WorkerStates{$_}++ , split(//,$ScoreBoard) );
 
 
-foreach my $slotState ( keys( %{$TranslationTable{$httpserver}} ) ) {
+foreach my $slotState ( sort(keys(%{$TranslationTable{$httpserver}})) ) {
 	my $val = 0 ;
 	if ( defined($WorkerStates{$slotState}) ) {
 		$val = $WorkerStates{$slotState};
@@ -357,7 +357,7 @@ foreach my $slotState ( keys( %{$TranslationTable{$httpserver}} ) ) {
 }
 
 
-if ($httpserver eq 'APACHE') {
+if ( $httpserver eq 'APACHE' ) {
 	$InfoData = sprintf ("%.3f s - %d/%d Busy/Idle, %d/%d Open/Total, %.1f requests/s, %.1f B/s, %d B/request", 
 		$timeelapsed, $BusyWorkers, $IdleWorkers, $CountOpenSlots, $TotalSlots, $ReqPerSec, $BytesPerSec, $BytesPerReq);
 	
