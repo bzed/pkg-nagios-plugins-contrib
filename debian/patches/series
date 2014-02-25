@@ -29,3 +29,4 @@ dsa/epn
 check_cups/epn
 check_webinject/epn
 check_snmp_time/epn
+check_varnish/automake_foreign
