@@ -1,4 +1,6 @@
 #!/usr/bin/perl
+# nagios: -epn
+
 use strict;
 my $VERSION = '0.2';
 my $COPYRIGHT = 'Copyright (C) 2005-2011 Jonathan Buhacoff <jonathan@buhacoff.net>';
