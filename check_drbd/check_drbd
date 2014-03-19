@@ -272,7 +272,7 @@ sub parse_drbd_devices {
 		}
 		$check{$device} = 1;
 		if (defined($oos{$device}) and $oos{$device} > 0) {
-			&myexit('WARNING',"Out of sync on device $device: $oos{$device} sectors");
+			&myexit('WARNING',"Out of sync on device $device: $oos{$device} KiB");
 		}
 	}
 	if (int(keys %check) == 0) {
