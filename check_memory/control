@@ -6,4 +6,4 @@ Description: plugin to check for free memory
  on some system with very stable memory usage it is perfectly
  normal for system cache to fill in all available memory.
 Recommends: libnagios-plugin-perl (>= 0.31)
-Version: 1.0
+Version: 1.0.1
