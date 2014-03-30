@@ -19,15 +19,15 @@
 # enable substitution with:
 #   $ svn propset svn:keywords "Id Revision HeadURL Source Date"
 #
-#   $Id: check_ssl_cert 1348 2013-12-23 08:07:44Z corti $
-#   $Revision: 1348 $
+#   $Id: check_ssl_cert 1353 2014-02-28 10:32:11Z corti $
+#   $Revision: 1353 $
 #   $HeadURL: https://svn.id.ethz.ch/nagios_plugins/check_ssl_cert/check_ssl_cert $
-#   $Date: 2013-12-23 09:07:44 +0100 (Mon, 23 Dec 2013) $
+#   $Date: 2014-02-28 11:32:11 +0100 (Fri, 28 Feb 2014) $
 
 ################################################################################
 # Constants
 
-VERSION=1.16.0
+VERSION=1.16.1
 SHORTNAME="SSL_CERT"
 
 VALID_ATTRIBUTES=",startdate,enddate,subject,issuer,modulus,serial,hash,email,ocsp_uri,fingerprint,"
