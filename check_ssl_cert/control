@@ -1,7 +1,7 @@
 Uploaders: Jan Wagner <waja@cyconet.org>
 Recommends: openssl
 Suggests: expect
-Version: 1.16.0
+Version: 1.16.1
 Homepage: https://trac.id.ethz.ch/projects/nagios_plugins/wiki/check_ssl_cert
 Watch: https://trac.id.ethz.ch/projects/nagios_plugins/wiki/check_ssl_cert check_ssl_cert-([0-9.]+)\.tar\.gz
 Description: plugin to check the CA and validity of an
