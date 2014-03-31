@@ -4,7 +4,7 @@ Priority: extra
 Maintainer: Debian Nagios Maintainer Group <pkg-nagios-devel@lists.alioth.debian.org>
 Uploaders: Bernd Zeimetz <bzed@debian.org>, Jan Wagner <waja@cyconet.org>
 Build-Depends: debhelper (>= 8.0.0), python, python-debian, quilt (>= 0.46-7), autotools-dev, dh-autoreconf, autotools-dev, flex, libmemcached-dev, libvarnishapi-dev, pkg-config
-Standards-Version: 3.9.4
+Standards-Version: 3.9.5
 Vcs-Git: git://anonscm.debian.org/pkg-nagios/pkg-nagios-plugins-contrib
 Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-nagios/pkg-nagios-plugins-contrib;a=summary
 
@@ -92,7 +92,7 @@ Description: Plugins for nagios compatible monitoring systems
    * check_printer: plugin to check printer supply levels using SNMP
      It outputs performance data for all supplies
      found, for example toner and drum.
-   * check_raid (3.0.6+cc7d1b287b): plugin to check sw/hw RAID status
+   * check_raid (3.0.5+cc7d1b287b): plugin to check sw/hw RAID status
      The plugin looks for any known types of RAID configurations,
      and checks them all.
      .
