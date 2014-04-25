@@ -3,10 +3,10 @@ Section: net
 Priority: extra
 Maintainer: Debian Nagios Maintainer Group <pkg-nagios-devel@lists.alioth.debian.org>
 Uploaders: Bernd Zeimetz <bzed@debian.org>, Jan Wagner <waja@cyconet.org>
-Build-Depends: debhelper (>= 8.0.0), python, python-debian, quilt (>= 0.46-7), autotools-dev,  autotools-dev, dh-autoreconf, flex, libmemcached-dev, libvarnishapi-dev, pkg-config
-Standards-Version: 3.9.4
-Vcs-Git: git://git.debian.org/pkg-nagios/pkg-nagios-plugins-contrib
-Vcs-Browser: http://git.debian.org/?p=pkg-nagios/pkg-nagios-plugins-contrib;a=summary
+Build-Depends: debhelper (>= 8.0.0), python, python-debian, quilt (>= 0.46-7), autotools-dev, dh-autoreconf, autotools-dev, flex, libmemcached-dev, libvarnishapi-dev, pkg-config
+Standards-Version: 3.9.5
+Vcs-Git: git://anonscm.debian.org/pkg-nagios/pkg-nagios-plugins-contrib
+Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-nagios/pkg-nagios-plugins-contrib;a=summary
 
 Package: nagios-plugins-contrib
 Architecture: any
@@ -63,7 +63,7 @@ Description: Plugins for nagios compatible monitoring systems
        * Raids
      and alerts you if one of these components is faulty or operates
      outside its normal parameters.
-   * check_httpd_status (rev140): plugin checking Apache or Lighthttpd
+   * check_httpd_status (rev148): plugin checking Apache or Lighthttpd
      server-status page (using mod_status)
    * check_ipmi_sensor (3.1): IPMI Sensor Monitoring Plugin
      Plugin to monitor the hardware status (fan speed, temperaturs,
@@ -79,12 +79,12 @@ Description: Plugins for nagios compatible monitoring systems
      limit.
      Hit/miss and evictions are measured over a 30 minute interval,
      using a memcached object to store the earlier statistics.
-   * check_memory (1.0): plugin to check for free memory
+   * check_memory (1.0.1): plugin to check for free memory
      This plugin excludes the system cache and buffer, because
      on some system with very stable memory usage it is perfectly
      normal for system cache to fill in all available memory.
-   * check_mongodb (b14ad3ef17): Plugin script to monitor your MongoDB server(s)
-   * check_multipath (0.1.9): plugin to monitor the number of available and
+   * check_mongodb (9d17373c6a): Plugin script to monitor your MongoDB server(s)
+   * check_multipath (0.2.0): plugin to monitor the number of available and
      failed paths of multipath devices
    * check_mysql_health (2.1.8.2): plugin to check various parameters of a
      MySQL database
@@ -92,7 +92,7 @@ Description: Plugins for nagios compatible monitoring systems
    * check_printer: plugin to check printer supply levels using SNMP
      It outputs performance data for all supplies
      found, for example toner and drum.
-   * check_raid (3.0.5): plugin to check sw/hw RAID status
+   * check_raid (3.0.5+cc7d1b287b): plugin to check sw/hw RAID status
      The plugin looks for any known types of RAID configurations,
      and checks them all.
      .
@@ -133,9 +133,9 @@ Description: Plugins for nagios compatible monitoring systems
      it against the local time on the Nagios server. This identifies systems
      with no correct time set and sends alarms if the time is off to far.
      HOST-RESOURCES-MIB::hrSystemDate.0 used here returns 8 or 11 byte octets.
-     SNMP translation needs to be switched off and we need to convert the
+     SNMP translation needs to be switched off and to be converted the
      received SNMP data into readable strings.
-   * check_ssl_cert (1.15.0): plugin to check the CA and validity of an
+   * check_ssl_cert (1.16.1): plugin to check the CA and validity of an
      X.509 certificate
    * check_v46 (2013-08-26T07:33:11Z): ipv4/ipv6 Nagios plugin wrapper
      Nagios plugin wrapper for running the actual plugin for both / either of
@@ -150,7 +150,7 @@ Description: Plugins for nagios compatible monitoring systems
      individual system components that have HTTP interfaces
      (JSP, ASP, CGI, PHP, AJAX, Servlets, HTML Forms,
      XML/SOAP Web Services, REST, etc).
-   * check_whois (1.14): plugin to check for the expiration of a domain.
+   * check_whois (1.15): plugin to check for the expiration of a domain.
      The plugin may not yet work with all registrars, since their
      output formats differ or there is no expiration date in the
      whois output.
