@@ -5,6 +5,17 @@
 export DH_VERBOSE=1
 
 PLUGINS := $(shell find $(CURDIR) -mindepth 1 -maxdepth 1 -name .git -prune -o -name .pc -prune -o -name debian -prune -o -type d -printf '%f\n' | sort)
+
+ifeq ($(DEB_HOST_ARCH),$(filter $(DEB_HOST_ARCH), hurd-i386))
+	PLUGINS := $(filter-out check_memcached check_varnish,$(PLUGINS))
+endif
+ifeq ($(DEB_HOST_ARCH),$(filter $(DEB_HOST_ARCH), arm64))
+	PLUGINS := $(filter-out check_memcached,$(PLUGINS))
+endif
+ifeq ($(DEB_HOST_ARCH),$(filter $(DEB_HOST_ARCH), m68k))
+	PLUGINS := $(filter-out check_varnish,$(PLUGINS))
+endif
+
 PKGNAME = nagios-plugins-contrib
 
 %:

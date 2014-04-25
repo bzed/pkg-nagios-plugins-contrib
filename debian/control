@@ -3,7 +3,7 @@ Section: net
 Priority: extra
 Maintainer: Debian Nagios Maintainer Group <pkg-nagios-devel@lists.alioth.debian.org>
 Uploaders: Bernd Zeimetz <bzed@debian.org>, Jan Wagner <waja@cyconet.org>
-Build-Depends: debhelper (>= 8.0.0), python, python-debian, quilt (>= 0.46-7), autotools-dev, dh-autoreconf, autotools-dev, flex, libmemcached-dev, libvarnishapi-dev, pkg-config
+Build-Depends: debhelper (>= 8.0.0), python, python-debian, quilt (>= 0.46-7), autotools-dev, dh-autoreconf, flex, libmemcached-dev [!hurd-i386 !arm64], libvarnishapi-dev [!hurd-i386 !m68k], pkg-config
 Standards-Version: 3.9.5
 Vcs-Git: git://anonscm.debian.org/pkg-nagios/pkg-nagios-plugins-contrib
 Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-nagios/pkg-nagios-plugins-contrib;a=summary
