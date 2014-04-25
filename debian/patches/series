@@ -30,4 +30,5 @@ check_cups/epn
 check_webinject/epn
 check_snmp_time/epn
 check_varnish/automake_foreign
-debian/patches/check_drbd/fix_for_oos_and_cosmetic
+check_drbd/fix_for_oos_and_cosmetic
+check_imap_quota/syntax_error_fix
