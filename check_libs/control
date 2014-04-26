@@ -1,5 +1,5 @@
 Homepage: http://svn.noreply.org/cgi-bin/viewvc.cgi/weaselutils/trunk/?logsort=cvs&diff_format=s&sortby=file#dirlist
-Watch: http://svn.noreply.org/cgi-bin/viewvc.cgi/weaselutils/trunk/nagios-check-libs?logsort=cvs&diff_format=s&sortby=file&view=log <a name="rev([0-9]+)"></a>
+Watch: http://svn.noreply.org/svn/weaselutils/trunk/nagios-check-libs SHA1:c5fd4ce2dac0b4c5b03dfee43994a1dcebd69d8d
 Uploaders: Bernd Zeimetz <bzed@debian.org>
 Description: plugin to report the usage of no longer existing
  libraries by running processes
