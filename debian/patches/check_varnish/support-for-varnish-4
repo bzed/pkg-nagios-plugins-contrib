@@ -1,0 +1,133 @@
+From 04555fb05cb5292b811f696cacd585435f6a9f3e Mon Sep 17 00:00:00 2001
+From: Evgeni Golov <evgeni.golov@credativ.de>
+Date: Sat, 26 Apr 2014 18:06:26 +0200
+Subject: [PATCH] add support for varnish 4
+
+closes #2
+---
+ check_varnish.c | 41 +++++++++++++++++++++++++++++++++++++++--
+ configure.ac    |  8 +++++++-
+ 2 files changed, 46 insertions(+), 3 deletions(-)
+
+diff --git a/check_varnish.c b/check_varnish.c
+index 2ba36aa..95156f3 100644
+--- a/check_varnish/varnish-nagios-1.1/check_varnish.c
++++ b/check_varnish/varnish-nagios-1.1/check_varnish.c
+@@ -43,8 +43,13 @@
+ #include <locale.h>
+ #include <assert.h>
+ 
++#if defined(HAVE_VARNISHAPI_4)
++#include <vapi/vsc.h>
++#include <vapi/vsm.h>
++#elif defined(HAVE_VARNISHAPI_3)
+ #include "vsc.h"
+ #include "varnishapi.h"
++#endif
+ 
+ static int verbose = 0;
+ 
+@@ -177,6 +182,22 @@ check_stats_cb(void *priv, const struct VSC_point * const pt)
+ 	struct stat_priv *p;
+ 	char tmp[1024];
+ 
++	if (pt == NULL)
++		return(0);
++
++#if defined(HAVE_VARNISHAPI_4)
++	assert(sizeof(tmp) > (strlen(pt->section->fantom->type) + 1 +
++			      strlen(pt->section->fantom->ident) + 1 +
++			      strlen(pt->desc->name) + 1));
++	snprintf(tmp, sizeof(tmp), "%s%s%s%s%s",
++		(pt->section->fantom->type[0] == 0 ? "" : pt->section->fantom->type),
++		(pt->section->fantom->type[0] == 0 ? "" : "."),
++		(pt->section->fantom->ident[0] == 0 ? "" : pt->section->fantom->ident),
++		(pt->section->fantom->ident[0] == 0 ? "" : "."),
++		 pt->desc->name);
++	p = priv;
++	assert(!strcmp(pt->desc->fmt, "uint64_t"));
++#elif defined(HAVE_VARNISHAPI_3)
+ 	assert(sizeof(tmp) > (strlen(pt->class) + 1 +
+ 			      strlen(pt->ident) + 1 +
+ 			      strlen(pt->name) + 1));
+@@ -188,15 +209,20 @@ check_stats_cb(void *priv, const struct VSC_point * const pt)
+ 		 pt->name);
+ 	p = priv;
+ 	assert(!strcmp(pt->fmt, "uint64_t"));
++#endif
+ 	if (strcmp(tmp, p->param) == 0) {
+ 		p->found = 1;
++#if defined(HAVE_VARNISHAPI_4)
++		p->info = pt->desc->sdesc;
++#elif defined(HAVE_VARNISHAPI_3)
+ 		p->info = pt->desc;
++#endif
+ 		p->value = *(const volatile uint64_t*)pt->ptr;
+ 	} else if (strcmp(p->param, "ratio") == 0) {
+-		if (strcmp(tmp, "cache_hit") == 0) {
++		if (strcmp(tmp, "cache_hit") == 0 || strcmp(tmp, "MAIN.cache_hit") == 0) {
+ 			p->found = 1;
+ 			p->cache_hit = *(const volatile uint64_t*)pt->ptr;
+-		} else if (strcmp(tmp, "cache_miss") == 0) {
++		} else if (strcmp(tmp, "cache_miss") == 0 || strcmp(tmp, "MAIN.cache_miss") == 0) {
+ 			p->cache_miss = *(const volatile uint64_t*)pt->ptr;
+ 		}
+ 	}
+@@ -215,7 +241,11 @@ check_stats(struct VSM_data *vd, char *param)
+ 	priv.found = 0;
+ 	priv.param = param;
+ 
++#if defined(HAVE_VARNISHAPI_4)
++	(void)VSC_Iter(vd, NULL, check_stats_cb, &priv);
++#elif defined(HAVE_VARNISHAPI_3)
+ 	(void)VSC_Iter(vd, check_stats_cb, &priv);
++#endif
+ 	if (strcmp(param, "ratio") == 0) {
+ 		intmax_t total = priv.cache_hit + priv.cache_miss;
+ 		priv.value = total ? (100 * priv.cache_hit / total) : 0;
+@@ -280,7 +310,9 @@ main(int argc, char **argv)
+ 	setlocale(LC_ALL, "");
+ 
+ 	vd = VSM_New();
++#if defined(HAVE_VARNISHAPI_3)
+ 	VSC_Setup(vd);
++#endif
+ 
+ 	while ((opt = getopt(argc, argv, VSC_ARGS "c:hn:p:vw:")) != -1) {
+ 		switch (opt) {
+@@ -311,8 +343,13 @@ main(int argc, char **argv)
+ 		}
+ 	}
+ 
++#if defined(HAVE_VARNISHAPI_4)
++	if (VSM_Open(vd))
++		exit(1);
++#elif defined(HAVE_VARNISHAPI_3)
+ 	if (VSC_Open(vd, 1))
+ 		exit(1);
++#endif
+ 
+ 	/* Default: if no param specified, check hit ratio.  If no warning
+ 	 * and critical values are specified either, set these to default.
+diff --git a/configure.ac b/configure.ac
+index feac2bd..a3df21e 100644
+--- a/check_varnish/varnish-nagios-1.1/configure.ac
++++ b/check_varnish/varnish-nagios-1.1/configure.ac
+@@ -21,7 +21,13 @@ AC_PROG_LIBTOOL
+ AC_PROG_MAKE_SET
+ 
+ # Checks for libraries.
+-PKG_CHECK_MODULES([VARNISHAPI], [varnishapi])
++PKG_CHECK_MODULES([VARNISHAPI], [varnishapi >= 4],
++  [AC_DEFINE([HAVE_VARNISHAPI_4], [1], [Use VARNISHAPI v4])],
++  [PKG_CHECK_MODULES([VARNISHAPI], [varnishapi >= 3],
++    [AC_DEFINE([HAVE_VARNISHAPI_3], [1], [Use VARNISHAPI v3])],
++    [AC_MSG_ERROR([Could not find neither varnishapi v4 nor v3.])])
++  ]
++)
+ 
+ # Checks for header files.
+ AC_HEADER_STDC
+-- 
+2.0.0.rc0
+
