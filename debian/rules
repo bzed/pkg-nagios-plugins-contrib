@@ -78,7 +78,7 @@ dh_auto_install-%:
 dh_auto_%:
 	set -e; \
 	    export auto_command=`echo $* | sed 's,-.*,,;s,^,dh_auto_,'` ;\
-	    export plugin=`echo $* | sed 's,.*-,,'` ;\
+	    export plugin=`echo $* | sed 's,[^-]*-,,'` ;\
 	    $(DH_AUTO_CALL)
 
 
