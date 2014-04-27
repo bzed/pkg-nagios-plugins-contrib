@@ -3,7 +3,7 @@
 # Check if the running kernel has the same version string as the on-disk
 # kernel image.
 
-# Copyright 2008,2009,2011 Peter Palfrader
+# Copyright 2008,2009,2011,2012,2013,2014 Peter Palfrader
 # Copyright 2009 Stephen Gran
 # Copyright 2010,2012,2013 Uli Martens
 # Copyright 2011 Alexander Reichle-Schmehl
@@ -37,9 +37,11 @@ get_offset() {
 
 	file="$1"
 	needle="$2"
+	pos="$3"
+
 	perl -e '
 		undef $/;
-		$i = index(<>, "'"$needle"'");
+		$i = index(<>, "'"$needle"'", '"$pos"');
 		if ($i < 0) {
 			exit 1;
 		};
@@ -128,18 +130,22 @@ cat_vmlinux() {
 	header="$2"
 	filter="$3"
 	hdroff="$4"
+	nextoff=0
 
-	off=`get_offset "$image" $header`
-	local ret="$?"
-	if [ "$ret" != 0 ]; then
-		# not found, exit
-		return 1
-	fi
+	while : ; do
+		off=`get_offset "$image" $header $nextoff`
+		local ret="$?"
+		if [ "$ret" != 0 ]; then
+			# not found, exit
+			return 1
+		fi
 
-	(if [ "$off" != 0 ]; then
-	   dd ibs="$((off+hdroff))" skip=1 count=0
-	 fi &&
-	 dd bs=512k) < "$image"  2>/dev/null | $filter 2>/dev/null
+		(if [ "$off" != 0 ]; then
+		   dd ibs="$((off+hdroff))" skip=1 count=0
+		 fi &&
+		 dd bs=512k) < "$image"  2>/dev/null | $filter 2>/dev/null
+		nextoff=$((off + 1))
+	done
 	return 0
 }
 
@@ -149,13 +155,13 @@ get_image_linux() {
 	image="$1"
 
 	# gzip compressed image
-	if cat_vmlinux "$image" "\x1f\x8b\x08\x00"      "zcat"   0; then return; fi
-	if cat_vmlinux "$image" "\x1f\x8b\x08\x08"      "zcat"   0; then return; fi
+	cat_vmlinux "$image" "\x1f\x8b\x08\x00"      "zcat"   0
+	cat_vmlinux "$image" "\x1f\x8b\x08\x08"      "zcat"   0
 	# lzma compressed image
-	if cat_vmlinux "$image" "\x00\x00\x00\x02\xff"  "xzcat" -1; then return; fi
-	if cat_vmlinux "$image" "\x00\x00\x00\x04\xff"  "xzcat" -1; then return; fi
+	cat_vmlinux "$image" "\x00\x00\x00\x02\xff"  "xzcat" -1
+	cat_vmlinux "$image" "\x00\x00\x00\x04\xff"  "xzcat" -1
 	# xz compressed image
-	if cat_vmlinux "$image" "\xfd\x37\x7a\x58\x5a " "xzcat"  0; then return; fi
+	cat_vmlinux "$image" "\xfd\x37\x7a\x58\x5a " "xzcat"  0
 
 	echo "ERROR: Unable to extract kernel image." 2>&1
 	exit 1

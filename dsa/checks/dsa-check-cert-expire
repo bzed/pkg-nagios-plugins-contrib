@@ -30,9 +30,30 @@ set -e
 warn=1209600
 crit=86400
 
-if [ "$#" != 1 ]; then
-	echo "Usage: $0 <certfile>" >&2
+usage() {
+	echo "Usage: $0 [-w seconds] [-c seconds] <certfile>" >&2
 	exit 3
+}
+
+
+OPTS=`getopt -o w:c: -n "$0" -- "$@"` || usage
+
+eval set -- "$OPTS"
+
+while :; do
+	case "$1" in
+		-w) warn=$2; shift 2 ;;
+		-c) crit=$2; shift 2 ;;
+		--) shift; break; ;;
+		*) usage ;;
+	esac
+done
+if test "$crit" -gt "$warn"; then
+	warn=$crit
+fi
+
+if [ "$#" != 1 ]; then
+	usage
 fi
 
 cert="$1"

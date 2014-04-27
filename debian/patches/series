@@ -5,7 +5,6 @@ check_raid/prefer_cciss_vol_status_over_hpacucli
 check_clamav/clamav_locations
 check_nfsmounts/perl_module
 check_nfsmounts/nfs_write_location
-dsa/security_updates_critical
 dsa/check_packages_location
 check_libs/config_location
 check_libs/config_path
@@ -30,5 +29,6 @@ check_cups/epn
 check_webinject/epn
 check_snmp_time/epn
 check_varnish/automake_foreign
+check_varnish/support-for-varnish-4
 check_drbd/fix_for_oos_and_cosmetic
 check_imap_quota/syntax_error_fix
