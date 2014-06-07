@@ -6,7 +6,6 @@ check_clamav/clamav_locations
 check_nfsmounts/perl_module
 check_nfsmounts/nfs_write_location
 dsa/check_packages_location
-check_libs/config_location
 check_libs/config_path
 dsa/status_directory
 dsa/check_packages-inifile
