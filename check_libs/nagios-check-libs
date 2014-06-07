@@ -170,6 +170,7 @@ LINE: for my $line (@lsof)  {
 	my $inode = $fields{i};
 	my $path  = $fields{n};
 	if ($path =~ m/\.dpkg-/ || $path =~ m/\(deleted\)/ || $path =~ /path inode=/ || $fd eq 'DEL') {
+		$path =~ s/^\(deleted\)//; # in some cases "(deleted)" is at the beginning of the string
 		for my $i (@{$config->{'ignorelist'}}) {
 			my $ignore = eval($i);
 			next LINE if $ignore;
