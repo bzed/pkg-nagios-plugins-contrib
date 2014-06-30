@@ -71,7 +71,7 @@ if ($params->{'version'}) {
 };
 
 if (! defined $params->{'config'}) {
-	$params->{'config'} = '/etc/nagios-plugins/check-libs.conf';
+	$params->{'config'} = '/etc/nagios/check-libs.conf';
 } elsif (! -e $params->{'config'}) {
 	dief("Config file $params->{'config'} does not exist.\n");
 }
@@ -170,6 +170,7 @@ LINE: for my $line (@lsof)  {
 	my $inode = $fields{i};
 	my $path  = $fields{n};
 	if ($path =~ m/\.dpkg-/ || $path =~ m/\(deleted\)/ || $path =~ /path inode=/ || $fd eq 'DEL') {
+		$path =~ s/^\(deleted\)//; # in some cases "(deleted)" is at the beginning of the string
 		for my $i (@{$config->{'ignorelist'}}) {
 			my $ignore = eval($i);
 			next LINE if $ignore;

@@ -1,0 +1,17 @@
+Author: Jan Wagner <waja@cyconet.org>
+Description:
+ Ignore missing of required files on autoreconf
+
+diff --git a/check_varnish/varnish-nagios-1.1/configure.ac b/check_varnish/varnish-nagios-1.1/configure.ac
+index feac2bd..5a51b89 100644
+--- a/check_varnish/varnish-nagios-1.1/configure.ac
++++ b/check_varnish/varnish-nagios-1.1/configure.ac
+@@ -10,7 +10,7 @@ AM_CONFIG_HEADER(config.h)
+ AC_CANONICAL_SYSTEM
+ AC_LANG(C)
+ 
+-AM_INIT_AUTOMAKE
++AM_INIT_AUTOMAKE([foreign])
+ 
+ # Checks for programs.
+ AC_GNU_SOURCE

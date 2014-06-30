@@ -1,0 +1,3 @@
+check_hpasm/src/
+check_mysql_health/src/
+check_varnish/src/

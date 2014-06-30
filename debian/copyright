@@ -224,6 +224,7 @@ The plugin was downloaded from:
 http://labs.consol.de/lang/en/nagios/check_hpasm/
 
   AUTHOR: Gerhard Lausser <gerhard.lausser@consol.de>
+  License: GPL v2
   
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -239,6 +240,8 @@ http://labs.consol.de/lang/en/nagios/check_hpasm/
   with this program; if not, write to the Free Software Foundation, Inc.,
   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
   
+    On Debian systems, the complete text of the GNU General
+    Public License version 2 can be found in "/usr/share/common-licenses/GPL-2".
   
 
 ------------------------------------------------------------------------------
@@ -383,7 +386,7 @@ http://exchange.nagios.org/directory/Plugins/Websites,-Forms-and-Transactions/ch
 check_memory:
 
 The plugin was downloaded from: 
-https://www.monitoringexchange.org/inventory/Check-Plugins/Operating-Systems/Linux/check_memory
+https://github.com/dermoth/misc-code/blob/master/nagios/plugins/check_memory
 
   Copyright (C) 2007 Thomas Guyot-Sionnest <tguyot@gmail.com>
   
@@ -399,8 +402,8 @@ https://www.monitoringexchange.org/inventory/Check-Plugins/Operating-Systems/Lin
   
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-  
+  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+  MA 02110-1301 USA.
   
 
 ------------------------------------------------------------------------------
@@ -413,8 +416,24 @@ https://github.com/mzupan/nagios-plugin-mongodb
   Copyright: (c) 2012, Mike Zupan <mike@zcentric.com>
   License: BSD
   
-  On Debian systems, a copy of the BSD License can be found in
-  /usr/share/common-licenses/BSD
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+  
+  Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+  Redistributions in binary form must reproduce the above copyright notice, this
+  list of conditions and the following disclaimer in the documentation and/or
+  other materials provided with the distribution.
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+  DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   
 
 ------------------------------------------------------------------------------
@@ -450,6 +469,7 @@ The plugin was downloaded from:
 http://labs.consol.de/lang/en/nagios/check_mysql_health/
 
   AUTHOR: Gerhard Lausser <gerhard.lausser@consol.de>
+  License: GPL v2
   
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -465,6 +485,8 @@ http://labs.consol.de/lang/en/nagios/check_mysql_health/
   with this program; if not, write to the Free Software Foundation, Inc.,
   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
   
+    On Debian systems, the complete text of the GNU General
+    Public License version 2 can be found in "/usr/share/common-licenses/GPL-2".
   
 
 ------------------------------------------------------------------------------
@@ -569,8 +591,8 @@ https://svn.id.ethz.ch/projects/nagios_plugins/wiki/check_rbl
   
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
-  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,
-  MA 02110-1301, USA.
+  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+  MA 02110-1301 USA.
   
 
 ------------------------------------------------------------------------------
@@ -909,4 +931,25 @@ extras:
        On Debian systems, the complete text of the GNU General Public
        License, version 2, can be found in /usr/share/common-licenses/GPL-2.
       
+  
+
+------------------------------------------------------------------------------
+
+percona-nagios-plugins:
+
+The plugin was downloaded from: 
+http://www.percona.com/doc/percona-monitoring-plugins/
+
+  Copyright 2012-2014 Baron Schwartz, 2012-2014 Percona Inc.
+  
+  THIS PROGRAM IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED
+  WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+  
+  This program is free software; you can redistribute it and/or modify it under
+  the terms of the GNU General Public License as published by the Free Software
+  Foundation, version 2.  You should have received a copy of the GNU General
+  Public License along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+  
   
