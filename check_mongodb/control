@@ -1,6 +1,6 @@
 Uploaders: Jan Wagner <waja@cyconet.org>
 Recommends: python-pymongo
-Version: 9d17373c6a
+Version: 66c42f93cc
 Homepage: https://github.com/mzupan/nagios-plugin-mongodb
 Watch: https://github.com/mzupan/nagios-plugin-mongodb <span class="sha">([0-9a-f]+)</span>
 Description: Plugin script to monitor your MongoDB server(s)
