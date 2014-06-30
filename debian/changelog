@@ -1,3 +1,25 @@
+nagios-plugins-contrib (11.20140630) unstable; urgency=medium
+
+  [ Jan Wagner ]
+  * [106aea0c] Update control file to reflect the shiped check_rbl version 1.3.2
+
+  [ Evgeni Golov ]
+  * [d654cba2] ignore locale-archive in check_libs
+    thanks h01ger!
+  * [4e9f28d2] revert nagios-check-libs source back to the original config path
+    patch our version only once, but with the correct path
+  * [607d1162] update nagios-check-libs to the latest upstream version
+  * [8a40ddb2] update check_libs checksum in control
+  * [9cc86dee] check_libs: add /var/lib/nginx/ to the ignorelist
+
+  [ Bernd Zeimetz ]
+  * [c712680b] Auto update of debian/copyright
+  * [0ff31881] Auto update of debian/control
+  * [be858113] Add percona nagios plugins.
+  * [be3753f9] Suggest percona-toolkit as Suggests.
+
+ -- Bernd Zeimetz <bzed@debian.org>  Mon, 30 Jun 2014 13:23:06 +0200
+
 nagios-plugins-contrib (10.20140427) unstable; urgency=medium
 
   [ Jan Wagner ]
