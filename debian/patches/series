@@ -1,3 +1,4 @@
+check_mysql_health/documentation_url
 check_v46/no_epn
 check_rbl/pod_encoding_fix
 check_ajp/return_critical_on_failed_connection
