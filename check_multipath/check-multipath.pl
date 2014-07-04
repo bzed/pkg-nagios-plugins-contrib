@@ -60,6 +60,7 @@
 #      0.2.0    Improved flexibility, more testcases. Thanks to Benjamin von Mossner and Ben Evans
 #               Warning if data for LUNs in --extraconfig is missing
 #               Added --reload option (based on Ben Evans' idea)
+#      0.2.1    Improved LUN-line check, thanks to Michal Svamberg
 #
 
 
@@ -84,7 +85,7 @@ use vars qw( $NAME $VERSION $AUTHOR $CONTACT $E_OK $E_WARNING $E_CRITICAL
 
 # === Version and similar info ===
 $NAME    = 'check-multipath.pl';
-$VERSION = '0.2.0   13. JAN. 2014';
+$VERSION = '0.2.1   31. MAR. 2014';
 $AUTHOR  = 'Hinnerk Rümenapf';
 $CONTACT = 'hinnerk.ruemenapf@uni-hamburg.de  hinnerk.ruemenapf@gmx.de';
 
@@ -412,6 +413,17 @@ $SIG{__WARN__} = sub { push @perl_warnings, [@_]; };
 ."`-+- policy='round-robin 0' prio=0 status=enabled\n"
 ."  `- #:#:#:# - #:#  active undef running\n",
 
+#28. thanks to Michal Svamberg <svamberg@civ.zcu.cz>
+"fc-p6-vicepb (1Proware_FF010000333001EC) dm-1 Proware,R_laila\n"
+."size=4.8T features='0' hwhandler='0' wp=rw\n"
+."|-+- policy='round-robin 0' prio=1 status=active\n"
+."| `- 9:0:1:0 sdd 8:48  active ready running\n"
+."|-+- policy='round-robin 0' prio=1 status=enabled\n"
+."| `- 9:0:0:0 sdc 8:32  active ready running\n"
+."|-+- policy='round-robin 0' prio=1 status=enabled\n"
+."| `- 9:0:2:0 sde 8:64  active ready running\n"
+."`-+- policy='round-robin 0' prio=1 status=enabled\n"
+."  `- 9:0:5:0 sdh 8:112 active ready running",
     );
 
 # Commands with full path
@@ -764,7 +776,8 @@ sub checkLunLine {
     # mpathb (36000d774000045f655ea91cb4ea41d6f) dm-1 
     # MYVOLUME (36005076801810523100000000000006f)
     # tex-lun4 (3600000e00d0000000002161200120000) dm-7 FUJITSU ,ETERNUS_DXL
-    if ($textLine =~ m/^([\w\-]+) \s+ \([0-9a-fA-F]+\)/x) {
+    # fc-p6-vicepb (1Proware_FF010000333001EC) dm-1 Proware,R_laila            thanks to Michal Svamberg
+    if ($textLine =~ m/^([\w\-]+) \s+ \([\w\-]+\)/x) {
 	$$rCurrentLun = $1;                           # do initialisations for new LUN
 	#report("named LUN $$rCurrentLun found", $E_OK);
 	$$rLunPaths{$$rCurrentLun} = 0;
