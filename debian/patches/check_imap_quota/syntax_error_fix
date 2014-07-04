@@ -4,11 +4,9 @@ Date:   Fri Mar 14 10:43:30 2014 +0100
 
     - fixed syntax error by added missing closing bracket as mentioned in issue #44
 
-diff --git a/check_email_delivery/check_email_delivery-0.7.1b/check_imap_quota b/check_email_delivery/check_email_delivery-0.7.1b/check_imap_quota
-index 13f3504..b4f4643 100644
---- a/check_email_delivery/check_email_delivery-0.7.1b/check_imap_quota
-+++ b/check_email_delivery/check_email_delivery-0.7.1b/check_imap_quota
-@@ -151,7 +151,7 @@ eval {
+--- a/check_email_delivery/src/check_imap_quota
++++ b/check_email_delivery/src/check_imap_quota
+@@ -153,7 +153,7 @@ eval {
  	  }
  	  if (!length($quotaUsed) && !length($quotaLimit)) {
  		print "no answer from imap host\n" if $verbose > 2;

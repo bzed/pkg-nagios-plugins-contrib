@@ -9,8 +9,6 @@ closes #2
  configure.ac    |  8 +++++++-
  2 files changed, 46 insertions(+), 3 deletions(-)
 
-diff --git a/check_varnish.c b/check_varnish.c
-index 2ba36aa..95156f3 100644
 --- a/check_varnish/varnish-nagios-1.1/check_varnish.c
 +++ b/check_varnish/varnish-nagios-1.1/check_varnish.c
 @@ -43,8 +43,13 @@
@@ -27,7 +25,7 @@ index 2ba36aa..95156f3 100644
  
  static int verbose = 0;
  
-@@ -177,6 +182,22 @@ check_stats_cb(void *priv, const struct VSC_point * const pt)
+@@ -177,6 +182,22 @@ check_stats_cb(void *priv, const struct
  	struct stat_priv *p;
  	char tmp[1024];
  
@@ -50,7 +48,7 @@ index 2ba36aa..95156f3 100644
  	assert(sizeof(tmp) > (strlen(pt->class) + 1 +
  			      strlen(pt->ident) + 1 +
  			      strlen(pt->name) + 1));
-@@ -188,15 +209,20 @@ check_stats_cb(void *priv, const struct VSC_point * const pt)
+@@ -188,15 +209,20 @@ check_stats_cb(void *priv, const struct
  		 pt->name);
  	p = priv;
  	assert(!strcmp(pt->fmt, "uint64_t"));
@@ -73,7 +71,7 @@ index 2ba36aa..95156f3 100644
  			p->cache_miss = *(const volatile uint64_t*)pt->ptr;
  		}
  	}
-@@ -215,7 +241,11 @@ check_stats(struct VSM_data *vd, char *param)
+@@ -215,7 +241,11 @@ check_stats(struct VSM_data *vd, char *p
  	priv.found = 0;
  	priv.param = param;
  
@@ -109,8 +107,6 @@ index 2ba36aa..95156f3 100644
  
  	/* Default: if no param specified, check hit ratio.  If no warning
  	 * and critical values are specified either, set these to default.
-diff --git a/configure.ac b/configure.ac
-index feac2bd..a3df21e 100644
 --- a/check_varnish/varnish-nagios-1.1/configure.ac
 +++ b/check_varnish/varnish-nagios-1.1/configure.ac
 @@ -21,7 +21,13 @@ AC_PROG_LIBTOOL
@@ -128,6 +124,3 @@ index feac2bd..a3df21e 100644
  
  # Checks for header files.
  AC_HEADER_STDC
--- 
-2.0.0.rc0
-

@@ -4,5 +4,5 @@
 -#!perl
 +#!/usr/bin/perl
  
- package main;
+ # nagios: -epn
  
