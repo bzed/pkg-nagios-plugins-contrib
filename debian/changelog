@@ -1,4 +1,4 @@
-nagios-plugins-contrib (11.20140630) unstable; urgency=medium
+nagios-plugins-contrib (11.20140704) unstable; urgency=medium
 
   [ Jan Wagner ]
   * [106aea0c] Update control file to reflect the shiped check_rbl version 1.3.2
@@ -17,8 +17,18 @@ nagios-plugins-contrib (11.20140630) unstable; urgency=medium
   * [0ff31881] Auto update of debian/control
   * [be858113] Add percona nagios plugins.
   * [be3753f9] Suggest percona-toolkit as Suggests.
+  * [09e70d62] Updaring changelog.
 
- -- Bernd Zeimetz <bzed@debian.org>  Mon, 30 Jun 2014 13:23:06 +0200
+  [ Jan Wagner ]
+  * [7e7d34f6] check_mongodb: Update to latest git version
+
+  [ Bernd Zeimetz ]
+  * [f31fc76d] Update check_mysql_health web documentation url.
+  * [101305b6] Update check-multipath to 0.2.1
+  * [111a0b42] Refreshing patches.
+  * [30fe69ff] Auto update of debian/control
+
+ -- Bernd Zeimetz <bzed@debian.org>  Fri, 04 Jul 2014 11:36:51 +0200
 
 nagios-plugins-contrib (10.20140427) unstable; urgency=medium
 
