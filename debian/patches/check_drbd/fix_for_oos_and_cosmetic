@@ -7,8 +7,6 @@ Date:   Mon Mar 3 08:11:31 2014 +0300
     1) add check for out of sync sectors (report WARNING for non-zero value)
     2) cosmetic: sort device list while processing
 
-diff --git a/check_drbd/check_drbd b/check_drbd/check_drbd
-index aeda397..45a4441 100644
 --- a/check_drbd/check_drbd
 +++ b/check_drbd/check_drbd
 @@ -12,7 +12,7 @@ use Getopt::Long;
