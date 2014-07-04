@@ -12,7 +12,7 @@ Package: nagios-plugins-contrib
 Architecture: any
 Depends: ${misc:Depends}
 Recommends: ${shlibs:Depends}, ${python:Depends}, libsocket-perl, libnagios-plugin-perl, libnet-snmp-perl, whois, nagios-plugins-basic, libnet-dns-perl, libdate-manip-perl, libnagios-plugin-perl (>= 0.31), libnet-cups-perl, libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-ssleay-perl, python, liblocale-gettext-perl, liblwp-useragent-determined-perl, snmp, freeipmi-tools, libipc-run-perl, lsof, libyaml-syck-perl, python-pymongo, libdbd-mysql-perl, libreadonly-perl, libnet-snmp-perl (>= 5), libtimedate-perl, openssl, libwebinject-perl, libnet-dns-sec-perl, ruby | ruby-interpreter, ${perl:Depends}
-Suggests: backuppc, perl-doc, cciss-vol-status, mpt-status, smstools (>= 3~), expect, nagios-plugin-check-multi, moreutils
+Suggests: backuppc, perl-doc, cciss-vol-status, mpt-status, smstools (>= 3~), expect, nagios-plugin-check-multi, moreutils, percona-toolkit
 Enhances: nagios-plugins, nagios-plugins-basic, nagios-plugins-standard
 Description: Plugins for nagios compatible monitoring systems
  This package provides various plugins for Nagios compatible monitoring
@@ -83,8 +83,8 @@ Description: Plugins for nagios compatible monitoring systems
      This plugin excludes the system cache and buffer, because
      on some system with very stable memory usage it is perfectly
      normal for system cache to fill in all available memory.
-   * check_mongodb (9d17373c6a): Plugin script to monitor your MongoDB server(s)
-   * check_multipath (0.2.0): plugin to monitor the number of available and
+   * check_mongodb (66c42f93cc): Plugin script to monitor your MongoDB server(s)
+   * check_multipath (0.2.1): plugin to monitor the number of available and
      failed paths of multipath devices
    * check_mysql_health (2.1.8.2): plugin to check various parameters of a
      MySQL database
