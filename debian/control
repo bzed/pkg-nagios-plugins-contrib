@@ -51,6 +51,9 @@ Description: Plugins for nagios compatible monitoring systems
        - check email-to-FTP or other special email gateways
    * check_graphite: Plugin to monitor graphite metrics
    * check_haproxy (rev135): plugin check the HAProxy statistics url
+   * check_hp_bladechassis (1.0.1): plugin to check the hardware health of
+     HP blade enclosures via SNMP.
+     The plugin is only tested with the c7000 enclosure.
    * check_hpasm (4.6.3.2): plugin to check the hardware health of
      HP Proliant Servers
      It either uses snmp or - if installed - the hpasm package locally.
