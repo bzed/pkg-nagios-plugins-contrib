@@ -33,7 +33,7 @@ for t in md5 sha1 sha224 sha256 sha384 sha512; do
 
         sed 's,^[^ ]*  ,,' ${fname} | while read f; do
             if [ -f "${f}" ]; then
-                ${tool} ${f} >> ${tmp}
+                ${tool} "${f}" >> ${tmp}
             else
                 echo "${f} went missing, ignoring!"
             fi

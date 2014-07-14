@@ -1,0 +1,15 @@
+1.0.1   2010-01-22
+------------------
+
+* Ignore components that are absent, such as power supplies and
+  fans. If your chassis isn't fully stacked with blades, it may not be
+  fully stacked with power supplies and fans either.
+* Collect perl warnings and output them in a Nagios friendly way
+* Plugin version information is now available in the debug output
+* Manpage moved from section 3 to section 8
+* Plugin now installs in <libdir>/nagios, not <libdir>/nagios/contrib
+
+1.0.0   2009-08-04
+------------------
+
+* Initial release

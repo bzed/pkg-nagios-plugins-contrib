@@ -51,6 +51,9 @@ Description: Plugins for nagios compatible monitoring systems
        - check email-to-FTP or other special email gateways
    * check_graphite: Plugin to monitor graphite metrics
    * check_haproxy (rev135): plugin check the HAProxy statistics url
+   * check_hp_bladechassis (1.0.1): plugin to check the hardware health of
+     HP blade enclosures via SNMP.
+     The plugin is only tested with the c7000 enclosure.
    * check_hpasm (4.6.3.2): plugin to check the hardware health of
      HP Proliant Servers
      It either uses snmp or - if installed - the hpasm package locally.
@@ -137,6 +140,11 @@ Description: Plugins for nagios compatible monitoring systems
      received SNMP data into readable strings.
    * check_ssl_cert (1.16.1): plugin to check the CA and validity of an
      X.509 certificate
+   * check_uptime (1.0.1): check_uptime returns uptime of a system
+     in text (readable) format as well as in minutes for performance graphing.
+     The plugin can either run on a local unix system (using 'uptime' command)
+     or check remote system by SNMP. Also it is able to report one CRITICAL
+     or WARNING alert if system has been rebooted since last check.
    * check_v46 (2013-08-26T07:33:11Z): ipv4/ipv6 Nagios plugin wrapper
      Nagios plugin wrapper for running the actual plugin for both / either of
      IPv6 and/or IPv4.  The worst result of the actual plugin runs will be
