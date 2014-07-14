@@ -1,3 +1,15 @@
+nagios-plugins-contrib (12.20140714) unstable; urgency=medium
+
+  * [c48b2fba] Auto update of debian/control
+  * [53787970] Auto update of debian/copyright
+  * [54c6b89b] Add check_hp_bladechassis.
+  * [779307ef] Add missing " " around a filename variable in update_checksums.
+  * [a26ff221] Add check_uptime plugin.
+  * [e2a97b03] Auto update of debian/control
+  * [284db8fa] Auto update of debian/copyright
+
+ -- Bernd Zeimetz <bzed@debian.org>  Mon, 14 Jul 2014 11:26:10 +0200
+
 nagios-plugins-contrib (11.20140704) unstable; urgency=medium
 
   [ Jan Wagner ]
