@@ -1,3 +1,4 @@
+check_libs/lsof-nP
 check_ajp/return_critical_on_failed_connection
 check_backuppc/use_nagios_plugins
 check_clamav/clamav_locations
