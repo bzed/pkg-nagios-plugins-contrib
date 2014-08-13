@@ -11,9 +11,9 @@ Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-nagios/pkg-nagios-plugins-c
 Package: nagios-plugins-contrib
 Architecture: any
 Depends: ${misc:Depends}
-Recommends: ${shlibs:Depends}, ${python:Depends}, libsocket-perl, libnagios-plugin-perl, libnet-snmp-perl, whois, nagios-plugins-basic, libnet-dns-perl, libdate-manip-perl, libnagios-plugin-perl (>= 0.31), libnet-cups-perl, libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-ssleay-perl, python, liblocale-gettext-perl, liblwp-useragent-determined-perl, snmp, freeipmi-tools, libipc-run-perl, lsof, libyaml-syck-perl, python-pymongo, libdbd-mysql-perl, libreadonly-perl, libnet-snmp-perl (>= 5), libtimedate-perl, openssl, libwebinject-perl, libnet-dns-sec-perl, ruby | ruby-interpreter, ${perl:Depends}
+Recommends: ${shlibs:Depends}, ${python:Depends}, libsocket-perl, libnagios-plugin-perl, libnet-snmp-perl, whois, monitoring-plugins-basic | nagios-plugins-basic, libnet-dns-perl, libdate-manip-perl, libnagios-plugin-perl (>= 0.31), libnet-cups-perl, libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-ssleay-perl, python, liblocale-gettext-perl, liblwp-useragent-determined-perl, snmp, freeipmi-tools, libipc-run-perl, lsof, libyaml-syck-perl, python-pymongo, libdbd-mysql-perl, libreadonly-perl, libnet-snmp-perl (>= 5), libtimedate-perl, openssl, libwebinject-perl, libnet-dns-sec-perl, ruby | ruby-interpreter, ${perl:Depends}
 Suggests: backuppc, perl-doc, cciss-vol-status, mpt-status, smstools (>= 3~), expect, nagios-plugin-check-multi, moreutils, percona-toolkit
-Enhances: nagios-plugins, nagios-plugins-basic, nagios-plugins-standard
+Enhances: monitoring-plugins, monitoring-plugins-basic, monitoring-plugins-standard
 Description: Plugins for nagios compatible monitoring systems
  This package provides various plugins for Nagios compatible monitoring
  systems like Nagios and Icinga.
