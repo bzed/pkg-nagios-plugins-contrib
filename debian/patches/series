@@ -24,6 +24,7 @@ check_rbl/pod_encoding_fix
 check_rbl/interpreter
 check_rbl/spelling_errors
 check_rbl/disable_solid.net
+check_rbl/additional_rbls
 check_snmp_time/epn
 check_varnish/automake_foreign
 check_varnish/support-for-varnish-4
