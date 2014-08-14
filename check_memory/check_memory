@@ -26,7 +26,7 @@ use vars qw($PROGNAME $VERSION $FREECMD $UNIT);
 use Nagios::Plugin;
 
 $PROGNAME = "check_memory";
-$VERSION = '1.0';
+$VERSION = '1.0.1';
 $FREECMD = '/usr/bin/free';
 $UNIT = 'M';
 
@@ -35,15 +35,14 @@ my $np = Nagios::Plugin->new(
     . '   [ -u <unit> ]',
   version => $VERSION,
   plugin  => $PROGNAME,
-  shortname => uc($PROGNAME),
   blurb => 'Check free(1) data against given tresholds',
   timeout => 30,
 );
 
 $np->add_arg(
   spec => 'warning|w=s',
-  help => "-w, --warning=THRESHOLD\n"
-    . "   Warning threshold (in *bytes*) for free memory. See\n"
+  help => "-w, --warning=THRESHOLD[%]\n"
+    . "   Warning threshold (in bytes or percent) for free memory. See\n"
     . "   http://nagiosplug.sourceforge.net/developer-guidelines.html#THRESHOLDFORMAT\n"
     . "   for the threshold format. Alternatively this can be defined as a percentage\n"
     . '   of minimum free memory (warning and critical must be in the same format).',
@@ -52,8 +51,8 @@ $np->add_arg(
 
 $np->add_arg(
   spec => 'critical|c=s',
-  help => "-c, --critical=THRESHOLD\n"
-    . "   Critical threshold (in *bytes*) for free memory. See\n"
+  help => "-c, --critical=THRESHOLD[%]\n"
+    . "   Critical threshold (in bytes or percent) for free memory. See\n"
     . "   http://nagiosplug.sourceforge.net/developer-guidelines.html#THRESHOLDFORMAT\n"
     . "   for the threshold format. Alternatively this can be defined as a percentage\n"
     . '   of minimum free memory (warning and critical must be in the same format).',
@@ -99,7 +98,7 @@ $np->set_thresholds(
 # Better safe than sorry
 alarm $np->opts->timeout;
 
-# We always get bytes, then calculate units ourselves (Who knows... what if $FREECMD is on an offline device)
+# We always get bytes, then calculate units ourselves
 warn("Running: '$FREECMD -b'\n") if ($verbose);
 open(RESULT, "$FREECMD -b |")
   or $np->nagios_exit('CRITICAL', "Could not run $FREECMD");

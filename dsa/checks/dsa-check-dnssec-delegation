@@ -28,6 +28,26 @@ use Net::DNS::Resolver;
 use Getopt::Long;
 use File::Basename;
 
+# taken from Array::Utils
+# http://cpansearch.perl.org/src/ZMIJ/Array-Utils-0.5/Utils.pm
+# This module is Copyright (c) 2007 Sergei A. Fedorov.
+# You may distribute under the terms of either the GNU General Public
+# License or the Artistic License, as specified in the Perl README file.
+#
+sub intersect(\@\@) {
+	my %e = map { $_ => undef } @{$_[0]};
+	return grep { exists( $e{$_} ) } @{$_[1]};
+}
+sub array_diff(\@\@) {
+	my %e = map { $_ => undef } @{$_[1]};
+	return @{[ ( grep { (exists $e{$_}) ? ( delete $e{$_} ) : ( 1 ) } @{ $_[0] } ), keys %e ] };
+}
+sub array_minus(\@\@) {
+	my %e = map{ $_ => undef } @{$_[1]};
+	return grep( ! exists( $e{$_} ), @{$_[0]} );
+}
+
+
 $SIG{'__DIE__'} = sub { print @_; exit 4; };
 
 my $RES = Net::DNS::Resolver->new;
@@ -37,8 +57,10 @@ my $params;
 sub get_tag_generic {
 	my $zone = shift;
 	my $type = shift;
+	my %options = @_;
 
 	my @result;
+	my @zsks;
 	print "Querying $type $zone\n" if $params->{'verbose'};
 	my $pkt = $RES->send($zone, $type);
 	return () unless $pkt;
@@ -47,28 +69,39 @@ sub get_tag_generic {
 		next unless ($rr->type eq $type);
 		next unless (lc($rr->name) eq lc($zone));
 
-		# only handle KSKs, i.e. keys with the SEP flag set
-		next if ($type eq 'DNSKEY' && !($rr->is_sep));
+		my $tag = $options{'pretty'} ? sprintf("%5d(%d)", $rr->keytag, $rr->algorithm) : $rr->keytag;
+		# for now only handle KSKs, i.e. keys with the SEP flag set
+		if ($type eq 'DNSKEY' && !($rr->is_sep)) {
+			push @zsks, $tag;
+			next;
+		}
 
-		push @result, $rr->keytag;
+		push @result, $tag;
 	};
+	if ($type eq 'DNSKEY' && (scalar @result) == 0) {
+		# use remaining keys if no keys with the SEP bit are present
+		@result = @zsks;
+	}
 	my %unique = ();
-	@result = sort {$a <=> $b} grep {!$unique{$_}++} @result;
+	@result = sort {$a cmp $b} grep {!$unique{$_}++} @result;
 	return @result
 };
 
 sub get_dnskeytags {
 	my $zone = shift;
-	return get_tag_generic($zone, 'DNSKEY');
+	my %options = @_;
+	return get_tag_generic($zone, 'DNSKEY', %options);
 };
 sub get_dstags {
 	my $zone = shift;
-	return get_tag_generic($zone, 'DS');
+	my %options = @_;
+	return get_tag_generic($zone, 'DS', %options);
 };
 sub get_dlvtags {
 	my $zone = shift;
+	my %options = @_;
 	$zone .= ".".$DLV;
-	return get_tag_generic($zone, 'DLV');
+	return get_tag_generic($zone, 'DLV', %options);
 };
 sub has_dnskey_parent {
 	my $zone = shift;
@@ -144,10 +177,17 @@ sub what_to_check {
 	}
 	close(F);
 
-	my @keys = ();
-	push @keys, 'dlv' if $do_dlv;
-	push @keys, 'ds' if $do_ds;
-	return @keys;
+	return { 'dlv' => $do_dlv,
+	         'ds' => $do_ds };
+}
+sub diff_spec {
+	my $a = shift;
+	my $b = shift;
+
+	my @elems = intersect(@$a, @$b);
+	push @elems, map { '-'.$_ } array_minus(@$a, @$b);
+	push @elems, map { '+'.$_ } array_minus(@$b, @$a);
+	return join(',', @elems);
 }
 
 Getopt::Long::config('bundling');
@@ -197,15 +237,15 @@ $DLV = $params->{'dlv'} if $params->{'dlv'};
 if ($mode eq 'overview') {
 	my %data;
 	for my $zone (keys %zones) {
-		$data{$zone} = { 'dnskey' => join(', ', get_dnskeytags($zone)),
-				 'ds'     => join(', ', get_dstags($zone)),
-				 'dlv'    => join(', ', get_dlvtags($zone)),
+		$data{$zone} = { 'dnskey' => join(', ', get_dnskeytags($zone, pretty=>1)),
+				 'ds'     => join(', ', get_dstags($zone, pretty=>1)),
+				 'dlv'    => join(', ', get_dlvtags($zone, pretty=>1)),
 				 'parent_dnssec' => get_parent_dnssec_status($zone) };
 	}
 
-	my $format = "%60s %-10s %-10s %-10s %-10s\n";
+	my $format = "%60s %-20s %-15s %-3s %-10s\n";
 	printf $format, "zone", "DNSKEY", "DS\@parent", "DLV", "dnssec\@parent";
-	printf $format, "-"x 60,  "-"x 10,  "-"x 10,  "-"x 10, "-"x 10;
+	printf $format, "-"x 60,  "-"x 20,  "-"x 15,  "-"x 3, "-"x 10;
 	for my $zone (sort {$a cmp $b} keys %data) {
 		printf $format, $zone,
 			$data{$zone}->{'dnskey'},
@@ -215,25 +255,33 @@ if ($mode eq 'overview') {
 	}
 	exit(0);
 } elsif ($mode eq 'check-dlv' || $mode eq 'check-ds' || $mode eq 'check-header') {
-	my $key;
-	$key = 'dlv' if $mode eq 'check-dlv';
-	$key = 'ds' if $mode eq 'check-ds';
-	$key = 'per-zone' if $mode eq 'check-header';
-	die ("key undefined") unless $key;
+	my @to_check;
+	push @to_check, 'dlv' if $mode eq 'check-header' ||  $mode eq 'check-dlv';
+	push @to_check, 'ds'  if $mode eq 'check-header' ||  $mode eq 'check-ds';
 
 	my @warn;
 	my @ok;
 	for my $zone (sort {$a cmp $b} keys %zones) {
-		my @thiskeys = $key eq 'per-zone' ? what_to_check($zone, $zones{$zone}) : ($key);
+		my $require = { map { $_ => 1 } @to_check };
+		if ($mode eq 'check-header') {
+			$require = what_to_check($zone, $zones{$zone})
+		}
 
-		my $dnskey = join(', ', get_dnskeytags($zone)) || '-';
-		for my $thiskey (@thiskeys) {
-			my $target = join(', ', $thiskey eq 'ds' ? get_dstags($zone) : get_dlvtags($zone)) || '-';
+		my @dnskey = get_dnskeytags($zone);
+		for my $thiskey (@to_check) {
+			my @target = $thiskey eq 'ds' ? get_dstags($zone) : get_dlvtags($zone);
 
-			if ($dnskey ne $target) {
-				push @warn, "$zone ([$dnskey] != [$target])";
+			my $spec = diff_spec(\@target, \@dnskey);
+			# if the intersection between DS and KEY is empty,
+			# or if there are DS records for keys we do not have, that's an issue.
+			if (intersect(@dnskey, @target) == 0 || array_minus(@target, @dnskey)) {
+				if ($require->{$thiskey} || scalar @target > 0) {
+					push @warn, "$zone ($spec)";
+				}
 			} else  {
-				push @ok, "$zone ($dnskey)";
+				if ($require->{$thiskey}) {
+					push @ok, "$zone ($spec)";
+				}
 			};
 		}
 	}

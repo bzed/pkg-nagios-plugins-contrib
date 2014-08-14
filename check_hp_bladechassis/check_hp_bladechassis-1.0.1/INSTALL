@@ -1,0 +1,23 @@
+Automatic installation
+----------------------
+
+Run the script install.sh to install automatically. The install.sh
+script will ask where to install the files, unless given the '-q'
+option, which will install the files in the default location.
+
+
+Manual installation
+-------------------
+
+To install check_hp_bladechassis, copy the file check_hp_bladechassis to the
+Nagios plugin directory (usually /usr/lib/nagios/plugins):
+
+  cp check_hp_bladechassis /usr/lib/nagios/plugins
+
+To install the manual page:
+
+  cp check_hp_bladechassis.8 /usr/share/man/man8
+
+This is all.
+
+-trond

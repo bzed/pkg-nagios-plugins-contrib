@@ -1,0 +1,8 @@
+Homepage: http://folk.uio.no/trondham/software/check_hp_bladechassis.html
+Watch: http://folk.uio.no/trondham/software/check_hp_bladechassis.html .*href="files/check_hp_bladechassis-([0-9.]+)\.tar\.gz
+Uploaders: Bernd Zeimetz <bzed@debian.org>
+Description: plugin to check the hardware health of
+ HP blade enclosures via SNMP.
+ The plugin is only tested with the c7000 enclosure.
+Recommends: libnet-snmp-perl
+Version: 1.0.1

@@ -1,0 +1,62 @@
+commit b04bdeb025c77e34fdf8ed9eab2f222240297ca3
+Author: Stanislav German-Evtushenko <ginermail@gmail.com>
+Date:   Mon Mar 3 08:11:31 2014 +0300
+
+    check_drbd: add check for oos and cosmetic
+    
+    1) add check for out of sync sectors (report WARNING for non-zero value)
+    2) cosmetic: sort device list while processing
+
+--- a/check_drbd/check_drbd
++++ b/check_drbd/check_drbd
+@@ -12,7 +12,7 @@ use Getopt::Long;
+ my $drbd_proc='/proc/drbd';
+ my $drbd_devices=0;
+ my ($drbd_expect, $drbd_role, $drbd_version, $debug_mode); 
+-my (%options, %cs, %st, %ld, %ds, %check, %warning, %critical);
++my (%options, %cs, %st, %ld, %ds, %oos, %check, %warning, %critical);
+ 
+ my $prog_name=basename($0);
+ my $prog_revision='0.5.3';
+@@ -210,10 +210,17 @@ sub parse_proc {
+ 	} else {
+ 		$input = "STDIN";
+ 	}
++	my $devnum;
+ 	while(<$input>) {
+ 		if (/^version: (\d+).(\d+)/) {
+ 			$drbd_version = "$1.$2";
+ 		}
++		if (/^\s?(\d+):.*/) {
++			$devnum = $1;
++		}
++		if (defined($devnum) and /\soos:(\d+)/) {
++			$oos{$devnum} = $1;
++		}
+ 		if (/^\s?(\d+):.* cs:(\w+)/) {
+ 			$cs{$1} = $2;
+ 		}
+@@ -248,11 +255,11 @@ sub parse_drbd_devices {
+ 	#
+ 	my @devices;
+ 	if ($drbd_devices =~ /^all$/i) {
+-		for my $device ( keys %cs ) {
++		for my $device ( sort keys %cs ) {
+ 			push(@devices,$device);
+ 		}
+ 	} elsif ($drbd_devices =~ /^configured$/i) {
+-		for my $device ( keys %cs ) {
++		for my $device ( sort keys %cs ) {
+ 			next if ($cs{$device} eq "Unconfigured");
+ 			push(@devices,$device);
+ 		}
+@@ -264,6 +271,9 @@ sub parse_drbd_devices {
+ 			&myexit('UNKNOWN',"Could not find device $device");
+ 		}
+ 		$check{$device} = 1;
++		if (defined($oos{$device}) and $oos{$device} > 0) {
++			&myexit('WARNING',"Out of sync on device $device: $oos{$device} sectors");
++		}
+ 	}
+ 	if (int(keys %check) == 0) {
+ 		&myexit('UNKNOWN',"No configured devices found");

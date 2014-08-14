@@ -8,5 +8,5 @@ Description: plugin to check the time on a server using SNMP
  it against the local time on the Nagios server. This identifies systems
  with no correct time set and sends alarms if the time is off to far.
  HOST-RESOURCES-MIB::hrSystemDate.0 used here returns 8 or 11 byte octets.
- SNMP translation needs to be switched off and we need to convert the
+ SNMP translation needs to be switched off and to be converted the
  received SNMP data into readable strings.

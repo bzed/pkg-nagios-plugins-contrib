@@ -1,8 +1,140 @@
-nagios-plugins-contrib (9.20140106~bpo60+1) squeeze-backports-sloppy; urgency=low
+nagios-plugins-contrib (12.20140714) unstable; urgency=medium
 
-  * Rebuild for squeeze-backports-sloppy.
+  * [c48b2fba] Auto update of debian/control
+  * [53787970] Auto update of debian/copyright
+  * [54c6b89b] Add check_hp_bladechassis.
+  * [779307ef] Add missing " " around a filename variable in update_checksums.
+  * [a26ff221] Add check_uptime plugin.
+  * [e2a97b03] Auto update of debian/control
+  * [284db8fa] Auto update of debian/copyright
 
- -- Evgeni Golov <evgeni@debian.org>  Fri, 24 Jan 2014 12:53:11 +0100
+ -- Bernd Zeimetz <bzed@debian.org>  Mon, 14 Jul 2014 11:26:10 +0200
+
+nagios-plugins-contrib (11.20140704) unstable; urgency=medium
+
+  [ Jan Wagner ]
+  * [106aea0c] Update control file to reflect the shiped check_rbl version 1.3.2
+
+  [ Evgeni Golov ]
+  * [d654cba2] ignore locale-archive in check_libs
+    thanks h01ger!
+  * [4e9f28d2] revert nagios-check-libs source back to the original config path
+    patch our version only once, but with the correct path
+  * [607d1162] update nagios-check-libs to the latest upstream version
+  * [8a40ddb2] update check_libs checksum in control
+  * [9cc86dee] check_libs: add /var/lib/nginx/ to the ignorelist
+
+  [ Bernd Zeimetz ]
+  * [c712680b] Auto update of debian/copyright
+  * [0ff31881] Auto update of debian/control
+  * [be858113] Add percona nagios plugins.
+  * [be3753f9] Suggest percona-toolkit as Suggests.
+  * [09e70d62] Updaring changelog.
+
+  [ Jan Wagner ]
+  * [7e7d34f6] check_mongodb: Update to latest git version
+
+  [ Bernd Zeimetz ]
+  * [f31fc76d] Update check_mysql_health web documentation url.
+  * [101305b6] Update check-multipath to 0.2.1
+  * [111a0b42] Refreshing patches.
+  * [30fe69ff] Auto update of debian/control
+
+ -- Bernd Zeimetz <bzed@debian.org>  Fri, 04 Jul 2014 11:36:51 +0200
+
+nagios-plugins-contrib (10.20140427) unstable; urgency=medium
+
+  [ Jan Wagner ]
+  * [0029d09d] check_email_delivery: Use full binary path instead of $ macro in command definition
+
+  [ Evgeni Golov ]
+  * [1028de53] use = instead of == in shell comparisons
+    fixes
+     /bin/sh: 4: [: dh_auto_clean: unexpected operator
+    for /bin/sh != /bin/bash
+
+  [ Bernd Zeimetz ]
+  * [6bc6ae0e] Merge pull request #39 from evgeni/no-bashisms
+    use = instead of == in shell comparisons
+
+  [ Jan Wagner ]
+  * [92a64933] check_raid: Update to latest git version
+  * [646ae3cf] check_ssl_cert: Update to 1.16.0
+  * [5810c290] check_whois: Update to 1.15
+  * [62ed2f18] check_httpd_status: Update to rev148
+  * [b5c5becf] check_mongodb: Update copyright file.
+    Include full copyright to make lintian happy.
+  * [64e5aa8b] check_mysql_health: Update copyright file.
+    Add reference to GPL license file
+  * [ab9066d2] check_hpasm: Update copyright file.
+    Add reference to GPL license file
+  * [a0a47d2a] check_memory: Update copyright file.
+    Update FSF address
+  * [0bbd4521] check_rbl: Update copyright file.
+    Cosmetical changes
+  * [0f533e19] Add '--with autoreconf' to dh calls (Closes: #727468)
+      - Build-depend on dh-autoreconf
+      - Add check_varnish/automake_foreign patch
+      - Specify autoreconf (sub-)dirs in debian/autoreconf
+  * [19c052cc] check_multipath: Update to 0.2.0
+  * [5c94f9c5] Add Travis-CI configuration
+
+  [ Stanislav German-Evtushenko ]
+  * [b04bdeb0] check_drbd: add check for oos and cosmetic.
+    1) add check for out of sync sectors (report WARNING for non-zero value)
+    2) cosmetic: sort device list while processing
+  * [13ace27b] small fix: oos is in KiB and not sectors
+
+  [ Jan Wagner ]
+  * [bc434662] check_mongo: Update to latest git version
+  * [dbd5989c] check_raid: Update to latest git version
+  * [3100e689] check_ssl_cert: Update to 1.16.1 (No source changes)
+  * [a7e727c8] check_raid: Update to latest git version (Closes: #742877)
+  * [8fcc4d95] check_ssl_cert: Update to 1.16.1 (No source changes)
+  * [1d17b5da] Update VCS-* field to uncanonical URI
+  * [5529d605] check_memory: Update to new upstream source
+  * [18a708fb] check_memory: Update to version 1.0.1
+  * [b88fd4ae] check_snmp_time: Preventing to use first person in package description
+  * [dfbe25c3] Merge 0f533e1959 and f4cc012a82 into debian/control.in
+  * [5a2dff52] Updating debian/copyright and debian/control
+  * [dfb170cb] Updating standards version to 3.9.5, no changes needed
+
+  [ Bernd Zeimetz ]
+  * [6af00ac0] Merge pull request #43 from giner/patch-1
+    check_drbd: add check for oos and cosmetic
+  * [f5deb224] Move b04bdeb025c77e34fdf8ed9eab2f222240297ca3 into a patch file.
+  * [4b9f4ad4] Merge remote-tracking branch 'origin/master'
+
+  [ Evgeni Golov ]
+  * [9774c695] do not build check_varnish and check_memcached on hurd-i386
+    also do not build check_memcached on arm64 and check_varnish on m68k
+
+  [ Bernd Zeimetz ]
+  * [2a2e8abe] Add closing brackets fix for check_imap_quota.
+  * [244d5d31] Merge pull request #40 from evgeni/hurd
+    do not build check_varnish and check_memcached on hurd-i386
+  * [b032938a] Use sha1 to check check_libs upstream.
+
+  [ Evgeni Golov ]
+  * [eef97dc6] update check_rbl to 1.3.2
+    this is a mere documentation update, but having the latest version is always good
+  * [2049c14d] dsa-check-cert-expire: Make timers configurable (Closes: #744248)
+  * [868f614a] update dsa checks
+  * [cd351102] update dsa-chack-packages (Closes: #744922)
+  * [8a28edeb] check_varnish: add support for varnish 4 (Closes: #745895)
+
+  [ Bernd Zeimetz ]
+  * [7d537eca] Fix plugin name generation.
+  * [5a9e4201] Merge pull request #46 from evgeni/check_rbl_132
+    update check_rbl to 1.3.2
+  * [d9702669] Merge pull request #47 from evgeni/dsa
+    update dsa checks
+  * [306e2109] Merge pull request #48 from evgeni/varnish4
+    check_varnish: add support for varnish 4
+  * [fea80041] Merge remote-tracking branch 'github/master'
+
+ -- Bernd Zeimetz <bzed@debian.org>  Sun, 27 Apr 2014 11:25:11 +0200
+>>>>>>> master
 
 nagios-plugins-contrib (9.20140106) unstable; urgency=low
 

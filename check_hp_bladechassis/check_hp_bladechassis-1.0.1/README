@@ -1,0 +1,16 @@
+Files in this directory:
+
+  check_hp_bladechassis       - The plugin
+  check_hp_bladechassis.8     - Man page
+  check_hp_bladechassis.pod   - POD (raw man page)
+  check_hp_bladechassis.php   - PNP4Nagios template
+  COPYING                     - License information
+  INSTALL                     - Install HOWTO
+  CHANGES                     - Changelog
+  install.sh                  - Linux/UNIX install script
+  README                      - This file
+
+More information avilable online:
+
+  http://folk.uio.no/trondham/software/check_hp_bladechassis.html
+

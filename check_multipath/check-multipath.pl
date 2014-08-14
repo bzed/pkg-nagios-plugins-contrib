@@ -9,21 +9,22 @@
 #              - Gunther Schlegel  <schlegel@riege.com>
 #              - Matija Nalis      <mnalis+debian@carnet.hr>
 #
-#---------------------------------------------------
+#-------------------------------------------------------------
 #
 # == IMPORTANT ==
 #
 # "sudo" must be configured to allow 'multipath -l' 
+# (and also 'multipath -r', if you intend to use the --reload option)
 # for the NAGIOS-user without password
 #
-#---------------------------------------------------
+#-------------------------------------------------------------
 #
 #
 # $Id: $
 #
-# Copyright (C) 2011-2013 
+# Copyright (C) 2011-2014
 # Hinnerk Rümenapf, Trond H. Amundsen, Gunther Schlegel, Matija Nalis, 
-# Bernd Zeimetz, Sven Anders
+# Bernd Zeimetz, Sven Anders, Ben Evans
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -55,6 +56,12 @@
 #      0.1.7    Added test option
 #      0.1.8    Added Support for LUN names without HEX-ID (e.g. iSCSI LUNs)
 #      0.1.9    Added extraconfig option
+#
+#      0.2.0    Improved flexibility, more testcases. Thanks to Benjamin von Mossner and Ben Evans
+#               Warning if data for LUNs in --extraconfig is missing
+#               Added --reload option (based on Ben Evans' idea)
+#      0.2.1    Improved LUN-line check, thanks to Michal Svamberg
+#
 
 
 use strict;
@@ -65,7 +72,7 @@ use Getopt::Long qw(:config no_ignore_case);
 
 # Global (package) variables used throughout the code
 use vars qw( $NAME $VERSION $AUTHOR $CONTACT $E_OK $E_WARNING $E_CRITICAL
-	     $E_UNKNOWN $USAGE $HELP $LICENSE $SUDO $MULTIPATH
+	     $E_UNKNOWN $USAGE $HELP $LICENSE $SUDO $MULTIPATH_LIST $MULTIPATH_RELOAD
              $linebreak $counter $exit_code
 	     %opt %reverse_exitcode %text2exit @multipathStateLines %nagios_level_count
 	     @perl_warnings @reports  @ok_reports @debugInput 
@@ -78,7 +85,7 @@ use vars qw( $NAME $VERSION $AUTHOR $CONTACT $E_OK $E_WARNING $E_CRITICAL
 
 # === Version and similar info ===
 $NAME    = 'check-multipath.pl';
-$VERSION = '0.1.9   06. MAR. 2013';
+$VERSION = '0.2.1   31. MAR. 2014';
 $AUTHOR  = 'Hinnerk Rümenapf';
 $CONTACT = 'hinnerk.ruemenapf@uni-hamburg.de  hinnerk.ruemenapf@gmx.de';
 
@@ -380,14 +387,49 @@ $SIG{__WARN__} = sub { push @perl_warnings, [@_]; };
 ."  |- 9:0:0:1  sdc 8:32 active ready  running\n"
 ."  `- 10:0:0:1 sdd 8:48 failed faulty running\n",
 
+#25. Old Debian Lenny example (edited) thanks to Benjamin von Mossner <benjamin.von.mossner@insparx.com>
+"360a98000503361754b5a58724f6f7a59dm-2 NETAPP  ,LUN\n"
+."size=450G features='1 queue_if_no_path' hwhandler='1 emc' wp=rw\n"
+."|-+- policy='round-robin 0' prio=0 status=active\n"
+."| |- 2:0:0:1 sdi 8:128 active undef running\n"
+."| `- 1:0:0:1 sdc 8:32  active undef running\n"
+."`-+- policy='round-robin 0' prio=0 status=enabled\n"
+."  |- 1:0:1:1 sdf 8:80  active undef running\n"
+."  `- 2:0:1:1 sdl 8:176 active undef running\n",
 
+#26. thanks to Ben Evans <Ben.Evans@terascala.com>
+"map00 (36d4ae52000a2666a0000083751e90c16) dm-1 DELL,MD32xx\n"
+."size=9.1T features='2 pg_init_retries 50' hwhandler='1 rdac' wp=rw\n"
+."|-+- policy='round-robin 0' prio=0 status=active\n"
+."| `- 1:0:0:0 sdb 8:16  active undef running\n"
+."`-+- policy='round-robin 0' prio=0 status=enabled\n"
+."  `- 2:0:0:0 sdf 8:80  active failed running\n",
 
+#27. thanks to Ben Evans <Ben.Evans@terascala.com>
+"map00 (36d4ae52000a2666a0000083751e90c16) dm-1 DELL,MD32xx\n"
+."size=9.1T features='2 pg_init_retries 50' hwhandler='1 rdac' wp=rw\n"
+."|-+- policy='round-robin 0' prio=0 status=active\n"
+."| `- 1:0:0:0 sdb 8:16  active undef running\n"
+."`-+- policy='round-robin 0' prio=0 status=enabled\n"
+."  `- #:#:#:# - #:#  active undef running\n",
+
+#28. thanks to Michal Svamberg <svamberg@civ.zcu.cz>
+"fc-p6-vicepb (1Proware_FF010000333001EC) dm-1 Proware,R_laila\n"
+."size=4.8T features='0' hwhandler='0' wp=rw\n"
+."|-+- policy='round-robin 0' prio=1 status=active\n"
+."| `- 9:0:1:0 sdd 8:48  active ready running\n"
+."|-+- policy='round-robin 0' prio=1 status=enabled\n"
+."| `- 9:0:0:0 sdc 8:32  active ready running\n"
+."|-+- policy='round-robin 0' prio=1 status=enabled\n"
+."| `- 9:0:2:0 sde 8:64  active ready running\n"
+."`-+- policy='round-robin 0' prio=1 status=enabled\n"
+."  `- 9:0:5:0 sdh 8:112 active ready running",
     );
 
-# Commands with path
-$SUDO      = '/usr/bin/sudo';
-$MULTIPATH = '/sbin/multipath -l 2>/dev/null';
-
+# Commands with full path
+$SUDO             = '/usr/bin/sudo';
+$MULTIPATH_LIST   = '/sbin/multipath -l';
+$MULTIPATH_RELOAD = '/sbin/multipath -r';
 
 # Exit codes
 $E_OK       = 0;
@@ -439,10 +481,15 @@ OPTIONS:
   -o, --ok-paths      High mark, less paths per LUN raise WARNING  [4]
   -n, --no-multipath  Exitcode for no LUNs or no multipath driver  [warning]
 
+  -r, --reload        force devmap reload if status is WARNING or CRITICAL
+                      (multipath -r)
+                      Can help to pick up LUNs coming back to life.
+
   -l, --linebreak     Define end-of-line string:
                       REG      regular UNIX-Newline
                       HTML     <br/>
-                      -other-  use specified string as linebreak symbol, e.g. ' '
+                      -other-  use specified string as linebreak symbol, 
+                               e.g. ', ' (all in one line, comma seperated)
 
   -e, --extraconfig   Specify different low/high thresholds for LUNs:
                       "<LUN>,<LOW>,<HIGH>:"  for each LUN with deviant thresholds
@@ -455,6 +502,11 @@ OPTIONS:
 
   -h, --help          Display this message
 
+
+NOTE: 'sudo' must be configured to allow the nagios-user to call 
+      multipath -l (and also multipath -r, if you intend to use the --reload option)
+      without password.
+
 END_HELP
 
 # Version and license text
@@ -462,7 +514,7 @@ $LICENSE = <<"END_LICENSE";
 
 $NAME   $VERSION
 
-Copyright (C) 2011-2013 $AUTHOR
+Copyright (C) 2011-2014 $AUTHOR
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
 This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.
@@ -471,7 +523,7 @@ Written by
 $AUTHOR <$CONTACT>
 
 Thanks for contributions to
-Bernd Zeimetz, Sven Anders and others
+Bernd Zeimetz, Sven Anders, Ben Evans and others
 
 Based on work by 
 - Trond H. Amundsen <t.h.amundsen\@usit.uio.no>
@@ -495,6 +547,7 @@ END_LICENSE
       'extraconfig'   => '',
       'verbose'       => 0,
       'test'          => 0, 
+      'reload'        => 0, 
     );
 
 # Get options
@@ -511,6 +564,7 @@ GetOptions(#'t|timeout=i'      => \$opt{timeout},
 	   'e|extraconfig=s'  => \$opt{extraconfig},
 	   'v|verbose'        => \$opt{verbose},
 	   't|test'           => \$opt{test},
+	   'r|reload'         => \$opt{reload},
 	  ) or do { print $USAGE; exit $E_UNKNOWN };
 
 # If user requested help
@@ -580,7 +634,7 @@ if ($opt{extraconfig} ne '') {
 	} # if
 
 	#print "\n ['$name', '$crit', '$warn' ] \n";
-	$extraconfig{$name} = {'warn' => $warn, 'crit' => $crit};
+	$extraconfig{$name} = {'warn' => $warn, 'crit' => $crit, 'found' => 0};
     } # while 
 } # if
 
@@ -655,18 +709,25 @@ sub unknown_error {
 # or debug input (testcase)
 #
 sub get_multipath_text {
+    my ( $cmd ) = @_;
+
+    if ( !defined($cmd) || $cmd !~ m!^/\w+! ) {
+	unknown_error ("INVALID system command '$cmd' specified.");
+    }
+    my $cmdFull = $cmd.' 2>/dev/null';                            # ignore error output
+
     my $output = "";
     
-    if ( ! $opt{"di"} ) {                                         # normal action
+    if ( ! $opt{"di"} ) {                                         # normal action, NO debug input
 	#print "Reale USER-ID : $< Effektive USER-ID : $>\n";
 	#print getpwuid( $< )."\n";
 	my $command = "";
 	if ($< == 0 ) {                                           # called by root?
-	    $command = $MULTIPATH;                                # use command "as is"
+	    $command = $cmdFull;                                  # use command "as is"
 	} else {
-	    $command = "$SUDO $MULTIPATH";                        # otherwise: use sudo
+	    $command = "$SUDO $cmdFull";                          # otherwise: use sudo
 	}
-	#print "[$command]\n";
+	#print "exec [$command]\n";
 
 	$output = qx($command);
         my $err = $!;
@@ -680,8 +741,8 @@ sub get_multipath_text {
 		    # (root) NOPASSWD: /sbin/multipath -l
 		    my $sudoListCommand = "$SUDO -l 2>/dev/null";
 		    my $sudoList = qx($sudoListCommand);
-		    if ($sudoList !~ m!\(root\) \s+ NOPASSWD\: \s+ /sbin/multipath \s+ \-l!x ) {
-			unknown_error ("'sudo' not configured for command: '$MULTIPATH'?" );
+		    if ($sudoList !~ m!\(root\) \s+ NOPASSWD\: \s+ $cmd!x ) {
+			unknown_error ("Command failed, 'sudo' not configured for command: '$cmd'?" );
 		    } # if
 		} # if 
 
@@ -715,7 +776,8 @@ sub checkLunLine {
     # mpathb (36000d774000045f655ea91cb4ea41d6f) dm-1 
     # MYVOLUME (36005076801810523100000000000006f)
     # tex-lun4 (3600000e00d0000000002161200120000) dm-7 FUJITSU ,ETERNUS_DXL
-    if ($textLine =~ m/^([\w\-]+) \s+ \([0-9a-fA-F]+\)/x) {
+    # fc-p6-vicepb (1Proware_FF010000333001EC) dm-1 Proware,R_laila            thanks to Michal Svamberg
+    if ($textLine =~ m/^([\w\-]+) \s+ \([\w\-]+\)/x) {
 	$$rCurrentLun = $1;                           # do initialisations for new LUN
 	#report("named LUN $$rCurrentLun found", $E_OK);
 	$$rLunPaths{$$rCurrentLun} = 0;
@@ -724,7 +786,14 @@ sub checkLunLine {
     # 36006016019e02a00d009495ddbf3e011 dm-2 DGC,VRAID
     elsif ($textLine =~ m/^[0-9a-fA-F]+ \s+ ([\w\-\_]+)/x) {
 	$$rCurrentLun = $1;                           # do initialisations for new LUN
-	#report("simple LUN $$rCurrentLun found", $E_OK);
+	#report("simple (1) LUN $$rCurrentLun found", $E_OK);
+	$$rLunPaths{$$rCurrentLun} = 0;
+	return 1;
+    } 
+    # 360a98000503361754b5a58724f6f7a59dm-2 NETAPP  ,LUN
+    elsif ($textLine =~ m/^[0-9a-fA-F]{3,33} \s* ([\w\-\_]+) \s+/x) {
+	$$rCurrentLun = $1;                           # do initialisations for new LUN
+	#report("simple (2) LUN $$rCurrentLun found", $E_OK);
 	$$rLunPaths{$$rCurrentLun} = 0;
 	return 1;
     } 
@@ -795,6 +864,9 @@ sub checkMultipathText {
 		#  (thanks to Bernd Zeimetz)
                 #  `- #:#:#:# - #:# active faulty running
 
+		#  (thanks to Ben Evans)
+                #  `- #:#:#:# - #:#  active undef running
+
 	        #if ( $textLine =~ m/^[\s_\|\-\`\\\+]+ [\d\:]+ \s+ (\w+) \s+ [\d\:]+ \s+ \w+ \s+ \w+/xi ) {
                 if ( $textLine =~ m/^[\s_\|\-\`\\\+]+ [#\d\:]+ \s+ ([\w\-]+) \s+ [#\d\:]+ \s+ \w+/xi ) { 
 		    my $pathName   = $1;
@@ -808,6 +880,9 @@ sub checkMultipathText {
 		    elsif ($textLine !~ m/\sactive\s/) {         # path is active?
 			#print "NOT active: $textLine\n";
 			report("LUN $currentLun, path $pathName: NOT active.", $E_WARNING);
+		    }
+		    elsif ($pathName eq "-") {                   # empty path name => path is missing (thanks to Ben Evans)
+			report("LUN $currentLun: missing path (empty path name)", $E_WARNING);
 		    }
 		    else {
 			if ( $currentLun eq "") {                # YES => check logic, increase path count for LUN
@@ -872,9 +947,9 @@ sub checkMultipathText {
 #=====================================================================
 
 
-my @multipathStateText = @{ get_multipath_text() };             # get input data
+my @multipathStateText = @{ get_multipath_text( $MULTIPATH_LIST ) };  # get input data
 
-my %lunPaths = %{checkMultipathText ( \@multipathStateText )};  # analyse it
+my %lunPaths = %{checkMultipathText ( \@multipathStateText )};        # analyse it
 
 
 # if no LUN found...
@@ -896,6 +971,7 @@ foreach my $lunName ( sort {$a cmp $b} keys %lunPaths) {
 	$warn = ${$extraconfig{$lunName}}{'warn'};
 	$crit = ${$extraconfig{$lunName}}{'crit'};
 	#print "$lunName: $pathCount  EXTRA: crit=$crit, warn=$warn\n";
+	${$extraconfig{$lunName}}{'found'} = 1;
     } else {	
 	#print "$lunName: $pathCount  STANDARD\n";
     }# if
@@ -908,6 +984,17 @@ foreach my $lunName ( sort {$a cmp $b} keys %lunPaths) {
 	report("LUN $lunName: $pathCount/$warn.", $E_OK);
     }
 } # foreach
+
+
+#
+# Check if all LUNs in extraconfig were found
+#
+foreach my $lunName ( keys %extraconfig ) {
+    if (! ${$extraconfig{$lunName}}{'found'} ) {
+	report("LUN '$lunName' in extraconfig, but NO DATA found.", $E_WARNING);
+    }
+} # foreach
+
 
 
 # Counter variable
@@ -959,13 +1046,23 @@ if ($nagios_level_count{UNKNOWN} > 0)  { $exit_code = $E_UNKNOWN;  }
 if ($nagios_level_count{WARNING} > 0)  { $exit_code = $E_WARNING;  }
 if ($nagios_level_count{CRITICAL} > 0) { $exit_code = $E_CRITICAL; }
 
+
 # Print OK messages
 $counter = 0;
 if ($exit_code == $E_OK && !$opt{verbose}) {
+    if ( (!$opt{'state'}) && (!$opt{'shortstate'})  ) {
+	print 'OK'.$linebreak;
+    }
     foreach my $msg (@ok_reports) {
 	($counter++ == 0) ? print $msg : print $linebreak, $msg;
     } # foreach
 } # if
+
+# Call reload command if NOT ok and parameter --reload is set
+if ( ($exit_code != $E_OK) && $opt{'reload'}  ){
+    my $txt = get_multipath_text($MULTIPATH_RELOAD);
+    print $linebreak.'Reload was issued.';
+}
 
 print $linebreak;
 #print "$exit_code\n";

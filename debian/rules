@@ -5,10 +5,21 @@
 export DH_VERBOSE=1
 
 PLUGINS := $(shell find $(CURDIR) -mindepth 1 -maxdepth 1 -name .git -prune -o -name .pc -prune -o -name debian -prune -o -type d -printf '%f\n' | sort)
+
+ifeq ($(DEB_HOST_ARCH),$(filter $(DEB_HOST_ARCH), hurd-i386))
+	PLUGINS := $(filter-out check_memcached check_varnish,$(PLUGINS))
+endif
+ifeq ($(DEB_HOST_ARCH),$(filter $(DEB_HOST_ARCH), arm64))
+	PLUGINS := $(filter-out check_memcached,$(PLUGINS))
+endif
+ifeq ($(DEB_HOST_ARCH),$(filter $(DEB_HOST_ARCH), m68k))
+	PLUGINS := $(filter-out check_varnish,$(PLUGINS))
+endif
+
 PKGNAME = nagios-plugins-contrib
 
 %:
-	dh $@ --with quilt,python2,autotools_dev --parallel
+	dh $@ --with quilt,python2,autotools_dev,autoreconf --parallel
 
 # Here follows a small shell snipped to call dh_auto_* for all plugins
 # Currently
@@ -16,7 +27,7 @@ PKGNAME = nagios-plugins-contrib
 #   we run dh_auto_$(1) with -O--sourcedirectory="$$plugin"
 # - if $${plugin}/src exists, we run dh_auto_$(1) on that directory
 # - else: fail :)
-DH_AUTO_CALL = 	if [ "$$auto_command" == "dh_auto_configure" ]; then \
+DH_AUTO_CALL = 	if [ "$$auto_command" = "dh_auto_configure" ]; then \
 		    export options="$$options -- --enable-stack-protector" ;\
 		fi ;\
 		if [ -f $(CURDIR)/$$plugin/Makefile ]; then \
@@ -31,7 +42,7 @@ PACKAGING_HELPER = /usr/bin/python $(CURDIR)/debian/packaging-helper.py
 
 
 clean: $(PLUGINS:%=clean-%) debian/copyright debian/control
-	dh $@ --with quilt,python2,autotools_dev --parallel
+	dh $@ --with quilt,python2,autotools_dev,autoreconf --parallel --with
 	rm -f debian/$(PKGNAME).install
 	rm -f debian/README.Debian.plugins
 
@@ -67,7 +78,7 @@ dh_auto_install-%:
 dh_auto_%:
 	set -e; \
 	    export auto_command=`echo $* | sed 's,-.*,,;s,^,dh_auto_,'` ;\
-	    export plugin=`echo $* | sed 's,.*-,,'` ;\
+	    export plugin=`echo $* | sed 's,[^-]*-,,'` ;\
 	    $(DH_AUTO_CALL)
 
 
