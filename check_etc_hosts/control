@@ -1,0 +1,8 @@
+Uploaders: Petter Reinholdtsen <pere@hungry.com>
+Description: plugin to check /etc/hosts for DNS consistency
+ Check /etc/hosts, and make sure the content matches the information
+ in DNS.  Lookup IP, and check if the names listed in /etc/hosts
+ maches the one in DNS.  It will ignore entries with '# NAGIOSIGNORE'
+ at the end.
+Recommends: libnet-dns-perl
+Version: ?
