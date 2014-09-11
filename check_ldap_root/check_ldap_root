@@ -1,0 +1,35 @@
+#!/bin/sh
+#
+# Author: Petter Reinholdtsen <pere@hungry.com>
+# Date: 2011-12-22
+# License: GNU GPL v2 or later
+#
+# Make sure the LDAP server is able to respond by searching for the
+# root DSE.
+
+set -e
+
+PATH=/bin:/sbin:/usr/sbin:/usr/bin
+
+if [ -z "$1" ] ; then
+    echo "No LDAP server specified on command line"
+    exit 1
+fi
+
+ldapserver=$1
+shift
+
+if type ldapsearch > /dev/null 2>&1 ; then
+    :
+else
+    echo "Missing the ldapsearch tool, unable to check LDAP server."
+    exit 2
+fi
+
+if ldapsearch -l 3 -LLL -h $ldapserver -x -b '' -s base > /dev/null 2>&1 ; then
+    echo "OK - Searching for LDAP root DSE worked on $ldapserver"
+    exit 0
+else
+    echo "Failed to fetch root DSE from LDAP server $ldapserver."
+    exit 1
+fi
