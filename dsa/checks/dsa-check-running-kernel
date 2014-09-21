@@ -172,7 +172,7 @@ freebsd_check_running_version() {
 	local imagefile="$1"; shift
 
 	local r="$(uname -r)"
-	local v="$(uname -v| sed -e 's/^#[0-9]*/&:/')"
+	local v="$(uname -v| sed -e 's/^#[0-9]*/&:/' -e 's/\+/\\+/g')"
 
 	local q='@\(#\)FreeBSD '"$r $v"
 
