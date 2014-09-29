@@ -5,4 +5,4 @@ Homepage: http://www.thomas-krenn.com/en/oss/ipmi-plugin.html
 Description: IPMI Sensor Monitoring Plugin
  Plugin to monitor the hardware status (fan speed, temperaturs,
  voltages, power usage, ...) of a server using IPMI.
-Watch: http://www.thomas-krenn.com/en/oss/ipmi-plugin.html check_ipmi_sensor_v([0-9.]+)\.tar\.gz
+Watch: http://git.thomas-krenn.com/?p=check_ipmi_sensor_v3.git;a=blob_plain;f=check_ipmi_sensor check_ipmi_sensor_version = "([0-9.]+)";
