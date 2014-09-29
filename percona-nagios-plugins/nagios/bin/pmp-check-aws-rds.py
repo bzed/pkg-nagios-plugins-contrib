@@ -407,7 +407,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 =head1 VERSION
 
-Percona Monitoring Plugins pmp-check-aws-rds.py 1.1.3
+Percona Monitoring Plugins pmp-check-aws-rds.py 1.1.4
 
 =cut
 
