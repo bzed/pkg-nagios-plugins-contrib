@@ -1,5 +1,5 @@
 Homepage: https://github.com/willixix/WL-NagiosPlugins
-Watch: https://raw.githubusercontent.com/willixix/WL-NagiosPlugins/master/check_uptime.pl ^Version[ :]+([0-9.]+)
+Watch: https://raw.githubusercontent.com/willixix/WL-NagiosPlugins/master/check_uptime.pl Version[ :]+([0-9.]+)
 Uploaders: Bernd Zeimetz <bzed@debian.org>
 Description: check_uptime returns uptime of a system
  in text (readable) format as well as in minutes for performance graphing.
