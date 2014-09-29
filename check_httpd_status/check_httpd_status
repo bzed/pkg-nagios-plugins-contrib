@@ -232,14 +232,18 @@ my $webcontent = $response->content;
 
 logD("Web content :\n----------------------------\n".$webcontent."\n----------------------------");
 
+my $patternFound = 0;
+
 my $Uptime = 0;
 if ( $webcontent =~ m/Uptime: (.*?)\n/) {
 	$Uptime = $1;
+	$patternFound++;
 }
 	
 my $TotalAccesses = 0;
 if ( $webcontent =~ m/Total Accesses: (.*?)\n/) {
 	$TotalAccesses = $1;
+	$patternFound++;
 } else {
 	$np->add_message(WARNING, _gt('"Total Accesses" not set ! (need extented status ?)') );
 }
@@ -247,11 +251,13 @@ if ( $webcontent =~ m/Total Accesses: (.*?)\n/) {
 my $TotalKbytes = 0;
 if ( $webcontent =~ m/Total kBytes: (.*?)\n/) {
 	$TotalKbytes = $1;
+	$patternFound++;
 }
 
 my $ScoreBoard = '';
 if ( $webcontent =~ m/Scoreboard: (.*?)\n/) {
 	$ScoreBoard = $1;
+	$patternFound++;
 } else {
 	$np->add_message(WARNING, _gt("Scoreboard not found in reponse !") );
 }
@@ -259,6 +265,7 @@ if ( $webcontent =~ m/Scoreboard: (.*?)\n/) {
 my $BusyWorkers = 0;
 if ( $webcontent =~ m/(BusyWorkers|BusyServers): (.*?)\n/) {
 	$BusyWorkers = $2;
+	$patternFound++;
 	if ($1 eq 'BusyServers') {
 		$httpserver = 'LIGHTTPD';
 	}
@@ -267,8 +274,13 @@ if ( $webcontent =~ m/(BusyWorkers|BusyServers): (.*?)\n/) {
 my $IdleWorkers = 0;
 if ( $webcontent =~ m/(IdleWorkers|IdleServers): (.*?)\n/) {
 	$IdleWorkers = $2;
+	$patternFound++;
 }
-	
+
+if ( $patternFound <= 1) {
+	$np->nagios_exit(CRITICAL, _gt("Server-status informations not found !") );
+}
+
 	
 my $TempFile = $TempPath.$o_host.'_check_httpd_status'.md5_hex($url);
 
