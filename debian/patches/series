@@ -1,4 +1,3 @@
-check_libs/lsof-nP
 check_ajp/return_critical_on_failed_connection
 check_backuppc/use_nagios_plugins
 check_bgpstate/epn
@@ -10,7 +9,9 @@ check_email_delivery/paths
 check_haproxy/epn
 check_httpd_status/epn
 check_imap_quota/syntax_error_fix
+check_libs/lsof-nP
 check_libs/config_path
+check_libs/space_before_deleted
 check_lm_sensors/manpage_whatis_fix
 check_lm_sensors/spelling_errors
 check_lm_sensors/interpreter
