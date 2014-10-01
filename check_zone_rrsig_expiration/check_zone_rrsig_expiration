@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $Id: check_zone_rrsig_expiration,v 1.10 2011/01/04 22:27:26 wessels Exp $
+# $Id: check_zone_rrsig_expiration,v 1.11 2014/05/23 17:37:52 wessels Exp $
 #
 # check_zone_rrsig_expiration
 #
@@ -74,8 +74,9 @@ use List::Util qw ( shuffle );
 #  -d             debug
 #  -C days        Critical if expiring in this many days
 #  -W days        Warning if expiring in this many days
-my %opts = (t=>30, C=>2, W=>3);
-getopts('Z:dt:W:C:', \%opts);
+#  -T type	  Query type (default SOA)
+my %opts = (t=>30, C=>2, W=>3, T=>'SOA');
+getopts('Z:dt:W:C:T:', \%opts);
 usage() unless $opts{Z};
 usage() if $opts{h};
 my $zone = $opts{Z};
@@ -114,11 +115,13 @@ sub do_recursion {
 		print STDERR "\nRECURSE\n" if $opts{d};
 		my $pkt;
 		foreach my $ns (shuffle @refs) {
-			print STDERR "sending query for $zone RRSIG to $ns\n" if $opts{d};
+			print STDERR "sending query for $zone $opts{T} to $ns\n" if $opts{d};
 			$res->nameserver($ns);
 			$res->udp_timeout($opts{t});
+			$res->recurse(0);
+			$res->dnssec(1);
 			$res->udppacketsize(4096);
-			$pkt = $res->send($zone, 'RRSIG');
+			$pkt = $res->send($zone, $opts{T});
 			last if $pkt;
 		}
 		critical("No response to seed query") unless $pkt;
@@ -126,6 +129,7 @@ sub do_recursion {
 			unless ($pkt->header->rcode eq 'NOERROR');
 		@refs = ();
 		foreach my $rr ($pkt->authority) {
+			next unless $rr->type eq 'NS';
 			print STDERR $rr->string, "\n" if $opts{d};
 			push (@refs, $rr->nsdname);
 			next unless names_equal($rr->name, $zone);
@@ -144,9 +148,9 @@ sub do_queries {
 			next if $data->{$ns}->{done};
 			print STDERR "\nQUERY $ns\n" if $opts{d};
 
-			my $pkt = send_query($zone, 'RRSIG', $ns);
+			my $pkt = send_query($zone, $opts{T}, $ns);
 			add_nslist_to_data($pkt);
-			$data->{$ns}->{queries}->{RRSIG} = $pkt;
+			$data->{$ns}->{queries}->{$opts{T}} = $pkt;
 
 			print STDERR "done with $ns\n" if $opts{d};
 			$data->{$ns}->{done} = 1;
@@ -161,7 +165,7 @@ sub do_analyze {
 	my %MAX_EXP_BY_TYPE;
 	foreach my $ns (keys %$data) {
 		print STDERR "\nANALYZE $ns\n" if $opts{d};
-		my $pkt = $data->{$ns}->{queries}->{RRSIG};
+		my $pkt = $data->{$ns}->{queries}->{$opts{T}};
 		critical("No response from $ns") unless $pkt;
 		print STDERR $pkt->string if $opts{d};
 		critical($pkt->header->rcode . " from $ns")
@@ -250,7 +254,12 @@ sub output {
 }
 
 sub usage {
-	print STDERR "usage: $0 -Z zone\n";
+	print STDERR "usage: $0 -Z zone -d -t timeout -W days -C days\n";
+	print STDERR "\t-Z zone		zone to test\n";
+	print STDERR "\t-d 		debug\n";
+	print STDERR "\t-t seconds	timeout on DNS queries\n";
+	print STDERR "\t-W days		warning threshhold\n";
+	print STDERR "\t-C days		critical threshold\n";
 	exit 3;
 }
 
@@ -262,6 +271,8 @@ sub send_query {
 	$res->nameserver($server) if $server;
 	$res->udp_timeout($opts{t});
 	$res->retry(2);
+	$res->recurse(0);
+	$res->dnssec(1);
 	$res->udppacketsize(4096);
 	my $pkt = $res->send($qname, $qtype);
 	unless ($pkt) {

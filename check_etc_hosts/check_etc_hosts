@@ -1,0 +1,249 @@
+#!/usr/bin/perl -w
+#
+# Author: Petter Reinholdtsen <pere@hungry.com>
+# Date: 2002-07-08
+#
+# Check /etc/hosts, and make sure the content matches the information
+# in DNS.  Lookup IP, and check if the names listed in /etc/hosts
+# maches the one in DNS.  It will ignore entries with '# NAGIOSIGNORE'
+# at the end.
+
+use vars qw($use_perl_resolver $debug $returnvalue $nagiosmsg);
+
+$debug = 0;
+$returnvalue = 0; # all ok
+$nagiosmsg = "";
+
+# Report missing reverse lookup.  This will ignore CNAME entries
+# pointing to the IP address, and report error in these cases.
+$use_reverse = 0;
+
+# Report missing forward-lookup.  This will complain on private
+# network IP addresses using the same name as a DNS entry.
+$use_forward = 1;
+
+eval 'use Net::DNS;';
+if ($@) {
+    print "Using /etc/hosts\n" if $debug;
+    $use_perl_resolver = 0;
+} else {
+    print "Using Net::DNS\n" if $debug;
+    $use_perl_resolver = 1;
+}
+
+$host = '/usr/bin/host';
+
+# Look up ip address, and return ($error status, @DNS names, @DNS addresses)
+sub dns_lookup_ext {
+    local $address = shift;
+
+    # Stupid Tru64 Unix give me two copies of the error messages from
+    # host.  Throw away one of them.
+    close(STDERR);
+
+    print "Looking up $address using $host\n" if $debug;
+
+    my @names = ();
+    my @addresses = ();
+
+    my $lookup = "";
+    # Some versions need -i to make sure it uses reverse DNS lookup,
+    # and not /etc/hosts.
+    # This option will confuse 'host' on Irix and HP/UX, and make the
+    # program loop forever.  Avoiding it for now [pere 2002-08-06]
+    for $options ("") {
+        open(HOST, "$host $options $address 2>&1 |")
+            || die "Unable to execute host";
+        while (<HOST>) {
+            $lookup .= $_;
+            chomp;
+            print "host: $_\n" if $debug;
+
+            push(@names, lc($1)) if (/^Name: (.+)$/);
+            push(@names, lc($1)) if (/^Aliases: (.+)$/);
+
+            # 10.6.240.129.in-addr.arpa       PTR     perleporten.uio.no
+            push(@names, lc($1)) if (/\s+PTR\s+(.+)$/);
+
+            # spheniscus.uio.no has address 129.240.148.19
+            if (/^\S+ has address (\S+)$/) {
+                print "Match addr $1\n" if $debug;
+                push(@addresses, lc($1))
+            }
+
+            # 10.6.240.129.IN-ADDR.ARPA domain name pointer perleporten.uio.no
+            if (/IN-ADDR.ARPA domain name pointer\s+(.+)$/) {
+                print "Match name $1\n" if $debug;
+                push(@names, lc($1))
+            }
+
+            push(@addresses, $1) if (/^Address: (.+)$/);
+            push(@addresses, $1) if (/\s+A\s+(\d+.+)$/)
+            }
+        close(HOST);
+        if ($lookup =~ /Usage: /) {
+            # Probably unknown parameter, try again without -i
+            $lookup = "";
+        } else {
+            last;
+        }
+    }
+    return ("no/bad reply from DNS server", undef, undef)
+        if ($lookup !~ /domain name pointer/
+            && $lookup !~ /\shas address\s/
+            && $lookup !~ /\sPTR\s/
+            && $lookup !~ /Name:/);
+
+    if ( $address =~ m/^\d+\.\d+\.\d+\.\d+/
+         && ! grep /$address/, @addresses ) {
+        print "Adding $address to list of addresses\n" if $debug;
+        unshift(@addresses, $address) ;
+    }
+
+    return (undef, \@names, \@addresses);
+}
+
+sub dns_lookup_int {
+    my $address = shift;
+
+    print "Looking up $address using Net::DNS\n" if $debug;
+
+    my @names = ();
+    my @addresses = ();
+
+    my $res = new Net::DNS::Resolver;
+    my $query;
+    if ($address =~ m/\d+\.\d+\.\d+\.\d+/) {
+        $query = $res->query($address);
+    } else {
+        $query = $res->search($address);
+    }
+    if ($query) {
+        foreach $rr ($query->answer) {
+            print "Type: $rr->type\n" if $debug;
+            if ($rr->type eq "A") {
+                print $rr->address, " - A\n" if $debug;
+                push(@addresses, $rr->address);
+            }
+            if ($rr->type eq "CNAME") {
+                print $rr->cname, " - CNAME\n" if $debug;
+                push(@addresses, $rr->cname);
+            }
+            if ($rr->type eq "PTR") {
+                print $rr->ptrdname, " - PTR\n" if $debug;
+                push(@names, lc($rr->ptrdname));
+            }
+        }
+        return (undef, \@names, \@addresses);
+    }
+    else {
+        print "query failed: ", $res->errorstring, "\n" if $debug;
+        return ($res->errorstring, (), ());
+    }
+}
+
+sub dns_lookup {
+    my $entry = shift;
+
+    if ($use_perl_resolver) {
+        return dns_lookup_int($entry);
+    } else {
+        return dns_lookup_ext($entry);
+    }
+}
+
+sub error {
+    local ($level, $error) = @_;
+
+    $returnvalue = 1 if ($level =~ /^W$/ && $returnvalue <= 1);
+    $returnvalue = 2 if ($level =~ /^C$/);
+	
+    $nagiosmsg = $nagiosmsg . "<br>" unless ($nagiosmsg =~ /^$/);
+    $nagiosmsg = $nagiosmsg . "$error";
+}
+
+sub is_ip_private {
+    my $ip = shift;
+
+    return 1 if ($ip =~ m/^10\./);
+    return 1 if ($ip =~ m/^192\.168\./);
+
+    return 0;
+}
+
+sub is_names_ip_matching {
+    local ($ip, @names) = @_;
+
+    my $level = "W";
+
+    # Ignore IPv6 addresses for now.
+    return if ($ip =~ m/:/);
+
+    # Ignore private network
+    return if (is_ip_private($ip));
+
+    my $name;
+    for $name (sort @names) {
+        if ($use_reverse) {
+            # Check reverse
+            my ($retval, $revnames) = dns_lookup($ip);
+
+            return if ( $retval ); # Ignore unknown IP addresses
+
+            if ( ! $retval && ! grep /$name/, @{$revnames} ) {
+                error $level, "Incorrect /etc/hosts for $ip: ".
+                    "$name not in reverse DNS list";
+            }
+        }
+
+        if ($use_forward) {
+            # Check forward
+            my ($retval, $revnames, $forwip);
+
+            ($retval, $revnames) = dns_lookup($ip);
+            ($retval, undef, $forwip) = dns_lookup($name);
+
+            print "Forward DNS $name/$ip: ", join(" ", @{$forwip}), "\n"
+                if $debug;
+
+            # Ignore entry if both IP and hostname fail to resolve in DNS
+            return if ( ! defined $revnames && ! defined $forwip );
+
+            if ( ! grep /$ip/, @{$forwip} ) {
+                error $level, "Incorrect /etc/hosts for $ip: ".
+                    "IP not in forward DNS list for '$name'";
+            }
+        }
+    }
+}
+
+sub check_etc_hosts {
+    open(HOSTS, "< /etc/hosts") || die "Unable to open /etc/hosts";
+    while (<HOSTS>) {
+        chomp;
+        next if (/# NAGIOSIGNORE$/); # Skip lines marked to be ignored
+        s/\#.+//;          # Skip comments
+        next if (/^\s*$/); # Skip empty lines
+
+        print "Testing $_\n" if $debug;
+
+        $_ = lc($_);
+
+        local ($ip, @names) = split(/\s+/);
+
+        # Skip localhost, it is different on some platforms.
+        next if ($ip eq '127.0.0.1');
+
+        is_names_ip_matching($ip, @names);
+    }
+    close(HOSTS);
+}
+
+check_etc_hosts() if ( -f "/etc/hosts" );
+
+if ($nagiosmsg =~ /^$/) {
+    print "/etc/hosts OK\n";
+} else {
+    print $nagiosmsg . "\n";
+}
+exit $returnvalue;

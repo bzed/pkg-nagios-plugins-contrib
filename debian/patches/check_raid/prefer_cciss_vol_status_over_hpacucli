@@ -1,6 +1,6 @@
 --- a/check_raid/check_raid
 +++ b/check_raid/check_raid
-@@ -3251,8 +3251,10 @@ sub check {
+@@ -3975,8 +3975,10 @@ sub check {
  package hpacucli;
  use base 'plugin';
  

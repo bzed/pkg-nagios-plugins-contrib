@@ -4,7 +4,7 @@
 # This program is part of Percona Monitoring Plugins
 # License: GPL License (see COPYING)
 # Authors:
-#  Baron Schwartz
+#  Baron Schwartz, Roman Vynar
 # ########################################################################
 
 # ########################################################################
@@ -30,8 +30,10 @@ main() {
       case "${o}" in
          -c)              shift; OPT_CRIT="${1}"; shift; ;;
          --defaults-file) shift; OPT_DEFT="${1}"; shift; ;;
+         -d)              shift; OPT_DELD=1; shift; ;;
          -H)              shift; OPT_HOST="${1}"; shift; ;;
          -l)              shift; OPT_USER="${1}"; shift; ;;
+         -L)              shift; OPT_LOPA="${1}"; shift; ;;
          -p)              shift; OPT_PASS="${1}"; shift; ;;
          -P)              shift; OPT_PORT="${1}"; shift; ;;
          -S)              shift; OPT_SOCK="${1}"; shift; ;;
@@ -57,7 +59,8 @@ main() {
    local TEMP=$(mktemp -t "${0##*/}.XXXXXX") || exit $?
    trap "rm -f '${TEMP}' >/dev/null 2>&1" EXIT
    if [ -z "$1" ]; then
-      mysql_exec 'SHOW SLAVE STATUS\G' > "${TEMP}"
+      # Leverage lock-free SHOW SLAVE STATUS NOLOCK with Percona Server
+      mysql_exec "SHOW SLAVE STATUS NOLOCK\G" > "${TEMP}" 2>/dev/null || mysql_exec "SHOW SLAVE STATUS\G" > "${TEMP}"
    else
       # This is just for testing.  /dev/null it.
       cat "$1" > "${TEMP}" 2>/dev/null
@@ -70,6 +73,11 @@ main() {
          NOTE=$(awk '$1 ~ /_Running:|Last_Error:/{print substr($0, 1, 100)}' "${TEMP}")
          if grep 'Last_Error: .' "${TEMP}" >/dev/null 2>&1; then
             NOTE="CRIT $NOTE"
+         # pt-slave-delayed slave
+         elif [ -n "${OPT_DELD}" ] &&
+              grep 'Slave_IO_Running: Yes' "${TEMP}" >/dev/null 2>&1 &&
+              grep 'Slave_SQL_Running: No' "${TEMP}" >/dev/null 2>&1; then
+            NOTE="OK (delayed slave) $NOTE"
          elif egrep "_Running: (No|Connecting)" "${TEMP}" >/dev/null 2>&1; then
             if [ "${OPT_CRIT}" ]; then
                NOTE="CRIT $NOTE"
@@ -99,7 +107,7 @@ main() {
 mysql_exec() {
    mysql ${OPT_DEFT:+--defaults-file="${OPT_DEFT}"} ${OPT_HOST:+-h"${OPT_HOST}"} ${OPT_USER:+-u"${OPT_USER}"} \
       ${OPT_PASS:+-p"${OPT_PASS}"} ${OPT_SOCK:+-S"${OPT_SOCK}"} ${OPT_PORT:+-P"${OPT_PORT}"} \
-      -ss -e "$1"
+      ${OPT_LOPA:+--login-path="${OPT_LOPA}"} -ss -e "$1"
 }
 
 # ########################################################################
@@ -141,11 +149,14 @@ pmp-check-mysql-replication-running - Alert when MySQL replication stops.
 
   Usage: pmp-check-mysql-replication-running [OPTIONS]
   Options:
-    -c CRIT         Report CRITICAL when replication is stopped without errors.
+    -c CRIT         Report CRITICAL when replication is stopped with or w/o errors.
     --defaults-file FILE Only read mysql options from the given file.
                     Defaults to /etc/nagios/mysql.cnf if it exists.
+    -d              Useful for slaves delayed by pt-slave-delay. It will not alert
+                    when IO thread is running, SQL one is not and no errors.
     -H HOST         MySQL hostname.
     -l USER         MySQL username.
+    -L LOGIN-PATH   Use login-path to access MySQL (with MySQL client 5.6).
     -p PASS         MySQL password.
     -P PORT         MySQL port.
     -S SOCKET       MySQL socket file.
@@ -174,6 +185,10 @@ produces no output, which means it is not configured as a replica.  By default,
 this plugin will report that replication is healthy when a server isn't
 configured as a replica.
 
+If you want to run this check against the delayed slaves, e.g. those running
+with pt-slave-delay tool, you may want to specify -d option. It will not alert
+when Slave_IO_Running is Yes, Slave_SQL_Running is No and there are no errors.
+
 =head1 PRIVILEGES
 
 This plugin executes the following commands against MySQL:
@@ -182,7 +197,7 @@ This plugin executes the following commands against MySQL:
 
 =item *
 
-C<SHOW SLAVE STATUS>.
+C<SHOW SLAVE STATUS NOLOCK> with Percona Server and w/o NOLOCK otherwise.
 
 =back
 
@@ -205,7 +220,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 =head1 VERSION
 
-Percona Monitoring Plugins pmp-check-mysql-replication-running 1.1.3
+Percona Monitoring Plugins pmp-check-mysql-replication-running 1.1.4
 
 =cut
 

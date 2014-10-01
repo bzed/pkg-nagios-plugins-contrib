@@ -1,11 +1,20 @@
-nagios-plugins-contrib (12.20140714~bpo70+1) wheezy-backports; urgency=medium
+nagios-plugins-contrib (12.20141001~bpo70+1) wheezy-backports; urgency=medium
 
   * Rebuild for wheezy-backports.
 
- -- Bernd Zeimetz <bzed@debian.org>  Mon, 14 Jul 2014 11:27:23 +0200
+ -- Bernd Zeimetz <bzed@debian.org>  Wed, 01 Oct 2014 13:27:18 +0200
 
-nagios-plugins-contrib (12.20140714) unstable; urgency=medium
+nagios-plugins-contrib (12.20141001) unstable; urgency=medium
 
+  * Fix version number.
+    Unfortunately this makes an upload necessary due to
+    older snapshots being in use already.
+
+ -- Bernd Zeimetz <bzed@debian.org>  Wed, 01 Oct 2014 13:27:09 +0200
+
+nagios-plugins-contrib (11.20141001) unstable; urgency=medium
+
+  [ Bernd Zeimetz ]
   * [c48b2fba] Auto update of debian/control
   * [53787970] Auto update of debian/copyright
   * [54c6b89b] Add check_hp_bladechassis.
@@ -13,8 +22,78 @@ nagios-plugins-contrib (12.20140714) unstable; urgency=medium
   * [a26ff221] Add check_uptime plugin.
   * [e2a97b03] Auto update of debian/control
   * [284db8fa] Auto update of debian/copyright
+  * [02769ec2] Updating changelog.
 
- -- Bernd Zeimetz <bzed@debian.org>  Mon, 14 Jul 2014 11:26:10 +0200
+  [ Jan Wagner ]
+  * [a4e3d3ab] Reorder patch series
+
+  [ Bernd Zeimetz ]
+  * [a1793637] check-libs: Use lsof -nP
+
+  [ Jan Wagner ]
+  * [497cef52] monitoring-plugins is the ways to got, so we recommend/enhance it
+
+  [ Bernd Zeimetz ]
+  * [899be56b] Merge remote-tracking branch 'github/master'
+
+  [ Jan Wagner ]
+  * [6d9f7c6f] check_bgpstate: disable epn via patches/check_bgpstate/epn
+
+  [ Bernd Zeimetz ]
+  * [462d412b] Merge pull request #51 from mstock/bugfix/running-kernel-on-kfreebsd.
+    Escape '+' in 'uname -v' output in freebsd_check_running_version()
+
+  [ Jan Wagner ]
+  * [482b9bfb] Merge branch 'check_httpd_status_153' into update
+  * [5d8c1517] Merge branch 'check_mongodb_60b639ef4c' into update
+  * [fca59f8b] Merge branch 'check_raid_32' into update
+  * [d425c2d1] Merge branch 'check_zone_rrsig_expiration_111' into update
+  * [14476fe2] Merge branch 'percona-nagios-plugins_114' into update
+  * [277a24e1] check_raid: Raise suggest of cciss-vol-status to >= 1.10
+  * [5e3d1834] check_ipmi_sensor: Update watch location
+  * [c2599a4c] Updating VCS-headers
+  * [2ccefe74] check_uptime: Update watch location
+
+  [ Evgeni Golov ]
+  * [2f5c758f] update check_libs homepage and watch url
+  * [cd40ea09] check_libs: fix lsof output parsing for OpenVZ
+    check_libs sometimes parses files incorrectly
+    inside an OpenVZ container (wheezy host and guest, proxmox ve
+    2.6.32 kernel):
+    Running /usr/bin/lsof -F0 -n
+    adding bash(28081) because of [ (deleted)/tmp/tmpfXKFYTG]:
+    f1aul tREGG0x8002;0x0D0x6ds218i9441399k0n (deleted)/tmp/tmpfXKFYTG
+    adding bash(28081) because of [ (deleted)/tmp/tmpfXKFYTG]:
+    f2aul tREGG0x8002;0x0D0x6ds218i9441399k0n (deleted)/tmp/tmpfXKFYTG
+    adding puppet(28244) because of [ (deleted)/tmp/tmpfXKFYTG]:
+    f1aul tREGG0x8002;0x0D0x6ds218i9441399k0n (deleted)/tmp/tmpfXKFYTG
+    adding puppet(28244) because of [ (deleted)/tmp/tmpfXKFYTG]:
+    f2aul tREGG0x8002;0x0D0x6ds218i9441399k0n (deleted)/tmp/tmpfXKFYTG
+    The following processes have libs linked that were upgraded: root: bash
+    (28081), puppet (28244)
+    So in some cases there is a space in front of "(deleted)".
+    Attached is a patch that fixes this.
+    Thanks to Felix Geyer <felix.geyer@credativ.de> (Closes: #760373)
+
+  [ Bernd Zeimetz ]
+  * [7dccd2a2] Merge pull request #50 from petterreinholdtsen/checks-from-sitesummary.
+    Checks from sitesummary-client
+  * [36c3d9a1] Revert "Add check_kernel_status module from the sitesummary-client package."
+    This reverts commit b63d12999ffa00f6b1108c21fceeeae12e260c77.
+    We have check_kernel for linux and kfreebsd already.
+  * [99cbfb3c] Revert "Add check_cups_queue module from the sitesummary-client package."
+    This reverts commit 99951c619705578470b1786999361d232fa9cba6.
+    check_cups should handle these things just fine.
+  * [5525ee99] Updating check_printer.
+  * [4302e534] Fix version number of check_uptime.
+  * [399a5a40] Updating check_rbl to 1.3.5
+  * [11320c50] Update check_ipmi_sensor to 3.4
+  * [d6d96ff5] Refreshing patches.
+  * [f92be1cf] Auto update of debian/copyright
+  * [b528bd11] Do not depend on perl-base.
+  * [72597951] Auto update of debian/control
+
+ -- Bernd Zeimetz <bzed@debian.org>  Wed, 01 Oct 2014 13:05:16 +0200
 
 nagios-plugins-contrib (11.20140704) unstable; urgency=medium
 

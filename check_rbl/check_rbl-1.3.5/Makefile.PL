@@ -2,10 +2,10 @@
 use inc::Module::Install;
 
 # File version information:
-# $Id: Makefile.PL 1264 2011-07-11 05:45:43Z corti $
-# $Revision: 1264 $
+# $Id: Makefile.PL 1361 2014-08-09 09:41:30Z corti $
+# $Revision: 1361 $
 # $HeadURL: https://svn.id.ethz.ch/nagios_plugins/check_rbl/Makefile.PL $
-# $Date: 2011-07-11 07:45:43 +0200 (Mon, 11 Jul 2011) $
+# $Date: 2014-08-09 11:41:30 +0200 (Sat, 09 Aug 2014) $
 
 ##############################################################################
 # Define metadata (we read it from the binary)
@@ -20,6 +20,8 @@ all_from          'check_rbl.pod';
 
 include 'version';
 
+requires 'Data::Validate::Domain'    => 0;
+requires 'Data::Validate::IP'        => 0;
 requires 'Nagios::Plugin'            => 0.31;
 requires 'Nagios::Plugin::Getopt'    => 0;
 requires 'Nagios::Plugin::Threshold' => 0;

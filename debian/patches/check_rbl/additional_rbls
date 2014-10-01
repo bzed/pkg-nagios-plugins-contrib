@@ -1,0 +1,51 @@
+diff --git a/check_rbl/src/check_rbl.ini b/check_rbl/src/check_rbl.ini
+index aeebf6d..4db4edd 100644
+--- a/check_rbl/src/check_rbl.ini
++++ b/check_rbl/src/check_rbl.ini
+@@ -42,6 +42,46 @@ server=forbidden.icm.edu.pl
+ server=hil.habeas.com
+ server=rbl.schulte.org
+ server=sbl-xbl.spamhaus.org
++server=dul.dnsbl.borderware.com
++server=uribl.swinog.ch
++server=black.uribl.com
++server=grey.uribl.com
++server=red.uribl.com
++server=multi.uribl.com
++server=dnsbl.inps.de
++server=tor.dan.me.uk
++server=torexit.dan.me.uk
++server=combined.rbl.msrbl.net
++server=rbl.efnetrbl.org
++server=virbl.dnsbl.bit.nl
++server=relays.mail-abuse.org
++server=dev.null.dk
++server=blackholes.mail-abuse.org
++server=dialups.mail-abuse.org
++server=dul.orca.bc.ca
++server=blackholes.five-ten-sg.com
++server=rbl-plus.mail-abuse.org
++server=rbl.jp
++server=virus.rbl.jp
++server=dialup.blacklist.jippg.org
++server=blackholes.intersil.net
++server=assholes.madscience.nl
++server=blackholes.sandes.dk
++server=blocked.hilli.dk
++server=cart00ney.surriel.com
++server=dnsbl.antispam.or.id
++server=dsbl.dnsbl.net.au
++server=duinv.aupads.org
++server=rsbl.aupads.org
++server=intruders.docs.uu.se
++server=map.spam-rbl.com
++server=orvedb.aupads.org
++server=proxy.bl.gweep.ca
++server=pss.spambusters.org.ar
++server=rdts.dnsbl.net.au
++server=relays.bl.gweep.ca
++server=relays.bl.kundenserver.de
++server=spam.olsentech.net
+ 
+ ; these are rather slow
+ ;server=bl.csma.biz

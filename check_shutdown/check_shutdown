@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+# Author: Petter Reinholdtsen <pere@hungry.com>
+# Date: 2011-02-03
+# License: GNU GPL v2 or later
+#
+# Report when a reboot is in progress.  Useful to detect if
+# reboot-when-idle have been used on a server.
+
+set -e
+
+PATH=/bin:/sbin:/usr/sbin:/usr/bin
+
+shutdownpid="`pgrep '^shutdown$'|head -1`"
+
+if [ "$shutdownpid" ] ; then
+    case "`uname -s`" in
+	Linux)
+	    cmd="`ps --no-headers --pid $shutdownpid -o command`"
+	    echo "REBOOT IN PROGRESS: $cmd"
+	    ;;
+	*)
+	    echo "REBOOT IN PROGRESS"
+	    ;;
+    esac
+    exit 1
+fi
+
+echo "OK - no shutdown running"
+exit 0

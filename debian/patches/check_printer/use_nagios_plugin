@@ -1,6 +1,6 @@
 --- a/check_printer/check_printer
 +++ b/check_printer/check_printer
-@@ -33,14 +33,7 @@
+@@ -33,12 +33,7 @@
  use strict;
  use warnings;
  
@@ -10,9 +10,7 @@
 -} elsif ($OS =~ m/Linux/){
 -	use lib "/usr/local/nagios/libexec";
 -}
--
--use utils qw(%ERRORS);
 +use Nagios::Plugin qw(%ERRORS);
  
- '$Revision$' =~ m/Revision: (\d+)/;
- my $revision = $1;
+ use Getopt::Long;
+ use Pod::Usage;

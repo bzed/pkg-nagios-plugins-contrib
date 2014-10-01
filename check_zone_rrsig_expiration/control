@@ -4,4 +4,4 @@ Uploaders: Bernd Zeimetz <bzed@debian.org>
 Description: plugin to check for expiration of
  signatures in dnssec-enabled zones.
 Recommends: libnet-dns-perl, libnet-dns-sec-perl
-Version: 1.10
+Version: 1.11

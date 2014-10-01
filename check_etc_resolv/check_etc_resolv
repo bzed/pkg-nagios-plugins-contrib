@@ -1,0 +1,139 @@
+#!/usr/bin/perl -w
+#
+# Author: Petter Reinholdtsen <pere@hungry.com>
+# Date: 2001-11-09
+#
+# Check /etc/resolv.conf, and make sure the name servers listed are
+# working.  It will ignore entries with '# NAGIOSIGNORE' at the end.
+
+use Socket;
+
+use vars qw($host $debug $mincount $trycount $testhost $retval $nagiosmsg);
+
+$retval = 0;
+$nagiosmsg = "";
+
+$host = '/usr/bin/host';
+
+$debug = 0;
+
+# There should be at least this many servers in the list
+$mincount = 1;
+
+# Try to call host this many times before reporting any bugs
+$trycount = 3;
+
+# Which DNS name to look up
+$testhost = "www.uio.no";
+
+# Stolen from Logwatch.pm
+sub canonical_ipv6_address {
+    my @a = split /:/, shift;
+    my @b = qw(0 0 0 0 0 0 0 0);
+    my $i = 0;
+    # comparison is numeric, so we use hex function
+    while (defined $a[0] and $a[0] ne '') {$b[$i++] = hex(shift @a);}
+    @a = reverse @a;
+    $i = 7;
+    while (defined $a[0] and $a[0] ne '') {$b[$i--] = hex(shift @a);}
+    @b;
+}
+
+sub error_with_dns {
+    local ($count, $ip, $error) = @_;
+
+    # Count 1   = Error
+    # Count 2   = Problem
+    # Count 3-> = Warning
+    if (1 == $count) {
+	$retval = 2;
+    } elsif (2 == $count) {
+	$retval = 1 unless ($retval > 0);
+    }
+    
+    $nagiosmsg .= "<br>" unless ($nagiosmsg =~ /^$/);
+    $nagiosmsg .= "/etc/resolv.conf: nameserver #$count $ip: $error";
+}
+
+# Check if there is a DNS server running on the given IP address
+sub test_dns_server {
+    local ($ip) = @_;
+    local ($name) = "";
+
+    print "Checking $1\n" if $debug;
+
+    # there are other module functions that do this more gracefully
+    # (such as inet_pton), but we can't guarantee that they are available
+    # in every system, so we use the built-in gethostbyaddr.
+    if ($ip =~ /^[\d\.]*$/) {
+	$PackedAddr = pack('C4', split /\./,$ip);
+	$name = gethostbyaddr($PackedAddr,AF_INET());
+    } elsif ($ip =~ /^[0-9a-zA-Z:]*/) {
+	$PackedAddr = pack('n8', canonical_ipv6_address($ip));
+	$name = gethostbyaddr($PackedAddr, AF_INET6());
+    }
+
+    return "missing in DNS" if ( ! defined $name );
+
+    my $try = $trycount;
+    my $delay = 1; # Exponensial backoff
+    for ($try = $trycount; $try; --$try) {
+        print "Running '$host $testhost $ip 2>/dev/null'\n" if $debug;
+        local $lookup = `$host $testhost $ip 2>/dev/null`;
+
+        print "Reply from host (try=$try):\n  $lookup\n" if $debug;
+
+        if ($lookup =~ /\sA\s+\d/ || $lookup =~ /has address/ ||
+            $lookup =~ /domain name pointer/ || $lookup =~ /Name: /) {
+            return undef; # true
+        }
+        print "Sleeping $delay\n" if $debug;
+        sleep $delay;
+        $delay += $delay;
+    }
+
+    return "no/bad reply from DNS server";
+}
+
+sub check_etc_resolv_conf {
+    open(RESOLV, "< /etc/resolv.conf") || die "Unable to open /etc/resolv.conf";
+    local $count = 0;
+    while (<RESOLV>) {
+        chomp;
+        if (/# NAGIOSIGNORE$/) { # Skip lines marked to be ignored
+            $count++ if (m/^nameserver\s+/); # Count ignored nameservers
+            next;
+        }
+        s/\#.+//;          # Skip comments
+        next if (/^\s*$/); # Skip empty lines
+        if (/^nameserver\s+(\S+)/) {
+            $count++;
+            local ($error) = test_dns_server($1);
+            if ( defined $error ) {
+                error_with_dns($count, $1, $error);
+	    }
+        }
+    }
+    close(RESOLV);
+    
+    if ($count < $mincount) {
+	$retval = 1 unless $retval > 0;
+	$nagiosmsg .= "<br>" unless ($nagiosmsg =~ /^$/);
+	$nagiosmsg .= "/etc/resolv.conf: Only $count nameservers in " .
+	    "/etc/resolv.conf (low-limit is $mincount)";
+    }
+}
+
+check_etc_resolv_conf() if ( -f "/etc/resolv.conf" && -x $host );
+
+unless ( -x $host ) {
+    $nagiosmsg .= "$host is missing or not executable, please fix..";
+    $retval = 1;
+}
+
+if ($nagiosmsg =~ /^$/) {
+    print "/etc/resolv.conf OK\n";
+} else {
+    print $nagiosmsg . "\n";
+}
+exit $retval;

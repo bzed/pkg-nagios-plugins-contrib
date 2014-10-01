@@ -40,28 +40,34 @@ if ($OS =~ m/^\wBSD/){
 	use lib "/usr/local/nagios/libexec";
 }
 
-use utils qw(%ERRORS);
 use Data::Dumper;
+use Getopt::Long;
+use Pod::Usage;
 
 '$Revision$' =~ m/Revision: (\d+)/;
 my $revision = $1;
 '$HeadURL$' =~ m/HeadURL: ([\w\:\/\-\.\_]+) /;
 my $src_url = $1;
-my $usage = "
-Usage: $0 host_addr community warn% crit%
-
-This script connects via SNMP to a print and checks printer supply
-levels.  This script outputs performance data for all supplies
-found for toner and drum.
-";
-
-## set to 1 if you want debug output for development
 my $debug = 0;
-if ($ARGV[4]){
-	$debug = 1;
-	print "check_printer Revision $revision\n$src_url\n\n";
-}
-die $usage unless ($#ARGV >= 3);
+my ($host, $warning, $critical, @ignore);
+my $community = "public";
+
+our %getopts;
+Getopt::Long::Configure("bundling");
+GetOptions(
+	"h|host=s"	=>	\$host,
+	"C|community=s"	=>	\$community,
+	"w|warn=i"	=>	\$warning,
+	"c|crit=i"	=>	\$critical,
+	"i=i"		=>	\@ignore,
+	'V|version'	=>	sub { print '$Id$' ."\n"; exit 0 },
+	"d|debug"	=>	\$debug,
+	"man"		=>	sub { pod2usage(-exitstatus => 0, -verbose => 2); exit 0 }
+) or pod2usage(2);
+
+
+pod2usage(2)  unless (defined($host));
+
 my $base_oid = ".1.3.6.1.2.1.43.11.1.1";
 my $type_oid = "3.1";
 my $name_oid = "6.1";
@@ -71,13 +77,14 @@ my $curr_oid = "9.1";
 my $loop;
 
 
-my $host = $ARGV[0];
+
 my $comm = $ARGV[1];
 
-my @vars = ("snmpwalk -On -v 1 -c $comm $host $base_oid.$name_oid",
-	   "snmpwalk -On -v 1 -c $comm $host $base_oid.$uom_oid",
-	   "snmpwalk -On -v 1 -c $comm $host $base_oid.$max_oid",
-	   "snmpwalk -On -v 1 -c $comm $host $base_oid.$curr_oid");
+my @vars = ("snmpwalk -On -v 1 -c $community $host $base_oid.$name_oid",
+	   "snmpwalk -On -v 1 -c $community $host $base_oid.$uom_oid",
+	   "snmpwalk -On -v 1 -c $community $host $base_oid.$max_oid",
+	   "snmpwalk -On -v 1 -c $community $host $base_oid.$curr_oid");
+
 my(@values, @names, @max, @min);
 
 our %uom = (     "4" => "µm",
@@ -97,7 +104,7 @@ foreach(@vars){
 	@values = (@values, split /\n/, `$_`);
 	if ($? != 0){
 		print "Printer Supplies UNKNOWN";
-		exit $ERRORS{'UNKNOWN'};
+		exit 3;
 	}
 }
 
@@ -105,14 +112,20 @@ if ($debug){
 	print Dumper(\@values);
 }
 my %finvalues;
+
+my $ignore = join('|', @ignore);
+
 foreach(@values){
 	# matching the following line
 	#            $1                    $2           $3 
 	# .1.3.6.1.2.1.43.11.1.1.6.1.1 = STRING: "Black Cartridge"
-	$_ =~ m/^([\.\d]+) = ([\w-]+):[\s\"]+([\(\)\-\d\w\s,\/:]+)\"*$/;
+	$_ =~ m/^([\.\d]+) = ([\w-]+):[\s\"]+([\(\)\-\d\w\s,\/:]+)\"*$/ or next;
 	my $loid = $1;
 	my $ltype = $2;
 	my $string = $3;
+	if ($loid =~ m/\.(${ignore})$/){
+		next;
+	}
 	if ($ltype =~ m/HEX/i){
 		# hex string, convert to ascii
 		$string = join "", map {chr hex $_ } split m/ /, $string;
@@ -183,9 +196,7 @@ my $is_crit = 0;
 my $err_str = "";
 while (my($key, $value) = each(%status)){
 	my ($maximum, $current);
-	my $critical = $ARGV[3];
-	my $warning = $ARGV[2];
-	if ($value->{"curr"} == -3){
+	if (!exists($value->{"curr"}) || $value->{"curr"} == -3){
 		## we can process as yes/no
 		$current = 100;
 		## Override the critical/warning, since they're moot
@@ -197,10 +208,8 @@ while (my($key, $value) = each(%status)){
 	} else {
 		$maximum = $value->{"max"};
 	}
-	if ($value->{"curr"} == -3){
-		## -3 means printer knows supply exists, but not how much
-		$current = 100;
-	} elsif ($value->{"curr"} < 0){
+	
+	if (!exists($value->{"curr"}) || $value->{"curr"} < 0){
 		## weird value, set to 0 for math reasons
 		$current = 0;
 	} else {
@@ -246,16 +255,17 @@ if ($debug){
 	print "please send all of the output, including your command line to\n";
 	print "ecrist\@secure-computing.net with the subject line 'check_printer DEBUG' along\n";
 	print "with a description of the problem you're experiencing.\n###################################\n";
+	print '$Id$'."\n\n";
 }
 if ($is_crit){
-	print "$err_str CRITICAL.  See http://$ARGV[0] | $perf_str";
-	exit $ERRORS{'CRITICAL'};
+	print "$err_str CRITICAL.  See http://$ARGV[0] | $perf_str\n";
+	exit 2;
 } elsif ($is_warn){
-	print "$err_str WARNING. See http://$ARGV[0] | $perf_str";
-	exit $ERRORS{'WARNING'};
+	print "$err_str WARNING. See http://$ARGV[0] | $perf_str\n";
+	exit 1;
 } else {
-	print "Printer Supplies OK | $perf_str";
-	exit $ERRORS{'OK'};
+	print "Printer Supplies OK | $perf_str\n";
+	exit 0;
 }
 
 
@@ -267,3 +277,99 @@ sub round {
 	my($number) = shift;
 	return int($number + .5 * ($number <=> 0));
 }
+
+__END__
+
+=head1 check_printer
+
+check_printer - Gather supply metrics from a printer via SNMP query
+
+=head1 SYNOPSIS
+
+check_printer [options]
+
+Options:
+	
+	-h, --host		Printer hostname or IP address.
+	-C, --community		SNMP community string, defaults to "public"
+	-w, --warn		Warning threshold
+	-c, --crit		Critical threshold
+	-i, --ignore		Supply ignore.  See man page for more information (--man)
+	-V, --version		Prints version string and exits
+	-d, --debug		Prints debug output, useful when reporting a problem to the developer, or getting index numbers for --ignore
+	--man			Prints man page
+
+=head1 DESCRIPTION
+
+B<check_printer> is a Perl script that retrieves supply metrics from printers using the snmpwalk command.
+
+=head1 OPTIONS
+
+=over
+
+=item -h, --host
+
+Defines the host or IP address passed to snmpwalk.
+
+=item -C, --community
+
+Identifies the SNMP community string.  Requires read access only.
+
+=item -w, --warn
+
+Value at which a warning is generated.  For example, if -w 10 is set, when 
+supply levels fall to 10% or below, a warning will be sent as part of the 
+performance data.
+
+=item -c, --crit
+
+Value at which a critical alert is generated.  This number should be lower
+than --warn is set, but this is not enforced.
+
+=item -i, --ignore
+
+Supply index that should be ignore from the output.  Multiple values are 
+accepted, separately:
+
+=over
+
+check_printer -i 1 -i 2
+
+=back
+
+Will exclude supply indexes 1 and 2.  To get the supply index list, run the 
+check_printer utility with --debug defined and the top of the output will
+list available supply metrics as follows:
+
+=over
+
+$VAR1 = [
+    '.1.3.6.1.2.1.43.11.1.1.6.1.1 = STRING: "Black Toner"',
+    '.1.3.6.1.2.1.43.11.1.1.6.1.2 = STRING: "Drum Unit"',
+    '.1.3.6.1.2.1.43.11.1.1.7.1.1 = INTEGER: 13',
+    '.1.3.6.1.2.1.43.11.1.1.7.1.2 = INTEGER: 7',
+    '.1.3.6.1.2.1.43.11.1.1.8.1.1 = INTEGER: -2',
+    '.1.3.6.1.2.1.43.11.1.1.8.1.2 = INTEGER: -2',
+    '.1.3.6.1.2.1.43.11.1.1.9.1.1 = INTEGER: -3',
+    '.1.3.6.1.2.1.43.11.1.1.9.1.2 = INTEGER: 0'
+];
+
+=back
+
+In the above example, we are looking for the OID string starting with 
+B<.1.3.6.1.2.1.43.11.1.1.6.1> and the index is the last number. To exclude the
+Drum Unit, pass I<-i 2> to check_printer
+
+=item -V, --version
+
+Print the check_printer version string and exits.
+
+=item -d, --debug
+
+Outputs debug information.  If you are having problems with a printer or device,
+send the debug output to B<ecrist@secure-computing.net> and identify your printer
+model and manufacturer.
+
+=item --man
+
+Prints this man page.  :)
