@@ -1,6 +1,0 @@
-Homepage: http://www.monitoringexchange.org/attachment/download/Check-Plugins/Operating-Systems/Linux/Running-kernel-compared-to-installed-kernel-version/check_kernel_status
-Uploaders: Toni Van Remortel <toni.van.remortel@p-ops.be>
-Description: plugin to check if the running Linux kernel is the latest installed
- Compare the running kernel with the set of kernels installed in /boot/
-Recommends: dpkg
-Version: ?
