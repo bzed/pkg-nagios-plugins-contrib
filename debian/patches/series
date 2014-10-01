@@ -22,7 +22,6 @@ check_printer/use_data_dumper_if_needed
 check_printer/use_nagios_plugin
 check_printer/debian_bts
 check_raid/prefer_cciss_vol_status_over_hpacucli
-check_rbl/pod_encoding_fix
 check_rbl/interpreter
 check_rbl/spelling_errors
 check_rbl/disable_solid.net

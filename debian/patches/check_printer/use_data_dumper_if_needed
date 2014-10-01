@@ -1,18 +1,18 @@
 --- a/check_printer/check_printer
 +++ b/check_printer/check_printer
-@@ -41,7 +41,6 @@ if ($OS =~ m/^\wBSD/){
+@@ -40,7 +40,6 @@ if ($OS =~ m/^\wBSD/){
+ 	use lib "/usr/local/nagios/libexec";
  }
  
- use utils qw(%ERRORS);
 -use Data::Dumper;
+ use Getopt::Long;
+ use Pod::Usage;
  
- '$Revision$' =~ m/Revision: (\d+)/;
- my $revision = $1;
-@@ -58,6 +57,7 @@ found for toner and drum.
- ## set to 1 if you want debug output for development
- my $debug = 0;
- if ($ARGV[4]){
-+        use Data::Dumper;
- 	$debug = 1;
- 	print "check_printer Revision $revision\n$src_url\n\n";
+@@ -109,6 +108,7 @@ foreach(@vars){
  }
+ 
+ if ($debug){
++        use Data::Dumper;
+ 	print Dumper(\@values);
+ }
+ my %finvalues;
