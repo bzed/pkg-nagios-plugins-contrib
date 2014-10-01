@@ -1,0 +1,6 @@
+Uploaders: Petter Reinholdtsen <pere@hungry.com>
+Description: plugin to check LDAP server response
+ Make sure the LDAP server is able to respond by searching for the
+ root DSE.
+Recommends: ldap-utils
+Version: ?
