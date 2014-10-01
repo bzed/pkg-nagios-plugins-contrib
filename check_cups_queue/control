@@ -1,8 +1,0 @@
-Homepage: http://exchange.nagios.org/directory/Plugins/Printing/check_cups_queue/details
-Uploaders: John E. Vincent <nagios-plugs@lusis.org>
-Description: plugin to check age and length of CUPS queue
- This plugin is monitoring of queues on a local or remote CUPS server,
- which means that it doesn't need to be installed on the print
- server and run via NRPE.
-Recommends: cups-client
-Version: ?
