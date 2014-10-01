@@ -187,6 +187,46 @@ http://buhacoff.net/software/check_email_delivery/
 
 ------------------------------------------------------------------------------
 
+check_etc_hosts:
+
+  Copyright (C) 2002 Petter Reinholdtsen <pere@hungry.com>
+  
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2 of the License, or (at
+  your option) any later version.
+  
+  This program is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, see <http://www.gnu.org/licenses/>.
+  
+
+------------------------------------------------------------------------------
+
+check_etc_resolv:
+
+  Copyright (C) 2001 Petter Reinholdtsen <pere@hungry.com>
+  
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2 of the License, or (at
+  your option) any later version.
+  
+  This program is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, see <http://www.gnu.org/licenses/>.
+  
+
+------------------------------------------------------------------------------
+
 check_graphite:
 
 The plugin was downloaded from: 
@@ -298,7 +338,7 @@ check_ipmi_sensor:
 The plugin was downloaded from: 
 http://www.thomas-krenn.com/en/oss/ipmi-plugin.html
 
-  Copyright (C) 2009-2011 Thomas-Krenn.AG (written by Werner Fischer),
+  Copyright (C) 2009-2013 Thomas-Krenn.AG (written by Werner Fischer),
   additional contributors see changelog.txt
   
   This program is free software; you can redistribute it and/or modify it under
@@ -336,10 +376,30 @@ http://www.thomas-krenn.com/en/oss/ipmi-plugin.html
 
 ------------------------------------------------------------------------------
 
+check_ldap_root:
+
+  Copyright (C) 2011 Petter Reinholdtsen <pere@hungry.com>
+  
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2 of the License, or (at
+  your option) any later version.
+  
+  This program is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, see <http://www.gnu.org/licenses/>.
+  
+
+------------------------------------------------------------------------------
+
 check_libs:
 
 The plugin was downloaded from: 
-http://svn.noreply.org/cgi-bin/viewvc.cgi/weaselutils/trunk/?logsort=cvs&diff_format=s&sortby=file#dirlist
+https://www.palfrader.org/gitweb/?p=tools/monitoring.git
 
   Copyright (C) 2005, 2006, 2007, 2008, 2012 Peter Palfrader <peter@palfrader.org>
                 2012 Uli Martens <uli@youam.net>
@@ -617,6 +677,26 @@ https://svn.id.ethz.ch/projects/nagios_plugins/wiki/check_rbl
   along with this program; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
   MA 02110-1301 USA.
+  
+
+------------------------------------------------------------------------------
+
+check_shutdown:
+
+  Copyright (C) 2011 Petter Reinholdtsen <pere@hungry.com>
+  
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2 of the License, or (at
+  your option) any later version.
+  
+  This program is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, see <http://www.gnu.org/licenses/>.
   
 
 ------------------------------------------------------------------------------
