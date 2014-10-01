@@ -1,19 +1,19 @@
 #!/usr/bin/perl
 # check_ipmi_sensor: Nagios/Icinga plugin to check IPMI sensors
 #
-# Copyright (C) 2009-2012 Thomas-Krenn.AG,
+# Copyright (C) 2009-2013 Thomas-Krenn.AG,
 # additional contributors see changelog.txt
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
 # Foundation; either version 3 of the License, or (at your option) any later
 # version.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
 # details.
-# 
+#
 # You should have received a copy of the GNU General Public License along with
 # this program; if not, see <http://www.gnu.org/licenses/>.
 #
@@ -35,34 +35,35 @@ use Getopt::Long qw(:config no_ignore_case);
 use IPC::Run qw( run ); #interact with processes
 ################################################################################
 # set text variables
-our $check_ipmi_sensor_version = "3.1 2012-05-24";
+our $check_ipmi_sensor_version = "3.4";
 
 sub get_version
 {
-    return <<EOT;
+	return <<EOT;
 check_ipmi_sensor version $check_ipmi_sensor_version
-Copyright (C) 2009-2012 Thomas-Krenn.AG
-Current updates available at http://www.thomas-krenn.com/en/oss/ipmi-plugin/
+Copyright (C) 2009-2014 Thomas-Krenn.AG
+Current updates at http://git.thomas-krenn.com/check_ipmi_sensor_v3.git
 EOT
 }
 sub get_usage
 {
-    return <<EOT;
+	return <<EOT;
 Usage:
 check_ipmi_sensor -H <hostname>
   [-f <FreeIPMI config file> | -U <username> -P <password> -L <privilege level>]
-  [-O <FreeIPMI options>] [-b] [-T <sensor type>] [-x <sensor id>] [-v|-vv|-vvv]
-  [-o zenoss] [-h] [-V]
+  [-O <FreeIPMI options>] [-b] [-T <sensor type>] [-x <sensor id>] [-i <sensor id>]
+  [-o zenoss] [-D <protocol LAN version>] [-h] [-V] [-v|-vv|-vvv]
 EOT
 }
 sub get_help
 {
-    return <<EOT;
+	return <<EOT;
   -H <hostname>
        hostname or IP of the IPMI interface.
        For \"-H localhost\" the Nagios/Icinga user must be allowed to execute
-       ipmimonitoring with root privileges via sudo (ipmimonitoring must be
-       able to access the IPMI devices via the IPMI system interface).
+       ipmimonitoring/ipmi-sensors with root privileges via sudo
+       (ipmimonitoring/ipmi-sensor must be able to access the IPMI devices via
+       the IPMI system interface).
   [-f <FreeIPMI config file>]
        path to the FreeIPMI configuration file.
        Only neccessary for communication via network.
@@ -89,16 +90,22 @@ sub get_help
        caching options --quiet-cache and --sdr-cache-recreate)
   [-T <sensor type>]
        limit sensors to query based on IPMI sensor type.
-       Examples for IPMI sensor type are 'Fan', 'Temperature', 'Voltage', ...
-       See chapter '42.2 Sensor Type Codes and Data' of the IPMI 2.0 spec for a
-       full list of possible sensor types. The available types depend on your
-       particular server and the available sensors there.
+       Examples for IPMI sensor types are 'Fan', 'Temperature', 'Voltage', ...
+       See the output of the FreeIPMI command 'ipmi-sensors -L' and chapter
+       '42.2 Sensor Type Codes and Data' of the IPMI 2.0 spec for a full list
+       of possible sensor types. The available types depend on your particular
+       server and the available sensors there.
   [-x <sensor id>]
        exclude sensor matching <sensor id>. Useful for cases when unused
        sensors cannot be deleted from SDR and are reported in a non-OK state.
        Option can be specified multiple times. The <sensor id> is a numeric
        value (sensor names are not used as some servers have multiple sensors
        with the same name). Use -v 3 option to query the <sensor ids>.
+  [-i <sensor id>]
+       include only sensor matching <sensor id>. Useful for cases when only
+       specific sensors should be monitored. Be aware that only for the
+       specified sensor errors/warnings are generated. Use -v 3 option to query
+       the <sensor ids>.
   [-v|-vv|-vvv]
        be verbose
          (no -v) .. single line output
@@ -110,13 +117,36 @@ sub get_help
        software than Nagios or Icinga.
          -o zenoss .. create ZENOSS compatible formatted output (output with
                       underscores instead of whitespaces and no single quotes)
+  [-D]
+       change the protocol LAN version. Per default LAN_2_0 is used as protocol
+       version if not overwritten with this option.
+  [-fc <num fans>]
+       number of fans that should be active. If the number of current active
+       fans reported by IPMI is smaller than <num fans> then a Warning state
+       is returned.
+  [--fru]
+       print the product serial number if it is available in the IPMI FRU data.
+       For this purpose the tool 'ipmi-fru' is used. E.g.:
+         IPMI Status: OK (9000096781)
   [-h]
        show this help
   [-V]
        show version information
 
+Examples:
+  \$ check_ipmi_sensor -H 192.0.2.1 -U monitor -P monitor -L user 
+    IPMI Status: OK | 'System Temp'=30.00 'Peripheral Temp'=32.00
+    'FAN 1'=2775.00 [...]
+  \$ check_ipmi_sensor -H 192.0.2.1 -U monitor -P monitor -L user -x 205
+    IPMI Status: OK | 'System Temp'=30.00 'Peripheral Temp'=32.00 
+    'FAN 2'=2775.00 [...]
+  \$ check_ipmi_sensor -H 192.0.2.1 -U monitor -P monitor -L user -i 4,71
+    IPMI Status: OK | 'System Temp'=30.00 'Peripheral Temp'=32.00
+  \$ check_ipmi_sensor -H 192.0.2.1 -U monitor -P monitor -L user -i 4 --fru
+    IPMI Status: OK (0000012345) | 'System Temp'=30.00
+
 Further information about this plugin can be found at
-http://www.thomas-krenn.com/en/oss/ipmi-plugin.html
+http://www.thomas-krenn.com/en/wiki/IPMI_Sensor_Monitoring_Plugin
 
 Send email to the IPMI-plugin-user mailing list if you have questions regarding
 use of this software, to submit patches, or suggest improvements.
@@ -125,19 +155,19 @@ EOT
 }
 sub usage
 {
-    my ($arg) = @_; #the list of inputs
-    my ($exitcode);
-    if ( defined $arg ){
+	my ($arg) = @_; #the list of inputs
+	my ($exitcode);
+	if ( defined $arg ){
 		if ( $arg =~ m/^\d+$/ ){
-	    	$exitcode = $arg;
+			$exitcode = $arg;
 		}
 		else{
 			print STDOUT $arg, "\n";
-	    	$exitcode = 1;
+			$exitcode = 1;
 		}
-    }
-    print STDOUT get_usage();
-    exit($exitcode) if defined $exitcode;
+	}
+	print STDOUT get_usage();
+	exit($exitcode) if defined $exitcode;
 }
 ################################################################################
 # set ipmimonitoring path
@@ -165,7 +195,7 @@ sub get_ipmi_version{
 	my $ipmi_version = '';
 	@ipmi_version_output = `$IPMICOMMAND -V`;
 	$ipmi_version = shift(@ipmi_version_output);
-	$ipmi_version =~ /(\d+)\.(\d+)\.(\d+)/;	
+	$ipmi_version =~ /(\d+)\.(\d+)\.(\d+)/;
 	@ipmi_version_output = ();
 	push @ipmi_version_output,$1,$2,$3;
 	return @ipmi_version_output;
@@ -179,8 +209,37 @@ sub simulate{
 		print "Error: Simulation file with ipmi output not found.\n";
 		exit(3);
 	}
-	return ($output = `cat $simul_file`);	
+	return ($output = `cat $simul_file`);
 }
+
+sub get_fru{
+	my @frucmd = @{(shift)};
+	my $fru;
+	if(-e '/usr/sbin/ipmi-fru'){
+		$fru = '/usr/sbin/ipmi-fru';
+	}
+	else{
+		chomp($fru = `which ipmi-fru`);
+	}
+	$frucmd[0] = $fru;
+	#skip checksum validation
+	push @frucmd,'-s';
+	my $fruoutput;
+	my $returncode;
+	run \@frucmd, '>&', \$fruoutput;
+	#the upper eight bits contain the error condition (exit code)
+	#see http://perldoc.perl.org/perlvar.html#Error-Variables
+	$returncode = $? >> 8;
+	if ( $returncode != 0 ){
+		print "$fruoutput\n";
+		print "-> Execution of $fru failed with return code $returncode.\n";
+		print "-> $fru was executed with the following parameters:\n";
+		print "   ", join(' ', @frucmd), "\n";
+		exit(3);
+	}
+	return split('\n', $fruoutput);
+}
+
 
 #define entire hashes
 our %hdrmap = (
@@ -203,21 +262,24 @@ our %hdrmap = (
 our $verbosity = 0;
 
 MAIN: {
-    $| = 1; #force a flush after every write or print
-    my @ARGV_SAVE = @ARGV;#keep args for verbose output
-    my ($show_help, $show_version);
-    my ($ipmi_host, $ipmi_user, $ipmi_password, $ipmi_privilege_level, $ipmi_config_file, $ipmi_outformat);
-    my (@freeipmi_options, $freeipmi_compat);
-    my (@ipmi_sensor_types, @ipmi_xlist);
-    my (@ipmi_version);
-    my $ipmi_sensors = 0;#states to use ipmi-sensors instead of ipmimonitoring
+	$| = 1; #force a flush after every write or print
+	my @ARGV_SAVE = @ARGV;#keep args for verbose output
+	my ($show_help, $show_version);
+	my ($ipmi_host, $ipmi_user, $ipmi_password, $ipmi_privilege_level, $ipmi_config_file, $ipmi_outformat);
+	my (@freeipmi_options, $freeipmi_compat);
+	my (@ipmi_sensor_types, @ipmi_xlist, @ipmi_ilist);
+	my (@ipmi_version);
+	my $ipmi_sensors = 0;#states to use ipmi-sensors instead of ipmimonitoring
+	my $fan_count;#number of fans that should be installed in unit
+	my $lanVersion;#if desired use a different protocol version
 	my $abort_text = '';
 	my $zenoss = 0;
 	my $simulate = '';
+	my $use_fru;
 
 	#read in command line arguments and init hash variables with the given values from argv
-    if ( !( GetOptions(
-    	'H|host=s'	    	=> \$ipmi_host,#the pipe states an list of possible option names
+	if ( !( GetOptions(
+		'H|host=s'	    	=> \$ipmi_host,#the pipe states an list of possible option names
 		'f|config-file=s'	=> \$ipmi_config_file,#the backslash inits the variable with the given argument
 		'U|user=s'	    	=> \$ipmi_user,
 		'P|password=s'  	=> \$ipmi_password,
@@ -225,37 +287,41 @@ MAIN: {
 		'O|options=s'		=> \@freeipmi_options,
 		'b|compat'			=> \$freeipmi_compat,
 		'T|sensor-types=s'	=> \@ipmi_sensor_types,
+		'fru'				=> \$use_fru,
 		'v|verbosity'		=> \$verbosity,
 		'vv'				=> sub{$verbosity=2},
 		'vvv'				=> sub{$verbosity=3},
 		'x|exclude=s'		=> \@ipmi_xlist,
+		'i|include=s'		=> \@ipmi_ilist,
 		'o|outformat=s'		=> \$ipmi_outformat,
-		's=s'					=>\$simulate,
-		'h|help'	    	=> 
+		'fc|fancount=i'		=> \$fan_count,
+		'D=s'			=> \$lanVersion,
+		's=s'				=>\$simulate,
+		'h|help'			=>
 			sub{print STDOUT get_version();
 				print STDOUT "\n";
 				print STDOUT get_usage();
 				print STDOUT "\n";
 				print STDOUT get_help();
 				exit(0)
-			},	
-		'V|version'	    	=> 
+			},
+		'V|version'	    	=>
 			sub{
 				print STDOUT get_version();
 				exit(0);
 			},
-		'usage|?'					=> 
+		'usage|?'					=>
 			sub{print STDOUT get_usage();
 				exit(3);
-			}	
+			}
 	) ) ){
 		usage(1);#call usage if GetOptions failed
 	}
 	usage(1) if @ARGV;#print usage if unknown arg list is left
-	
+
 ################################################################################
 # check for ipmimonitoring or ipmi-sensors. Since version > 0.8 ipmi-sensors is used
-# if '--legacy-output' is given ipmi-sensors cannot be used	
+# if '--legacy-output' is given ipmi-sensors cannot be used
 
 	if( $MISSING_COMMAND_TEXT ne "" ){
 		print STDOUT "Error:$MISSING_COMMAND_TEXT";
@@ -264,7 +330,7 @@ MAIN: {
 	else{
 		@ipmi_version = get_ipmi_version();
 		if( $ipmi_version[0] > 0 && (grep(/legacy\-output/,@freeipmi_options)) == 0){
-			$IPMICOMMAND =~ s/ipmimonitoring/ipmi-sensors/;	
+			$IPMICOMMAND =~ s/ipmimonitoring/ipmi-sensors/;
 			$ipmi_sensors = 1;
 		}
 		if( $ipmi_version[0] > 0 && (grep(/legacy\-output/,@freeipmi_options)) == 1){
@@ -278,58 +344,64 @@ MAIN: {
 	#\s defines any whitespace characters
 	#first join the list, then split it at whitespace ' '
 	#also cf. http://perldoc.perl.org/Getopt/Long.html#Options-with-multiple-values
-    @freeipmi_options = split(/\s+/, join(' ', @freeipmi_options)); # a bit hack, shell word splitting should be implemented...
-    @ipmi_sensor_types = split(/,/, join(',', @ipmi_sensor_types));
-    @ipmi_xlist = split(/,/, join(',', @ipmi_xlist));
-    
-    #check for zenoss output    
-    if(defined $ipmi_outformat && $ipmi_outformat eq "zenoss"){
-    	$zenoss = 1;
-    }
+	@freeipmi_options = split(/\s+/, join(' ', @freeipmi_options)); # a bit hack, shell word splitting should be implemented...
+	@ipmi_sensor_types = split(/,/, join(',', @ipmi_sensor_types));
+	@ipmi_xlist = split(/,/, join(',', @ipmi_xlist));
+	@ipmi_ilist = split(/,/, join(',', @ipmi_ilist));
 
-    my @basecmd; #variable for command to call ipmi
-    if( !(defined $ipmi_host) ){
-    	$abort_text= $abort_text . " -H <hostname>"
-    }
-    else{
-    	if( $ipmi_host eq 'localhost' ){
-    		@basecmd = ('sudo', $IPMICOMMAND);
-    	}
-    	else{
-    		if(defined $ipmi_config_file){
-    			@basecmd = ($IPMICOMMAND, '-h', $ipmi_host, '--config-file', $ipmi_config_file);
-    		}
-    		elsif ( defined $ipmi_user && defined $ipmi_password && defined $ipmi_privilege_level ){
-	    		@basecmd = ($IPMICOMMAND, '-h', $ipmi_host, '-u', $ipmi_user, '-p', $ipmi_password, '-l', $ipmi_privilege_level)
+	#check for zenoss output
+	if(defined $ipmi_outformat && $ipmi_outformat eq "zenoss"){
+		$zenoss = 1;
+	}
+
+	my @basecmd; #variable for command to call ipmi
+	if( !(defined $ipmi_host) ){
+		$abort_text= $abort_text . " -H <hostname>"
+	}
+	else{
+		if( $ipmi_host eq 'localhost' ){
+			@basecmd = ('sudo', $IPMICOMMAND);
+		}
+		else{
+			if(defined $ipmi_config_file){
+				@basecmd = ($IPMICOMMAND, '-h', $ipmi_host, '--config-file', $ipmi_config_file);
+			}
+			elsif ( defined $ipmi_user && defined $ipmi_password && defined $ipmi_privilege_level ){
+				@basecmd = ($IPMICOMMAND, '-h', $ipmi_host, '-u', $ipmi_user, '-p', $ipmi_password, '-l', $ipmi_privilege_level)
 			}
 			else{
 				$abort_text = $abort_text . " -f <FreeIPMI config file> or -U <username> -P <password> -L <privilege level>";
 			}
-    	}    		
-    }        
-    if( $abort_text ne ""){
-    	print STDOUT "Error: " . $abort_text . " missing.";
+		}
+	}
+	if( $abort_text ne ""){
+		print STDOUT "Error: " . $abort_text . " missing.";
 		print STDOUT get_usage();
-		exit(3);	
-    }    
-    # , is the seperator in the new string
-    if(@ipmi_sensor_types){
-    	 push @basecmd, '-g', join(',', @ipmi_sensor_types);    	 
-    }
-   
-    if(@freeipmi_options){
-    	push @basecmd, @freeipmi_options;
-    }
-    
-    #keep original basecmd for later usage
-    my @getstatus = @basecmd;
-    
-    #if -b is not defined, caching options are used
-    if( !(defined $freeipmi_compat) ){
-    	push @getstatus, '--quiet-cache', '--sdr-cache-recreate';
-    }
-    #since version 0.8 it is possible to interpret OEM data
-    if( ($ipmi_version[0] == 0 && $ipmi_version[1] > 7) ||
+		exit(3);
+	}
+	# copy command for fru usage
+	my @frucmd;
+	if($use_fru){
+		@frucmd = @basecmd
+	}
+
+	# , is the seperator in the new string
+	if(@ipmi_sensor_types){
+		push @basecmd, '-g', join(',', @ipmi_sensor_types);
+	}
+	if(@freeipmi_options){
+		push @basecmd, @freeipmi_options;
+	}
+
+	#keep original basecmd for later usage
+	my @getstatus = @basecmd;
+
+	#if -b is not defined, caching options are used
+	if( !(defined $freeipmi_compat) ){
+		push @getstatus, '--quiet-cache', '--sdr-cache-recreate';
+	}
+	#since version 0.8 it is possible to interpret OEM data
+	if( ($ipmi_version[0] == 0 && $ipmi_version[1] > 7) ||
 			$ipmi_version[0] > 0){
 				push @getstatus, '--interpret-oem-data';
 	}
@@ -337,10 +409,17 @@ MAIN: {
 	if( ($ipmi_version[0] == 0 && $ipmi_version[1] > 7) && (grep(/legacy\-output/,@freeipmi_options) == 0)){
 			push @getstatus, '--legacy-output';
 	}
-	#if ipmi-sensors is used show the state of sensors an ignore N/A
+	#if ipmi-sensors is used show the state of sensors and ignore N/A
 	if($ipmi_sensors){
 		push @getstatus, '--output-sensor-state', '--ignore-not-available-sensors';
-	}    		
+	}
+	#if not stated otherwise we use protocol lan version 2 per default
+	if(!defined($lanVersion)){
+		$lanVersion = 'LAN_2_0';
+	}
+	if($lanVersion ne 'default'){
+		push @getstatus, "--driver-type=$lanVersion";
+	}
 
 ################################################################################
 	#execute status command and redirect stdout and stderr to ipmioutput
@@ -348,18 +427,22 @@ MAIN: {
 	my $returncode;
 	if(!$simulate){
 		run \@getstatus, '>&', \$ipmioutput;
-	    #the upper eight bits contain the error condition (exit code)
-    	#see http://perldoc.perl.org/perlvar.html#Error-Variables
-    	$returncode = $? >> 8;
+		#the upper eight bits contain the error condition (exit code)
+		#see http://perldoc.perl.org/perlvar.html#Error-Variables
+		$returncode = $? >> 8;
 	}
 	else{
 		$ipmioutput = simulate($simulate);
 		print "DEBUG: Using simulation mode\n";
 		$returncode = 0;
 	}
+	my @fruoutput;
+	if($use_fru){
+		@fruoutput = get_fru(\@frucmd);
+	}
 ################################################################################
 # print debug output when verbosity is set to 3 (-vvv)
-    if ( $verbosity == 3 ){
+	if ( $verbosity == 3 ){
 		my $ipmicommandversion;
 		run [$IPMICOMMAND, '-V'], '2>&1', '|', ['head', '-n', 1], '&>', \$ipmicommandversion;
 		#remove trailing newline with chomp
@@ -376,42 +459,67 @@ MAIN: {
 		print "  FreeIPMI return code: $returncode\n";
 		print "  output of FreeIPMI:\n";
 		print "$ipmioutput\n";
+		print "  output of FRU data:\n";
+		for my $line (@fruoutput){
+			print $line."\n";
+		}
 		print "--------------------- end of debug output ---------------------\n";
-    }
+	}
 
 ################################################################################
 # generate main output
-    if ( $returncode != 0 ){
+	if ( $returncode != 0 ){
 		print "$ipmioutput\n";
-		print "-> Execution of ipmimonitoring failed with return code $returncode.\n";
-		print "-> ipmimonitoring was executed with the following parameters:\n";
-        print "   ", join(' ', @getstatus), "\n";
+		print "-> Execution of $IPMICOMMAND failed with return code $returncode.\n";
+		print "-> $IPMICOMMAND was executed with the following parameters:\n";
+		print "   ", join(' ', @getstatus), "\n";
 		exit(3);
-    }
-    else{
+	}
+	else{
+		my @outputRows;
+		if(defined($ipmioutput)){
+			@outputRows = split('\n', $ipmioutput);
+		}
+		if(!defined($ipmioutput) || scalar(@outputRows) == 1){
+			print "-> Execution of FreeIPMI returned an empty output or only 1 header row!\n";
+			print "-> $IPMICOMMAND was executed with the following parameters:\n";
+			print "   ", join(' ', @getstatus), "\n";
+			exit(3);
+		}
 		#print desired filter types
 		if ( @ipmi_sensor_types ){
-	    	print "Sensor Type(s) ", join(', ', @ipmi_sensor_types), " Status: ";
+			print "Sensor Type(s) ", join(', ', @ipmi_sensor_types), " Status: ";
 		}
 		else{
-	    	print "IPMI Status: ";
+			print "IPMI Status: ";
 		}
 		#split at newlines, fetch array with lines of output
 		my @ipmioutput = split('\n', $ipmioutput);
-	
+		
+		#remove sudo errors and warnings like they appear on dns resolving issues
+		@ipmioutput = map { /^sudo:/ ? () : $_ } @ipmioutput;
+		
 		#remove leading and trailing whitespace characters, split at the pipe delimiter
 		@ipmioutput = map { [ map { s/^\s*//; s/\s*$//; $_; } split(m/\|/, $_) ] } @ipmioutput;
-	
+
 		#shift out the header as it is the first line
 		my $header = shift @ipmioutput;
+		if(!defined($header)){
+			print "$ipmioutput\n";
+			print " FreeIPMI returned an empty header map (first line)";
+			if(@ipmi_sensor_types){
+				print " FreeIPMI could not find any sensors for the given sensor type (option '-T').\n";
+			}
+			exit(3);
+		}
 		my %header;
 		for(my $i = 0; $i < @$header; $i++)
 		{
 			#assigning %header with (key from hdrmap) => $i
 			#checking at which position in the header is which key
-		    $header{$hdrmap{$header->[$i]}} = $i;
+			$header{$hdrmap{$header->[$i]}} = $i;
 		}
-	
+
 		my @ipmioutput2;
 		foreach my $row ( @ipmioutput ){
 			my %row;
@@ -426,17 +534,23 @@ MAIN: {
 		my %ipmi_xlist = map { ($_, 1) } @ipmi_xlist;
 		#filter out the desired sensor values
 		@ipmioutput2 = grep(!exists $ipmi_xlist{$_->{'id'}}, @ipmioutput2);
-	
-		my $exit = 0;		
-		my $w_sensors = '';#sensors with warnings		
-		my $perf = '';#performance sensor		
-		
+		#check for an include list
+		if(@ipmi_ilist){
+			my %ipmi_ilist = map { ($_, 1) } @ipmi_ilist;
+			#only include sensors from include list
+			@ipmioutput2 = grep(exists $ipmi_ilist{$_->{'id'}}, @ipmioutput2);
+		}
+		#start with main output
+		my $exit = 0;
+		my $w_sensors = '';#sensors with warnings
+		my $perf = '';#performance sensor
+		my $curr_fans = 0;
 		foreach my $row ( @ipmioutput2 ){
 			if( $zenoss ){
 				$row->{'name'} =~ s/ /_/g;
 			}
 			#check for warning sensors
-	    	if ( $row->{'state'} ne 'Nominal' && $row->{'state'} ne 'N/A' ){
+			if ( $row->{'state'} ne 'Nominal' && $row->{'state'} ne 'N/A' ){
 				$exit = 1 if $exit < 1;
 				$exit = 2 if $exit < 2 && $row->{'state'} ne 'Warning';
 				#don't insert a , the first time
@@ -449,50 +563,73 @@ MAIN: {
 					else{
 						$w_sensors .= " ($row->{'event'})";
 					}
-				}		
-	    	}
-	    	if ( $row->{'units'} ne 'N/A' ){
+				}
+			}
+			if ( $row->{'units'} ne 'N/A' ){
 				my $val = $row->{'reading'};
 				if($zenoss){
 					$perf .= qq|$row->{'name'}=$val |;
 				}
 				else{
-					$perf .= qq|'$row->{'name'}'=$val |;	
-				}				
-	    	}
+					$perf .= qq|'$row->{'name'}'=$val |;
+				}
+			}
+			if( $row->{'type'} eq 'Fan' && $row->{'reading'} ne 'N/A' ){
+				$curr_fans++;
+			}
+		}
+		#now check if num fans equals desired unit fans
+		if( $fan_count ){
+			if( $curr_fans < $fan_count ){
+				$exit = 1 if $exit < 1;
+				$w_sensors .= ", " unless $w_sensors eq '';
+				$w_sensors .= "Fan = Warning";
+				if( $verbosity ){
+					$w_sensors .= " ($curr_fans)" ;
+				}
+			}
+		}
+		#check for the FRU serial number
+		my @server_serial;
+		my $serial_number;
+		if( $use_fru ){
+			@server_serial = grep(/Product Serial Number/,@fruoutput);
+			$server_serial[0] =~ m/(\d+)/;
+			$serial_number = $1;
 		}
 		$perf = substr($perf, 0, -1);#cut off the last chars
 		if ( $exit == 0 ){
-		    print "OK";
+			print "OK";
 		}
 		elsif ( $exit == 1 ){
-		    print "Warning [$w_sensors]";
+			print "Warning [$w_sensors]";
 		}
 		else{
 			print "Critical [$w_sensors]";
 		}
+		if( $use_fru && defined($serial_number)){
+			print " ($serial_number)";
+		}
 		print " | ", $perf if $perf ne '';
 		print "\n";
-	
+
 		if ( $verbosity > 1 ){
-	    	foreach my $row (@ipmioutput2){
-	    		if( $row->{'state'} eq 'N/A'){
-	    			next;
-	    		}	    		
-	    		elsif( $row->{'reading'} ne 'N/A'){
+			foreach my $row (@ipmioutput2){
+				if( $row->{'state'} eq 'N/A'){
+					next;
+				}
+				elsif( $row->{'reading'} ne 'N/A'){
 					print "$row->{'name'} = $row->{'reading'} ";
-	    		}
-	    		elsif( $row->{'event'} ne 'N/A'){
-	    			print "$row->{'name'} = $row->{'event'} ";	
-	    		}
-	    		else{
-	    			next;
-	    		}
+				}
+				elsif( $row->{'event'} ne 'N/A'){
+					print "$row->{'name'} = $row->{'event'} ";
+				}
+				else{
+					next;
+				}
 				print "(Status: $row->{'state'})\n";
-	    	}
+			}
 		}
 		exit $exit;
 	}
 };
-
-# vim:ai:sw=4:sts=4:
