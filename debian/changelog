@@ -1,3 +1,11 @@
+nagios-plugins-contrib (12.20141001) unstable; urgency=medium
+
+  * Fix version number.
+    Unfortunately this makes an upload necessary due to
+    older snapshots being in use already.
+
+ -- Bernd Zeimetz <bzed@debian.org>  Wed, 01 Oct 2014 13:24:23 +0200
+
 nagios-plugins-contrib (11.20141001) unstable; urgency=medium
 
   [ Bernd Zeimetz ]
