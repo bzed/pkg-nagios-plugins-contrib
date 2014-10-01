@@ -2,5 +2,3 @@ Uploaders: Petter Reinholdtsen <pere@hungry.com>
 Description: plugin to check /etc/resolv.conf
  Check /etc/resolv.conf, and make sure the name servers listed are
  working.  It will ignore entries with '# NAGIOSIGNORE' at the end.
-Recommends: perl-base
-Version: ?
