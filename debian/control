@@ -11,7 +11,7 @@ Vcs-Browser: http://anonscm.debian.org/cgit/pkg-nagios/pkg-nagios-plugins-contri
 Package: nagios-plugins-contrib
 Architecture: any
 Depends: ${misc:Depends}
-Recommends: ${shlibs:Depends}, ${python:Depends}, libsocket-perl, libnagios-plugin-perl, libnet-snmp-perl, whois, nagios-plugins-basic, libnet-dns-perl, libdate-manip-perl, libnagios-plugin-perl (>= 0.31), libnet-cups-perl, libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-ssleay-perl, python, liblocale-gettext-perl, liblwp-useragent-determined-perl, snmp, freeipmi-tools, libipc-run-perl, ldap-utils, lsof, libyaml-syck-perl, python-pymongo, libdbd-mysql-perl, libreadonly-perl, procps, libnet-snmp-perl (>= 5), libtimedate-perl, openssl, libwebinject-perl, libnet-dns-sec-perl, ruby | ruby-interpreter, ${perl:Depends}
+Recommends: ${shlibs:Depends}, ${python:Depends}, libsocket-perl, libnagios-plugin-perl, libnet-snmp-perl, whois, nagios-plugins-basic, libnet-dns-perl, libdate-manip-perl, libnagios-plugin-perl (>= 0.31), libnet-cups-perl, libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-ssleay-perl, python, liblocale-gettext-perl, liblwp-useragent-determined-perl, snmp, freeipmi-tools, libipc-run-perl, ldap-utils, lsof, libyaml-syck-perl, python-pymongo, libdbd-mysql-perl, libreadonly-perl, libdata-validate-domain-perl, libdata-validate-ip-perl, procps, libnet-snmp-perl (>= 5), libtimedate-perl, openssl, libwebinject-perl, libnet-dns-sec-perl, ruby | ruby-interpreter, ${perl:Depends}
 Suggests: backuppc, perl-doc, cciss-vol-status (>= 1.10), mpt-status, smstools (>= 3~), expect, nagios-plugin-check-multi, moreutils, percona-toolkit
 Enhances: nagios-plugins, nagios-plugins-basic, nagios-plugins-standard
 Description: Plugins for nagios compatible monitoring systems
@@ -106,7 +106,7 @@ Description: Plugins for nagios compatible monitoring systems
    * check_printer: plugin to check printer supply levels using SNMP
      It outputs performance data for all supplies
      found, for example toner and drum.
-   * check_raid (3.2.0): plugin to check sw/hw RAID status
+   * check_raid (3.2.1): plugin to check sw/hw RAID status
      The plugin looks for any known types of RAID configurations,
      and checks them all.
      .
