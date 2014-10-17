@@ -1,3 +1,17 @@
+nagios-plugins-contrib (13.20141017) unstable; urgency=medium
+
+  * [87b2651] check_rbl: Adding libdata-validate-domain-perl,
+    libdata-validate-ip-perl to Recommends as needed for new upstream
+  * [e6dab92] check_raid: Update to 3.2.1
+  * [486d2f0] check_raid: Updating to latest git master to fix several bugs
+  * [7fdccac] check_raid: Updating to latest git master to fix with arcconf
+  * [c0b9c82] Bump Standards-Version to 3.9.6, no changes needed
+  * [fb6090a] percona-nagios-plugins: Fix typo in package description
+  * [e8aa125] percona-nagios-plugins: Fixing FSF address
+  * [f5d63e9] check_update: Fixing FSF address
+
+ -- Jan Wagner <waja@cyconet.org>  Fri, 17 Oct 2014 16:14:40 +0200
+
 nagios-plugins-contrib (12.20141001) unstable; urgency=medium
 
   * Fix version number.
