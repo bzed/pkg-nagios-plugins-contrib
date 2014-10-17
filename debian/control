@@ -198,7 +198,7 @@ Description: Plugins for nagios compatible monitoring systems
      Not a plugin, but a collection of various useful
      event/obsession handlers and similar scripts.
    * percona-nagios-plugins (1.1.4): Percona Monitoring Plugins (nagios)
-     Nagios Mysql Monitoring plugins writting/provided by Percona.
+     Nagios MySQL Monitoring plugins writting/provided by Percona.
  .
  Some scripts and binaries need more packages installed to work, which is
  implemented as recommends.
