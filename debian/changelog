@@ -1,3 +1,15 @@
+nagios-plugins-contrib (14.20141104) unstable; urgency=medium
+
+  [ Jan Wagner ]
+  * [0b3a2c4] check_email_delivery: Adding libnet-smtp-ssl-perl to Recommends
+  * [7c8eeb2] check_running_kernel: Add binutils to Recommends
+
+  [ Evgeni Golov ]
+  * [4df550b] check_ipmi_sensor: update to v3.5.
+    Thanks to Werner Fischer <debian-bugs@wefi.net> (Closes: #768018)
+
+ -- Evgeni Golov <evgeni@debian.org>  Tue, 04 Nov 2014 15:03:27 +0100
+
 nagios-plugins-contrib (13.20141017) unstable; urgency=medium
 
   * [87b2651] check_rbl: Adding libdata-validate-domain-perl,
