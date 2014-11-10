@@ -1,3 +1,9 @@
+nagios-plugins-contrib (13.20141017~bpo70+1) wheezy-backports; urgency=medium
+
+  * Rebuild for wheezy-backports.
+
+ -- Jan Wagner <waja@cyconet.org>  Fri, 17 Oct 2014 23:28:40 +0200
+
 nagios-plugins-contrib (13.20141017) unstable; urgency=medium
 
   * [87b2651] check_rbl: Adding libdata-validate-domain-perl,
