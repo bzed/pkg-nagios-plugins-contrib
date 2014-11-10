@@ -1,3 +1,17 @@
+nagios-plugins-contrib (13.20141017) unstable; urgency=medium
+
+  * [87b2651] check_rbl: Adding libdata-validate-domain-perl,
+    libdata-validate-ip-perl to Recommends as needed for new upstream
+  * [e6dab92] check_raid: Update to 3.2.1
+  * [486d2f0] check_raid: Updating to latest git master to fix several bugs
+  * [7fdccac] check_raid: Updating to latest git master to fix with arcconf
+  * [c0b9c82] Bump Standards-Version to 3.9.6, no changes needed
+  * [fb6090a] percona-nagios-plugins: Fix typo in package description
+  * [e8aa125] percona-nagios-plugins: Fixing FSF address
+  * [f5d63e9] check_update: Fixing FSF address
+
+ -- Jan Wagner <waja@cyconet.org>  Fri, 17 Oct 2014 16:14:40 +0200
+
 nagios-plugins-contrib (12.20141001~bpo70+1) wheezy-backports; urgency=medium
 
   * Rebuild for wheezy-backports.
@@ -10,7 +24,7 @@ nagios-plugins-contrib (12.20141001) unstable; urgency=medium
     Unfortunately this makes an upload necessary due to
     older snapshots being in use already.
 
- -- Bernd Zeimetz <bzed@debian.org>  Wed, 01 Oct 2014 13:27:09 +0200
+ -- Bernd Zeimetz <bzed@debian.org>  Wed, 01 Oct 2014 13:24:23 +0200
 
 nagios-plugins-contrib (11.20141001) unstable; urgency=medium
 
@@ -273,13 +287,6 @@ nagios-plugins-contrib (9.20140106) unstable; urgency=low
     Update check_raid to 3.0.5
 
  -- Bernd Zeimetz <bzed@debian.org>  Mon, 06 Jan 2014 12:56:27 +0100
-
-nagios-plugins-contrib (8.20130824~bpo70+1) wheezy-backports; urgency=low
-
-  * Rebuild for wheezy-backports.
-  * Include debian/gbp.conf for building against wheezy-backports branch.
-
- -- Bernd Zeimetz <bzed@debian.org>  Fri, 21 Jun 2013 12:58:43 +0200
 
 nagios-plugins-contrib (8.20130824) unstable; urgency=low
 

@@ -3,5 +3,5 @@ Version: 1.1.4
 Homepage: http://www.percona.com/doc/percona-monitoring-plugins/
 Uploaders: Bernd Zeimetz <bzed@debian.org>
 Description: Percona Monitoring Plugins (nagios)
- Nagios Mysql Monitoring plugins writting/provided by Percona.
+ Nagios MySQL Monitoring plugins writting/provided by Percona.
 Suggests: percona-toolkit

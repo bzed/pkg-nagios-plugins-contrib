@@ -1023,10 +1023,20 @@ sub parse_ld {
 			$ld{state} = $s;
 			next;
 		}
+
+		if (my($s) = /Default Cache Policy\s*:\s*(.+)/) {
+			$ld{default_cache} = [split /,\s*/, $s];
+			next;
+		}
+
+		if (my($s) = /Current Cache Policy\s*:\s*(.+)/) {
+			$ld{current_cache} = [split /,\s*/, $s];
+			next;
+		}
+
 		if (my($s) = /Exit Code: (\d+x\d+)/) {
 			$rc = hex($s);
-		}
-		else {
+		} else {
 			$rc = 0;
 		}
 	}
@@ -1127,7 +1137,7 @@ sub parse_bbu {
 	return \@bbu;
 }
 
-sub check {
+sub parse {
 	my $this = shift;
 
 	my $pd = $this->parse_pd;
@@ -1138,16 +1148,37 @@ sub check {
 	my @vols = @$ld if $ld;
 	my @bats = @$bbu if $bbu;
 
+	return {
+		logical => $ld,
+		physical => $pd,
+		battery => $bbu,
+	};
+}
+
+sub check {
+	my $this = shift;
+
+	my $c = $this->parse;
+
 	my @vstatus;
-	foreach my $vol (@vols) {
+	foreach my $vol (@{$c->{logical}}) {
 		push(@vstatus, sprintf "%s:%s", $vol->{name}, $vol->{state});
 		if ($vol->{state} ne 'Optimal') {
 			$this->critical;
 		}
+
+		# check cache policy, #65
+		my @wt = grep { /WriteThrough/ } @{$vol->{current_cache}};
+		if (@wt) {
+			my @default = grep { /WriteThrough/ } @{$vol->{default_cache}};
+			# alert if WriteThrough is configured in default
+			$this->cache_fail unless @default;
+			push(@vstatus, "WriteCache:DISABLED");
+		}
 	}
 
 	my %dstatus;
-	foreach my $dev (@devs) {
+	foreach my $dev (@{$c->{physical}}) {
 		if ($dev->{state} eq 'Online' || $dev->{state} eq 'Hotspare' || $dev->{state} eq 'Unconfigured(good)') {
 			push(@{$dstatus{$dev->{state}}}, sprintf "%02d", $dev->{dev});
 
@@ -1159,7 +1190,7 @@ sub check {
 	}
 
 	my (%bstatus, @bpdata, @blongout);
-	foreach my $bat (@bats) {
+	foreach my $bat (@{$c->{battery}}) {
 		if ($bat->{state} !~ /^(Operational|Optimal)$/) {
 			# BBU learn cycle in progress.
 			if ($bat->{charging_status} =~ /^(Charging|Discharging)$/ && $bat->{learn_cycle_active} eq 'Yes') {
@@ -1218,12 +1249,11 @@ sub check {
 		));
 	}
 
-	my @status;
-	push(@status,
-		'Volumes(' . ($#vols + 1) . '): ' . join(',', @vstatus) .
-		'; Devices(' . ($#devs + 1) . '): ' . $this->join_status(\%dstatus) .
-		(@bats ? '; Batteries(' . ($#bats + 1) . '): ' . $this->join_status(\%bstatus) : '')
-	);
+	my @cstatus;
+	push(@cstatus, 'Volumes(' . ($#{$c->{logical}} + 1) . '): ' . join(',', @vstatus));
+	push(@cstatus, 'Devices(' . ($#{$c->{physical}} + 1) . '): ' . $this->join_status(\%dstatus));
+	push(@cstatus, 'Batteries(' . ($#{$c->{battery}} + 1) . '): ' . $this->join_status(\%bstatus)) if @{$c->{battery}};
+	my @status = join('; ', @cstatus);
 
 	my @pdata;
 	push(@pdata,
@@ -2337,6 +2367,7 @@ sub sudo {
 
 sub parse_error {
 	my ($this, $message) = @_;
+	warn "arcconf: parse error: $message";
 	$this->unknown->message("Parse Error: $message");
 }
 
@@ -2793,7 +2824,7 @@ sub check {
 				$this->spare;
 				$pd->{status} = "$pd->{status} for $pd->{spare}";
 
-			} elsif ($pd->{status} !~ '^Online|Hot[- ]Spare') {
+			} elsif ($pd->{status} !~ /^Online|Hot[- ]Spare|Ready/) {
 				$this->critical;
 			}
 
@@ -3239,11 +3270,12 @@ sub parse {
 
 		# catch enclosures, print_bus_status()
 		# /dev/cciss/c1d0: (Smart Array P800) Enclosure MSA70 (S/N: SGA651004J) on Bus 2, Physical Port 1E status: OK.
+		# /dev/cciss/c0d0: (Smart Array 6i) Enclosure PROLIANT 6L2I (S/N: ) on Bus 0, Physical Port J1 status: OK.
 		if (my($file, $board_name, $name, $sn, $bus, $port1, $port2, $status) = m{
 			^(/dev/[^:]+):\s        # File
 			\(([^)]+)\)\s           # Board Name
-			Enclosure\s(\S+)\s      # Enclosure Name
-			\(S/N:\s(\S+)\)\s        # Enclosure SN
+			Enclosure\s(.*?)\s      # Enclosure Name
+			\(S/N:\s(\S*)\)\s       # Enclosure SN
 			on\sBus\s(\d+),\s       # Bus Number
 			Physical\sPort\s(.)     # physical_port1
 			(.)\s                   # physical_port2
@@ -3418,7 +3450,11 @@ sub check {
 			for my $i (sort {$a cmp $b} keys %{$c->{enclosures}}) {
 				my $e = $c->{enclosures}{$i};
 
-				my $s = "$e->{name}($e->{sn}): $e->{status}";
+				# enclosure name may be missing, identify by connection
+				my $s = $e->{name} || "$e->{bus}-$e->{phys1}$e->{phys2}";
+				# enclosure S/N may be missing
+				$s .= "($e->{sn})" if $e->{sn};
+				$s .= ": $e->{status}";
 				if ($e->{status} !~ '^OK') {
 					$this->critical;
 				}
@@ -4366,7 +4402,7 @@ use Getopt::Long;
 
 my ($opt_V, $opt_d, $opt_h, $opt_W, $opt_S, $opt_p, $opt_l);
 my (%ERRORS) = (OK => 0, WARNING => 1, CRITICAL => 2, UNKNOWN => 3);
-my ($VERSION) = "3.2.0";
+my ($VERSION) = "3.2.1";
 my ($message, $status, $perfdata, $longoutput);
 my ($noraid_state) = $ERRORS{UNKNOWN};
 
@@ -4399,12 +4435,14 @@ sub print_usage() {
 	"    Force the use of selected plugins, comma separated",
 	" -l, --list-plugins",
 	"    Lists active plugins",
+	" --noraid=STATE",
+	"    Return STATE if no RAID controller is found. Defaults to UNKNOWN",
 	" --resync=STATE",
 	"    Return STATE if RAID is in resync state. Defaults to WARNING",
 	" --check=STATE",
 	"    Return STATE if RAID is in check state. Defaults to OK",
-	" --noraid=STATE",
-	"    Return STATE if no RAID controller is found. Defaults to UNKNOWN",
+	" --cache-fail=STATE",
+	"    Set status as STATE if Write Cache is present but disabled. Defaults to WARNING",
 	" --bbulearn=STATE",
 	"    Return STATE if Backup Battery Unit (BBU) learning cycle is in progress. Defaults to WARNING",
 	" --bbu-monitoring",
@@ -4414,7 +4452,8 @@ sub print_usage() {
 
 sub print_help() {
 	print "check_raid, v$VERSION\n";
-	print "Copyright (c) 2004-2006 Steve Shipway, Copyright (c) 2009-2014, Elan Ruusamäe <glen\@pld-linux.org>
+	print "Copyright (c) 2004-2006 Steve Shipway,
+Copyright (c) 2009-2014, Elan Ruusamäe <glen\@pld-linux.org>
 
 This plugin reports the current server's RAID status
 https://github.com/glensc/nagios-plugin-check_raid
