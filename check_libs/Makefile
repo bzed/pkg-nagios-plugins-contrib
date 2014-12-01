@@ -3,6 +3,7 @@
 INIFILES = check-libs.conf
 PLUGIN = check_libs
 CLEANFILES = $(INIFILES) $(PLUGIN)
+CRONJOBS:= update-check_libs-status
 
 include ../common.mk
 
