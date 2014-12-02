@@ -1,0 +1,30 @@
+--- a/dsa/checks/dsa-check-packages
++++ b/dsa/checks/dsa-check-packages
+@@ -334,7 +334,7 @@ for my $form (@reportform) {
+ 	push @perfout, sprintf($form->{'perf'}, $num);
+ 	next unless ($num > 0);
+ 	if ($form->{'listpackages'}) {
+-		my $list = join(", ", keys %$pkgs);
++		my $list = join(" ", keys %$pkgs);
+ 		push @longout, sprintf($form->{'long'}, $num, $list);
+ 	} else {
+ 		push @longout, sprintf($form->{'long'}, $num);
+@@ -344,15 +344,15 @@ for my $form (@reportform) {
+ };
+ if (scalar keys %$packages) {
+ 	record('WARNING');
+-	unshift @shortout, "unk: ".join(", ", keys %$packages);
++	unshift @shortout, "unk: ".join(" ", keys %$packages);
+ 	for my $status (sort {$b cmp $a} keys %$packages) {
+ 		my $pkgs = $packages->{$status};
+-		my $list = join(", ", keys %$pkgs);
++		my $list = join(" ", keys %$pkgs);
+ 		unshift @longout, "Unknown package status $status: $list";
+ 	};
+ }
+ 
+-my $shortout = $EXITCODE.": ".join(", ", @shortout);
++my $shortout = $EXITCODE.": ".join(" ", @shortout);
+ my $longout = join("\n", @longout);
+ my $perfout = "|".join(" ", @perfout);
+ 
