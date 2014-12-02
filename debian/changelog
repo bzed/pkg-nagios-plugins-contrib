@@ -13,8 +13,11 @@ nagios-plugins-contrib (15.20141201~1.gbp3479e9) UNRELEASED; urgency=medium
     it was correct in the upload, but not in Git
 
   [ Jan Wagner ]
-  * [0da58400] Disable rbl.orbitrbl.com, it's offline - Adding check_rbl/disable_orbitrbl.com see http://www.dnsbl.com/2014/10/status-of-rblorbitrblcom-dead.html
-  * [98498248] check_email_delivery: Add libnet-smtpauth-perl as Recommends for CRAM-MD5
+  * [0da58400] Disable rbl.orbitrbl.com, it's offline
+    - Adding check_rbl/disable_orbitrbl.com see
+      http://www.dnsbl.com/2014/10/status-of-rblorbitrblcom-dead.html
+  * [98498248] check_email_delivery: Add libnet-smtpauth-perl as Recommends for
+    CRAM-MD5
 
   [ Bernd Zeimetz ]
   * [1151ce30] Add update-check_libs-status cronjob script.
