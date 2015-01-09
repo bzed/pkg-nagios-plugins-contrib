@@ -1,23 +1,30 @@
-nagios-plugins-contrib (15.20141201~1.gbp3479e9) UNRELEASED; urgency=medium
+nagios-plugins-contrib (15.20150109~1.gbp803520) unstable; urgency=medium
 
-  ** SNAPSHOT build @3479e9da55148ffc97dd8635369f558ff8d4b15e **
+  ** SNAPSHOT build @803520c9300d79ee8552a1f20cdd0b5cbe23dce8 **
 
   [ Evgeni Golov ]
   * [655f77d4] fix check_ipmi_sebsor version
     it was correct in the upload, but not in Git
 
   [ Jan Wagner ]
-  * [0da58400] Disable rbl.orbitrbl.com, it's offline
-    - Adding check_rbl/disable_orbitrbl.com see
-      http://www.dnsbl.com/2014/10/status-of-rblorbitrblcom-dead.html
-  * [98498248] check_email_delivery: Add libnet-smtpauth-perl as Recommends for
-    CRAM-MD5
+  * [0da58400] Disable rbl.orbitrbl.com, it's offline - Adding check_rbl/disable_orbitrbl.com see http://www.dnsbl.com/2014/10/status-of-rblorbitrblcom-dead.html
+  * [98498248] check_email_delivery: Add libnet-smtpauth-perl as Recommends for CRAM-MD5
 
   [ Bernd Zeimetz ]
   * [1151ce30] Add update-check_libs-status cronjob script.
   * [3479e9da] Update check_apt.cmd to use update-check_libs-status.
+  * [ec49961d] snapshot changelog.
 
- -- Bernd Zeimetz <bzed@debian.org>  Mon, 01 Dec 2014 17:12:56 +0100
+  [ Jan Wagner ]
+  * [52030fc9] Fixing changelog entries
+
+  [ Bernd Zeimetz ]
+  * [f66a1d83] Remove , from check_packages output.
+
+  [ Jan Wagner ]
+  * [803520c9] Adding check_rbl/disable_ahbl.org patch (Closes: #774749)
+
+ -- Bernd Zeimetz <bzed@debian.org>  Fri, 09 Jan 2015 11:33:58 +0100
 
 nagios-plugins-contrib (14.20141104) unstable; urgency=medium
 
