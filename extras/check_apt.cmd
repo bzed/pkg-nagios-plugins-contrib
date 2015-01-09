@@ -9,13 +9,14 @@
 #  - the following sudo permissions:
 #       nagios  ALL=(ALL) NOPASSWD: /usr/lib/nagios/plugins/check_libs
 #       nagios  ALL=(ALL) NOPASSWD: /usr/lib/nagios/plugins/check_running_kernel
-#  - a cronjob running update-apt-status:
+#  - cronjobs running update-apt-status and update-check_libs-status:
 #       @hourly  root [ -x /usr/lib/nagios/cronjobs/update-apt-status ] && /usr/lib/nagios/cronjobs/update-apt-status 2>&1 | logger -t update-apt-status
+#       @hourly  root [ -x /usr/lib/nagios/cronjobs/update-check_libs-status ] && /usr/lib/nagios/cronjobs/update-check_libs-status 2>&1 | logger -t update-check_libs-status
 
 
 
 command[ packages ]		= mispipe "/usr/lib/nagios/plugins/check_statusfile /var/cache/nagios_status/apt"  "sed -n '1p;\$p' | paste -s -d ''"
-command[ libs ]			= mispipe "sudo /usr/lib/nagios/plugins/check_libs" "sed 's, ([0-9, ]*),,g'"
+command[ libs ]		        = /usr/lib/nagios/plugins/check_statusfile /var/cache/nagios_status/check_libs
 command[ running_kernel ]	= sudo /usr/lib/nagios/plugins/check_running_kernel
 
 
