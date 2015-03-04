@@ -98,7 +98,7 @@ Description: Plugins for nagios compatible monitoring systems
      This plugin excludes the system cache and buffer, because
      on some system with very stable memory usage it is perfectly
      normal for system cache to fill in all available memory.
-   * check_mongodb (60b639ef4c): Plugin script to monitor your MongoDB server(s)
+   * check_mongodb (2032d64ba1): Plugin script to monitor your MongoDB server(s)
    * check_multipath (0.2.1): plugin to monitor the number of available and
      failed paths of multipath devices
    * check_mysql_health (2.1.8.2): plugin to check various parameters of a
