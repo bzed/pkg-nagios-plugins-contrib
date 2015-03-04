@@ -1,0 +1,13 @@
+Homepage: https://github.com/willixix/WL-NagiosPlugins
+Watch: https://raw.githubusercontent.com/willixix/WL-NagiosPlugins/master/check_redis.pl Version[ :]+([0-9.]+)
+Uploaders: Bernd Zeimetz <bzed@debian.org>
+Description: Redis Server check plugin
+ This plugin checks Redis NoSQL database status variables,
+ measures its response time and if specified allows to set thresholds
+ on one or more key data. You can set thresholds for data in stats
+ variables and some of them are also conveniently available as long options
+ with special threshold syntax. Plugin also calculates statistics such as
+ Hitrate (calculated as rate of change of hits/misses) and memory use and
+ can check replication delay.
+Recommends: libredis-perl
+Version: 0.73
