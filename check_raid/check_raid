@@ -1179,7 +1179,7 @@ sub check {
 
 	my %dstatus;
 	foreach my $dev (@{$c->{physical}}) {
-		if ($dev->{state} eq 'Online' || $dev->{state} eq 'Hotspare' || $dev->{state} eq 'Unconfigured(good)') {
+		if ($dev->{state} eq 'Online' || $dev->{state} eq 'Hotspare' || $dev->{state} eq 'Unconfigured(good)' || $dev->{state} eq 'JBOD' ) {
 			push(@{$dstatus{$dev->{state}}}, sprintf "%02d", $dev->{dev});
 
 		} else {
@@ -2269,10 +2269,12 @@ sub check {
 	}
 
 	# process each controller
-	while (my($cid, $c) = each %$c) {
+	for my $cid (sort keys %$c) {
+		my $c = $c->{$cid};
 		my @cstatus;
 
-		while (my($uid, $u) = each %{$c->{unitstatus}}) {
+		for my $uid (sort keys %{$c->{unitstatus}}) {
+			my $u = $c->{unitstatus}->{$uid};
 			my $s = $u->{status};
 
 			if ($s =~ /INITIALIZING|MIGRATING/) {
@@ -2280,11 +2282,11 @@ sub check {
 				$s .= " $u->{vim_percent}";
 
 			} elsif ($s eq 'VERIFYING') {
-				$this->resync;
+				$this->check_status;
 				$s .= " $u->{vim_percent}";
 
 			} elsif ($s eq 'REBUILDING') {
-				$this->warning;
+				$this->resync;
 				$s .= " $u->{rebuild_percent}";
 
 			} elsif ($s eq 'DEGRADED') {
@@ -2310,7 +2312,11 @@ sub check {
 		foreach my $p (sort { $a cmp $b } keys %{$c->{drivestatus}}) {
 			my $d = $c->{drivestatus}->{$p};
 			my $ds = $d->{status};
-			$this->critical unless $ds eq 'OK';
+			if ($ds eq 'VERIFYING') {
+				$this->check_status;
+			} elsif ($ds ne 'OK') {
+				$this->critical;
+			}
 
 			if ($d->{unit} eq '-') {
 				$ds = 'SPARE';
@@ -4402,7 +4408,7 @@ use Getopt::Long;
 
 my ($opt_V, $opt_d, $opt_h, $opt_W, $opt_S, $opt_p, $opt_l);
 my (%ERRORS) = (OK => 0, WARNING => 1, CRITICAL => 2, UNKNOWN => 3);
-my ($VERSION) = "3.2.1";
+my ($VERSION) = "3.2.2";
 my ($message, $status, $perfdata, $longoutput);
 my ($noraid_state) = $ERRORS{UNKNOWN};
 
