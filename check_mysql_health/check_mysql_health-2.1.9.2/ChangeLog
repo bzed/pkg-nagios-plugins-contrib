@@ -2,6 +2,23 @@
 # Changelog of the check_mysql_health plugin #
 ###############################################
 
+2.1.9.2 2014-12-22
+- bugfix in InnoDB initialization & versions > 5.6.1 (Thanks Jorg Veit)
+
+2.1.9.1 2014-06-12
+- add connections_aborted, open_files to the pnp template (Thanks Simon Meggle)
+
+2.1.9 2014-06-12
+- bugfix in pnp template (Thanks Simon Meggle)
+- bugfix in qcache calculation (Thanks lermit)
+
+2.1.8.4 2014-04-01
+- implement --negate old_level=new_level
+- allow floating point numbers in thresholds
+
+2.1.8.3 2012-10-15
+- output also ok-messages for my-modes
+
 2.1.8.2 2012-08-08
 - bugfix in querycache-hitrate (div by 0 after db restart). (Thanks Gianluca Varisco)
 

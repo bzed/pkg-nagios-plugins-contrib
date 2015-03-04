@@ -74,10 +74,15 @@ sub init {
   my $dummy;
   $self->debug("enter init");
   $self->init_nagios();
-  ($dummy, $self->{have_innodb}) 
-      = $self->{handle}->fetchrow_array(q{
-      SHOW VARIABLES LIKE 'have_innodb'
-  });
+  if (DBD::MySQL::Server::return_first_server()->version_is_minimum("5.1")) {
+    ($dummy, $self->{have_innodb}) = $self->{handle}->fetchrow_array(q{
+        SELECT ENGINE, SUPPORT FROM INFORMATION_SCHEMA.ENGINES WHERE ENGINE='InnoDB'
+    });
+  } else { 
+    ($dummy, $self->{have_innodb}) = $self->{handle}->fetchrow_array(q{
+        SHOW VARIABLES LIKE 'have_innodb'
+    });
+  }
   if ($self->{have_innodb} eq "NO") {
     $self->add_nagios_critical("the innodb engine has a problem (have_innodb=no)");
   } elsif ($self->{have_innodb} eq "DISABLED") {

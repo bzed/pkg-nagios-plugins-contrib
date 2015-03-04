@@ -13,6 +13,7 @@ sub new {
   my $self = {
     handle => $params{handle},
     uptime => $params{uptime},
+    replication_user => $params{replication_user},
     warningrange => $params{warningrange},
     criticalrange => $params{criticalrange},
     threads_connected => undef,
@@ -81,17 +82,23 @@ sub init {
     });
     $self->valdiff(\%params, qw(threads_created connections));
     if ($self->{delta_connections} > 0) {
-      $self->{threadcache_hitrate_now} = 
+      $self->{threadcache_hitrate_now} =
           100 - ($self->{delta_threads_created} * 100.0 /
           $self->{delta_connections});
     } else {
       $self->{threadcache_hitrate_now} = 100;
     }
-    $self->{threadcache_hitrate} = 100 - 
+    $self->{threadcache_hitrate} = 100 -
         ($self->{threads_created} * 100.0 / $self->{connections});
     $self->{connections_per_sec} = $self->{delta_connections} /
         $self->{delta_timestamp};
   } elsif ($params{mode} =~ /server::instance::querycachehitrate/) {
+    ($dummy, $self->{qcache_inserts}) = $self->{handle}->fetchrow_array(q{
+        SHOW /*!50000 global */ STATUS LIKE 'Qcache_inserts'
+    });
+    ($dummy, $self->{qcache_not_cached}) = $self->{handle}->fetchrow_array(q{
+        SHOW /*!50000 global */ STATUS LIKE 'Qcache_not_cached'
+    });
     ($dummy, $self->{com_select}) = $self->{handle}->fetchrow_array(q{
         SHOW /*!50000 global */ STATUS LIKE 'Com_select'
     });
@@ -107,15 +114,15 @@ sub init {
         SHOW VARIABLES LIKE 'query_cache_size'
     });
     $self->valdiff(\%params, qw(com_select qcache_hits));
-    $self->{querycache_hitrate_now} = 
+    $self->{querycache_hitrate_now} =
         ($self->{delta_com_select} + $self->{delta_qcache_hits}) > 0 ?
         100 * $self->{delta_qcache_hits} /
             ($self->{delta_com_select} + $self->{delta_qcache_hits}) :
         0;
-    $self->{querycache_hitrate} = 
-        ($self->{com_select} + $self->{qcache_hits}) > 0 ?
+    $self->{querycache_hitrate} =
+        ($self->{qcache_not_cached} + $self->{qcache_inserts} + $self->{qcache_hits}) > 0 ?
         100 * $self->{qcache_hits} /
-            ($self->{com_select} + $self->{qcache_hits}) :
+            ($self->{qcache_not_cached} + $self->{qcache_inserts} + $self->{qcache_hits}) :
         0;
     $self->{selects_per_sec} =
         $self->{delta_com_select} / $self->{delta_timestamp};
@@ -124,34 +131,34 @@ sub init {
         SHOW /*!50000 global */ STATUS LIKE 'Qcache_lowmem_prunes'
     });
     $self->valdiff(\%params, qw(lowmem_prunes));
-    $self->{lowmem_prunes_per_sec} = $self->{delta_lowmem_prunes} / 
+    $self->{lowmem_prunes_per_sec} = $self->{delta_lowmem_prunes} /
         $self->{delta_timestamp};
   } elsif ($params{mode} =~ /server::instance::slowqueries/) {
     ($dummy, $self->{slow_queries}) = $self->{handle}->fetchrow_array(q{
         SHOW /*!50000 global */ STATUS LIKE 'Slow_queries'
     });
     $self->valdiff(\%params, qw(slow_queries));
-    $self->{slow_queries_per_sec} = $self->{delta_slow_queries} / 
+    $self->{slow_queries_per_sec} = $self->{delta_slow_queries} /
         $self->{delta_timestamp};
   } elsif ($params{mode} =~ /server::instance::longprocs/) {
     if (DBD::MySQL::Server::return_first_server()->version_is_minimum("5.1")) {
-      ($self->{longrunners}) = $self->{handle}->fetchrow_array(q{
+      ($self->{longrunners}) = $self->{handle}->fetchrow_array(qq(
           SELECT
               COUNT(*)
           FROM
               information_schema.processlist
-          WHERE user <> 'replication' 
+          WHERE user <> ?
           AND id <> CONNECTION_ID() 
           AND time > 60 
           AND command <> 'Sleep'
-      });
+      ), $self->{replication_user});
     } else {
       $self->{longrunners} = 0 if ! defined $self->{longrunners};
       foreach ($self->{handle}->fetchall_array(q{
           SHOW PROCESSLIST
       })) {
         my($id, $user, $host, $db, $command, $tme, $state, $info) = @{$_};
-        if (($user ne 'replication') &&
+        if (($user ne $self->{replication_user}) &&
             ($tme > 60) &&
             ($command ne 'Sleep')) {
           $self->{longrunners}++;
@@ -178,16 +185,16 @@ sub init {
     }
     $self->{table_cache} ||= 0;
     #$self->valdiff(\%params, qw(open_tables opened_tables table_cache));
-    # _now ist hier sinnlos, da opened_tables waechst, aber open_tables wieder 
+    # _now ist hier sinnlos, da opened_tables waechst, aber open_tables wieder
     # schrumpfen kann weil tabellen geschlossen werden.
     if ($self->{opened_tables} != 0 && $self->{table_cache} != 0) {
-      $self->{tablecache_hitrate} = 
+      $self->{tablecache_hitrate} =
           100 * $self->{open_tables} / $self->{opened_tables};
-      $self->{tablecache_fillrate} = 
+      $self->{tablecache_fillrate} =
           100 * $self->{open_tables} / $self->{table_cache};
     } elsif ($self->{opened_tables} == 0 && $self->{table_cache} != 0) {
       $self->{tablecache_hitrate} = 100;
-      $self->{tablecache_fillrate} = 
+      $self->{tablecache_fillrate} =
           100 * $self->{open_tables} / $self->{table_cache};
     } else {
       $self->{tablecache_hitrate} = 0;
@@ -202,14 +209,14 @@ sub init {
         SHOW /*!50000 global */ STATUS LIKE 'Table_locks_immediate'
     });
     $self->valdiff(\%params, qw(table_locks_waited table_locks_immediate));
-    $self->{table_lock_contention} = 
+    $self->{table_lock_contention} =
         ($self->{table_locks_waited} + $self->{table_locks_immediate}) > 0 ?
-        100 * $self->{table_locks_waited} / 
+        100 * $self->{table_locks_waited} /
         ($self->{table_locks_waited} + $self->{table_locks_immediate}) :
         100;
-    $self->{table_lock_contention_now} = 
+    $self->{table_lock_contention_now} =
         ($self->{delta_table_locks_waited} + $self->{delta_table_locks_immediate}) > 0 ?
-        100 * $self->{delta_table_locks_waited} / 
+        100 * $self->{delta_table_locks_waited} /
         ($self->{delta_table_locks_waited} + $self->{delta_table_locks_immediate}) :
         100;
   } elsif ($params{mode} =~ /server::instance::tableindexusage/) {

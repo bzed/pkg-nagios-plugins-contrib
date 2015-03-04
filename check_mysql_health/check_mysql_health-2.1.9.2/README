@@ -102,6 +102,11 @@ Command line parameters
    http://www.consol.com/opensource/nagios/check-mysql-health for a list
    of features.
 
+--replication-user=<username of replication user>
+  This is the username used to authenticated mysql replication, this is useful
+  with the longprocs mode where the replication users process is not counted as
+  a longrunning process.
+
 --warning=<warning threshold>
   If the metric is out of this range, the plugin returns a warning.
 
