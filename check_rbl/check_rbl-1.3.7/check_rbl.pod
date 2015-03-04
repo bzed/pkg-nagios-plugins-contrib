@@ -1,8 +1,8 @@
 # File version information:
-# $Id: check_rbl.pod 1369 2014-09-20 17:40:12Z corti $
-# $Revision: 1369 $
+# $Id: check_rbl.pod 1428 2015-02-01 12:22:40Z corti $
+# $Revision: 1428 $
 # $HeadURL: https://svn.id.ethz.ch/nagios_plugins/check_rbl/check_rbl.pod $
-# $Date: 2014-09-20 19:40:12 +0200 (Sat, 20 Sep 2014) $
+# $Date: 2015-02-01 13:22:40 +0100 (Sun, 01 Feb 2015) $
 
 =pod
 
@@ -16,7 +16,7 @@ check_rbl is a Nagios plugin to check if an SMTP server is blacklisted
 
 =head1 VERSION
 
-Version 1.3.5
+Version 1.3.7
 
 =head1 SYNOPSIS
 
@@ -74,9 +74,9 @@ check_updates depends on
 
 =item * IO::Select
 
-=item * Nagios::Plugin
+=item * Monitoring::Plugin
 
-=item * Nagios::Plugin::Threshold
+=item * Monitoring::Plugin::Threshold
 
 =item * Number::Format
 

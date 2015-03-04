@@ -6,9 +6,9 @@ Dependences
 check_rbl depends on several Perl modules:
 
  * IO::Select
- * Nagios::Plugin
- * Nagios::Plugin::Getopt
- * Nagios::Plugin::Threshold
+ * Monitoring::Plugin
+ * Monitoring::Plugin::Getopt
+ * Monitoring::Plugin::Threshold
  * Net::DNS
  * Readonly
 
@@ -67,7 +67,7 @@ open a ticket at
 https://trac.id.ethz.ch/projects/nagios_plugins/newticket
 
 # File version information:
-# $Id: INSTALL 1349 2014-01-30 11:18:43Z corti $
-# $Revision: 1349 $
+# $Id: INSTALL 1404 2015-01-09 16:56:58Z corti $
+# $Revision: 1404 $
 # $HeadURL: https://svn.id.ethz.ch/nagios_plugins/check_rbl/INSTALL $
-# $Date: 2014-01-30 12:18:43 +0100 (Thu, 30 Jan 2014) $
+# $Date: 2015-01-09 17:56:58 +0100 (Fri, 09 Jan 2015) $

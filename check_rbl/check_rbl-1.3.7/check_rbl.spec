@@ -1,12 +1,12 @@
 ################################################################################
 # File version information:
-# $Id: check_rbl.spec 1369 2014-09-20 17:40:12Z corti $
-# $Revision: 1369 $
+# $Id: check_rbl.spec 1428 2015-02-01 12:22:40Z corti $
+# $Revision: 1428 $
 # $HeadURL: https://svn.id.ethz.ch/nagios_plugins/check_rbl/check_rbl.spec $
-# $Date: 2014-09-20 19:40:12 +0200 (Sat, 20 Sep 2014) $
+# $Date: 2015-02-01 13:22:40 +0100 (Sun, 01 Feb 2015) $
 ################################################################################
 
-%define version          1.3.5
+%define version          1.3.7
 %define release          0
 %define sourcename       check_rbl
 %define packagename      nagios-plugins-check-rbl
@@ -62,6 +62,12 @@ rm -rf %{buildroot}
 %{_mandir}/man1/%{sourcename}.1*
 
 %changelog
+* Sun Feb  1 2015 Matteo Corti <matteo@corti.li> - 1.3.7-0
+- Update to 1.3.7 (using Monitoring::Plugins)
+
+* Fri Dec  5 2014 Matteo Corti <matteo@corti.li> - 1.3.6-0
+- Updated to 1.3.6 (removed dependency on Data::Dumper)
+
 * Sat Sep 20 2014 Matteo Corti <matteo@corti.li> - 1.3.5-0
 - Updated to 1.3.5
 

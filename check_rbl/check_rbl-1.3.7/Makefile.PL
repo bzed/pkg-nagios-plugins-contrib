@@ -2,10 +2,10 @@
 use inc::Module::Install;
 
 # File version information:
-# $Id: Makefile.PL 1361 2014-08-09 09:41:30Z corti $
-# $Revision: 1361 $
+# $Id: Makefile.PL 1404 2015-01-09 16:56:58Z corti $
+# $Revision: 1404 $
 # $HeadURL: https://svn.id.ethz.ch/nagios_plugins/check_rbl/Makefile.PL $
-# $Date: 2014-08-09 11:41:30 +0200 (Sat, 09 Aug 2014) $
+# $Date: 2015-01-09 17:56:58 +0100 (Fri, 09 Jan 2015) $
 
 ##############################################################################
 # Define metadata (we read it from the binary)
@@ -20,14 +20,14 @@ all_from          'check_rbl.pod';
 
 include 'version';
 
-requires 'Data::Validate::Domain'    => 0;
-requires 'Data::Validate::IP'        => 0;
-requires 'Nagios::Plugin'            => 0.31;
-requires 'Nagios::Plugin::Getopt'    => 0;
-requires 'Nagios::Plugin::Threshold' => 0;
-requires 'Net::DNS'                  => 0;
-requires 'Readonly'                  => 0;
-requires 'IO::Select'                => 0;
+requires 'Data::Validate::Domain'        => 0;
+requires 'Data::Validate::IP'            => 0;
+requires 'Monitoring::Plugin'            => 0;
+requires 'Monitoring::Plugin::Getopt'    => 0;
+requires 'Monitoring::Plugin::Threshold' => 0;
+requires 'Net::DNS'                      => 0;
+requires 'Readonly'                      => 0;
+requires 'IO::Select'                    => 0;
 
 install_script  'check_rbl';
 
