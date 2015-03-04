@@ -24,7 +24,6 @@ check_printer/debian_bts
 check_raid/prefer_cciss_vol_status_over_hpacucli
 check_rbl/interpreter
 check_rbl/spelling_errors
-check_rbl/disable_orbitrbl.com
 check_rbl/disable_solid.net
 check_rbl/additional_rbls
 check_rbl/nagios-plugins
