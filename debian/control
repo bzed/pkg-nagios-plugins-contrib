@@ -181,7 +181,7 @@ Description: Plugins for nagios compatible monitoring systems
      individual system components that have HTTP interfaces
      (JSP, ASP, CGI, PHP, AJAX, Servlets, HTML Forms,
      XML/SOAP Web Services, REST, etc).
-   * check_whois (1.15): plugin to check for the expiration of a domain.
+   * check_whois (1.16): plugin to check for the expiration of a domain.
      The plugin may not yet work with all registrars, since their
      output formats differ or there is no expiration date in the
      whois output.

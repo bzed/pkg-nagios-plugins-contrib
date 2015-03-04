@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # nagios: -epn
 
-# $Id: check_whois,v 1.15 2013/12/16 23:31:39 wessels Exp $
+# $Id: check_whois,v 1.16 2014/12/16 00:09:36 wessels Exp $
 #
 # check_whois
 #
@@ -196,6 +196,13 @@ sub grok {
 	#
 	if ($expires =~ /[a-z]{3} ([a-z]{3}) (\d\d) 00:00:00 \S+ (\d\d\d\d)T/i) {
 		$expires = join('-', $2,$1,$3);
+	}
+
+	# Name.com returns dates like this: 2018-12-13T21:27:28-07:00Z
+	# Just remove the timezone offset and call it good enough
+	#	
+	if ($expires =~ /(\d{4}-\d\d-\d\dt\d\d:\d\d:\d\d)-\d\d:\d\dz/i) {
+		$expires = $1;
 	}
 
 	my $t;
