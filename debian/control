@@ -76,7 +76,7 @@ Description: Plugins for nagios compatible monitoring systems
      outside its normal parameters.
    * check_httpd_status (rev153): plugin checking Apache or Lighthttpd
      server-status page (using mod_status)
-   * check_ipmi_sensor (3.5): IPMI Sensor Monitoring Plugin
+   * check_ipmi_sensor (3.7): IPMI Sensor Monitoring Plugin
      Plugin to monitor the hardware status (fan speed, temperaturs,
      voltages, power usage, ...) of a server using IPMI.
    * check_ldap_root (?): plugin to check LDAP server response
