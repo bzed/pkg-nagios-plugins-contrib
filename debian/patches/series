@@ -28,6 +28,7 @@ check_rbl/disable_ahbl.org
 check_rbl/disable_orbitrbl.com
 check_rbl/disable_solid.net
 check_rbl/additional_rbls
+check_rbl/nagios-plugins
 check_snmp_time/epn
 check_varnish/automake_foreign
 check_varnish/support-for-varnish-4
