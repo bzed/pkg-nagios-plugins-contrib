@@ -6,7 +6,7 @@ before_install:
 
 install:
     # install implicit build dependencies
-    - sudo apt-get install -qq --no-install-recommends build-essential fakeroot devscripts
+    - sudo apt-get install -qq --no-install-recommends build-essential fakeroot devscripts equivs
     # install build dependencies
     - sudo mk-build-deps --install debian/control
 
