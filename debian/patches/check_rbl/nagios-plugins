@@ -1,0 +1,59 @@
+diff --git a/check_rbl/src/check_rbl b/check_rbl/src/check_rbl
+index 43f5f29..fa3ece8 100644
+--- a/check_rbl/src/check_rbl
++++ b/check_rbl/src/check_rbl
+@@ -34,9 +34,9 @@ use 5.00800;
+ use Data::Validate::Domain qw(is_hostname);
+ use Data::Validate::IP qw(is_ipv4 is_ipv6);
+ use IO::Select;
+-use Monitoring::Plugin;
+-use Monitoring::Plugin::Getopt;
+-use Monitoring::Plugin::Threshold;
++use Nagios::Plugin 0.31;
++use Nagios::Plugin::Getopt;
++use Nagios::Plugin::Threshold;
+ use Net::DNS;
+ use Readonly;
+ 
+@@ -352,14 +352,14 @@ sub run {
+     ################################################################################
+     # Initialization
+ 
+-    $plugin = Monitoring::Plugin->new( shortname => 'CHECK_RBL' );
++    $plugin = Nagios::Plugin->new( shortname => 'CHECK_RBL' );
+ 
+     my $time = time;
+ 
+     ########################
+     # Command line arguments
+ 
+-    $options = Monitoring::Plugin::Getopt->new(
++    $options = Nagios::Plugin::Getopt->new(
+         usage   => 'Usage: %s [OPTIONS]',
+         version => $VERSION,
+         url     => 'https://trac.id.ethz.ch/projects/nagios_plugins',
+@@ -448,7 +448,7 @@ sub run {
+     # Set the limits
+ 
+     # see https://nagios-plugins.org/doc/guidelines.html#THRESHOLDFORMAT
+-    $threshold = Monitoring::Plugin::Threshold->set_thresholds(
++    $threshold = Nagios::Plugin::Threshold->set_thresholds(
+         warning  => $options->warning - 1,
+         critical => $options->critical - 1,
+     );
+diff --git a/check_rbl/src/check_rbl.pod b/check_rbl/src/check_rbl.pod
+index c9c5735..9267980 100644
+--- a/check_rbl/src/check_rbl.pod
++++ b/check_rbl/src/check_rbl.pod
+@@ -74,9 +74,9 @@ check_updates depends on
+ 
+ =item * IO::Select
+ 
+-=item * Monitoring::Plugin
++=item * Nagios::Plugin
+ 
+-=item * Monitoring::Plugin::Threshold
++=item * Nagios::Plugin::Threshold
+ 
+ =item * Number::Format
+ 

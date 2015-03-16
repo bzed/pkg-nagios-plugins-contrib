@@ -6,13 +6,13 @@ before_install:
 
 install:
     # install implicit build dependencies
-    - sudo apt-get install -qq --no-install-recommends build-essential fakeroot devscripts
+    - sudo apt-get install -qq --no-install-recommends build-essential fakeroot devscripts equivs
     # install build dependencies
-    - sudo apt-get install -qq --no-install-recommends debhelper python python-debian quilt autotools-dev autotools-dev flex libmemcached-dev libvarnishapi-dev pkg-config dh-autoreconf
+    - sudo mk-build-deps --install debian/control
 
 script:
     # build the debian package
-    - debuild -uc -us
+    - dpkg-buildpackage -uc -us
 
 after_script:
     # run lintian after build

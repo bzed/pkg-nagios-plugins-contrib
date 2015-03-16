@@ -9,6 +9,7 @@ LDFLAGS += $(shell dpkg-buildflags --get LDFLAGS)
 PLUGINDIR := /usr/lib/nagios/plugins
 CRONJOBDIR := /usr/lib/nagios/cronjobs
 CONFIGDIR := /etc/nagios-plugins/config
+PNP4NAGIOSTEMPLATEDIR := /etc/pnp4nagios/templates.d/nagios-plugins-contrib
 INIDIR := /etc/nagios-plugins
 CONFIGFILES := $(wildcard *.cfg)
 
@@ -41,6 +42,10 @@ ifdef MANPAGES
 		install -d $(DESTDIR)$${mandir} ;\
 		install -m 644 -o root -g root $${m} $(DESTDIR)$${mandir} ;\
 	done
+endif
+ifdef PNP4NAGIOSTEMPLATES
+	install -d $(DESTDIR)$(PNP4NAGIOSTEMPLATEDIR)
+	install -m 644 -o root -g root $(PNP4NAGIOSTEMPLATES) $(DESTDIR)$(PNP4NAGIOSTEMPLATEDIR)
 endif
 ifdef INIFILES
 	install -d $(DESTDIR)$(INIDIR)

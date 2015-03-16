@@ -135,7 +135,7 @@ http://exchange.nagios.org/directory/Plugins/Anti-2DVirus/ClamAV/ClamAV-check-pl
 check_cups:
 
 The plugin was downloaded from: 
-https://www.monitoringexchange.org/inventory/Check-Plugins/Hardware/Devices/Printer/check_cups
+https://exchange.icinga.org/oldmonex/1867-check_cups/
 
   Copyright (C) Steve Huff <shuff@hmdc.harvard.edu>
   
@@ -150,7 +150,7 @@ https://www.monitoringexchange.org/inventory/Check-Plugins/Hardware/Devices/Prin
 check_drbd:
 
 The plugin was downloaded from: 
-https://www.monitoringexchange.org/inventory/Check-Plugins/Operating-Systems/Linux/check_drbd
+https://exchange.icinga.org/oldmonex/512-check_drbd/
 
   Copyright (C) Brandon Lee Poyner <bpoyner@ccac.edu>
   
@@ -253,6 +253,28 @@ http://cvs.orion.education.fr/viewvc/viewvc.cgi/nagios-plugins-perl/trunk/plugin
     On Debian systems, the complete text of the GNU General
     Public License version 2 can be found in "/usr/share/common-licenses/GPL-2".
   
+  
+  
+
+------------------------------------------------------------------------------
+
+check_haproxy_stats:
+
+The plugin was downloaded from: 
+http://exchange.nagios.org/directory/Plugins/Clustering-and-High-2DAvailability/check_haproxy_stats-2Epl/details
+
+  Copyright (C) 2012, Giacomo Montagner <giacomo@entirelyunlike.net>
+  
+  This program is free software; you can redistribute it and/or modify it 
+  under the same terms as Perl 5.10.1. 
+  For more details, see http://dev.perl.org/licenses/artistic.html
+  
+  This program is distributed in the hope that it will be
+  useful, but without any warranty; without even the implied
+  warranty of merchantability or fitness for a particular purpose.
+  
+  On Debian systems a copy of the Artistic license can be found
+  in /usr/share/common-licenses/Artistic.
   
   
 

@@ -1,0 +1,152 @@
+# File version information:
+# $Id: check_rbl.pod 1428 2015-02-01 12:22:40Z corti $
+# $Revision: 1428 $
+# $HeadURL: https://svn.id.ethz.ch/nagios_plugins/check_rbl/check_rbl.pod $
+# $Date: 2015-02-01 13:22:40 +0100 (Sun, 01 Feb 2015) $
+
+=pod
+
+=head1 NAME
+
+C<check_rbl> - a Nagios plugin to check if an SMTP server is blacklisted
+
+=head1 DESCRIPTION
+
+check_rbl is a Nagios plugin to check if an SMTP server is blacklisted
+
+=head1 VERSION
+
+Version 1.3.7
+
+=head1 SYNOPSIS
+
+check_rbl [--help] [--verbose] [--version] [--timeout t]
+                 -H hostname --server servername
+                 [--critical n] [--warning n] [--workers n]
+
+=head1 REQUIRED ARGUMENTS
+
+  -s, --server=STRING  RBL server (may be repeated)
+  -H, --host=STRING    SMTP server to check
+
+=head1 OPTIONS
+
+ -?, --usage                                Print usage information
+ -h, --help                                 Print detailed help screen
+ -V, --version                              Print version information
+ --extra-opts=[<section>[@<config_file>]]   Section and/or config_file from which to load extra options (may repeat)
+ -c, --critical=INTEGER                     Number of blacklisting servers for a critical warning
+ -w, --warning=INTEGER                      Number of blacklisting servers for a warning
+ -d, --debug                                Prints debugging information
+ -r, --retry=INTEGER                        Number of times to try a DNS query (default is 4) 
+ --workers=INTEGER                          Number of parallel checks
+ --whitelistings, --wl                      Check whitelistings instead of blacklistings
+ --query-timeout=INTEGER                    Timeout of the RBL queries
+ -t, --timeout=INTEGER                      Seconds before plugin times out (default: 15)
+ -v, --verbose                              Show details for command-line debugging (can repeat up to 3 times)
+
+=head1 EXAMPLE
+
+  check_rbl -t 30 -H matteocorti.ch -s zen.spamhaus.org -s bl.spamcop.net
+
+=head1 DIAGNOSTICS
+
+You can specify multiple --verbose options to increase the program
+verbosity. --debug can be used to display the process and internals of
+the querying mechanism.
+
+=head1 EXIT STATUS
+
+0 if OK, 1 in case of a warning, 2 in case of a critical status and 3
+in case of an unkown problem
+
+=head1 DEPENDENCIES
+
+check_updates depends on
+
+=over 4
+
+=item * Data::Validate::Domain
+
+=item * Data::Validate::IP
+
+=item * Getopt::Long
+
+=item * IO::Select
+
+=item * Monitoring::Plugin
+
+=item * Monitoring::Plugin::Threshold
+
+=item * Number::Format
+
+=item * Net::DNS
+
+=item * Readonly
+
+=back
+
+=head1 CONFIGURATION
+
+=head1 INCOMPATIBILITIES
+
+None reported.
+
+=head1 SEE ALSO
+
+Nagios documentation
+
+=head1 BUGS AND LIMITATIONS
+
+No bugs have been reported.
+
+Please report any bugs or feature requests to matteo.corti@id.ethz.ch,
+or through the web interface at
+https://trac.id.ethz.ch/projects/nagios_plugins/newticket?component=check_rbl
+
+=head1 AUTHOR
+
+Matteo Corti <matteo.corti@id.ethz.ch>
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (c) 2010, Elan Ruusamae <glen@delfi.ee>
+
+Copyright (c) 2008-2011, Matteo Corti <matteo.corti@id.ethz.ch>
+
+This module is free software; you can redistribute it and/or modify it
+under the terms of GNU general public license (gpl) version 3.
+See the LICENSE file for details.
+
+=head1 DISCLAIMER OF WARRANTY
+
+BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT
+WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER
+PARTIES PROVIDE THE SOFTWARE "AS IS" WITHOUT WARRANTY OF ANY KIND,
+EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE
+SOFTWARE IS WITH YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME
+THE COST OF ALL NECESSARY SERVICING, REPAIR, OR CORRECTION.
+
+IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE LIABLE
+TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL, OR
+CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE
+SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGES.
+
+=head1 ACKNOWLEDGMENTS
+
+=encoding iso-8859-1
+
+Elan Ruusamäe for the improved parallel support and several fixes
+
+Victor V Kudlak for parallel support
+
+Jan Kantert for whitelistings support

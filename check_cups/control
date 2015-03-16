@@ -1,4 +1,4 @@
-Homepage: https://www.monitoringexchange.org/inventory/Check-Plugins/Hardware/Devices/Printer/check_cups
+Homepage: https://exchange.icinga.org/oldmonex/1867-check_cups/
 Uploaders: Jan Wagner <waja@cyconet.org>
 Description: plugin to check queues on a remote CUPS server
  This plugin is monitoring of queues on a remote CUPS server,
