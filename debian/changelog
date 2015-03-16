@@ -1,10 +1,10 @@
-nagios-plugins-contrib (15.20150109~1.gbp803520~bpo70+1) wheezy-backports; urgency=medium
+nagios-plugins-contrib (15.20150316~1.gbp803520~bpo70+1) wheezy-backports; urgency=medium
 
   * Rebuild for wheezy-backports.
 
  -- Bernd Zeimetz <bzed@debian.org>  Mon, 16 Mar 2015 15:20:17 +0100
 
-nagios-plugins-contrib (15.20150109~1.gbp803520) unstable; urgency=medium
+nagios-plugins-contrib (15.20150316~1.gbpcb814e) unstable; urgency=medium
 
   ** SNAPSHOT build @cb814e21e0460183fb69e124d481487143790bd8 **
 
