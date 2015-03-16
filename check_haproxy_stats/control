@@ -1,0 +1,7 @@
+Homepage: http://exchange.nagios.org/directory/Plugins/Clustering-and-High-2DAvailability/check_haproxy_stats-2Epl/details
+Watch: http://exchange.nagios.org/components/com_mtree/attachment.php?link_id=4089&cf_id=24 VERSION = "([0-9.]+)"
+Version: 1.0.1
+Uploaders: Bernd Zeimetz <bzed@debian.org>
+Description: check haproxy via admin socket
+ Different from check_haproxy this plugin is able to check
+ haproxy via the unix admin socket.

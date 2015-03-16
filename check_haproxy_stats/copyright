@@ -1,0 +1,13 @@
+Copyright (C) 2012, Giacomo Montagner <giacomo@entirelyunlike.net>
+
+This program is free software; you can redistribute it and/or modify it 
+under the same terms as Perl 5.10.1. 
+For more details, see http://dev.perl.org/licenses/artistic.html
+
+This program is distributed in the hope that it will be
+useful, but without any warranty; without even the implied
+warranty of merchantability or fitness for a particular purpose.
+
+On Debian systems a copy of the Artistic license can be found
+in /usr/share/common-licenses/Artistic.
+
