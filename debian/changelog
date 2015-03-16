@@ -2,11 +2,11 @@ nagios-plugins-contrib (15.20150109~1.gbp803520~bpo70+1) wheezy-backports; urgen
 
   * Rebuild for wheezy-backports.
 
- -- Bernd Zeimetz <bzed@debian.org>  Fri, 09 Jan 2015 12:16:07 +0100
+ -- Bernd Zeimetz <bzed@debian.org>  Mon, 16 Mar 2015 15:20:17 +0100
 
 nagios-plugins-contrib (15.20150109~1.gbp803520) unstable; urgency=medium
 
-  ** SNAPSHOT build @803520c9300d79ee8552a1f20cdd0b5cbe23dce8 **
+  ** SNAPSHOT build @cb814e21e0460183fb69e124d481487143790bd8 **
 
   [ Evgeni Golov ]
   * [655f77d4] fix check_ipmi_sebsor version
@@ -30,7 +30,57 @@ nagios-plugins-contrib (15.20150109~1.gbp803520) unstable; urgency=medium
   [ Jan Wagner ]
   * [803520c9] Adding check_rbl/disable_ahbl.org patch (Closes: #774749)
 
- -- Bernd Zeimetz <bzed@debian.org>  Fri, 09 Jan 2015 11:33:58 +0100
+  [ Bernd Zeimetz ]
+  * [1853853e] Updating snapshot changelog.
+  * [b308bb78] Remove duplicate check_apt.cmd file.
+  * [f3e3cee7] Add check_libvirt.
+  * [112168dd] Auto update of debian/copyright
+  * [40a9288c] Auto update of debian/control
+  * [1e398f95] Make check_libs faster.
+  * [d7cf2679] Add breaks/replaces for smooth upgrades from squeeze.
+  * [1ae1eee9] Add check_redis.
+  * [89a53d33] Auto update of debian/copyright
+  * [09d0cdbe] Auto update of debian/control
+  * [bce89a01] Merge remote-tracking branch 'github/master'
+
+  [ Jan Wagner ]
+  * [8733ae5b] check_redis: Adding command definition config
+  * [5874628f] check_redis: Fixing command definition
+  * [6ed8e1bc] check_mongodb: Updating to latest version
+  * [b9544e3b] check_mysql_health: Updating to 2.1.9.2
+  * [a2c74a4a] check_raid: Updating to 3.2.2
+  * [19e12620] check_raid: Updating to latest git version (5bc04e1822)
+  * [5862270d] check_ssl_cert: Updating to 1.17.0
+  * [e4c7bc02] check_cups: Update Homepage
+  * [cc9ce255] check_drbd: Update Homepage and Watch header
+  * [99c5b843] check_rbl: Updating to 1.3.7
+  * [160e8d3f] check_rbl: Move back to Nagios::Plugin again by adding patches/check_rbl/nagios-plugins
+  * [8b921f7f] check_whois: Updating to 1.16
+  * [90e32111] check_ipmi_sensor: Updating to 3.7
+  * [37d10e7c] Drop check_rbl/disable_ahbl.org
+  * [a2b7c696] Drop check_rbl/disable_orbitrbl.com
+
+  [ Bernd Zeimetz ]
+  * [d33acc60] Some better travis scripts.
+  * [22073ab8] Handle php4nagios templates
+  * [ec7197ab] Install check_redis pnp4nagios template
+  * [f8d59a38] Fix check_ajp to handle non-responding tcp ports.
+  * [2709f46a] install equivs in .travis.yml
+  * [d0e0af8b] Revert "Fix check_ajp to handle non-responding tcp ports."
+    This reverts commit f8d59a383175bbcf0011b8308d0505868c6b61e4.
+    Change was applied by patch...
+  * [f948c66d] Merge branch 'master' of alioth.debian.org:/git/pkg-nagios/pkg-nagios-plugins-contrib
+
+  [ Jan Wagner ]
+  * [8696a410] common.mk: Using TAB instead of white spaces
+
+  [ Bernd Zeimetz ]
+  * [c408dff0] Typo fix.
+  * [b41594fe] Add check_haproxy_stats.
+  * [5e5ae833] Auto update of debian/copyright
+  * [cb814e21] Auto update of debian/control
+
+ -- Bernd Zeimetz <bzed@debian.org>  Mon, 16 Mar 2015 15:16:54 +0100
 
 nagios-plugins-contrib (14.20141104~bpo70+1) wheezy-backports; urgency=medium
 
