@@ -58,7 +58,10 @@ Description: Plugins for nagios compatible monitoring systems
      Check /etc/resolv.conf, and make sure the name servers listed are
      working.  It will ignore entries with '# NAGIOSIGNORE' at the end.
    * check_graphite: Plugin to monitor graphite metrics
-   * check_haproxy (rev135): plugin check the HAProxy statistics url
+   * check_haproxy (rev135): plugin to check the HAProxy statistics url
+   * check_haproxy_stats (1.0.1): check haproxy via admin socket
+     Different from check_haproxy this plugin is able to check
+     haproxy via the unix admin socket.
    * check_hp_bladechassis (1.0.1): plugin to check the hardware health of
      HP blade enclosures via SNMP.
      The plugin is only tested with the c7000 enclosure.
