@@ -19,15 +19,15 @@
 # enable substitution with:
 #   $ svn propset svn:keywords "Id Revision HeadURL Source Date"
 #
-#   $Id: check_ssl_cert 1384 2014-11-29 15:08:58Z corti $
-#   $Revision: 1384 $
+#   $Id: check_ssl_cert 1442 2015-04-07 14:06:03Z corti $
+#   $Revision: 1442 $
 #   $HeadURL: https://svn.id.ethz.ch/nagios_plugins/check_ssl_cert/check_ssl_cert $
-#   $Date: 2014-11-29 16:08:58 +0100 (Sat, 29 Nov 2014) $
+#   $Date: 2015-04-07 16:06:03 +0200 (Tue, 07 Apr 2015) $
 
 ################################################################################
 # Constants
 
-VERSION=1.17.0
+VERSION=1.17.1
 SHORTNAME="SSL_CERT"
 
 VALID_ATTRIBUTES=",startdate,enddate,subject,issuer,modulus,serial,hash,email,ocsp_uri,fingerprint,"
@@ -85,7 +85,7 @@ usage() {
     echo "   -s,--selfsigned        allows self-signed certificates"
     echo "   -S,--ssl version       force SSL version (2,3)"
     echo "   -r,--rootcert path     root certificate or directory to be used for"
-    echo "                          certficate validation"
+    echo "                          certificate validation"
     echo "   -t,--timeout           seconds timeout after the specified time"
     echo "                          (defaults to 15 seconds)"
     echo "      --temp dir          directory where to store the temporary files"
@@ -490,7 +490,7 @@ main() {
         if [ ! -x "${OPENSSL}" ] ; then
             unknown "${OPENSSL} ist not an executable"
         fi
-        if [ "${OPENSSL##*/}" != 'openssl' ] ; then
+        if ! "${OPENSSL}" list-standard-commands | grep -q s_client ; then
             unknown "${OPENSSL} ist not an openssl executable"
         fi
     fi
@@ -820,11 +820,15 @@ EOF
         if file "${ISSUER_CERT}" | grep -q ': data' ; then
             openssl x509 -inform DER -outform PEM -in "${ISSUER_CERT}" -out "${ISSUER_CERT}"
         fi
-
-        if "$OPENSSL" ocsp -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT}" -url "${OCSP_URI}" 2>&1 | grep -qi "revoked" ; then
-            critical "certificate is revoked"
+        OCSP_HOST=$(echo ${OCSP_URI} | sed -e "s?.*//\([^/]\+\)/.*?\1?g")
+        OCSP_RESP=$($OPENSSL ocsp -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT}" -url "${OCSP_URI}" -header "HOST" "${OCSP_HOST}" 2>&1 | grep -i "ssl_cert")
+        if echo "${OCSP_RESP}" | grep -qi "revoked" ; then
+            critical "certifiicate is revoked"
+        elif ! $(echo "${OCSP_RESP}" | grep -qi "good") ; then
+            echo "### ${OCSP_RESP}"
+            warning "${OCSP_RESP}"
         fi
-        
+
     fi
 
     ################################################################################
@@ -852,7 +856,7 @@ EOF
         fi
     
         if [ -z "${EMAIL}" ] ; then
-            critical "the certficate does not contain an email address"
+            critical "the certificate does not contain an email address"
         fi
     
         if ! echo "$EMAIL" | grep -q "^$ADDR" ; then
