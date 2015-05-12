@@ -2,6 +2,23 @@
 # Changelog of the check_hpasm plugin #
 #######################################
 
+4.7.0.2 2014-03-18
+- add another storageworks detection
+- add StoreEasy detection (thanks Alexander Laimer)
+
+4.7.0.1 2014-03-04
+- bugfix in blacklisting (Thanks Ingvar Hagelund)
+
+4.7 2014-02-21
+- add StorageWorks
+
+4.6.3.4 2013-05-15
+- fix a bug in fan perfdata (absent fans were shown with 0%)
+
+4.6.3.3 2013-04-10
+- fix a bug in snmp overall nic condition
+- sort events by id numerically 
+
 4.6.3.2 2013-03-19
 - fix a bug in proliant/gen8/ilo temperature thresholds (Thanks Kai Benninghoff and Stephane Loeuillet)
 

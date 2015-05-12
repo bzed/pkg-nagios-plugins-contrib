@@ -68,7 +68,8 @@ EXTRA_MODULES=\
   HP/BladeSystem/Component.pm \
   HP/BladeSystem.pm \
   HP/Storage.pm \
-  HP/Server.pm 
+  HP/StorageWorks.pm \
+  HP/Server.pm
 EXTRA_DIST=check_hpasm.pl $(EXTRA_MODULES)
 
 CLEANFILES=$(libexec_SCRIPTS)

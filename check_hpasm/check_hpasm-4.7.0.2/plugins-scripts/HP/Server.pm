@@ -46,6 +46,12 @@ sub new {
         # HP X1600 G2 Network Storage System
         bless $self, 'HP::Proliant::SNMP';
         $self->trace(3, 'using HP::Proliant::SNMP');
+      } elsif ($self->{productname} =~ /StorageWorks/i) {
+        bless $self, 'HP::StorageWorks';
+        $self->trace(3, 'using HP::StorageWorks');
+      } elsif ($self->{productname} =~ /StoreEasy/i) {
+        bless $self, 'HP::Proliant::SNMP';
+        $self->trace(3, 'using HP::Proliant::SNMP');
       } elsif ($self->{productname} =~ /Storage/) { # fake
         bless $self, 'HP::Storage';
         $self->trace(3, 'using HP::Storage');
@@ -206,6 +212,7 @@ sub whoami {
     my $cpqSiProductName = '1.3.6.1.4.1.232.2.2.4.2.0';
     my $cpqSsMibRevMajor = '1.3.6.1.4.1.232.8.1.1.0';
     my $cpqSsBackplaneModel = '1.3.6.1.4.1.232.8.2.2.6.1.9'.'.1.1';
+    my $cpqHoMibStatusArray = '1.3.6.1.4.1.232.11.2.10.1.0';
     if ($productname = $self->{rawdata}->{$cpqSiProductName}) {
       if (! $productname) {
         $self->{productname} = 'ProLiant';
@@ -225,6 +232,7 @@ sub whoami {
     my $cpqSiProductName = '1.3.6.1.4.1.232.2.2.4.2.0';
     my $cpqSsMibRevMajor = '1.3.6.1.4.1.232.8.1.1.0';
     my $cpqSsBackplaneModel = '1.3.6.1.4.1.232.8.2.2.6.1.9'.'.1.1';
+    my $cpqHoMibStatusArray = '1.3.6.1.4.1.232.11.2.10.1.0';
     my $dummy = '1.3.6.1.2.1.1.5.0';
     if ($productname = $self->valid_response($cpqSiProductName)) {
       if ($productname eq '') {
@@ -237,6 +245,8 @@ sub whoami {
     } elsif ($self->valid_response($cpqSsMibRevMajor)) {
       # at least there is a CPQSTSYS-MIB
       $self->{productname} = 'Storage'
+    } elsif ($self->valid_response($cpqHoMibStatusArray)) {
+      $self->{productname} = 'StorageWorks'
     } else {
       $self->add_message(CRITICAL,
           'snmpwalk returns no product name (cpqsinfo-mib)');
@@ -293,7 +303,7 @@ sub is_blacklisted {
   my $blacklisted = 0;
 #  $name =~ s/\:/-/g;
   foreach my $bl_items (split(/\//, $self->{runtime}->{options}->{blacklist})) {
-    if ($bl_items =~ /^(\w+):([\:\d\-,]+)$/) {
+    if ($bl_items =~ /^(\w+):([\:\w\-,]+)$/) {
       my $bl_type = $1;
       my $bl_names = $2;
       foreach my $bl_name (split(/,/, $bl_names)) {
