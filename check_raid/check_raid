@@ -74,10 +74,11 @@ unshift(@paths, qw(/usr/local/nrpe /usr/local/bin /sbin /usr/sbin /bin /usr/sbin
 
 # lookup program from list of possible filenames
 # search is performed from $PATH plus additional hardcoded @paths
+# NOTE: we do not check for execute bit as it may fail for non-root. #104
 sub which {
 	for my $prog (@_) {
 		for my $path (@paths) {
-			return "$path/$prog" if -x "$path/$prog";
+			return "$path/$prog" if -f "$path/$prog";
 		}
 	}
 	return undef;
@@ -85,6 +86,9 @@ sub which {
 
 our @sudo;
 sub find_sudo() {
+	# no sudo needed if already root
+	return [] unless $>;
+
 	# detect once
 	return \@sudo if @sudo;
 
@@ -92,7 +96,10 @@ sub find_sudo() {
 	push(@sudo, $sudo);
 
 	# detect if sudo supports -A, issue #88
-	open(my $fh , '-|', $sudo, '-h') or die "Can't run 'sudo -h': $!";
+	use IPC::Open3;
+	my $fh;
+	my @cmd = ($sudo, '-h');
+	my $pid = open3(undef, $fh, undef, @cmd) or die "Can't run 'sudo -h': $!";
 	local $/ = undef;
 	local $_ = <$fh>;
 	close($fh) or die $!;
@@ -176,11 +183,11 @@ sub new {
 sub active {
 	my $this = shift;
 
-	# program not found
+	# no tool found, return false
 	return 0 unless $this->{program};
 
-	# program not executable
-	-x $this->{program};
+	# program file must exist, don't check for execute bit. #104
+	-f $this->{program};
 }
 
 # set status code for plugin result
@@ -2665,6 +2672,10 @@ sub parse_config {
 				# not parsed yet
 			} elsif ($subsection eq 'Controller Vital Product Data') {
 				# not parsed yet
+			} elsif ($subsection eq 'RAID Properties') {
+				# not parsed yet
+			} elsif ($subsection eq 'Controller BIOS Setting Information') {
+				# not parsed yet
 			} else {
 				warn "SUBSECTION of [$section] NOT PARSED: [$subsection] [$_]";
 			}
@@ -2870,35 +2881,8 @@ sub check {
 		}
 
 		# Battery status
-		if (defined($c->{battery_status}) and $c->{battery_status} ne "Not Installed") {
-			push(@status, "Battery Status: $c->{battery_status}");
-
-			if ($c->{battery_overtemp} ne "No") {
-				$this->critical;
-				push(@status, "Battery Overtemp: $c->{battery_overtemp}");
-			}
-
-			push(@status, "Battery Capacity Remaining: $c->{battery_capacity}%");
-			if ($c->{battery_capacity} < 50) {
-				$this->critical;
-			}
-			if ($c->{battery_capacity} < 25) {
-				$this->warning;
-			}
-
-			if ($c->{battery_time} < 1440) {
-				$this->warning;
-			}
-			if ($c->{battery_time} < 720) {
-				$this->critical;
-			}
-
-			if ($c->{battery_time} < 60) {
-				push(@status, "Battery Time: $c->{battery_time}m");
-			} else {
-				push(@status, "Battery Time: $c->{battery_time_full}");
-			}
-		}
+		my @s = $this->battery_status($c);
+		push(@status, @s) if @s;
 	}
 
 	# check for physical devices
@@ -2954,6 +2938,54 @@ sub check {
 	push(@status, "Drives: ".$this->join_status(\%pd)) if %pd;
 
 	$this->ok->message(join(', ', @status));
+}
+
+# check battery status in $c
+sub battery_status {
+	my ($this, $c) = @_;
+
+	my @status;
+
+	if (!defined($c->{battery_status}) || $c->{battery_status} eq 'Not Installed') {
+		return;
+	}
+
+	push(@status, "Battery Status: $c->{battery_status}");
+
+	# if battery status is 'Failed', none of the details below are available. #105
+	if ($c->{battery_status} eq 'Failed') {
+		$this->critical;
+		return @status;
+	}
+
+	# detailed battery checks
+	if ($c->{battery_overtemp} ne 'No') {
+		$this->critical;
+		push(@status, "Battery Overtemp: $c->{battery_overtemp}");
+	}
+
+	push(@status, "Battery Capacity Remaining: $c->{battery_capacity}%");
+	if ($c->{battery_capacity} < 50) {
+		$this->critical;
+	}
+	if ($c->{battery_capacity} < 25) {
+		$this->warning;
+	}
+
+	if ($c->{battery_time} < 1440) {
+		$this->warning;
+	}
+	if ($c->{battery_time} < 720) {
+		$this->critical;
+	}
+
+	if ($c->{battery_time} < 60) {
+		push(@status, "Battery Time: $c->{battery_time}m");
+	} else {
+		push(@status, "Battery Time: $c->{battery_time_full}");
+	}
+
+	return @status;
 }
 
 package megarc;
@@ -3166,6 +3198,9 @@ sub commands {
 		'detect hpsa' => ['<', '/sys/module/hpsa/refcnt'],
 		'detect cciss' => ['<', '/proc/driver/cciss'],
 		'cciss proc' => ['<', '/proc/driver/cciss/$controller'],
+
+		# for lsscsi, issue #109
+		'lsscsi list' => ['-|', '@CMD', '-g'],
 	}
 }
 
@@ -3214,9 +3249,10 @@ sub detect {
 
 	my ($fh, @devs);
 
-	# try lsscsi first
-	my $lsscsi = lsscsi->new();
-	if ($lsscsi->active) {
+	# try lsscsi first if enabled and allowed
+	my $lsscsi = lsscsi->new('commands' => $this->{commands});
+	my $use_lsscsi = defined($this->{use_lsscsi}) ? $this->{use_lsscsi} : $lsscsi->active;
+	if ($use_lsscsi) {
 		# for cciss_vol_status < 1.10 we need /dev/sgX nodes, columns which are type storage
 		@devs = $lsscsi->list_sg;
 
@@ -3328,7 +3364,7 @@ sub trim { my $s = shift; $s =~ s/^\s+|\s+$//g; return $s };
 
 # we process until we find end of sentence (dot at the end of the line)
 sub consume_diagnostic {
-	my ($this, $fh, $s) = @_;
+	my ($this, $fh) = @_;
 
 	my $diagnostic = '';
 	while (1) {
@@ -3339,6 +3375,18 @@ sub consume_diagnostic {
 		last if $s =~ /\.$/;
 	}
 	return trim($diagnostic);
+}
+
+# process to skip lines with physical location:
+# "         connector 1I box 1 bay 4 ..."
+sub consume_disk_map {
+	my ($this, $fh) = @_;
+
+	while (my $s = <$fh>) {
+		chomp $s;
+		# connector 1I box 1 bay 4
+		last unless $s =~ /^\s+connector\s/;
+	}
 }
 
 sub parse {
@@ -3390,13 +3438,15 @@ sub parse {
 		# volume status, print_volume_status()
 		# /dev/cciss/c0d0: (Smart Array P400i) RAID 1 Volume 0 status: OK
 		# /dev/sda: (Smart Array P410i) RAID 1 Volume 0 status: OK.
-		if (my($file, $board_name, $raid_level, $volume_number, $certain, $status) = m{
+		# /dev/sda: (Smart Array P410i) RAID 5 Volume 0 status: OK.   At least one spare drive designated.  At least one spare drive has failed.
+		if (my($file, $board_name, $raid_level, $volume_number, $certain, $status, $spare_drive_status) = m{
 			^(/dev/[^:]+):\s        # File
 			\(([^)]+)\)\s           # Board Name
 			(RAID\s\d+|\([^)]+\))\s # RAID level
 			Volume\s(\d+)           # Volume number
 			(\(\?\))?\s             # certain?
 			status:\s(.*?)\.        # status (without a dot)
+			(.*)?                   # spare drive status messages
 		}x) {
 			$cdev = $file;
 			$c{$file}{volumes}{$volume_number} = {
@@ -3405,6 +3455,7 @@ sub parse {
 				volume_number => $volume_number,
 				certain => int(not defined $certain),
 				status => $status,
+				spare_drive_status => trim($spare_drive_status),
 			};
 
 			$c{$file}{board_name} = $board_name;
@@ -3485,6 +3536,23 @@ sub parse {
 			}
 
 			next if $got;
+		}
+
+		# show_disk_map("  Failed drives:", file, fd, id, controller_lun, ctlrtype,
+		# show_disk_map("  'Replacement' drives:", file, fd, id, controller_lun, ctlrtype,
+		# show_disk_map("  Drives currently substituted for by spares:", file, fd, id, controller_lun, ctlrtype,
+		if (/^  Failed drives:/ ||
+			/^  'Replacement' drives:/ ||
+			/^  Drives currently substituted for by spares:/
+		) {
+			# could store this somewhere, ignore for now
+			$this->consume_disk_map($fh);
+			next;
+		}
+
+		if (my($total_failed) = /Total of (\d+) failed physical drives detected on this logical drive\./) {
+			$c{$cdev}{phys_failed} = $total_failed;
+			next;
 		}
 
 		warn "Unparsed[$_]";
@@ -3621,12 +3689,7 @@ package hp_msa;
 use base 'plugin';
 
 # do not register, better use hpacucli
-#push(@utils::plugins, __PACKAGE__);
-
-sub new {
-	my $self = shift;
-	$self->SUPER::new(tty_device => "/dev/ttyS0", @_);
-}
+push(@utils::plugins, __PACKAGE__);
 
 sub active {
 	my $this = shift;
@@ -3636,6 +3699,9 @@ sub active {
 # check from /sys if there are any MSA VOLUME's present.
 sub detect {
 	my $this = shift;
+
+	# allow --plugin-option=hp_msa-enabled to force this plugin to be enabled
+	return 1 if exists $this->{options}{'hp_msa-enabled'};
 
 	for my $file (</sys/block/*/device/model>) {
 		open my $fh, '<', $file or next;
@@ -3649,7 +3715,8 @@ sub detect {
 sub check {
 	my $this = shift;
 
-	my $ctldevice = $this->{tty_device};
+	#  allow --plugin-option=hp_msa-serial=/dev/ttyS2 to specify serial line
+	my $ctldevice = $this->{options}{'hp_msa-serial'} || '/dev/ttyS0';
 
 	# status messages pushed here
 	my @status;
@@ -4103,138 +4170,6 @@ sub check {
 	$this->ok->message($this->join_status(\%status));
 }
 
-package hpssacli;
-use base 'plugin';
-
-# register
-push(@utils::plugins, __PACKAGE__);
-
-sub program_names {
-	__PACKAGE__;
-}
-
-sub commands {
-	{
-		'controller status' => ['-|', '@CMD', 'controller', 'all', 'show', 'status'],
-		'logicaldrive status' => ['-|', '@CMD', 'controller', '$target', 'logicaldrive', 'all', 'show'],
-	}
-}
-
-sub sudo {
-	my ($this, $deep) = @_;
-	# quick check when running check
-	return 1 unless $deep;
-
-	my $cmd = $this->{program};
-	(
-		"CHECK_RAID ALL=(root) NOPASSWD: $cmd controller all show status",
-		"CHECK_RAID ALL=(root) NOPASSWD: $cmd controller * logicaldrive all show",
-	);
-}
-
-sub check {
-	my $this = shift;
-
-	# status messages pushed here
-	my @status;
-
-	# TODO: allow target customize:
-	# hpssacli <target> is of format:
-	#  [controller all|slot=#|wwn=#|chassisname="AAA"|serialnumber=#|chassisserialnumber=#|ctrlpath=#:# ]
-	#  [array all|<id>]
-	#  [physicaldrive all|allunassigned|[#:]#:#|[#:]#:#-[#:]#:#]
-	#  [logicaldrive all|#]
-	#  [enclosure all|#:#|serialnumber=#|chassisname=#]
-	#  [licensekey all|<key>]
-
-	# Scan controllers
-	my (%targets);
-	my $fh = $this->cmd('controller status');
-	while (<$fh>) {
-		# Numeric slot
-		if (my($model, $slot) = /^(\S.+) in Slot (.+)/) {
-			$slot =~ s/ \(Embedded\)//;
-			$targets{"slot=$slot"} = $model;
-			$this->unknown if $slot !~ /^\d+$/;
-			next;
-		}
-		# Named Entry
-		if (my($model, $cn) = /^(\S.+) in (.+)/) {
-			$targets{"chassisname=$cn"} = $cn;
-			next;
-		}
-	}
-	close $fh;
-
-	unless (%targets) {
-		$this->warning;
-		$this->message("No Controllers were found on this machine");
-		return;
-	}
-
-	# Scan logical drives
-	for my $target (sort {$a cmp $b} keys %targets) {
-		my $model = $targets{$target};
-		# check each controllers
-		my $fh = $this->cmd('logicaldrive status', { '$target' => $target });
-
-		my ($array, %array);
-		while (<$fh>) {
-			# "array A"
-			# "array A (Failed)"
-			# "array B (Failed)"
-			if (my($a, $s) = /^\s+array (\S+)(?:\s*\((\S+)\))?$/) {
-				$array = $a;
-				# Offset 0 is Array own status
-				# XXX: I don't like this one: undef could be false positive
-				$array{$array}[0] = $s || 'OK';
-			}
-
-			# skip if no active array yet
-			next unless $array;
-
-			# logicaldrive 1 (68.3 GB, RAID 1, OK)
-			# capture only status
-			if (my($drive, $s) = /^\s+logicaldrive (\d+) \([\d.]+ .B, [^,]+, ([^\)]+)\)$/) {
-				# Offset 1 is each logical drive status
-				$array{$array}[1]{$drive} = $s;
-				next;
-			}
-
-			# Error: The controller identified by "slot=attr_value_slot_unknown" was not detected.
-			if (/Error:/) {
-				$this->unknown;
-			}
-		}
-		$this->unknown unless close $fh;
-
-		my @cstatus;
-		while (my($array, $d) = each %array) {
-			my ($astatus, $ld) = @$d;
-
-			my @astatus;
-			# extra details for non-normal arrays
-			foreach my $lun (sort { $a cmp $b } keys %$ld) {
-				my $s = $ld->{$lun};
-				push(@astatus, "LUN$lun:$s");
-
-				if ($s eq 'OK' or $s eq 'Disabled') {
-				} elsif ($s eq 'Failed' or $s eq 'Interim Recovery Mode') {
-					$this->critical;
-				} elsif ($s eq 'Rebuild' or $s eq 'Recover') {
-					$this->warning;
-				}
-			}
-			push(@cstatus, "Array $array($astatus)[". join(',', @astatus). "]");
-		}
-		push(@status, "$model: ".join(', ', @cstatus));
-	}
-
-	return unless @status;
-
-	$this->ok->message(join(', ', @status));
-}
-
 package hpacucli;
 use base 'plugin';
 
@@ -4242,7 +4177,7 @@ use base 'plugin';
 push(@utils::plugins, __PACKAGE__);
 
 sub program_names {
-	__PACKAGE__;
+	qw(hpacucli hpssacli);
 }
 
 sub commands {
@@ -4264,11 +4199,8 @@ sub sudo {
 	);
 }
 
-sub check {
+sub scan_targets {
 	my $this = shift;
-
-	# status messages pushed here
-	my @status;
 
 	# TODO: allow target customize:
 	# hpacucli <target> is of format:
@@ -4285,6 +4217,7 @@ sub check {
 	while (<$fh>) {
 		# Numeric slot
 		if (my($model, $slot) = /^(\S.+) in Slot (.+)/) {
+			$slot =~ s/ \(RAID Mode\)//;
 			$slot =~ s/ \(Embedded\)//;
 			$targets{"slot=$slot"} = $model;
 			$this->unknown if $slot !~ /^\d+$/;
@@ -4298,16 +4231,16 @@ sub check {
 	}
 	close $fh;
 
-	unless (%targets) {
-		$this->warning;
-		$this->message("No Controllers were found on this machine");
-		return;
-	}
+	return \%targets;
+}
 
-	# Scan logical drives
-	for my $target (sort {$a cmp $b} keys %targets) {
-		my $model = $targets{$target};
-		# check each controllers
+# Scan logical drives
+sub scan_luns {
+	my ($this, $targets) = @_;
+
+	my %luns;
+	while (my($target, $model) = each %$targets) {
+		# check each controller
 		my $fh = $this->cmd('logicaldrive status', { '$target' => $target });
 
 		my ($array, %array);
@@ -4340,9 +4273,47 @@ sub check {
 		}
 		$this->unknown unless close $fh;
 
+		$luns{$target} = { %array };
+	}
+
+	return \%luns;
+}
+
+# parse hpacucli output into logical structure
+sub parse {
+	my $this = shift;
+
+	my $targets = $this->scan_targets;
+	if (!$targets) {
+		return $targets;
+	}
+	my $luns = $this->scan_luns($targets);
+	return { 'targets' => $targets, 'luns' => $luns };
+}
+
+sub check {
+	my $this = shift;
+
+	my $ctrl = $this->parse;
+	unless ($ctrl) {
+		$this->warning->message("No Controllers were found on this machine");
+		return;
+	}
+
+	# status messages pushed here
+	my @status;
+
+	for my $target (sort {$a cmp $b} keys %{$ctrl->{targets}}) {
+		my $model = $ctrl->{targets}->{$target};
+
 		my @cstatus;
-		while (my($array, $d) = each %array) {
-			my ($astatus, $ld) = @$d;
+		foreach my $array (sort { $a cmp $b } keys %{$ctrl->{luns}->{$target}}) {
+			my ($astatus, $ld) = @{$ctrl->{luns}->{$target}{$array}};
+
+			# check array status
+			if ($astatus ne 'OK') {
+				$this->critical;
+			}
 
 			my @astatus;
 			# extra details for non-normal arrays
@@ -4359,6 +4330,7 @@ sub check {
 			}
 			push(@cstatus, "Array $array($astatus)[". join(',', @astatus). "]");
 		}
+
 		push(@status, "$model: ".join(', ', @cstatus));
 	}
 
@@ -4629,7 +4601,7 @@ use Getopt::Long;
 
 my ($opt_V, $opt_d, $opt_h, $opt_W, $opt_S, $opt_p, $opt_l);
 my (%ERRORS) = (OK => 0, WARNING => 1, CRITICAL => 2, UNKNOWN => 3);
-my ($VERSION) = "3.2.3";
+my ($VERSION) = "3.2.4";
 my ($message, $status, $perfdata, $longoutput);
 my ($noraid_state) = $ERRORS{UNKNOWN};
 
@@ -4868,6 +4840,36 @@ sub setstate {
 	$$key = $ERRORS{$value};
 }
 
+# obtain git hash of check_raid.pl
+# http://stackoverflow.com/questions/460297/git-finding-the-sha1-of-an-individual-file-in-the-index#comment26055597_460315
+sub git_hash_object() {
+	my $content = "blob ";
+	$content .= -s $0;
+	$content .= "\0";
+	open my $fh, '<', $0 or die $!;
+	local $/ = undef;
+	$content .= <$fh>;
+	close($fh) or die $!;
+
+	# try Digest::SHA1
+	my $digest;
+	eval {
+		require Digest::SHA1;
+		$digest = Digest::SHA1::sha1_hex($content);
+	};
+
+	return $digest;
+}
+
+# plugin options (key=>value pairs) passed as 'options' key to each plugin constructor.
+# the options are global, not plugin specific, but it's recommended to prefix option with plugin name.
+# the convention is to have PLUGIN_NAME-OPTION_NAME=OPTION_VALUE syntax to namespace each plugin option.
+#
+# so "--plugin-option=hp_msa-serial=/dev/ttyS2" would define option 'serial'
+# for 'hp_msa' plugin with value '/dev/ttyS2'.
+#
+my %plugin_options;
+
 Getopt::Long::Configure('bundling');
 GetOptions(
 	'V' => \$opt_V, 'version' => \$opt_V,
@@ -4880,6 +4882,7 @@ GetOptions(
 	'noraid=s' => sub { setstate(\$noraid_state, @_); },
 	'bbulearn=s' => sub { setstate(\$plugin::bbulearn_status, @_); },
 	'cache-fail=s' => sub { setstate(\$plugin::cache_fail_status, @_); },
+	'plugin-option=s' => sub { my($k, $v) = split(/=/, $_[1], 2); $plugin_options{$k} = $v; },
 	'bbu-monitoring' => \$plugin::bbu_monitoring,
 	'p=s' => \$opt_p, 'plugin=s' => \$opt_p,
 	'l' => \$opt_l, 'list-plugins' => \$opt_l,
@@ -4896,6 +4899,21 @@ if ($opt_V) {
 	print "check_raid Version $VERSION\n";
 	exit $ERRORS{'OK'};
 }
+
+if ($opt_d) {
+	print "check_raid Version $VERSION\n";
+	my $git_ver = `git describe --tags 2>/dev/null`;
+	if ($git_ver) {
+		print "Using git: $git_ver";
+	}
+	my $hash = git_hash_object();
+	if ($hash) {
+		print "git hash object: $hash\n";
+	}
+	print "See CONTRIBUTING.md how to report bugs with debug data:\n";
+	print "https://github.com/glensc/nagios-plugin-check_raid/blob/master/CONTRIBUTING.md\n\n";
+}
+
 if ($opt_h) {
 	print_help();
 	exit $ERRORS{'OK'};
@@ -4917,7 +4935,7 @@ $utils::debug = $opt_d;
 my @plugins = $opt_p ? grep { my $p = $_; grep { /^$p$/ } split(/,/, $opt_p) } @utils::plugins : @utils::plugins;
 
 foreach my $pn (@plugins) {
-	my $plugin = $pn->new;
+	my $plugin = $pn->new(options => \%plugin_options);
 
 	# skip inactive plugins (disabled or no tools available)
 	next unless $plugin->active;
