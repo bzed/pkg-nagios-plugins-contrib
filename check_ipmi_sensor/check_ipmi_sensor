@@ -35,7 +35,7 @@ use Getopt::Long qw(:config no_ignore_case);
 use IPC::Run qw( run ); #interact with processes
 ################################################################################
 # set text variables
-our $check_ipmi_sensor_version = "3.8";
+our $check_ipmi_sensor_version = "3.9";
 
 sub get_version
 {
@@ -133,11 +133,26 @@ sub get_help
        For this purpose the tool 'ipmi-fru' is used. E.g.:
          IPMI Status: OK (9000096781)
   [--nosel]
-       turn off system event log checking via ipmi-sel.
+       turn off system event log checking via ipmi-sel. If there are
+       unintentional entries in SEL, use 'ipmi-sel --clear'.
+  [-sx|--selexclude <sel exclude file>]
+       use a sel exclude file to exclude entries from the system event log.
+       Specify name and type pipe delimitered in this file to exclude an entry,
+       for example: System Chassis Chassis Intru|Physical Security
+       To get valid names and types use the -vvv option and take a look at:
+       debug output for sel (-vvv is set). Don't use name and type from the
+       web interface as sensor descriptions are not complete there.
+  [-xx|--sexclude <exclude file>]
+       use an exclude file to exclude sensors.
+       Specify name and type pipe delimitered in this file to exclude a sensor,
+       To get valid names and types use the -vvv option.
   [--nosudo]
        turn off sudo usage on localhost or if ipmi host is ommited.
   [--nothresholds]
        turn off performance data thresholds from output-sensor-thresholds.
+  [-s <ipmi-sensor output file>]
+       simulation mode - test the plugin with an ipmi-sensor output redirected
+       to a file.
   [-h]
        show this help
   [-V]
@@ -306,9 +321,11 @@ sub get_sel{
 sub parse_sel{
 	my $selcmd = shift;
 	my $verbosity = shift;
+	my $sel_xfile = shift;
 	my @seloutput = get_sel($selcmd, $verbosity);
 	@seloutput = map { [ map { s/^\s*//; s/\s*$//; $_; } split(m/\|/, $_) ] } @seloutput;
 	my $header = shift(@seloutput);
+	
 	my @sel_rows;
 	foreach my $row (@seloutput){
 		my %curr_row;
@@ -316,9 +333,38 @@ sub parse_sel{
 			my $key = lc $header->[$i];
 			$curr_row{$key} = $row->[$i];
 		}
-		push @sel_rows, \%curr_row;
+		if(!(exclude_with_file($sel_xfile, $curr_row{'name'}, $curr_row{'type'}))){
+			push @sel_rows, \%curr_row;
+		}
 	}
 	return \@sel_rows;
+}
+
+# Excludes a name and type pair if it is present in the given file, pipe
+# delimitered.
+# @return 1 if name should be skipped, 0 if not
+sub exclude_with_file{
+	my $file_name = shift;
+	my $name = shift;
+	my $type = shift;
+	my @xlist;
+	my $skip = 0;
+	if($file_name){
+		if(!(open (FH, "< $file_name"))){
+			print "-> Reading exclude file $file_name failed with: $!.\n";
+			exit(3);
+		};
+		@xlist = <FH>;
+	}
+	foreach my $exclude (@xlist){
+		my @curr_exclude = map { s/^\s*//; s/\s*$//; $_; } split(/\|/,$exclude);
+		if($curr_exclude[0] eq $name && 
+		$curr_exclude[1] eq $type){
+			$skip = 1;
+		}
+	}
+	close FH;
+	return $skip;
 }
 
 #define entire hashes
@@ -337,12 +383,12 @@ our %hdrmap = (
 	'Sensor Reading'	=> 'reading',
 	'Reading'		=> 'reading',	# FreeIPMI 0.8.x
 	'Event'			=> 'event',	# FreeIPMI 0.8.x
-	'Lower C'			=> 'lowerC',
-	'Lower NC'			=> 'lowerNC',
-	'Upper C'			=> 'upperC',
-	'Upper NC'			=> 'upperNC',
-	'Lower NR'			=> 'lowerNR',
-	'Upper NR'			=> 'upperNR',
+	'Lower C'		=> 'lowerC',
+	'Lower NC'		=> 'lowerNC',
+	'Upper C'		=> 'upperC',
+	'Upper NC'		=> 'upperNC',
+	'Lower NR'		=> 'lowerNR',
+	'Upper NR'		=> 'upperNR',
 );
 
 our $verbosity = 0;
@@ -361,7 +407,7 @@ MAIN: {
 	my $abort_text = '';
 	my $zenoss = 0;
 	my $simulate = '';
-	my ($use_fru, $no_sel, $no_sudo, $use_thresholds, $no_thresholds);
+	my ($use_fru, $no_sel, $no_sudo, $use_thresholds, $no_thresholds, $sel_xfile, $s_xfile);
 
 	#read in command line arguments and init hash variables with the given values from argv
 	if ( !( GetOptions(
@@ -381,11 +427,13 @@ MAIN: {
 		'vv'				=> sub{$verbosity=2},
 		'vvv'				=> sub{$verbosity=3},
 		'x|exclude=s'		=> \@ipmi_xlist,
+		'sx|selexclude=s'	=> \$sel_xfile,
+		'xx|sexclude=s'		=> \$s_xfile,
 		'i|include=s'		=> \@ipmi_ilist,
 		'o|outformat=s'		=> \$ipmi_outformat,
 		'fc|fancount=i'		=> \$fan_count,
 		'D=s'				=> \$lanVersion,
-		's=s'				=>\$simulate,
+		's=s'				=> \$simulate,
 		'h|help'			=>
 			sub{print STDOUT get_version();
 				print STDOUT "\n";
@@ -551,7 +599,7 @@ MAIN: {
 	}
 	my $seloutput;
 	if(!$no_sel){
-		$seloutput = parse_sel(\@selcmd, $verbosity);
+		$seloutput = parse_sel(\@selcmd, $verbosity, $sel_xfile);
 	}
 ################################################################################
 # print debug output when verbosity is set to 3 (-vvv)
@@ -636,7 +684,9 @@ MAIN: {
 			while ( my ($key, $index) = each %header ){
 				$row{$key} = $row->[$index];
 			}
-			push @ipmioutput2, \%row;
+			if(!(exclude_with_file($s_xfile, $row{'name'}, $row{'type'}))){
+				push @ipmioutput2, \%row;
+			}
 		}
 		#create hash with sensor name an 1
 		my %ipmi_xlist = map { ($_, 1) } @ipmi_xlist;
