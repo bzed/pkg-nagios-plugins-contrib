@@ -886,6 +886,16 @@ sub system_tmpdir {
   }
 }
 
+sub decode_password {
+  my $self = shift;
+  my $password = shift;
+  if ($password && $password =~ /^rfc3986:\/\/(.*)/) {
+    $password = $1;
+    $password =~ s/\%([A-Fa-f0-9]{2})/pack('C', hex($1))/seg;
+  }
+  return $password;
+}
+
 
 package DBD::MySQL::Server::Connection;
 
@@ -989,7 +999,7 @@ sub init {
       if ($self->{handle} = DBI->connect(
           $self->{dsn},
           $self->{username},
-          $self->{password},
+          $self->decode_password($self->{password}),
           { RaiseError => 0, AutoCommit => 0, PrintError => 0 })) {
 #        $self->{handle}->do(q{
 #            ALTER SESSION SET NLS_NUMERIC_CHARACTERS=".," });
@@ -1174,6 +1184,7 @@ sub init {
     }
   }
   if (! exists $self->{errstr}) {
+    $self->{password} = $self->decode_password($self->{password});
     eval {
       my $mysql = '/'.'usr'.'/'.'bin'.'/'.'mysql';
       if (! -x $mysql) {
@@ -1188,7 +1199,7 @@ sub init {
             unless $self->{socket} || $self->{hostname} eq "localhost";
         $self->{sqlplus} .= sprintf "--socket=%s ", $self->{socket}
             if $self->{socket};
-        $self->{sqlplus} .= sprintf "--user=%s --password=%s < %s > %s",
+        $self->{sqlplus} .= sprintf "--user=%s --password='%s' < %s > %s",
             $self->{username}, $self->{password},
             $self->{sql_commandfile}, $self->{sql_resultfile};
       }
@@ -1422,6 +1433,19 @@ sub create_commandfile {
   close CMDCMD;
 }
 
+sub decode_password {
+  my $self = shift;
+  my $password = shift;
+  $password = $self->SUPER::decode_password($password);
+  # we call '...%s/%s@...' inside backticks where the second %s is the password
+  # abc'xcv -> ''abc'\''xcv''
+  # abc'`xcv -> ''abc'\''\`xcv''
+  if ($password =~ /'/) {
+    $password = "'".join("\\'", map { "'".$_."'"; } split("'", $password))."'";
+  }
+  return $password;
+}
+
 
 package DBD::MySQL::Server::Connection::Sqlrelay;
 
@@ -1451,13 +1475,13 @@ sub init {
     }
   } else {
     if (! $self->{hostname} || ! $self->{username} || ! $self->{password}) {
-      if ($self->{hostname} && $self->{hostname} =~ /(\w+)\/(\w+)@([\.\w]+):(\d+)/) {
+      if ($self->{hostname} && $self->{hostname} =~ /(\w+?)\/(.+)@([\.\w]+):(\d+)/) {
         $self->{username} = $1;
         $self->{password} = $2;
         $self->{hostname} = $3;
         $self->{port} = $4;
         $self->{socket} = "";
-      } elsif ($self->{hostname} && $self->{hostname} =~ /(\w+)\/(\w+)@([\.\w]+):([\w\/]+)/) {
+      } elsif ($self->{hostname} && $self->{hostname} =~ /(\w+?)\/(.+)@([\.\w]+):([\w\/]+)/) {
         $self->{username} = $1;
         $self->{password} = $2;
         $self->{hostname} = $3;
@@ -1502,7 +1526,7 @@ sub init {
           sprintf("DBI:SQLRelay:host=%s;port=%d;socket=%s", 
           $self->{hostname}, $self->{port}, $self->{socket}),
           $self->{username},
-          $self->{password},
+          $self->decode_password($self->{password}),
           { RaiseError => 1, AutoCommit => 0, PrintError => 1 })) {
         $retval = $self;
         if ($self->{mode} =~ /^server::tnsping/ && $self->{handle}->ping()) {

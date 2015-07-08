@@ -1,25 +1,15 @@
-dnl Process this file with autoconf to produce a configure script.
-AC_REVISION ($Revision: 1.150 $)
-AC_PREREQ(2.58)
-AC_INIT(check_mysql_health,2.1.9.2)
-AM_INIT_AUTOMAKE([1.9 tar-pax])
-AC_CANONICAL_HOST
+#                                               -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
 
+AC_PREREQ([2.69])
+AC_INIT(check_mysql_health,2.2)
+AM_INIT_AUTOMAKE([1.9 tar-pax])
+AM_MAINTAINER_MODE([disable])
+AC_CANONICAL_HOST
 RELEASE=1
 AC_SUBST(RELEASE)
 
 AC_PREFIX_DEFAULT(/usr/local/nagios)
-
-dnl Figure out how to invoke "install" and what install options to use.
-AC_PROG_INSTALL
-AC_SUBST(INSTALL)
-
-dnl AC_PROG_CC
-dnl AC_PROG_CPP
-dnl AC_PROG_GCC_TRADITIONAL
-dnl AC_PROG_RANLIB
-
-AC_PROG_MAKE_SET
 
 WARRANTY="This plugin comes with ABSOLUTELY NO WARRANTY. You may redistribute\ncopies of the plugin under the terms of the GNU General Public License.\nFor more information about these matters, see the file named COPYING.\n"
 AC_SUBST(WARRANTY)
@@ -66,36 +56,48 @@ AC_ARG_WITH(mymodules_dyn_dir,
 AC_SUBST(MYMODULES_DYN_DIR, $with_mymodules_dyn_dir)
 echo variable with_mymodules_dyn_dir is $with_mymodules_dyn_dir
 
-EXTRAS=
-dnl PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/etc:/usr/local/bin:/usr/local/sbin:$PATH
 
-dnl Checks for programs.
+EXTRAS=
+# PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/etc:/usr/local/bin:/usr/local/sbin:$PATH
+
+
+# Checks for programs.
+AC_PROG_MAKE_SET
+# Figure out how to invoke "install" and what install options to use.
+AC_PROG_INSTALL
+AC_SUBST(INSTALL)
+AC_PATH_PROG(ECHO,echo)
+AC_PATH_PROG(SED,sed)
+AC_PATH_PROG(GREP,grep)
+AC_PATH_PROG(CAT,cat)
 AC_PATH_PROG(SH,sh)
 AC_PATH_PROG(PERL,perl)
 AC_PATH_PROG(GZIP,gzip)
 AC_PATH_PROGS(AWK,gawk nawk /usr/xpg4/bin/awk awk)
-AC_PATH_PROG(GREP,grep)
-AC_PATH_PROG(ECHO,echo)
-AC_PATH_PROG(SED,sed)
-AC_PATH_PROG(CAT,cat)
-
-dnl allow them to override the path of perl
+# allow them to override the path of perl
 AC_ARG_WITH(perl,
   ACX_HELP_STRING([--with-perl=PATH],
     [sets path to perl executable]),
   with_perl=$withval,with_perl=$PERL)
 AC_SUBST(PERL, $with_perl)
 
-AC_OUTPUT(
-  Makefile 
-  plugins-scripts/Makefile 
-  plugins-scripts/subst 
-  t/Makefile
-)
+# Checks for libraries.
 
+# Checks for header files.
+
+# Checks for typedefs, structures, and compiler characteristics.
+
+# Checks for library functions.
+
+AC_CONFIG_FILES([Makefile
+                 plugins-scripts/Makefile
+                 plugins-scripts/subst
+                 t/Makefile])
+AC_OUTPUT
 ACX_FEATURE([with],[perl])
 ACX_FEATURE([with],[statefiles-dir])
 ACX_FEATURE([with],[nagios-user])
 ACX_FEATURE([with],[nagios-group])
 ACX_FEATURE([with],[mymodules-dir])
 ACX_FEATURE([with],[mymodules-dyn-dir])
+

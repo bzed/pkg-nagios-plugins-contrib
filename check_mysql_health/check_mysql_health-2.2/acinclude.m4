@@ -752,4 +752,11 @@ AC_SUBST([am__tar])
 AC_SUBST([am__untar])
 ]) # _AM_PROG_TAR
 
-m4_include([acinclude.m4])
+# @synopsis ACX_FEATURE(ENABLE_OR_WITH,NAME[,VALUE])
+AC_DEFUN([ACX_FEATURE],
+         [echo "builtin([substr],[                                  ],len(--$1-$2))--$1-$2: ifelse($3,,[$]translit($1-$2,-,_),$3)"])
+
+# @synopsis ACX_HELP_STRING(OPTION,DESCRIPTION)
+AC_DEFUN([ACX_HELP_STRING],
+         [  $1 builtin([substr],[                       ],len($1))[$2]])
+

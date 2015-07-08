@@ -2,6 +2,9 @@
 # Changelog of the check_mysql_health plugin #
 ###############################################
 
+2.2 - 2015-04-23
+- add rfc3986-encoded passwords
+
 2.1.9.2 2014-12-22
 - bugfix in InnoDB initialization & versions > 5.6.1 (Thanks Jorg Veit)
 
