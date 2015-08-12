@@ -1,6 +1,6 @@
 #/usr/bin/make -f
 CLEANFILES = check_memcached check_memcached.c
-LIBS += -lmemcached
+LIBS += $(shell pkg-config --libs libmemcached) -lpthread
 
 include ../common.mk
 
