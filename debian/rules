@@ -5,9 +5,14 @@
 export DH_VERBOSE=1
 
 PKGNAME = nagios-plugins-contrib
+PLUGINS := $(shell find $(CURDIR) -mindepth 1 -maxdepth 1 -name .git -prune -o -name .pc -prune -o -name debian -prune -o -type d -printf '%f\n' | sort)
 
 %:
 	dh $@ --with quilt,python2
+
+override_dh_auto_build:
+	dh_auto_build
+	$(PACKAGING_HELPER) --generate-readme
 
 PACKAGING_HELPER = /usr/bin/python $(CURDIR)/debian/packaging-helper.py
 
