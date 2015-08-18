@@ -79,7 +79,7 @@ Description: Plugins for nagios compatible monitoring systems
      outside its normal parameters.
    * check_httpd_status (rev153): plugin checking Apache or Lighthttpd
      server-status page (using mod_status)
-   * check_ipmi_sensor (3.8): IPMI Sensor Monitoring Plugin
+   * check_ipmi_sensor (3.9): IPMI Sensor Monitoring Plugin
      Plugin to monitor the hardware status (fan speed, temperaturs,
      voltages, power usage, ...) of a server using IPMI.
    * check_ldap_root (?): plugin to check LDAP server response
@@ -101,16 +101,16 @@ Description: Plugins for nagios compatible monitoring systems
      This plugin excludes the system cache and buffer, because
      on some system with very stable memory usage it is perfectly
      normal for system cache to fill in all available memory.
-   * check_mongodb (19e6b2c8f4): Plugin script to monitor your MongoDB server(s)
+   * check_mongodb (abf2daad31): Plugin script to monitor your MongoDB server(s)
    * check_multipath (0.2.1): plugin to monitor the number of available and
      failed paths of multipath devices
-   * check_mysql_health (2.1.9.2): plugin to check various parameters of a
+   * check_mysql_health (2.2.1): plugin to check various parameters of a
      MySQL database
    * check_nfsmounts: checks whether there are stale NFS mounts on the host
    * check_printer: plugin to check printer supply levels using SNMP
      It outputs performance data for all supplies
      found, for example toner and drum.
-   * check_raid (3.2.3): plugin to check sw/hw RAID status
+   * check_raid (3.2.4): plugin to check sw/hw RAID status
      The plugin looks for any known types of RAID configurations,
      and checks them all.
      .
