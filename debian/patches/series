@@ -16,6 +16,7 @@ check_lm_sensors/manpage_whatis_fix
 check_lm_sensors/spelling_errors
 check_lm_sensors/interpreter
 check_mysql_health/documentation_url
+check_mysql_health/fix_automake
 check_nfsmounts/perl_module
 check_nfsmounts/nfs_write_location
 check_printer/use_data_dumper_if_needed
