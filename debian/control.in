@@ -3,7 +3,12 @@ Section: net
 Priority: extra
 Maintainer: Debian Nagios Maintainer Group <pkg-nagios-devel@lists.alioth.debian.org>
 Uploaders: #AUTO_UPDATE_Uploaders#
-Build-Depends: debhelper (>= 8.0.0), python, python-debian, quilt (>= 0.46-7), dh-autoreconf, #AUTO_UPDATE_Build-Depends#
+Build-Depends: debhelper (>= 8.0.0),
+               dh-autoreconf,
+               python,
+               python-debian,
+               quilt (>= 0.46-7),
+               #AUTO_UPDATE_Build-Depends#
 Standards-Version: 3.9.6
 Vcs-Git: git://anonscm.debian.org/pkg-nagios/pkg-nagios-plugins-contrib.git
 Vcs-Browser: http://anonscm.debian.org/cgit/pkg-nagios/pkg-nagios-plugins-contrib.git
@@ -11,7 +16,10 @@ Vcs-Browser: http://anonscm.debian.org/cgit/pkg-nagios/pkg-nagios-plugins-contri
 Package: nagios-plugins-contrib
 Architecture: any
 Depends: ${misc:Depends}
-Recommends: ${shlibs:Depends}, ${python:Depends}, #AUTO_UPDATE_Recommends#, ${perl:Depends}
+Recommends: #AUTO_UPDATE_Recommends#,
+            ${perl:Depends},
+            ${python:Depends},
+            ${shlibs:Depends}
 Suggests: #AUTO_UPDATE_Suggests#
 Enhances: nagios-plugins, nagios-plugins-basic, nagios-plugins-standard
 Description: Plugins for nagios compatible monitoring systems
