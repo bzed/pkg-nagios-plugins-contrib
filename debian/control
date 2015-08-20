@@ -3,7 +3,12 @@ Section: net
 Priority: extra
 Maintainer: Debian Nagios Maintainer Group <pkg-nagios-devel@lists.alioth.debian.org>
 Uploaders: Bernd Zeimetz <bzed@debian.org>, Jan Wagner <waja@cyconet.org>, Petter Reinholdtsen <pere@hungry.com>
-Build-Depends: debhelper (>= 8.0.0), python, python-debian, quilt (>= 0.46-7), dh-autoreconf, autotools-dev, flex, libmemcached-dev [!hurd-i386 !arm64], libvarnishapi-dev [!hurd-i386 !m68k], pkg-config
+Build-Depends: debhelper (>= 8.0.0),
+               dh-autoreconf,
+               python,
+               python-debian,
+               quilt (>= 0.46-7),
+               autotools-dev, flex, libmemcached-dev [!hurd-i386 !arm64], libvarnishapi-dev [!hurd-i386 !m68k], pkg-config
 Standards-Version: 3.9.6
 Vcs-Git: git://anonscm.debian.org/pkg-nagios/pkg-nagios-plugins-contrib.git
 Vcs-Browser: http://anonscm.debian.org/cgit/pkg-nagios/pkg-nagios-plugins-contrib.git
@@ -11,7 +16,10 @@ Vcs-Browser: http://anonscm.debian.org/cgit/pkg-nagios/pkg-nagios-plugins-contri
 Package: nagios-plugins-contrib
 Architecture: any
 Depends: ${misc:Depends}
-Recommends: ${shlibs:Depends}, ${python:Depends}, libsocket-perl, libnagios-plugin-perl, libnet-snmp-perl, whois, nagios-plugins-basic, libnet-dns-perl, libdate-manip-perl, libnagios-plugin-perl (>= 0.31), libnet-cups-perl, libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-smtp-ssl-perl, libnet-ssleay-perl, libnet-smtpauth-perl, python, liblocale-gettext-perl, liblwp-useragent-determined-perl, snmp, freeipmi-tools, libipc-run-perl, ldap-utils, lsof, libyaml-syck-perl, libxml-simple-perl, python-pymongo, libdbd-mysql-perl, libreadonly-perl, libdata-validate-domain-perl, libdata-validate-ip-perl, libredis-perl, procps, libnet-snmp-perl (>= 5), libtimedate-perl, openssl, libwebinject-perl, libnet-dns-sec-perl, ruby | ruby-interpreter, binutils, ${perl:Depends}
+Recommends: libsocket-perl, libnagios-plugin-perl, libnet-snmp-perl, whois, nagios-plugins-basic, libnet-dns-perl, libdate-manip-perl, libnagios-plugin-perl (>= 0.31), libnet-cups-perl, libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-smtp-ssl-perl, libnet-ssleay-perl, libnet-smtpauth-perl, python, liblocale-gettext-perl, liblwp-useragent-determined-perl, snmp, freeipmi-tools, libipc-run-perl, ldap-utils, lsof, libyaml-syck-perl, libxml-simple-perl, python-pymongo, libdbd-mysql-perl, libreadonly-perl, libdata-validate-domain-perl, libdata-validate-ip-perl, libredis-perl, procps, libnet-snmp-perl (>= 5), libtimedate-perl, openssl, libwebinject-perl, libnet-dns-sec-perl, ruby | ruby-interpreter, binutils,
+            ${perl:Depends},
+            ${python:Depends},
+            ${shlibs:Depends}
 Suggests: backuppc, perl-doc, libsys-virt-perl, cciss-vol-status (>= 1.10), mpt-status, smstools (>= 3~), expect, nagios-plugin-check-multi, moreutils, percona-toolkit
 Enhances: nagios-plugins, nagios-plugins-basic, nagios-plugins-standard
 Description: Plugins for nagios compatible monitoring systems
