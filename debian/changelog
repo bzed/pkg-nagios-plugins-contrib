@@ -1,3 +1,15 @@
+nagios-plugins-contrib (16.20150820) UNRELEASED; urgency=medium
+
+  [ Jan Wagner ]
+  * [a3207bd] check_mysql_health: Update to 2.2.1
+  * [31c7ed1] check_mysql_health: Remove integrated
+    patches/check_mysql_health/documentation_url
+  * [dfc20c0] travis-ci: Installing newer autoconf
+  * [f55699c] travis-ci: Installing automake1.9
+  * [295f5a4] Generating new control file
+
+ -- Jan Wagner <waja@cyconet.org>  Thu, 20 Aug 2015 11:04:17 +0200
+
 nagios-plugins-contrib (15.20150818) unstable; urgency=medium
 
   The debconf15 release.
@@ -7,8 +19,11 @@ nagios-plugins-contrib (15.20150818) unstable; urgency=medium
     it was correct in the upload, but not in Git
 
   [ Jan Wagner ]
-  * [0da5840] Disable rbl.orbitrbl.com, it's offline - Adding check_rbl/disable_orbitrbl.com see http://www.dnsbl.com/2014/10/status-of-rblorbitrblcom-dead.html
-  * [9849824] check_email_delivery: Add libnet-smtpauth-perl as Recommends for CRAM-MD5
+  * [0da5840] Disable rbl.orbitrbl.com, it's offline
+    - Adding check_rbl/disable_orbitrbl.com see
+    http://www.dnsbl.com/2014/10/status-of-rblorbitrblcom-dead.html
+  * [9849824] check_email_delivery: Add libnet-smtpauth-perl as Recommends for
+    CRAM-MD5
 
   [ Bernd Zeimetz ]
   * [1151ce3] Add update-check_libs-status cronjob script.
@@ -48,7 +63,8 @@ nagios-plugins-contrib (15.20150818) unstable; urgency=medium
   * [e4c7bc0] check_cups: Update Homepage
   * [cc9ce25] check_drbd: Update Homepage and Watch header
   * [99c5b84] check_rbl: Updating to 1.3.7
-  * [160e8d3] check_rbl: Move back to Nagios::Plugin again by adding patches/check_rbl/nagios-plugins
+  * [160e8d3] check_rbl: Move back to Nagios::Plugin again by adding
+    patches/check_rbl/nagios-plugins
   * [8b921f7] check_whois: Updating to 1.16
   * [90e3211] check_ipmi_sensor: Updating to 3.7
   * [37d10e7] Drop check_rbl/disable_ahbl.org
@@ -63,7 +79,8 @@ nagios-plugins-contrib (15.20150818) unstable; urgency=medium
   * [d0e0af8] Revert "Fix check_ajp to handle non-responding tcp ports."
     This reverts commit f8d59a383175bbcf0011b8308d0505868c6b61e4.
     Change was applied by patch...
-  * [f948c66] Merge branch 'master' of alioth.debian.org:/git/pkg-nagios/pkg-nagios-plugins-contrib
+  * [f948c66] Merge branch 'master' of
+    alioth.debian.org:/git/pkg-nagios/pkg-nagios-plugins-contrib
 
   [ Jan Wagner ]
   * [8696a41] common.mk: Using TAB instead of white spaces
@@ -85,7 +102,8 @@ nagios-plugins-contrib (15.20150818) unstable; urgency=medium
   * [32e8ae4] check_hpasm: Updating to latest 4.7.1.1
   * [a08beb2] check_ipmi_sensor: Updating to 3.8
   * [25d1eea] Updating control file
-  * [74ea485] check_uptime: Update check_uptime.cfg to use the correct script (Closes: #787839)
+  * [74ea485] check_uptime: Update check_uptime.cfg to use the correct script
+    (Closes: #787839)
   * [45d50da] check_raid: Update to 3.2.4
   * [af3e278] check_ipmi_sensor: Update to version 3.9
 
