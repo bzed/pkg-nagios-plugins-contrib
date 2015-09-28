@@ -10,21 +10,42 @@ Copyright 2014 Percona LLC and/or its affiliates
 """
 
 import boto
+import boto.rds
 import datetime
 import optparse
 import pprint
 import sys
 
+# If set, need to search in all RDS regions
+all_regions = False
+
 def get_rds_info(indentifier=None):
     """Function for fetching RDS details"""
-    rds = boto.connect_rds()
-    try:
-        if indentifier:
-            info = rds.get_all_dbinstances(indentifier)[0]
+    
+    regions_list = [None]
+    if all_regions:
+        regions_list = [ region.name for region in boto.rds.regions() ]
+    
+    info = []
+            
+    # Search in all regions, or the default region if all_regions is None
+    for region in regions_list:
+        if not region:
+            rds = boto.connect_rds()
         else:
-            info = rds.get_all_dbinstances()
-    except boto.exception.BotoServerError:
-        info = None
+            rds = boto.rds.connect_to_region(region)
+        
+        try:
+            info.extend(rds.get_all_dbinstances(indentifier))
+        except boto.exception.BotoServerError:
+            pass
+
+    if indentifier:
+        if len(info)>0:
+            return info[0]
+            
+        return None
+    
     return info
 
 def get_rds_stats(step, start_time, end_time, metric, indentifier):
@@ -79,6 +100,8 @@ def main():
 
     # Parse options
     parser = optparse.OptionParser()
+    parser.add_option('--all_regions', help='list or search DB instances in all regions',
+                      action='store_true', default=False)
     parser.add_option('-l', '--list', help='list of all DB instances',
                       action='store_true', default=False, dest='db_list')
     parser.add_option('-i', '--ident', help='DB instance identifier')
@@ -92,6 +115,9 @@ def main():
     options, args = parser.parse_args()
 
     # Check args
+    global all_regions
+    all_regions = options.all_regions
+    
     if len(sys.argv) == 1:
         parser.print_help()
         sys.exit()
@@ -265,6 +291,7 @@ pmp-check-aws-rds.py - Check Amazon RDS metrics.
 
   Options:
     -h, --help            show this help message and exit
+    --all_regions         list or search DB instances in all regions
     -l, --list            list of all DB instances
     -i IDENT, --ident=IDENT
                           DB instance identifier
@@ -314,6 +341,10 @@ The plugin provides 4 checks and some options to list and print RDS details:
 To get the list of all RDS instances under AWS account:
 
   # ./aws-rds-nagios-check.py -l
+  
+To get the list of all RDS instances under AWS account in all regions:
+
+  # ./aws-rds-nagios-check.py -l --all_regions
 
 To get the detailed status of RDS instance identified as C<blackbox>: 
 
