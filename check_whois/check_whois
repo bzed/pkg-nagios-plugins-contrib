@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # nagios: -epn
 
-# $Id: check_whois,v 1.16 2014/12/16 00:09:36 wessels Exp $
+# $Id: check_whois,v 1.19 2015/10/06 14:22:02 wessels Exp $
 #
 # check_whois
 #
@@ -96,6 +96,19 @@ sub findwhois {
 	die "Could not find a whois command!\n";
 }
 
+# 
+# the ~ 2013-14-15 era New GTLDs have whois servers at whois.nic.$tld
+# and they are slow to be configured in either whois clients or the
+# whois-servers.net zone.
+#
+sub findnewgtldwhois($) {
+	my $name = shift;
+	my @x = split /\./, $name;
+	my $tld = pop @x;
+	my $whois = "whois.nic.$tld";
+	return gethostbyname($whois) ? $whois : undef;
+}
+
 sub grok {
 	my $whoiscmd = shift || die;
         my $name = shift || die;
@@ -168,6 +181,11 @@ sub grok {
             $registrar = 'go daddy' if ($registrar eq 'r91-lror');
         } elsif (defined $whoisservice) {
             $registrar = $whoisservice . ' whois service';
+	} elsif ((my $newgltdwhois = findnewgtldwhois($name)) && $whoiscmd !~ / -h /) {
+		print STDERR "retrying with -h $newgltdwhois\n" if $opts{d};
+		$whoiscmd .= " -h $newgltdwhois";
+		grok($whoiscmd, $name);
+		return;
 	} elsif (defined $opts{x}) {
 	    $registrar = 'UNKNOWN';
 	} else {
@@ -207,9 +225,11 @@ sub grok {
 
 	my $t;
 	if (defined $expires) {
+	    $expires =~ s/-t/ /i;
+	    $expires =~ s/z$//i;
             $t = UnixDate($expires, "%s");
             critical("Invalid expiration time '$expires'") unless defined $t;
-            critical("Invalid expiration time '$expires'") if ($t < 0);
+            critical("Invalid expiration time '$expires' (t=$t)") if ($t < 0);
             $expires = strftime("%Y-%m-%d", localtime($t));
 	} elsif (defined $opts{x}) {
 	    $t = time + (86400 * 90);
