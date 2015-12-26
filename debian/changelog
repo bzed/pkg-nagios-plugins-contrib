@@ -1,14 +1,24 @@
-nagios-plugins-contrib (16.20150820) UNRELEASED; urgency=medium
+nagios-plugins-contrib (16.20151226) unstable; urgency=medium
 
   [ Jan Wagner ]
   * [a3207bd] check_mysql_health: Update to 2.2.1
-  * [31c7ed1] check_mysql_health: Remove integrated
-    patches/check_mysql_health/documentation_url
+  * [31c7ed1] check_mysql_health: Remove integrated patches/check_mysql_health/documentation_url
   * [dfc20c0] travis-ci: Installing newer autoconf
   * [f55699c] travis-ci: Installing automake1.9
   * [295f5a4] Generating new control file
+  * [12e0087] Updating debian/changelog
+  * [e5d713c] Revert "Updating debian/changelog"
+    This reverts commit 12e0087eb624f7db93a56483c793bc8d2c28ab3f.
+  * [b9c168a] Creating new changelog entry
+  * [f27768f] debian/control.in: reformating with warp-and-sort
+  * [9362ba8] Rebuild debian/control
+  * [22ddfa6] check_raid: Update to latest version 3.2.5
+  * [c9f64fb] check_multipath: Update to latest version 0.3.0
+  * [fd2e679] check_whois: Update to latest version 1.19
+  * [9b19d0a] check_memcached: Install libmemcached-dev as build dependency on arm64 too (Closes: #798432)
+  * [4a79b7e] Updating debian/control
 
- -- Jan Wagner <waja@cyconet.org>  Thu, 20 Aug 2015 11:04:17 +0200
+ -- Bernd Zeimetz <bzed@debian.org>  Sat, 26 Dec 2015 18:19:43 +0100
 
 nagios-plugins-contrib (15.20150818) unstable; urgency=medium
 
