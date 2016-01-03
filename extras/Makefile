@@ -12,3 +12,5 @@ install:
 	install -d $(DESTDIR)$(DM_DIR)
 	install -m 755 -o root -g root send_nsca_host_or_service_check_result $(DESTDIR)$(DM_DIR)
 
+clean:
+	# nothing to do.
