@@ -1,4 +1,4 @@
-Build-Depends: flex, libmemcached-dev [!hurd-i386 !arm64]
+Build-Depends: flex, libmemcached-dev [!hurd-i386]
 Homepage: http://exchange.nagios.org/directory/Plugins/Websites,-Forms-and-Transactions/check_memcached-IV/details
 Version: 1.3
 Uploaders: Bernd Zeimetz <bzed@debian.org>

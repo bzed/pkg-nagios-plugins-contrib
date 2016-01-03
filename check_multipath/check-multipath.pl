@@ -14,15 +14,14 @@
 # == IMPORTANT ==
 #
 # "sudo" must be configured to allow 'multipath -l' 
+# and/or 'multipath -ll' if you intend to use the option -ll
 # (and also 'multipath -r', if you intend to use the --reload option)
 # for the NAGIOS-user without password
 #
 #-------------------------------------------------------------
 #
 #
-# $Id: $
-#
-# Copyright (C) 2011-2014
+# Copyright (C) 2011-2015
 # Hinnerk Rümenapf, Trond H. Amundsen, Gunther Schlegel, Matija Nalis, 
 # Bernd Zeimetz, Sven Anders, Ben Evans
 #
@@ -61,7 +60,9 @@
 #               Warning if data for LUNs in --extraconfig is missing
 #               Added --reload option (based on Ben Evans' idea)
 #      0.2.1    Improved LUN-line check, thanks to Michal Svamberg
-#
+#      0.2.2    Improved path error check, extended extraconfig capabilities (thanks to Nasimuddin Ansari for his comment)
+#      
+#      0.3.0    Added Option --ll, added handling of checker messages. Thanks to Andreas Steinel <Andreas.Steinel@exirius.de>
 
 
 use strict;
@@ -72,7 +73,7 @@ use Getopt::Long qw(:config no_ignore_case);
 
 # Global (package) variables used throughout the code
 use vars qw( $NAME $VERSION $AUTHOR $CONTACT $E_OK $E_WARNING $E_CRITICAL
-	     $E_UNKNOWN $USAGE $HELP $LICENSE $SUDO $MULTIPATH_LIST $MULTIPATH_RELOAD
+	     $E_UNKNOWN $USAGE $HELP $LICENSE $SUDO $MULTIPATH_LIST $MULTIPATH_LIST_LONG $MULTIPATH_RELOAD
              $linebreak $counter $exit_code
 	     %opt %reverse_exitcode %text2exit @multipathStateLines %nagios_level_count
 	     @perl_warnings @reports  @ok_reports @debugInput 
@@ -85,7 +86,7 @@ use vars qw( $NAME $VERSION $AUTHOR $CONTACT $E_OK $E_WARNING $E_CRITICAL
 
 # === Version and similar info ===
 $NAME    = 'check-multipath.pl';
-$VERSION = '0.2.1   31. MAR. 2014';
+$VERSION = '0.3.0   02. OCT 2015';
 $AUTHOR  = 'Hinnerk Rümenapf';
 $CONTACT = 'hinnerk.ruemenapf@uni-hamburg.de  hinnerk.ruemenapf@gmx.de';
 
@@ -424,12 +425,42 @@ $SIG{__WARN__} = sub { push @perl_warnings, [@_]; };
 ."| `- 9:0:2:0 sde 8:64  active ready running\n"
 ."`-+- policy='round-robin 0' prio=1 status=enabled\n"
 ."  `- 9:0:5:0 sdh 8:112 active ready running",
+
+#29. more errors (edited)
+"mpathb (36000d7700000c5780d68e963a7d30695) dm-1 FALCON,IPSTOR DISK\n"
+."size=1.9T features='1 queue_if_no_path' hwhandler='0' wp=rw\n"
+."`-+- policy='service-time 0' prio=1 status=active\n"
+."  |- 7:0:0:1 sdd 8:48  active ready  running\n"
+."  |- 7:0:1:1 sdg 8:96  active ready  running\n"
+."  |- 8:0:0:1 sdj 8:144 failed faulty offline\n"
+."  `- 8:0:1:1 sdm 8:192 active ready  running\n"
+."mpatha (36000d77e0000c9f549b7b04ab12f4f29) dm-0 FALCON,IPSTOR DISK\n"
+."size=1.9T features='1 queue_if_no_path' hwhandler='0' wp=rw\n"
+."`-+- policy='service-time 0' prio=1 status=active\n"
+."  |- 7:0:0:0 sdc 8:32  active shaky  running\n"
+."  |- 7:0:1:0 sdf 8:80  active ready  running\n"
+."  |- 8:0:0:0 sdi 8:128 failed faulty offline\n"
+."  `- 8:0:1:0 sdl 8:176 active ready  running\n",
+
+#30. thanks to Andreas Steinel <Andreas.Steinel@exirius.de>
+"sddv: checker msg is \"tur checker reports path is down\"\n"
+."mpatha (3aaaabbbbccccddddeeeeffff00001111) dm-16 DGC,VRAID\n"
+."[size=300G][features=1 queue_if_no_path][hwhandler=1 alua][rw]\n"
+."\_ round-robin 0 [prio=100][active]\n"
+." \_ 2:0:2:10 sdao 66:128  [active][ready] \n"
+." \_ 1:0:2:10 sddk 71:32   [active][ready] \n"
+."\_ round-robin 0 [prio=10][enabled]\n"
+." \_ 2:0:3:10 sdaz 67:48   [active][ready] \n"
+."\_ round-robin 0 [prio=0][enabled]\n"
+." \_ 1:0:3:10 sddv 71:208  [active][faulty]\n",
+
     );
 
 # Commands with full path
-$SUDO             = '/usr/bin/sudo';
-$MULTIPATH_LIST   = '/sbin/multipath -l';
-$MULTIPATH_RELOAD = '/sbin/multipath -r';
+$SUDO                = '/usr/bin/sudo';
+$MULTIPATH_LIST_LONG = '/sbin/multipath -ll';
+$MULTIPATH_LIST      = '/sbin/multipath -l';
+$MULTIPATH_RELOAD    = '/sbin/multipath -r';
 
 # Exit codes
 $E_OK       = 0;
@@ -471,12 +502,6 @@ see:
  http://www.nagios.org/documentation
 
 OPTIONS:
-
-  -s, --state         Prefix alerts with alert state
-  -S, --short-state   Prefix alerts with alert state abbreviated
-  -h, --help          Display this help text
-  -V, --version       Display version info
-  -v, --verbose
   -m, --min-paths     Low mark,  less paths per LUN are CRITICAL   [2]
   -o, --ok-paths      High mark, less paths per LUN raise WARNING  [4]
   -n, --no-multipath  Exitcode for no LUNs or no multipath driver  [warning]
@@ -485,17 +510,29 @@ OPTIONS:
                       (multipath -r)
                       Can help to pick up LUNs coming back to life.
 
+  -L, --ll            use multipath -ll instead of multipath -l
+                      Can give more detailed information
+
   -l, --linebreak     Define end-of-line string:
                       REG      regular UNIX-Newline
                       HTML     <br/>
                       -other-  use specified string as linebreak symbol, 
                                e.g. ', ' (all in one line, comma seperated)
 
-  -e, --extraconfig   Specify different low/high thresholds for LUNs:
-                      "<LUN>,<LOW>,<HIGH>:"  for each LUN with deviant thresholds
-                      e.g.  "iscsi_lun_01,2,2:dummyLun,1,1:paranoid_lun,8,16:"
-                            "oddLun,3,3:"
+  -e, --extraconfig   Specify different low/high thresholds for LUNs
+                      optional: specify return code if no data for LUN name was found 
+                                (ok, warning, critical), default is warning
+                      "<LUN>,<LOW>,<HIGH>[,<RETURNCODE>]:"  for each LUN with deviant thresholds
+                      e.g.  "iscsi_lun_01,2,2:dummyLun,1,1,ok:paranoid_lun,8,16,critical:"
+                            "oddLun,3,5,critical:"
+                            "default,2,4,warning:DonalLunny,6,8:"
                       Use option -v to see LUN names used by this plugin. 
+
+  -s, --state         Prefix alerts with alert state
+  -S, --short-state   Prefix alerts with alert state abbreviated
+  -h, --help          Display this help text
+  -V, --version       Display version info
+  -v, --verbose       More text output
 
   -d, --di            Run testcase instead of real check           [0]
   -t, --test          Do not display testcase input, just result
@@ -504,8 +541,9 @@ OPTIONS:
 
 
 NOTE: 'sudo' must be configured to allow the nagios-user to call 
-      multipath -l (and also multipath -r, if you intend to use the --reload option)
-      without password.
+      multipath -l and/or multipath -ll if you use the -ll option
+      (and also multipath -r, if you intend to use the --reload option)
+      *without* password.
 
 END_HELP
 
@@ -548,6 +586,7 @@ END_LICENSE
       'verbose'       => 0,
       'test'          => 0, 
       'reload'        => 0, 
+      'll'            => 0, 
     );
 
 # Get options
@@ -565,6 +604,7 @@ GetOptions(#'t|timeout=i'      => \$opt{timeout},
 	   'v|verbose'        => \$opt{verbose},
 	   't|test'           => \$opt{test},
 	   'r|reload'         => \$opt{reload},
+	   'L|ll'             => \$opt{ll},
 	  ) or do { print $USAGE; exit $E_UNKNOWN };
 
 # If user requested help
@@ -616,16 +656,23 @@ if (defined $opt{linebreak}) {
 my %extraconfig = ();
 
 if ($opt{extraconfig} ne '') {
-    if ($opt{extraconfig} !~ m!^(:?[\w\-]+,\d+,\d+:)+$!  ) {
+    if ( $opt{extraconfig} !~ m!^([\w\-]+,\d+,\d+(?:,(?:ok|warning|critical))?:)+$! ) {
 	unknown_error("Wrong usage of '--extraconfig' option: '"
 		      . $opt{extraconfig}
 		      . "' syntax error. See help information.");
     } # if
 
-    while ( $opt{extraconfig} =~ m!(:?[\w\-]+),(\d+),(\d+):+!g ) {
+    while ( $opt{extraconfig} =~ m!([\w\-]+),(\d+),(\d+)(?:,(ok|warning|critical))?:+!g ) {
 	my $name =$1;
 	my $crit =$2;
 	my $warn =$3;
+	my $ret = $4;
+        my $missingRet=$E_WARNING;
+	
+	if ( defined($ret) ) {
+	    $missingRet=$text2exit{$ret};
+	}
+	#print "EXTRA: $name, c=$crit, w=$warn, m=$missingRet, '$ret'\n";
 
 	if ($crit > $warn) {
 	    unknown_error("Error in '--extraconfig' option '"
@@ -633,8 +680,7 @@ if ($opt{extraconfig} ne '') {
 			  . "' for LUN '$name': critical threshold ($crit) must not be higher than warning threshold ($warn).");
 	} # if
 
-	#print "\n ['$name', '$crit', '$warn' ] \n";
-	$extraconfig{$name} = {'warn' => $warn, 'crit' => $crit, 'found' => 0};
+	$extraconfig{$name} = {'warn' => $warn, 'crit' => $crit, 'missingRet' => $missingRet, 'found' => 0 };
     } # while 
 } # if
 
@@ -739,6 +785,8 @@ sub get_multipath_text {
 	    } else {
 		if ($< != 0) {
 		    # (root) NOPASSWD: /sbin/multipath -l
+		    # (root) NOPASSWD: /sbin/multipath -ll
+		    # (root) NOPASSWD: /sbin/multipath -r
 		    my $sudoListCommand = "$SUDO -l 2>/dev/null";
 		    my $sudoList = qx($sudoListCommand);
 		    if ($sudoList !~ m!\(root\) \s+ NOPASSWD\: \s+ $cmd!x ) {
@@ -873,8 +921,8 @@ sub checkMultipathText {
 		    #print "'$textLine', ";
 		    #print "LUN '$currentLun', path '$pathName'\n";
 
-		    if ($textLine =~ m/fail|fault/) {            # fail or fault?
-			#print "FAULT: $textLine\n";
+		    if ($textLine =~ m/fail|fault|offline|shaky/) {     # fail or fault, offline or shaky?
+			#print "ERROR: $textLine\n";
 			report("LUN $currentLun, path $pathName: ERROR.", $E_WARNING);
 		    } 
 		    elsif ($textLine !~ m/\sactive\s/) {         # path is active?
@@ -896,7 +944,11 @@ sub checkMultipathText {
 		}                                               # check for new LUN name
 		elsif ( ($currentLun ne "") && checkPolicyLine ($textLine) ) {
 		   ; # SKIP NESTED POLICY 
-		} else {                                        # error: unknown line format
+		} 
+		elsif ( $textLine =~ m/checker msg is /) {
+		    ; # SKIP tur message stuff
+		}
+		else {                                        # error: unknown line format
 		    unknown_error ("Line $i not recognised. Expected path info, new LUN or nested policy:\n'$textLine'")
 		}
             } # case
@@ -946,8 +998,12 @@ sub checkMultipathText {
 # Main program
 #=====================================================================
 
+my $mpListCmd = $MULTIPATH_LIST;
+if ($opt{'ll'}) {
+    $mpListCmd = $MULTIPATH_LIST_LONG;
+}
 
-my @multipathStateText = @{ get_multipath_text( $MULTIPATH_LIST ) };  # get input data
+my @multipathStateText = @{ get_multipath_text( $mpListCmd ) };  # get input data
 
 my %lunPaths = %{checkMultipathText ( \@multipathStateText )};        # analyse it
 
@@ -991,7 +1047,7 @@ foreach my $lunName ( sort {$a cmp $b} keys %lunPaths) {
 #
 foreach my $lunName ( keys %extraconfig ) {
     if (! ${$extraconfig{$lunName}}{'found'} ) {
-	report("LUN '$lunName' in extraconfig, but NO DATA found.", $E_WARNING);
+	report("LUN '$lunName' in extraconfig, but NO DATA found.",${$extraconfig{$lunName}}{'missingRet'} );
     }
 } # foreach
 

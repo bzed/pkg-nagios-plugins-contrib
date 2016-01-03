@@ -1,86 +1,143 @@
-nagios-plugins-contrib (15.20150316~1.gbpcb814e~bpo80+1) jessie-backports; urgency=medium
+nagios-plugins-contrib (16.20151226~bpo8+1) jessie-backports; urgency=medium
 
   * Rebuild for jessie-backports.
 
- -- Bernd Zeimetz <bzed@debian.org>  Mon, 16 Mar 2015 15:02:14 +0100
+ -- Bernd Zeimetz <bzed@debian.org>  Sun, 03 Jan 2016 12:49:40 +0100
 
-nagios-plugins-contrib (15.20150316~1.gbpcb814e) unstable; urgency=medium
+nagios-plugins-contrib (16.20151226) unstable; urgency=medium
 
-  ** SNAPSHOT build @cb814e21e0460183fb69e124d481487143790bd8 **
+  [ Jan Wagner ]
+  * [a3207bd] check_mysql_health: Update to 2.2.1
+  * [31c7ed1] check_mysql_health: Remove integrated patches/check_mysql_health/documentation_url
+  * [dfc20c0] travis-ci: Installing newer autoconf
+  * [f55699c] travis-ci: Installing automake1.9
+  * [295f5a4] Generating new control file
+  * [12e0087] Updating debian/changelog
+  * [e5d713c] Revert "Updating debian/changelog"
+    This reverts commit 12e0087eb624f7db93a56483c793bc8d2c28ab3f.
+  * [b9c168a] Creating new changelog entry
+  * [f27768f] debian/control.in: reformating with warp-and-sort
+  * [9362ba8] Rebuild debian/control
+  * [22ddfa6] check_raid: Update to latest version 3.2.5
+  * [c9f64fb] check_multipath: Update to latest version 0.3.0
+  * [fd2e679] check_whois: Update to latest version 1.19
+  * [9b19d0a] check_memcached: Install libmemcached-dev as build dependency on arm64 too (Closes: #798432)
+  * [4a79b7e] Updating debian/control
+
+ -- Bernd Zeimetz <bzed@debian.org>  Sat, 26 Dec 2015 18:19:43 +0100
+
+nagios-plugins-contrib (15.20150818) unstable; urgency=medium
+
+  The debconf15 release.
 
   [ Evgeni Golov ]
-  * [655f77d4] fix check_ipmi_sebsor version
+  * [655f77d] fix check_ipmi_sebsor version
     it was correct in the upload, but not in Git
 
   [ Jan Wagner ]
-  * [0da58400] Disable rbl.orbitrbl.com, it's offline - Adding check_rbl/disable_orbitrbl.com see http://www.dnsbl.com/2014/10/status-of-rblorbitrblcom-dead.html
-  * [98498248] check_email_delivery: Add libnet-smtpauth-perl as Recommends for CRAM-MD5
+  * [0da5840] Disable rbl.orbitrbl.com, it's offline
+    - Adding check_rbl/disable_orbitrbl.com see
+    http://www.dnsbl.com/2014/10/status-of-rblorbitrblcom-dead.html
+  * [9849824] check_email_delivery: Add libnet-smtpauth-perl as Recommends for
+    CRAM-MD5
 
   [ Bernd Zeimetz ]
-  * [1151ce30] Add update-check_libs-status cronjob script.
-  * [3479e9da] Update check_apt.cmd to use update-check_libs-status.
-  * [ec49961d] snapshot changelog.
+  * [1151ce3] Add update-check_libs-status cronjob script.
+  * [3479e9d] Update check_apt.cmd to use update-check_libs-status.
+  * [ec49961] snapshot changelog.
 
   [ Jan Wagner ]
-  * [52030fc9] Fixing changelog entries
+  * [52030fc] Fixing changelog entries
 
   [ Bernd Zeimetz ]
-  * [f66a1d83] Remove , from check_packages output.
+  * [f66a1d8] Remove , from check_packages output.
 
   [ Jan Wagner ]
-  * [803520c9] Adding check_rbl/disable_ahbl.org patch (Closes: #774749)
+  * [803520c] Adding check_rbl/disable_ahbl.org patch (Closes: #774749)
 
   [ Bernd Zeimetz ]
-  * [1853853e] Updating snapshot changelog.
-  * [b308bb78] Remove duplicate check_apt.cmd file.
-  * [f3e3cee7] Add check_libvirt.
-  * [112168dd] Auto update of debian/copyright
-  * [40a9288c] Auto update of debian/control
-  * [1e398f95] Make check_libs faster.
-  * [d7cf2679] Add breaks/replaces for smooth upgrades from squeeze.
-  * [1ae1eee9] Add check_redis.
-  * [89a53d33] Auto update of debian/copyright
-  * [09d0cdbe] Auto update of debian/control
-  * [bce89a01] Merge remote-tracking branch 'github/master'
+  * [1853853] Updating snapshot changelog.
+  * [b308bb7] Remove duplicate check_apt.cmd file.
+  * [f3e3cee] Add check_libvirt.
+  * [112168d] Auto update of debian/copyright
+  * [40a9288] Auto update of debian/control
+  * [1e398f9] Make check_libs faster.
+  * [d7cf267] Add breaks/replaces for smooth upgrades from squeeze.
+  * [1ae1eee] Add check_redis.
+  * [89a53d3] Auto update of debian/copyright
+  * [09d0cdb] Auto update of debian/control
+  * [bce89a0] Merge remote-tracking branch 'github/master'
 
   [ Jan Wagner ]
-  * [8733ae5b] check_redis: Adding command definition config
-  * [5874628f] check_redis: Fixing command definition
-  * [6ed8e1bc] check_mongodb: Updating to latest version
-  * [b9544e3b] check_mysql_health: Updating to 2.1.9.2
-  * [a2c74a4a] check_raid: Updating to 3.2.2
-  * [19e12620] check_raid: Updating to latest git version (5bc04e1822)
-  * [5862270d] check_ssl_cert: Updating to 1.17.0
-  * [e4c7bc02] check_cups: Update Homepage
-  * [cc9ce255] check_drbd: Update Homepage and Watch header
-  * [99c5b843] check_rbl: Updating to 1.3.7
-  * [160e8d3f] check_rbl: Move back to Nagios::Plugin again by adding patches/check_rbl/nagios-plugins
-  * [8b921f7f] check_whois: Updating to 1.16
-  * [90e32111] check_ipmi_sensor: Updating to 3.7
-  * [37d10e7c] Drop check_rbl/disable_ahbl.org
-  * [a2b7c696] Drop check_rbl/disable_orbitrbl.com
+  * [8733ae5] check_redis: Adding command definition config
+  * [5874628] check_redis: Fixing command definition
+  * [6ed8e1b] check_mongodb: Updating to latest version
+  * [b9544e3] check_mysql_health: Updating to 2.1.9.2
+  * [a2c74a4] check_raid: Updating to 3.2.2
+  * [19e1262] check_raid: Updating to latest git version (5bc04e1822)
+  * [5862270] check_ssl_cert: Updating to 1.17.0
+  * [e4c7bc0] check_cups: Update Homepage
+  * [cc9ce25] check_drbd: Update Homepage and Watch header
+  * [99c5b84] check_rbl: Updating to 1.3.7
+  * [160e8d3] check_rbl: Move back to Nagios::Plugin again by adding
+    patches/check_rbl/nagios-plugins
+  * [8b921f7] check_whois: Updating to 1.16
+  * [90e3211] check_ipmi_sensor: Updating to 3.7
+  * [37d10e7] Drop check_rbl/disable_ahbl.org
+  * [a2b7c69] Drop check_rbl/disable_orbitrbl.com
 
   [ Bernd Zeimetz ]
-  * [d33acc60] Some better travis scripts.
-  * [22073ab8] Handle php4nagios templates
-  * [ec7197ab] Install check_redis pnp4nagios template
-  * [f8d59a38] Fix check_ajp to handle non-responding tcp ports.
-  * [2709f46a] install equivs in .travis.yml
-  * [d0e0af8b] Revert "Fix check_ajp to handle non-responding tcp ports."
+  * [d33acc6] Some better travis scripts.
+  * [22073ab] Handle php4nagios templates
+  * [ec7197a] Install check_redis pnp4nagios template
+  * [f8d59a3] Fix check_ajp to handle non-responding tcp ports.
+  * [2709f46] install equivs in .travis.yml
+  * [d0e0af8] Revert "Fix check_ajp to handle non-responding tcp ports."
     This reverts commit f8d59a383175bbcf0011b8308d0505868c6b61e4.
     Change was applied by patch...
-  * [f948c66d] Merge branch 'master' of alioth.debian.org:/git/pkg-nagios/pkg-nagios-plugins-contrib
+  * [f948c66] Merge branch 'master' of
+    alioth.debian.org:/git/pkg-nagios/pkg-nagios-plugins-contrib
 
   [ Jan Wagner ]
-  * [8696a410] common.mk: Using TAB instead of white spaces
+  * [8696a41] common.mk: Using TAB instead of white spaces
 
   [ Bernd Zeimetz ]
-  * [c408dff0] Typo fix.
-  * [b41594fe] Add check_haproxy_stats.
-  * [5e5ae833] Auto update of debian/copyright
-  * [cb814e21] Auto update of debian/control
+  * [c408dff] Typo fix.
+  * [b41594f] Add check_haproxy_stats.
+  * [5e5ae83] Auto update of debian/copyright
+  * [cb814e2] Auto update of debian/control
+  * [23c7416] Update snapshot changelog.
+  * [53e1b9c] Fix version number in changelog
 
- -- Bernd Zeimetz <bzed@debian.org>  Mon, 16 Mar 2015 15:16:54 +0100
+  [ Jan Wagner ]
+  * [9bcec60] check_hpasm: Update to  4.7.0.2
+  * [9609f87] check_raid: Update to 3.2.3
+  * [c750062] check_ssl_cert: Update to 1.17.1
+  * [ff74dbd] check_rbl: Disable dul.ru
+  * [c11ef66] check_mongo: Update to recent version
+  * [32e8ae4] check_hpasm: Updating to latest 4.7.1.1
+  * [a08beb2] check_ipmi_sensor: Updating to 3.8
+  * [25d1eea] Updating control file
+  * [74ea485] check_uptime: Update check_uptime.cfg to use the correct script
+    (Closes: #787839)
+  * [45d50da] check_raid: Update to 3.2.4
+  * [af3e278] check_ipmi_sensor: Update to version 3.9
+
+  [ Bernd Zeimetz ]
+  * [94ad100] implement git clean support in extras/Makefile
+  * [406aa15] Add makefile to build all plugins.
+  * [2655fe2] Add Makefile.
+    First step to get rid of dh crazyness.
+  * [94c0879] Fixing pthread linking fail for check_memcached.
+
+  [ Jan Wagner ]
+  * [140e08e] check_mongodb: Update to latest upstream
+
+  [ Bernd Zeimetz ]
+  * [22769ea] Let debian/rules use the new Makefile.
+  * [1a74854] build the debian readme again
+
+ -- Bernd Zeimetz <bzed@debian.org>  Tue, 18 Aug 2015 18:04:21 +0200
 
 nagios-plugins-contrib (14.20141104) unstable; urgency=medium
 

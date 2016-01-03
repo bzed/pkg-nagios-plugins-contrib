@@ -15,7 +15,6 @@ check_libs/space_before_deleted
 check_lm_sensors/manpage_whatis_fix
 check_lm_sensors/spelling_errors
 check_lm_sensors/interpreter
-check_mysql_health/documentation_url
 check_nfsmounts/perl_module
 check_nfsmounts/nfs_write_location
 check_printer/use_data_dumper_if_needed
@@ -25,6 +24,7 @@ check_raid/prefer_cciss_vol_status_over_hpacucli
 check_rbl/interpreter
 check_rbl/spelling_errors
 check_rbl/disable_solid.net
+check_rbl/disable_dul.ru
 check_rbl/additional_rbls
 check_rbl/nagios-plugins
 check_snmp_time/epn

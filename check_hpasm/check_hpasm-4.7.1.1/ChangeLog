@@ -1,0 +1,277 @@
+#######################################
+# Changelog of the check_hpasm plugin #
+#######################################
+
+4.7.1.1 2015-06-08
+- bugfix for gen9 with broken SysRomVer string
+
+4.7.1 2015-03-23
+- interpret other status for fcal as ok
+
+4.7.0.2 2014-03-18
+- add another storageworks detection
+- add StoreEasy detection (thanks Alexander Laimer)
+
+4.7.0.1 2014-03-04
+- bugfix in blacklisting (Thanks Ingvar Hagelund)
+
+4.7 2014-02-21
+- add StorageWorks
+
+4.6.3.4 2013-05-15
+- fix a bug in fan perfdata (absent fans were shown with 0%)
+
+4.6.3.3 2013-04-10
+- fix a bug in snmp overall nic condition
+- sort events by id numerically 
+
+4.6.3.2 2013-03-19
+- fix a bug in proliant/gen8/ilo temperature thresholds (Thanks Kai Benninghoff and Stephane Loeuillet)
+
+4.6.3.1 2013-01-10
+- fix a bug in da disk in local mode
+- fix a bux in overall_init proliant nics (Thanks Fanming Jen)
+
+4.6.3 2012-11-25
+- gen8 should work now
+- fix the problem with -99 degrees
+- fix the problem with binary zero EventUpdateTime
+
+4.6.2.1 2012-11-09
+- some bugfixes in bladecenter temperatures (Thanks Thomas Reichel)
+
+4.6.2 2012-08-20
+- fix some bugs in snmpget where the system responded with undef values
+
+4.6.1 2012-08-14
+- fix a small bug in boottime
+- skip pagination in long "show iml" lists
+- make bulk requests if possible
+
+4.6 2012-06-07
+- output power consumption as performance data (only newer proliant models)
+- support older <=7 versions of hpacucli
+- add another error log: Uncorrectable Memory Error 
+- raise the default timeout from 15 to 60 seconds
+
+4.5.3.1 2012-04-19
+- change the way --snmpwalk reads oids from a file
+
+4.5.3 2012-03-26
+- fix a bug in snmp-eventlogs
+
+4.5.2 2012-03-06
+- add another error log: Main Memory - Corrected Memory Error threshold exceeded 
+4.5.1 2012-02
+- add another error log: 210 - Quick Path Interconnect (QPI) Link Degradation
+- remove watt percent for blade center power supply
+- make the snmp oid collection phase shorter for blade center
+
+4.5 2012-01-26
+- output power consumption perfdata for BladeCenters
+- correctly identify dl388g7 (Thanks lilei8)
+
+4.4 2011-12-16
+- add checks for power converters
+- add checks for nic teaming (experimental!!, must be enabled with --eval-nics)
+- fix a bug with invalid date/time from iml
+- fix a bug in blade enclosure manager verbose output
+- add msa2xxx storage sensors
+
+4.3 2011-10-14
+- add monitoring of IML events (Thanks Klaus)
+  esp. Memory initialization error... The OS may not have access to all of the memory installed in the system 
+
+4.2.5
+- G2 series of X1660 storage systems are now correctly detected. (Thanks Andre Zaborowski)
+- blacklisting for SAS controller & disks was added (Thanks Jewi)
+
+4.2.4.1 2011-08-09
+- dimm output of G7 hpasmcli (under Solaris) is now handled (Thanks Ron Waffle)
+
+4.2.4 2011-07-21
+add a check for asr (Thanks Ingmar Verheij http://www.ingmarverheij.com/)
+
+4.2.3 2011-07-21
+- add a global temperature check when no temperature sensors are found
+- check power converters if no fault tolerant power supplies are found
+
+4.2.2.1 2011-04-17
+- fix a bug when a wrong --hostname was used (Thanks Wim Savenberg)
+
+4.2.2 2011-01-21
+- add support for msa500 and hpasmcli (Thanks Kalle Andersson)
+
+4.2.1.1
+- added support for x1** nas storage, which was detected as storage but in fact is like a proliant (Thanks Maik Schulz)
+
+4.2.1
+- added timeout handling
+- better hpacucli da controller handling
+- fix a bug in memory detection (0 dimms were shown) (Thanks Anthony Cano)
+- better handling for failed and disabled controller batteries. warning only.
+
+4.2 2010-03-20
+- added temperatures for bladesystems (although not implemented by HP)
+- added fuses for bladesystems
+- added enclosure managers for bladesystems
+- added blacklisting for scsi devices (scco,scld,scpd) (Thanks Marco Hill)
+- added blacklisting for overall fan status (ofs) (Thanks Thomas Jampen)
+
+4.1.2.1 2010-03-03
+- fixed a harmless bug in BladeCenter::Powersupply output
+
+4.1.2 2010-02-09
+- fixed a severe bug in detecting multiple logical drives with hpacucli (Thanks Trond Hasle)
+
+4.1.1 2010-01-07
+- detect more smart array types when run in local mode (Thanks Trond Hasle)
+
+4.1 2009-12-07
+- added more details for bladecenters (power suppl., server blades)
+- fixed a bug in powersupply checks with hpasmcli (Thanks Guillaume)
+
+4.0.1 2009-12-02
+- added the missing output for --help
+- non-redundant fans are now tolerated if the global fan status says "ok"
+- added detection for servers with a hidden model description
+- fixed a bug in celsius-fahrenheit-conversion
+
+4.0 2009-11-30
+- added support for the new g6-models
+- complete rewrite of the code
+- autodetection for proliant, bladecenter and storage
+- detailed dump of the hardware with -vvv
+- new format for blacklist
+
+3.5.1 2009-04-22
+- fixed a bug where the server didn't reveal serial no. and rom rev. (thanks Daniel Rich)
+- fixed a bug in the snmpv3 code.
+
+3.5 2009-03-20
+- added support for SNMPv3
+- added new parameter --port
+
+3.2.1 2009-02-26 
+- fixed a bug which showed degraded dimms as missing. (thanks matt at adicio.com)
+
+3.2 2009-02-20
+- added support for external disk arrays. (M. M. has a MSA20)
+
+3.1.1.1 2009-02-13
+- added an error message when sudo was configured with requiretty=yes. (thanks Jeff The Riffer)
+
+3.1.1 2009-02-06
+- fixed a bug which caused ugly perl warnings. (thanks Martin Hofmann and Bill Katz)
+
+3.1 2009-01-21
+- added support for sas and ide controllers/disks (only with snmp)
+
+3.0.7.2 2009-01-16
+- minor bugfix for dl320g5+hpasmcli+fan+n/a. (thanks Bruce Jackson)
+
+3.0.7.1 2008-12-05
+- minor bugfix. snmpwalk now uses -On
+
+3.0.7 2008-11-29
+- bugfix in controller blacklists (thanks Maurice Moric)
+- no need for Net::SNMP with --snmpwalk /usr/bin/snmpwalk
+
+3.0.6 2008-10-30
+- buxfix in ignore-dimms (thanks tumtliw)
+
+3.0.5 2008-10-23
+- higher speed through decreased amount of transferred oids (thanks Yannick Gravel)
+- new switch --ignore-fan-redundancy for old boxes without double fans
+
+3.0.4 2008-09-18
+- rewrote snmp memory checking for better handling of missing health info
+- new configure option --enable-extendedinfo (outputs lots of crap)
+
+3.0.3.2 2008-09-11
+- --protocol ist now optional (this was a bug)
+
+3.0.3.1 2008-09-10
+- Only accept 1, 2 or 2c as SNMP protocol
+- Try both bulk walk and get-next
+
+3.0.3 2008-08-11
+- cpqSiMem instead of cpqHeResMem
+- new parameter --protocol (default: 2c)
+- cpqHeComponents are fetched with get-next instead of get-bulk (Net::SNMP grr)
+
+3.0.2 2008-08-01
+- skip memory checking if snmp returns garbage
+- bugfix in numbering of snmp table indexes
+
+3.0.1 2008-07-31
+- bugfix in customthresholds&snmp (thanks TheCry)
+- broke up the snmpwalk into smaller pieces.
+
+3.0 2008-07-20
+- first release with snmp support for remote checks (thanks Matthias Flacke)
+- simulation is possible with --snmpwalk or --hpasmcli
+
+2.0.3.3 - 2008-05-22 Brangerdog
+- support fan partner# 0 with proliant support pack 8.0 (thanks Mark Wagner)
+
+2.0.3.2 - 2008-05-03
+- fixed a typo in README
+
+2.0.3.1 - 2008-04-16
+- fixed a bug in path to perl binary
+- fixed a bug in --enable-perfdata (thanks Birk Bohne)
+
+2.0.3 - 2008-04-09
+- fixed a bug in dimm code
+- added blacklisting for raid controllers (thanks Andreas Schrogl)
+- added blacklisting for cache&battery (thanks Harrold Nabben)
+
+2.0.2 - 2008-02-11
+- empty cpu&fan sockets are now properly handled
+
+2.0.1 - 2008-02-08
+- multiline output for nagios 3.x
+
+2.0 - 2008-02-08
+- complete code redesign
+- integrated raid checking with hpacucli 
+  (thanks Kelly Kristiaan van Vliet who was the first to propose this feature)
+  (thanks Mess for calling me "FAULE SAU!!!")
+
+1.6.2.2 - 2008-01-18
+- added debian 3.1 to the osses where multiple hpasmd are considered normal.
+
+1.6.2.1 - 2007-12-12
+- fixed a bug which caused overlooked fans. Thanks Michael Krebs.
+- such unknown patterns which might be important will be reported now.
+
+1.6.2 - 2007-11-16
+- Marcus Fleige contributed the -i and a more meaningful ok output
+
+1.6.1 - 2007-11-07
+- fixed a bug which caused overlooked failed fans
+
+1.6 - 2007-07-27
+- added performance data for fan speed and temperatures
+
+1.5.1 - 2007-07-11
+- hpasmcli can also be a link
+- fixed a bug, so more fan locations can be found
+
+1.5 - 2007-06-14
+- added support for userdefined temperature thresholds (Kelly Kristiaan van Vliet)
+
+1.4 - 2007-05-22
+- added support for hpasmxld und hpasmlited 
+
+1.3 - 2007-04-17
+- added --with-degree to configure (celsius or fahrenheit output)
+  added -b/--blacklist 
+  added trustix 2.2 to the osses where multipel hpasmd are considered normal.
+
+1.2 - 2007-04-16
+- added --with-noinst-level
+
+1.1 - 2007-04-14
+- First public release
