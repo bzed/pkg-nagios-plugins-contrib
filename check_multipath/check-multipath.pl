@@ -63,6 +63,13 @@
 #      0.2.2    Improved path error check, extended extraconfig capabilities (thanks to Nasimuddin Ansari for his comment)
 #      
 #      0.3.0    Added Option --ll, added handling of checker messages. Thanks to Andreas Steinel <Andreas.Steinel@exirius.de>
+#
+#      0.4.0    Added check if multipathd is running (suggested by Dmitry Sakoun)   11. Dec. 2015
+#               Added --group option (based on comments by Robert Towster and Tom Schier)
+#      0.4.1    minor changes 14. Dec 2015
+#
+#
+
 
 
 use strict;
@@ -86,9 +93,9 @@ use vars qw( $NAME $VERSION $AUTHOR $CONTACT $E_OK $E_WARNING $E_CRITICAL
 
 # === Version and similar info ===
 $NAME    = 'check-multipath.pl';
-$VERSION = '0.3.0   02. OCT 2015';
+$VERSION = '0.4.1   14. DEC 2015';
 $AUTHOR  = 'Hinnerk Rümenapf';
-$CONTACT = 'hinnerk.ruemenapf@uni-hamburg.de  hinnerk.ruemenapf@gmx.de';
+$CONTACT = 'hinnerk [DOT] ruemenapf [AT] uni-hamburg [DOT] de   (hinnerk [DOT] ruemenapf [AT] gmx [DOT] de)';
 
 
 
@@ -446,14 +453,27 @@ $SIG{__WARN__} = sub { push @perl_warnings, [@_]; };
 "sddv: checker msg is \"tur checker reports path is down\"\n"
 ."mpatha (3aaaabbbbccccddddeeeeffff00001111) dm-16 DGC,VRAID\n"
 ."[size=300G][features=1 queue_if_no_path][hwhandler=1 alua][rw]\n"
-."\_ round-robin 0 [prio=100][active]\n"
-." \_ 2:0:2:10 sdao 66:128  [active][ready] \n"
-." \_ 1:0:2:10 sddk 71:32   [active][ready] \n"
-."\_ round-robin 0 [prio=10][enabled]\n"
-." \_ 2:0:3:10 sdaz 67:48   [active][ready] \n"
-."\_ round-robin 0 [prio=0][enabled]\n"
-." \_ 1:0:3:10 sddv 71:208  [active][faulty]\n",
+."\\_ round-robin 0 [prio=100][active]\n"
+." \\_ 2:0:2:10 sdao 66:128  [active][ready] \n"
+." \\_ 1:0:2:10 sddk 71:32   [active][ready] \n"
+."\\_ round-robin 0 [prio=10][enabled]\n"
+." \\_ 2:0:3:10 sdaz 67:48   [active][ready] \n"
+."\\_ round-robin 0 [prio=0][enabled]\n"
+." \\_ 1:0:3:10 sddv 71:208  [active][faulty]\n",
 
+#31. thanks to Robert Towster
+"3600507606700440c1d0bba930b81dd65 dm-1 IBM,ServeRAID M1210e\n"
+."size=185G features='0' hwhandler='0' wp=rw\n"
+."`-+- policy='round-robin 0' prio=1 status=active\n"
+."  `- 2:2:0:0  sdaa 65:160 active ready running\n"
+."360050768018106d97800000000000134 dm-13 IBM,2145\n"
+."size=200G features='1 queue_if_no_path' hwhandler='0' wp=rw\n"
+."|-+- policy='round-robin 0' prio=50 status=active\n"
+."| |- 0:0:2:11 sdt  65:48  active ready running\n"
+."| `- 1:0:2:11 sdau 66:224 active ready running\n"
+."`-+- policy='round-robin 0' prio=10 status=enabled\n"
+."  |- 0:0:3:11 sdz  65:144 active ready running\n"
+."  `- 1:0:3:11 sdba 67:64  active ready running\n"
     );
 
 # Commands with full path
@@ -490,7 +510,7 @@ $E_UNKNOWN  = 3;
 # Usage text
 $USAGE = <<"END_USAGE";
 
-Usage: $NAME [OPTION]...
+Usage: $NAME [OPTIONS]
 END_USAGE
 
 # Help text
@@ -501,17 +521,23 @@ see:
  http://exchange.nagios.org/directory/Plugins/Operating-Systems/Linux/check-2Dmultipath-2Epl/details
  http://www.nagios.org/documentation
 
+A configuration for a specific LUN name via --extraconfig has highest priority and overrides group and global config.
+If a regex defined in --group matches a LUN line the specified group values are used. (First regex in List, checked from left to right)
+Otherwise the global defaults are used (--min-paths, --ok-paths).
+
 OPTIONS:
   -m, --min-paths     Low mark,  less paths per LUN are CRITICAL   [2]
   -o, --ok-paths      High mark, less paths per LUN raise WARNING  [4]
-  -n, --no-multipath  Exitcode for no LUNs or no multipath driver  [warning]
+  -n, --no-multipath  Exitcode for no LUNs, no multipath driver and multipathd not running  [warning]
+  -M, --mdskip        Skip extra check if multipathd is running (check uses '--no-multipath' returncode)
 
   -r, --reload        force devmap reload if status is WARNING or CRITICAL
                       (multipath -r)
                       Can help to pick up LUNs coming back to life.
 
   -L, --ll            use multipath -ll instead of multipath -l
-                      Can give more detailed information
+                      Can improve detection of failed paths with older versions of multipath tools
+
 
   -l, --linebreak     Define end-of-line string:
                       REG      regular UNIX-Newline
@@ -519,7 +545,15 @@ OPTIONS:
                       -other-  use specified string as linebreak symbol, 
                                e.g. ', ' (all in one line, comma seperated)
 
-  -e, --extraconfig   Specify different low/high thresholds for LUNs
+  -g, --group         Specify perl-regex to identify groups of LUNs with other default-thresholds.
+                      Overrides global config for LUNs with LUN lines that math a group regex.
+                      In most cases a simple String should be sufficient. NOTE: special regex characters must be escaped!
+                      "<LUN_LINE_REGEX>,<LOW>,<HIGH>:"  for each group with deviant thresholds
+                      e.g.  "IBM,ServeRAID,1,1:HAL,ChpRAID,1,2:"
+                      Use command multipath -l to see the LUN lines and to identify groups.
+
+  -e, --extraconfig   Specify different low/high thresholds for LUNs.
+                      Overrides group and global config for the specified LUNs.
                       optional: specify return code if no data for LUN name was found 
                                 (ok, warning, critical), default is warning
                       "<LUN>,<LOW>,<HIGH>[,<RETURNCODE>]:"  for each LUN with deviant thresholds
@@ -587,24 +621,28 @@ END_LICENSE
       'test'          => 0, 
       'reload'        => 0, 
       'll'            => 0, 
+      'mdskip'        => 0,
+      'group'         => '',
     );
 
 # Get options
 GetOptions(#'t|timeout=i'      => \$opt{timeout},
-	   'h|help'           => \$opt{help},
-	   'V|version'        => \$opt{version},
-	   'n|no-multipath=s' => \$opt{no_multipath},
+	   'h|help'           => \$opt{'help'},
+	   'V|version'        => \$opt{'version'},
+	   'n|no-multipath=s' => \$opt{'no_multipath'},
            'm|min-paths=i'    => \$opt{"min-paths"},
            'o|ok-paths=i'     => \$opt{"ok-paths"},
            'd|di=i'           => \$opt{"di"},
-	   's|state'          => \$opt{state},
-	   'S|short-state'    => \$opt{shortstate},
-	   'l|linebreak=s'    => \$opt{linebreak},
-	   'e|extraconfig=s'  => \$opt{extraconfig},
-	   'v|verbose'        => \$opt{verbose},
-	   't|test'           => \$opt{test},
-	   'r|reload'         => \$opt{reload},
-	   'L|ll'             => \$opt{ll},
+	   's|state'          => \$opt{'state'},
+	   'S|short-state'    => \$opt{'shortstate'},
+	   'l|linebreak=s'    => \$opt{'linebreak'},
+	   'e|extraconfig=s'  => \$opt{'extraconfig'},
+	   'v|verbose'        => \$opt{'verbose'},
+	   't|test'           => \$opt{'test'},
+	   'r|reload'         => \$opt{'reload'},
+	   'L|ll'             => \$opt{'ll'},
+	   'M|mdskip'         => \$opt{'mdskip'},
+	   'g|group=s'        => \$opt{'group'},
 	  ) or do { print $USAGE; exit $E_UNKNOWN };
 
 # If user requested help
@@ -650,6 +688,33 @@ if (defined $opt{linebreak}) {
     }
 } # if
 
+
+# group option
+my @group = ();
+
+#print "--group='".$opt{'group'}.$opt{'group'}."'\n";
+if ($opt{'group'} ne '') {
+    if ( $opt{'group'} !~ m!^(.+?,\d+,\d+:)+$! ) {
+	unknown_error("Wrong usage of '--group' option: '"
+		      . $opt{'group'}
+		      . "' syntax error. See help information.");
+    } # if
+
+    while ( $opt{'group'} =~ m!(.+?),(\d+),(\d+):!g ) {
+	my $regex =$1;
+	my $crit =$2;
+	my $warn =$3;
+	#print "GROUP: Regex='$regex', c=$crit, w=$warn\n";
+
+	if ($crit > $warn) {
+	    unknown_error("Error in '--group' option '"
+			  . $opt{'group'}
+			  . "' for group rule '$regex': critical threshold ($crit) must not be higher than warning threshold ($warn).");
+	} # if
+
+	push ( @group, { 'regex' => $regex, 'warn' => $warn, 'crit' => $crit } );
+    } # while 
+} # if
 
 
 # extraconfig option
@@ -817,7 +882,7 @@ sub get_multipath_text {
 # if so, set variables for new LUN
 #
 sub checkLunLine {
-    my ($textLine, $rCurrentLun, $rLunPaths) = @_;
+    my ($textLine, $rCurrentLun, $rLunData) = @_;
     #print "checkLunLine: '$textLine'\n";
 
     # mpathb (36000d774000045f655ea91cb4ea41d6f) dm-1 FALCON,IPSTOR DISK
@@ -826,37 +891,33 @@ sub checkLunLine {
     # tex-lun4 (3600000e00d0000000002161200120000) dm-7 FUJITSU ,ETERNUS_DXL
     # fc-p6-vicepb (1Proware_FF010000333001EC) dm-1 Proware,R_laila            thanks to Michal Svamberg
     if ($textLine =~ m/^([\w\-]+) \s+ \([\w\-]+\)/x) {
-	$$rCurrentLun = $1;                           # do initialisations for new LUN
+	$$rCurrentLun = $1;
 	#report("named LUN $$rCurrentLun found", $E_OK);
-	$$rLunPaths{$$rCurrentLun} = 0;
-	return 1;
     } 
     # 36006016019e02a00d009495ddbf3e011 dm-2 DGC,VRAID
     elsif ($textLine =~ m/^[0-9a-fA-F]+ \s+ ([\w\-\_]+)/x) {
-	$$rCurrentLun = $1;                           # do initialisations for new LUN
+	$$rCurrentLun = $1;
 	#report("simple (1) LUN $$rCurrentLun found", $E_OK);
-	$$rLunPaths{$$rCurrentLun} = 0;
-	return 1;
     } 
     # 360a98000503361754b5a58724f6f7a59dm-2 NETAPP  ,LUN
     elsif ($textLine =~ m/^[0-9a-fA-F]{3,33} \s* ([\w\-\_]+) \s+/x) {
-	$$rCurrentLun = $1;                           # do initialisations for new LUN
+	$$rCurrentLun = $1;
 	#report("simple (2) LUN $$rCurrentLun found", $E_OK);
-	$$rLunPaths{$$rCurrentLun} = 0;
-	return 1;
     } 
     # iscsi-LUN example
     # 1STORAGE_server_target2 dm-2 IET,VIRTUAL-DISK
     #elsif ($textLine =~ m/^([\w\-]+) \s+ [a-z]+\-\d+/x) {
     elsif ($textLine =~ m/^([\w\-]+) \s+ [a-z]+\-\d+ \s+ [\w\-\,]+/x) {
-	$$rCurrentLun = $1;                           # do initialisations for new LUN
+	$$rCurrentLun = $1;
 	#report("LUN without HEX-ID $$rCurrentLun found", $E_OK);
-	$$rLunPaths{$$rCurrentLun} = 0;
-	return 1;
     }
     else {
-	return 0;
+	return 0;   ## Not a LUN line, stop here and return zero
     } # if
+
+    # initialise data of found LUN
+    ${$rLunData}{$$rCurrentLun} = { 'paths' => 0, 'lunline' => $textLine };
+    return 1;
 } # sub
 
 
@@ -893,7 +954,7 @@ sub checkMultipathText {
 
     my $state      = "pathDesc";
     my $currentLun = "";
-    my %lunPaths   = ();
+    my %lunData    = ();
     my $i          = 0;
 
     foreach my $textLine (@$rTextArray) {
@@ -936,10 +997,10 @@ sub checkMultipathText {
 			if ( $currentLun eq "") {                # YES => check logic, increase path count for LUN
 			     unknown_error ("Path info before LUN name. Line $i:\n'$textLine'")
 			}
-			$lunPaths{$currentLun}++;
+			${$lunData{$currentLun}}{'paths'}++;
 		    } # if
 		}                                               # check for new LUN name
-		elsif ( checkLunLine ($textLine, \$currentLun, \%lunPaths) ) {
+		elsif ( checkLunLine ($textLine, \$currentLun, \%lunData) ) {
 		    $state="lunInfo";
 		}                                               # check for new LUN name
 		elsif ( ($currentLun ne "") && checkPolicyLine ($textLine) ) {
@@ -955,7 +1016,7 @@ sub checkMultipathText {
 
 	    # after new LUN was found skip the INFO-Line (nothing else...)
 	    case "lunInfo" {
-		if ( $currentLun eq "") {                       # check logic
+		if ( $currentLun eq "" ) {                      # check logic
 		    unknown_error ("No current LUN while looking for LUN info. Line $i:\n'$textLine'")
 		}
 		# size=2.0T features='1 queue_if_no_path' hwhandler='0' wp=rw
@@ -982,7 +1043,7 @@ sub checkMultipathText {
                 if ( checkPolicyLine ($textLine) ) {
 		    $state = "pathDesc";
 		}                                               # new LUN found
-		elsif ( checkLunLine ($textLine, \$currentLun, \%lunPaths) ) {
+		elsif ( checkLunLine ($textLine, \$currentLun, \%lunData) ) {
 		    $state = "lunInfo";
 		} else {                                        # error: unknown line format
 		    unknown_error ("Line $i not recognised. Expected path policy or new LUN:\n'$textLine'")
@@ -991,12 +1052,32 @@ sub checkMultipathText {
 	} # switch
     } # foreach
 
-    return \%lunPaths
+    return \%lunData
 } # sub
 
 #=====================================================================
 # Main program
 #=====================================================================
+
+
+# check if multipathd is running
+if ( !$opt{'mdskip'} ) {                                         # check is not disabled
+    my $cmd = 'ps -e';
+    my $output = qx($cmd);
+    #print "####\n$output\n####\n";
+
+    my $err = $!;
+    if ($? != 0) {
+	report("Check if multipathd is running FAILED. (There is an option to disable this check.) Command '$cmd': '$err'", $E_WARNING);
+    } else {
+	if ( $output !~ m!\smultipathd\n!s ) {
+	    report ("No multipathd running. (Not found in process list.)", $text2exit{$opt{'no_multipath'}} );
+	} else {
+	    #print "FOUND: multipathd process.\n";
+	}# if
+    }# if
+} # if
+
 
 my $mpListCmd = $MULTIPATH_LIST;
 if ($opt{'ll'}) {
@@ -1005,31 +1086,43 @@ if ($opt{'ll'}) {
 
 my @multipathStateText = @{ get_multipath_text( $mpListCmd ) };  # get input data
 
-my %lunPaths = %{checkMultipathText ( \@multipathStateText )};        # analyse it
+my %lunData = %{checkMultipathText ( \@multipathStateText )};   # analyse it
 
 
 # if no LUN found...
-if (scalar keys %lunPaths == 0) {
-    report ("No LUN found or no multipath driver.", $text2exit{$opt{no_multipath}});
+if (scalar keys %lunData == 0) {
+    report ("No LUN found or no multipath driver.", $text2exit{$opt{'no_multipath'}});
 }
+
 
 #
 # Check path count for each LUN
 #
-foreach my $lunName ( sort {$a cmp $b} keys %lunPaths) {
-    my $pathCount = $lunPaths{$lunName};
+foreach my $lunName ( sort {$a cmp $b} keys %lunData) {
+    my $rLunDef   = $lunData{$lunName};
+    my $pathCount = $$rLunDef{'paths'};
+    my $lunLine   = $$rLunDef{'lunline'};
 
     my $warn = $opt{'ok-paths'};
     my $crit = $opt{'min-paths'};
 
     # 	$extraconfig{$name} = {'warn' => $warn, 'crit' => $crit};
-    if (defined ($extraconfig{$lunName}) ) {       # deviant thresholds from options?
+    if (defined ($extraconfig{$lunName}) ) {       # deviant thresholds for THIS LUN from options?
 	$warn = ${$extraconfig{$lunName}}{'warn'};
 	$crit = ${$extraconfig{$lunName}}{'crit'};
 	#print "$lunName: $pathCount  EXTRA: crit=$crit, warn=$warn\n";
 	${$extraconfig{$lunName}}{'found'} = 1;
-    } else {	
-	#print "$lunName: $pathCount  STANDARD\n";
+    } else {	                                   # LUN-Line matches a group definition?
+	foreach my $rGroupDef ( @group ) {
+	    my $regex = ${$rGroupDef}{'regex'};
+	    #print "GRP: '$regex'\n";
+	    if ($lunLine =~ m!$regex! ) {
+		$warn = ${$rGroupDef}{'warn'};
+		$crit = ${$rGroupDef}{'crit'};
+		#print "GRP: '$regex' MATCH: c=$crit w=$warn \n";
+		last;
+	    }
+	} # foreach
     }# if
     
     if ($pathCount < $crit){
