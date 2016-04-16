@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $Id: check_zone_rrsig_expiration,v 1.11 2014/05/23 17:37:52 wessels Exp $
+# $Id: check_zone_rrsig_expiration,v 1.14 2015/10/12 16:54:20 wessels Exp $
 #
 # check_zone_rrsig_expiration
 #
@@ -75,8 +75,10 @@ use List::Util qw ( shuffle );
 #  -C days        Critical if expiring in this many days
 #  -W days        Warning if expiring in this many days
 #  -T type	  Query type (default SOA)
-my %opts = (t=>30, C=>2, W=>3, T=>'SOA');
-getopts('Z:dt:W:C:T:', \%opts);
+#  -4             use IPv4 only
+#  -U size        EDNS0 UDP packet size (default 4096)
+my %opts = (t=>30, C=>2, W=>3, T=>'SOA', U=>4096);
+getopts('4Z:dt:W:C:T:U:', \%opts);
 usage() unless $opts{Z};
 usage() if $opts{h};
 my $zone = $opts{Z};
@@ -120,7 +122,8 @@ sub do_recursion {
 			$res->udp_timeout($opts{t});
 			$res->recurse(0);
 			$res->dnssec(1);
-			$res->udppacketsize(4096);
+			$res->udppacketsize($opts{U});
+			$res->force_v4(1) if $opts{'4'};
 			$pkt = $res->send($zone, $opts{T});
 			last if $pkt;
 		}
@@ -256,10 +259,13 @@ sub output {
 sub usage {
 	print STDERR "usage: $0 -Z zone -d -t timeout -W days -C days\n";
 	print STDERR "\t-Z zone		zone to test\n";
+	print STDERR "\t-T type		query type (default SOA)\n";
 	print STDERR "\t-d 		debug\n";
 	print STDERR "\t-t seconds	timeout on DNS queries\n";
 	print STDERR "\t-W days		warning threshhold\n";
 	print STDERR "\t-C days		critical threshold\n";
+	print STDERR "\t-4		use IPv4 only\n";
+	print STDERR "\t-U bytes	EDNS0 UDP buffer size (default 4096)\n";
 	exit 3;
 }
 
@@ -273,7 +279,8 @@ sub send_query {
 	$res->retry(2);
 	$res->recurse(0);
 	$res->dnssec(1);
-	$res->udppacketsize(4096);
+	$res->udppacketsize($opts{U});
+	$res->force_v4(1) if $opts{'4'};
 	my $pkt = $res->send($qname, $qtype);
 	unless ($pkt) {
 		$res->usevc(1);
