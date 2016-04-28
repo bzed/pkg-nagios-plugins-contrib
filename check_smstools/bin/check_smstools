@@ -169,6 +169,7 @@ sub process_statusfile {
 			if ($result{'cmd'} =~ /$operator_command/) {
 				$operator = $result{'answer'};
 				$operator =~ s/0,0,"//g;
+				$operator =~ s/"$//g;
 			}
 		}
 		# No need to parse the rest of the file, if signal
@@ -196,7 +197,7 @@ sub check_signal {
 		$np->nagios_die("Unable to determine the modem signal strength.");
 	}
 
-	if (($siglvl < 0) or ($siglvl > 31)) {
+	if (($siglvl < 0) or ($siglvl > 32)) {
 		$np->nagios_die("Unable to determine the modem signal strength.");
 	}
 
