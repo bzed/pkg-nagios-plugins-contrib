@@ -191,7 +191,13 @@ $ua->agent($PROGNAME.'-'.$VERSION);
 logD("Web URL : $url");
 
 my $req = HTTP::Request->new( GET => $url );
-if ( defined($o_user) ) {
+if ( defined($o_realm) ) {
+    if ( ! defined($o_port) ) {
+        $o_port = 80;
+    }
+    $ua->credentials("$o_host:$o_port", $o_realm, $o_user, $o_pass);
+}
+elsif ( defined($o_user) ) {
 	$req->authorization_basic($o_user, $o_pass);
 }
 
