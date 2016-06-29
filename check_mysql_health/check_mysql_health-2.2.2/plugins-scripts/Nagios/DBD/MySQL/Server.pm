@@ -101,9 +101,17 @@ sub init {
       # sql output must be a number (or array of numbers)
       @{$self->{genericsql}} =
           $self->{handle}->fetchrow_array($params{selectname});
-      if (! (defined $self->{genericsql} &&
-          (scalar(grep { /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/ } @{$self->{genericsql}})) == 
+      if ($self->{handle}->{errstr}) {
+        $self->add_nagios_unknown(sprintf "got no valid response for %s: %s",
+            $params{selectname}, $self->{handle}->{errstr});
+      } elsif (! (defined $self->{genericsql} &&
+          (scalar(grep {
+              /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/
+          } @{$self->{genericsql}})) ==
           scalar(@{$self->{genericsql}}))) {
+        $self->add_nagios_unknown(sprintf "got no valid response for %s",
+            $params{selectname});
+      } elsif (! defined $self->{genericsql}) {
         $self->add_nagios_unknown(sprintf "got no valid response for %s",
             $params{selectname});
       } else {
@@ -1000,7 +1008,7 @@ sub init {
           $self->{dsn},
           $self->{username},
           $self->decode_password($self->{password}),
-          { RaiseError => 0, AutoCommit => 0, PrintError => 0 })) {
+          { RaiseError => 0, AutoCommit => 0, PrintError => 1 })) {
 #        $self->{handle}->do(q{
 #            ALTER SESSION SET NLS_NUMERIC_CHARACTERS=".," });
         $retval = $self;
@@ -1058,6 +1066,10 @@ sub fetchrow_array {
   my @arguments = @_;
   my $sth = undef;
   my @row = ();
+  my $stderrvar;
+  *SAVEERR = *STDERR;
+  open ERR ,'>',\$stderrvar;
+  *STDERR = *ERR;
   eval {
     $self->trace(sprintf "SQL:\n%s\nARGS:\n%s\n",
         $sql, Data::Dumper::Dumper(\@arguments));
@@ -1071,8 +1083,17 @@ sub fetchrow_array {
     $self->trace(sprintf "RESULT:\n%s\n",
         Data::Dumper::Dumper(\@row));
   }; 
+  *STDERR = *SAVEERR;
   if ($@) {
     $self->debug(sprintf "bumm %s", $@);
+    $self->{errstr} = $@;
+    return (undef);
+  } elsif ($stderrvar) {
+    $self->{errstr} = $stderrvar;
+    return (undef);
+  } elsif ($sth->errstr()) {
+    $self->{errstr} = $sth->errstr();
+    return (undef);
   }
   if (-f "/tmp/check_mysql_health_simulation/".$self->{mode}) {
     my $simulation = do { local (@ARGV, $/) = 

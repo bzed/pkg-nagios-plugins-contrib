@@ -1,6 +1,8 @@
-* 2.2.1 -  2015-08-18
+* 2.2.2 2016-05-13
+  handle permission/syntax problems for mode sql
+* 2.2.1 2015-08-18
   fix the autoconf m4, so the debian-builds don't fail (thanks Jan Wagner)
-* 2.2 - 2015-04-23
+* 2.2 2015-04-23
   add rfc3986-encoded passwords
 * 2.1.9.2 2014-12-22
   bugfix in InnoDB initialization & versions > 5.6.1 (Thanks Jorg Veit)
