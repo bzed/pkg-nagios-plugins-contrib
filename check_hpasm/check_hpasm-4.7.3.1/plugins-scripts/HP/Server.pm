@@ -35,6 +35,9 @@ sub new {
       } elsif ($self->{productname} =~ /OpenView .* appliance/) {
         bless $self, 'HP::Proliant::SNMP';
         $self->trace(3, 'using HP::Proliant::SNMP');
+      } elsif ($self->{productname} =~ /Superdome.*Enclosure/i) {
+        bless $self, 'HP::BladeSystem';
+        $self->trace(3, 'using HP::BladeSystem');
       } elsif ($self->{productname} =~ /BladeSystem/) {
         bless $self, 'HP::BladeSystem';
         $self->trace(3, 'using HP::BladeSystem');
