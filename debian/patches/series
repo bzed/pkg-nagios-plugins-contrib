@@ -15,6 +15,7 @@ check_libs/space_before_deleted
 check_lm_sensors/manpage_whatis_fix
 check_lm_sensors/spelling_errors
 check_lm_sensors/interpreter
+check_memory/new_free
 check_nfsmounts/perl_module
 check_nfsmounts/nfs_write_location
 check_printer/use_data_dumper_if_needed
