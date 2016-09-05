@@ -138,13 +138,13 @@ if( $help_usage
 		&&
 		(
 			$smtp_server eq "" || $mailto eq "" || $mailfrom eq "" 
-			|| $imap_server eq "" || $username eq "" || $password eq ""
+			|| $imap_server eq ""
 		)
 	)
 	) {
 	print "Usage 1: $0 -H host \n\t".
 			"--mailto recipient\@your.net --mailfrom sender\@your.net --body 'message' \n\t".
-			"--username username --password password \n\t".
+			"[--username username] [--password password] \n\t".
 			"[-w <seconds>] [-c <seconds>]\n\t" .
 			"[--imap-check-interval <seconds> ] [--imap-retries <times> ]\n";
 	print "Usage 2: $0 \n\t".
