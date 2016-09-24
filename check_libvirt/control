@@ -1,5 +1,4 @@
 Homepage: http://git.op5.org/gitweb?p=system-addons/plugins/op5/check_libvirt.git;a=summary
-Watch: http://git.op5.org/gitweb?p=system-addons/plugins/op5/check_libvirt.git;a=tags ".*list subject.*a=tag;.*>v([^<]+)</a></td>"
 Recommends: libnagios-plugin-perl, libxml-simple-perl
 Suggests: libsys-virt-perl
 Version: v7.0.3
