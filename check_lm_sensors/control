@@ -1,5 +1,5 @@
 Uploaders: Bernd Zeimetz <bzed@debian.org>
-Recommends: libmonitoring-plugin-perl (>= 0.31)
+Recommends: libmonitoring-plugin-perl | libnagios-plugin-perl (>= 0.31)
 Version: 4.1.1
 Homepage: https://github.com/matteocorti/check_lm_sensors
 Watch: https://github.com/matteocorti/check_lm_sensors/releases check_lm_sensors-([0-9.]+)\.tar\.gz
