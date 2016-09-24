@@ -1,3 +1,20 @@
+2016-01-08  Matteo Corti  <matteo@corti.li>
+
+	* check_lm_sensors: dynamic usage of the deprecated Nagios:: or Monitoring:: plugins
+
+2015-11-23  Martin Schulze
+
+	* check_lm_sensors: fixed an issue with device names on new kernels 
+
+2011-04-18 Matteo Corti <matteo.corti@id.ethz.ch>
+
+        * Makefile.PL: fixed some dependencies
+
+2011-01-28  Matteo Corti  <matteo.corti@id.ethz.ch>
+
+	* check_lm_sensors: applied a patch from Giles Westwood to support multiple --rename
+	                    arguments
+
 2008-10-17  Matteo Corti  <matteo.corti@id.ethz.ch>
 
 	* check_lm_sensors: added 0.2s pause before reading the output of 'sensors'

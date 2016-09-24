@@ -1,5 +1,29 @@
 Build and install check_lm_sensors
 
+Dependences
+===========
+
+check_lm_sensors depends on several Perl modules:
+
+ * Carp
+ * English
+ * Getopt::Long
+ * Monitoring::Plugin
+ * Monitoring::Plugin::Threshold
+ * version
+
+Perl modules can be found on the "Comprehensive Perl Archive Network"
+(CPAN). The "How to install CPAN modules" guide summarizes how these
+can be installed
+
+        http://www.cpan.org/modules/INSTALL.html
+
+On many systems Perl modules are also available as installation
+packages (refer to your system documentation on how to install them).
+
+The 'perl Makefile.PL' command (see below) will list the missing
+packages the you will need to install.
+
 Install to /usr/lib/nagios/plugins/contrib
 ==========================================
 
@@ -38,6 +62,5 @@ Generate the man page with pod2man
 
     pod2man check_lm_sensors.pod > CUSTOM_MAN_FILE
 
-Please report any installation problem to <matteo.corti@id.ethz.ch> or
-open a ticket at
-https://trac.id.ethz.ch/projects/nagios_plugins/newticket
+Please report any installation problem to <matteo@corti.li> or
+open a ticket at https://github.com/matteocorti/check_lm_sensors/issues

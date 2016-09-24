@@ -1,3 +1,13 @@
+2016-01-08 (Version 4.1.1)
+* the plugins falls back to the Nagios:: plugins if the Monitoring:: plugins are not installed
+
+2015-11-23 (Version 4.1.0)
+* fix for device names on new kernels
+
+2011-01-28 (Version 4.0.0)
+* code cleanup
+* multiple --rename options
+
 2008-10-17 (Version 3.1.1)
 * added a short pause while reading the output of 'sensors' to cope
   with some systems where a delay caused the plugin to fail

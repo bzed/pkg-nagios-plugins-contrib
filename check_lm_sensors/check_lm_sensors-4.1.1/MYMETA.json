@@ -1,0 +1,53 @@
+{
+   "abstract" : "unknown",
+   "author" : [
+      "Matteo Corti <matteo@corti.li>"
+   ],
+   "dynamic_config" : 0,
+   "generated_by" : "Module::Install version 1.16, CPAN::Meta::Converter version 2.150001",
+   "license" : [
+      "open_source"
+   ],
+   "meta-spec" : {
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "version" : "2"
+   },
+   "name" : "check_lm_sensors",
+   "no_index" : {
+      "directory" : [
+         "inc"
+      ]
+   },
+   "prereqs" : {
+      "build" : {
+         "requires" : {
+            "ExtUtils::MakeMaker" : "6.59"
+         }
+      },
+      "configure" : {
+         "requires" : {
+            "ExtUtils::MakeMaker" : "0"
+         }
+      },
+      "runtime" : {
+         "requires" : {
+            "Carp" : "0",
+            "English" : "0",
+            "Getopt::Long" : "0",
+            "List::MoreUtils" : "0",
+            "Monitoring::Plugin" : "0.31",
+            "Monitoring::Plugin::Getopt" : "0",
+            "Monitoring::Plugin::Threshold" : "0",
+            "perl" : "5.00800",
+            "version" : "0"
+         }
+      }
+   },
+   "release_status" : "stable",
+   "resources" : {
+      "license" : [
+         "http://opensource.org/licenses/gpl-license.php"
+      ]
+   },
+   "version" : "4.1.1"
+}
