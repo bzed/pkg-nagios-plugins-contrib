@@ -2,5 +2,5 @@ Uploaders: Jan Wagner <waja@cyconet.org>
 Recommends: python-pymongo
 Version: abf2daad31
 Homepage: https://github.com/mzupan/nagios-plugin-mongodb
-Watch: https://github.com/mzupan/nagios-plugin-mongodb <span class="sha">([0-9a-f]+)</span>
+Watch: https://github.com/mzupan/nagios-plugin-mongodb <a class="commit-tease-sha"[^>]*>\s+([0-9a-f]+)\s+</a>
 Description: Plugin script to monitor your MongoDB server(s)
