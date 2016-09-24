@@ -3,10 +3,12 @@ check_backuppc/use_nagios_plugins
 check_bgpstate/epn
 check_clamav/clamav_locations
 check_cups/epn
+check_cups/monitoring-plugin
 check_drbd/fix_for_oos_and_cosmetic
 check_email_delivery/epn
 check_email_delivery/paths
 check_haproxy/epn
+check_haproxy/monitoring-plugin
 check_httpd_status/epn
 check_imap_quota/syntax_error_fix
 check_libs/lsof-speedup
