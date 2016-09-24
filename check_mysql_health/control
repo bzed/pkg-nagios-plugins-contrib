@@ -5,4 +5,4 @@ Recommends: libdbd-mysql-perl
 Description: plugin to check various parameters of a
  MySQL database
 Build-Depends: autotools-dev
-Version: 2.1.9.2
+Version: 2.2.2

@@ -345,11 +345,21 @@ EOEO
               $hpacucli = '/usr/sbin/hpacucli';
             } elsif (-e '/usr/local/sbin/hpacucli') {
               $hpacucli = '/usr/local/sbin/hpacucli';
+            } elsif (-e '/usr/sbin/hpssacli') {
+              $hpacucli = '/usr/sbin/hpssacli';
+            } elsif (-e '/usr/local/sbin/hpssacli') {
+              $hpacucli = '/usr/local/sbin/hpssacli';
             } else {
               $hpacucli = $hpasmcli;
               $hpacucli =~ s/^sudo\s*//;
               $hpacucli =~ s/hpasmcli/hpacucli/;
               $hpacucli = -e $hpacucli ? $hpacucli : undef;
+              if (! $hpacucli) {
+                $hpacucli = $hpasmcli;
+                $hpacucli =~ s/^sudo\s*//;
+                $hpacucli =~ s/hpasmcli/hpssacli/;
+                $hpacucli = -e $hpacucli ? $hpacucli : undef;
+              }
             }
             if ($hpacucli) {
               if ($< != 0) {

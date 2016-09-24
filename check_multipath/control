@@ -1,5 +1,5 @@
 Watch: http://exchange.nagios.org/directory/Plugins/Operating-Systems/Linux/check-2Dmultipath-2Epl/details Current Version</div><div class="data">([0-9.]+)</div>
-Version: 0.2.1
+Version: 0.4.7
 Homepage: http://exchange.nagios.org/directory/Plugins/Operating-Systems/Linux/check-2Dmultipath-2Epl/details
 Uploaders: Bernd Zeimetz <bzed@debian.org>
 Description: plugin to monitor the number of available and

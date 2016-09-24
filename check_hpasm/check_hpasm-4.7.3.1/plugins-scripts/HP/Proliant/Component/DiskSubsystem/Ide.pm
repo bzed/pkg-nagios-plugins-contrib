@@ -68,6 +68,7 @@ sub new {
 
 sub check {
   my $self = shift;
+  $self->blacklist('ideco', $self->{name});
   if ($self->{cpqIdeControllerOverallCondition} eq 'other') {
     if (scalar(@{$self->{physical_drives}})) {
       $self->add_message(CRITICAL,
@@ -153,6 +154,7 @@ sub new {
 
 sub check {
   my $self = shift;
+  $self->blacklist('ideld', $self->{name});
   if ($self->{cpqIdeLogicalDriveCondition} ne "ok") {
     if ($self->{cpqIdeLogicalDriveStatus} =~ 
         /rebuild/) {
@@ -215,6 +217,7 @@ sub new {
 
 sub check {
   my $self = shift;
+  $self->blacklist('idepd', $self->{name});
   if ($self->{cpqIdeAtaDiskCondition} ne 'ok') {
     $self->add_message(CRITICAL,
         sprintf "physical drive %s is %s", 

@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # nagios: -epn
 
-# $Id: check_whois,v 1.16 2014/12/16 00:09:36 wessels Exp $
+# $Id: check_whois,v 1.21 2015/10/12 16:44:13 wessels Exp $
 #
 # check_whois
 #
@@ -80,6 +80,7 @@ my $string_found = 0;
 my $name = shift or die usage();
 $name =~ s/^zone\.//;
 my $whoiscmd = findwhois();
+print STDERR "$0 version ". '$Id: check_whois,v 1.21 2015/10/12 16:44:13 wessels Exp $'. "\n" if $opts{d};
 print STDERR "Whois command = $whoiscmd\n" if $opts{d};
 grok($whoiscmd, $name);
 exit 0;
@@ -94,6 +95,19 @@ sub findwhois {
 		}
 	}
 	die "Could not find a whois command!\n";
+}
+
+# 
+# the ~ 2013-14-15 era New GTLDs have whois servers at whois.nic.$tld
+# and they are slow to be configured in either whois clients or the
+# whois-servers.net zone.
+#
+sub findnewgtldwhois($) {
+	my $name = shift;
+	my @x = split /\./, $name;
+	my $tld = pop @x;
+	my $whois = "whois.nic.$tld";
+	return gethostbyname($whois) ? $whois : undef;
 }
 
 sub grok {
@@ -115,7 +129,7 @@ sub grok {
         print STDERR "checking $name\n" if $opts{d};
         while (<CMD>) {
                 tr/A-Z/a-z/;
-		print if $opts{d};
+		print STDERR "# $_" if $opts{d};
                 $registrar = $1 if (/registrar:\s*(\S.*)/);
                 if (!defined($registrar)) {
                         $registrar = $1 if (/registrar id:\s*(\S.*)/);
@@ -157,10 +171,17 @@ sub grok {
 		}
         }
         close(CMD);
+	printf STDERR "Line %d: expires='%s'\n", __LINE__, $expires if $opts{d};
+
+	# Remove any leading/trailing whitespace
+	#
+	$expires =~ s/^\s+// if defined $expires;
+	$expires =~ s/\s+$// if defined $expires;
 
 	# Remove any trailing dot from the expire time
 	#
 	$expires =~ s/\.$// if defined $expires;
+	printf STDERR "Line %d: expires='%s'\n", __LINE__, $expires if $opts{d};
 
 	if (defined $registrar) {
             $registrar = 'gandi' if ($registrar eq 'r42-lror');
@@ -168,6 +189,11 @@ sub grok {
             $registrar = 'go daddy' if ($registrar eq 'r91-lror');
         } elsif (defined $whoisservice) {
             $registrar = $whoisservice . ' whois service';
+	} elsif ((my $newgltdwhois = findnewgtldwhois($name)) && $whoiscmd !~ / -h /) {
+		print STDERR "retrying with -h $newgltdwhois\n" if $opts{d};
+		$whoiscmd .= " -h $newgltdwhois";
+		grok($whoiscmd, $name);
+		return;
 	} elsif (defined $opts{x}) {
 	    $registrar = 'UNKNOWN';
 	} else {
@@ -190,6 +216,7 @@ sub grok {
 			$expires = join('-', $p[2], $p[1], $p[0]);
 		}
 	}
+	printf STDERR "Line %d: expires='%s'\n", __LINE__, $expires if $opts{d};
 
 	# Network Solutions has a bug in their whois output, returning dates like this:
 	# Registrar Registration Expiration Date: Fri Jul 21 00:00:00 EDT 2023T00:00:00Z
@@ -197,6 +224,7 @@ sub grok {
 	if ($expires =~ /[a-z]{3} ([a-z]{3}) (\d\d) 00:00:00 \S+ (\d\d\d\d)T/i) {
 		$expires = join('-', $2,$1,$3);
 	}
+	printf STDERR "Line %d: expires='%s'\n", __LINE__, $expires if $opts{d};
 
 	# Name.com returns dates like this: 2018-12-13T21:27:28-07:00Z
 	# Just remove the timezone offset and call it good enough
@@ -204,12 +232,16 @@ sub grok {
 	if ($expires =~ /(\d{4}-\d\d-\d\dt\d\d:\d\d:\d\d)-\d\d:\d\dz/i) {
 		$expires = $1;
 	}
+	printf STDERR "Line %d: expires='%s'\n", __LINE__, $expires if $opts{d};
 
 	my $t;
 	if (defined $expires) {
+	    $expires =~ s/-t/ /i;
+	    $expires =~ s/z$//i;
+	    printf STDERR "Line %d: expires='%s'\n", __LINE__, $expires if $opts{d};
             $t = UnixDate($expires, "%s");
             critical("Invalid expiration time '$expires'") unless defined $t;
-            critical("Invalid expiration time '$expires'") if ($t < 0);
+            critical("Invalid expiration time '$expires' (t=$t)") if ($t < 0);
             $expires = strftime("%Y-%m-%d", localtime($t));
 	} elsif (defined $opts{x}) {
 	    $t = time + (86400 * 90);

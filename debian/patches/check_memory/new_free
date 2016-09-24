@@ -1,0 +1,53 @@
+From df189de31d33f40b894c33482dbdf9f61eaf1177 Mon Sep 17 00:00:00 2001
+From: Simon Ruderich <simon@ruderich.org>
+Date: Tue, 26 Jul 2016 18:50:38 +0200
+Subject: [PATCH] Fixing for new free output.
+
+The output of free doesn't anymore contain the "buffers/cache"
+line breaking the check_memory plugin. The attached patch uses
+instead the new "available" column to calculate the free memory
+as it seems to be a better estimation of free (usable) memory.
+---
+ check_memory/check_memory | 20 +++++++++++++++-----
+ 1 file changed, 15 insertions(+), 5 deletions(-)
+
+diff --git a/check_memory/check_memory b/check_memory/check_memory
+index 8369a9e..70d0514 100755
+--- a/check_memory/check_memory
++++ b/check_memory/check_memory
+@@ -104,12 +104,23 @@ open(RESULT, "$FREECMD -b |")
+   or $np->nagios_exit('CRITICAL', "Could not run $FREECMD");
+ 
+ warn("Output from $FREECMD:\n") if ($verbose > 1);
+-my ($used, $free);
++my $new_format = 0;
++my ($total, $used, $free);
+ while (<RESULT>) {
+   warn("  $_") if ($verbose > 1);
+-  next unless (m#^\-/\+\ buffers/cache:\s*(\d+)\s+(\d+)#);
+-  $used = $1;
+-  $free = $2;
++  # New `free` output from procps doesn't provide "buffers/cache" anymore, but
++  # provides a better estimate of available memory ("available" column).
++  $new_format = 1 if m{^\s+total\s+used\s+free\s+shared\s+buff/cache\s+available$};
++
++  if ($new_format and /^Mem:\s+(\d+)\s+\d+\s+\d+\s+\d+\s+\d+\s+(\d+)$/) {
++    $total = $1;
++    $free = $2; # available column
++    $used = $total - $free; # used is everything which is not available
++  } elsif (m#^\-/\+\ buffers/cache:\s*(\d+)\s+(\d+)#) {
++    $used = $1;
++    $free = $2;
++    $total = $used + $free;
++  }
+ }
+ 
+ close(RESULT);
+@@ -117,7 +128,6 @@ alarm(0);
+ 
+ $np->nagios_exit('CRITICAL', "Unable to interpret $FREECMD output") if (!defined($free));
+ 
+-my $total = $used + $free;
+ if (defined($warning) && $warning =~ /^\d+%$/) {
+   if ($warning) {
+     $warning =~ s/%//;

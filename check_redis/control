@@ -3,7 +3,7 @@ Watch: https://raw.githubusercontent.com/willixix/WL-NagiosPlugins/master/check_
 Uploaders: Bernd Zeimetz <bzed@debian.org>
 Description: Redis Server check plugin
  This plugin checks Redis NoSQL database status variables,
- measures its response time and if specified allows to set thresholds
+ measures its response time and if specified allows one to set thresholds
  on one or more key data. You can set thresholds for data in stats
  variables and some of them are also conveniently available as long options
  with special threshold syntax. Plugin also calculates statistics such as

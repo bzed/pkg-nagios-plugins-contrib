@@ -56,8 +56,10 @@ use strict;
 {
 package utils;
 
-my @EXPORT = qw(which find_sudo);
-my @EXPORT_OK = @EXPORT;
+use Exporter 'import';
+
+our @EXPORT = qw(which find_sudo);
+our @EXPORT_OK = @EXPORT;
 
 # registered plugins
 our @plugins;
@@ -85,7 +87,7 @@ sub which {
 }
 
 our @sudo;
-sub find_sudo() {
+sub find_sudo {
 	# no sudo needed if already root
 	return [] unless $>;
 
@@ -111,29 +113,205 @@ sub find_sudo() {
 } # package utils
 
 {
+package sudoers;
+
+use Exporter 'import';
+
+utils->import;
+
+our @EXPORT = qw(sudoers);
+our @EXPORT_OK = @EXPORT;
+
+# update sudoers file
+#
+# if sudoers config has "#includedir" directive, add file to that dir
+# otherwise update main sudoers file
+sub sudoers {
+	my ($dry_run) = @_;
+
+	# build values to be added
+	# go over all registered plugins
+	my @sudo;
+	foreach my $pn (@utils::plugins) {
+		my $plugin = $pn->new;
+
+		# skip inactive plugins (disabled or no tools available)
+		next unless $plugin->active;
+
+		# collect sudo rules
+		my @rules = $plugin->sudo(1) or next;
+
+		push(@sudo, @rules);
+	}
+
+	unless (@sudo) {
+		warn "Your configuration does not need to use sudo, sudoers not updated\n";
+		return;
+	}
+
+	my @rules = join "\n", (
+		"",
+		# setup alias, so we could easily remove these later by matching lines with 'CHECK_RAID'
+		# also this avoids installing ourselves twice.
+		"# Lines matching CHECK_RAID added by $0 -S on ". scalar localtime,
+		"User_Alias CHECK_RAID=nagios",
+		"Defaults:CHECK_RAID !requiretty",
+
+		# actual rules from plugins
+		join("\n", @sudo),
+		"",
+	);
+
+	if ($dry_run) {
+		warn "Content to be inserted to sudo rules:\n";
+		warn "--- sudoers ---\n";
+		print @rules;
+		warn "--- sudoers ---\n";
+		return;
+	}
+
+	my $sudoers = find_file('/usr/local/etc/sudoers', '/etc/sudoers');
+	my $visudo = which('visudo');
+
+	die "Unable to find sudoers file.\n" unless -f $sudoers;
+	die "Unable to write to sudoers file '$sudoers'.\n" unless -w $sudoers;
+	die "visudo program not found\n" unless -x $visudo;
+
+	# parse sudoers file for "#includedir" directive
+	my $sudodir = parse_sudoers_includedir($sudoers);
+	if ($sudodir) {
+		# sudo will read each file in /etc/sudoers.d, skipping file names that
+		# end in ~ or contain a . character to avoid causing problems with
+		# package manager or editor temporary/backup files
+		$sudoers = "$sudodir/check_raid";
+	}
+
+	warn "Updating file $sudoers\n";
+
+	# NOTE: secure as visudo itself: /etc is root owned
+	my $new = $sudoers.".new.".$$;
+
+	# setup to have sane perm for new sudoers file
+	umask(0227);
+
+	open my $fh, '>', $new or die $!;
+
+	# insert old sudoers
+	if (!$sudodir) {
+		open my $old, '<', $sudoers or die $!;
+		while (<$old>) {
+			print $fh $_;
+		}
+		close $old or die $!;
+	}
+
+	# insert the rules
+	print $fh @rules;
+	close $fh;
+
+	# validate sudoers
+	system($visudo, '-c', '-f', $new) == 0 or unlink($new),exit $? >> 8;
+
+	# check if they differ
+	if (filediff($sudoers, $new)) {
+		# use the new file
+		rename($new, $sudoers) or die $!;
+		warn "$sudoers file updated.\n";
+	} else {
+		warn "$sudoers file not changed.\n";
+		unlink($new);
+	}
+}
+
+# return first "#includedir" directive from $sudoers file
+sub parse_sudoers_includedir {
+	my ($sudoers) = @_;
+
+	open my $fh, '<', $sudoers or die "Can't open: $sudoers: $!";
+	while (<$fh>) {
+		if (my ($dir) = /^#includedir\s+(.+)$/) {
+			return $dir;
+		}
+	}
+	close $fh or die $!;
+
+	return undef;
+}
+
+# return FALSE if files are identical
+# return TRUE if files are different
+# return TRUE if any of the files is missing
+sub filediff {
+	my ($file1, $file2) = @_;
+
+	# return TRUE if neither of them exist
+	return 1 unless -f $file1;
+	return 1 unless -f $file2;
+
+	my $f1 = cat($file1);
+	my $f2 = cat($file2);
+
+	# wipe comments
+	$f1 =~ s/^#.+$//m;
+	$f2 =~ s/^#.+$//m;
+
+	# return TRUE if they differ
+	return $f1 ne $f2;
+}
+
+# get contents of a file
+sub cat {
+	my ($file) = @_;
+	open(my $fh, '<', $file) or die "Can't open $file: $!";
+	local $/ = undef;
+	local $_ = <$fh>;
+	close($fh) or die $!;
+
+	return $_;
+}
+
+# find first existing file from list of file paths
+sub find_file {
+	for my $file (@_) {
+		return $file if -f $file;
+	}
+	return undef;
+}
+
+} # package sudoers
+
+{
 package plugin;
 use Carp qw(croak);
+
+utils->import;
 
 # Nagios standard error codes
 my (%ERRORS) = (OK => 0, WARNING => 1, CRITICAL => 2, UNKNOWN => 3);
 
-# status to set when RAID is in resync state
-our $resync_status = $ERRORS{WARNING};
+# default plugin options
+our %options = (
+	# status to set when RAID is in resync state
+	resync_status => $ERRORS{WARNING},
 
-# status to set when RAID is in check state
-our $check_status = $ERRORS{OK};
+	# Status code to use when no raid was detected
+	noraid_state => $ERRORS{UNKNOWN},
 
-# status to set when PD is spare
-our $spare_status = $ERRORS{OK};
+	# status to set when RAID is in check state
+	check_status => $ERRORS{OK},
 
-# status to set when BBU is in learning cycle.
-our $bbulearn_status = $ERRORS{WARNING};
+	# status to set when PD is spare
+	spare_status => $ERRORS{OK},
 
-# status to set when Write Cache has failed.
-our $cache_fail_status = $ERRORS{WARNING};
+	# status to set when BBU is in learning cycle.
+	bbulearn_status => $ERRORS{WARNING},
 
-# check status of BBU
-our $bbu_monitoring = 0;
+	# status to set when Write Cache has failed.
+	cache_fail_status => $ERRORS{WARNING},
+
+	# check status of BBU
+	bbu_monitoring => 0,
+);
 
 # return list of programs this plugin needs
 # @internal
@@ -159,11 +337,19 @@ sub new {
 
 	croak 'Odd number of elements in argument hash' if @_ % 2;
 
+	# convert to hash
+	my %args = @_;
+
+	# merge 'options' from param and class defaults
+	%options = (%options, %{$args{options}}) if $args{options};
+	delete $args{options};
+
 	my $self = {
 		program_names => [ $class->program_names ],
 		commands => $class->commands,
-		sudo => $class->sudo ? utils::find_sudo() : '',
-		@_,
+		sudo => $class->sudo ? find_sudo() : '',
+		options => \%options,
+		%args,
 		name => $class,
 		status => undef,
 		message => undef,
@@ -173,7 +359,7 @@ sub new {
 
 	# lookup program, if not defined by params
 	if (!$self->{program}) {
-		$self->{program} = utils::which(@{$self->{program_names}});
+		$self->{program} = which(@{$self->{program_names}});
 	}
 
 	return bless $self, $class;
@@ -241,7 +427,7 @@ sub ok {
 # returns $this to allow fluent api
 sub resync {
 	my ($this) = @_;
-	$this->status($resync_status);
+	$this->status($this->{options}{resync_status});
 	return $this;
 }
 
@@ -249,7 +435,7 @@ sub resync {
 # returns $this to allow fluent api
 sub check_status {
 	my ($this) = @_;
-	$this->status($check_status);
+	$this->status($this->{options}{check_status});
 	return $this;
 }
 
@@ -257,7 +443,7 @@ sub check_status {
 # returns $this to allow fluent api
 sub spare {
 	my ($this) = @_;
-	$this->status($spare_status);
+	$this->status($this->{options}{spare_status});
 	return $this;
 }
 
@@ -265,7 +451,7 @@ sub spare {
 # returns $this to allow fluent api
 sub bbulearn {
 	my ($this) = @_;
-	$this->status($bbulearn_status);
+	$this->status($this->{options}{bbulearn_status});
 	return $this;
 }
 
@@ -273,7 +459,7 @@ sub bbulearn {
 # returns $this to allow fluent api
 sub cache_fail {
 	my ($this) = @_;
-	$this->status($cache_fail_status);
+	$this->status($this->{options}{cache_fail_status});
 	return $this;
 }
 
@@ -282,9 +468,9 @@ sub bbu_monitoring {
 	my ($this, $val) = @_;
 
 	if (defined $val) {
-		$bbu_monitoring = $val;
+		$this->{options}{bbu_monitoring} = $val;
 	}
-	$bbu_monitoring;
+	$this->{options}{bbu_monitoring};
 }
 
 # setup status message text
@@ -342,7 +528,7 @@ sub join_status {
 }
 
 # return true if parameter is not in ignore list
-sub valid($) {
+sub valid {
 	my $this = shift;
 	my ($v) = lc $_[0];
 
@@ -357,7 +543,7 @@ use constant M => K * 1024;
 use constant G => M * 1024;
 use constant T => G * 1024;
 
-sub format_bytes($) {
+sub format_bytes {
 	my $this = shift;
 
 	my ($bytes) = @_;
@@ -401,6 +587,7 @@ sub nosudo_cmd {
 # if command fails, program is exited (caller needs not to worry)
 sub cmd {
 	my ($this, $command, $cb) = @_;
+	my $debug = $utils::debug;
 
 	# build up command
 	my @CMD = $this->{program};
@@ -447,23 +634,23 @@ sub cmd {
 	if ($op eq '=' and ref $cb eq 'SCALAR') {
 		# Special: use open2
 		use IPC::Open2;
-		warn "DEBUG EXEC: $op @cmd" if $utils::debug;
+		warn "DEBUG EXEC: $op @cmd" if $debug;
 		my $pid = open2($fh, $$cb, @cmd) or croak "open2 failed: @cmd: $!";
 	} elsif ($op eq '>&2') {
 		# Special: same as '|-' but reads both STDERR and STDOUT
 		use IPC::Open3;
-		warn "DEBUG EXEC: $op @cmd" if $utils::debug;
+		warn "DEBUG EXEC: $op @cmd" if $debug;
 		my $pid = open3(undef, $fh, $cb, @cmd);
 
 	} else {
-		warn "DEBUG EXEC: @cmd" if $utils::debug;
+		warn "DEBUG EXEC: @cmd" if $debug;
 		open($fh, $op, @cmd) or croak "open failed: @cmd: $!";
 	}
 
 	# for dir handles, reopen as opendir
 	if (-d $fh) {
 		undef($fh);
-		warn "DEBUG OPENDIR: $cmd[0]" if $utils::debug;
+		warn "DEBUG OPENDIR: $cmd[0]" if $debug;
 		opendir($fh, $cmd[0]) or croak "opendir failed: @cmd: $!";
 	}
 
@@ -473,7 +660,7 @@ sub cmd {
 } # package plugin
 
 package lsscsi;
-use base 'plugin';
+use parent -norequire, 'plugin';
 
 push(@utils::plugins, __PACKAGE__);
 
@@ -555,7 +742,7 @@ sub scan {
 
 package metastat;
 # Solaris, software RAID
-use base 'plugin';
+use parent -norequire, 'plugin';
 
 push(@utils::plugins, __PACKAGE__);
 
@@ -578,7 +765,7 @@ sub sudo {
 	"CHECK_RAID ALL=(root) NOPASSWD: $cmd"
 }
 
-sub active($) {
+sub active {
 	my ($this) = @_;
 
 	# program not found
@@ -648,14 +835,15 @@ sub check {
 
 package megaide;
 # MegaIDE RAID controller
-use base 'plugin';
+use parent -norequire, 'plugin';
 
 # register
 # Status: BROKEN: no test data
 #push(@utils::plugins, __PACKAGE__);
 
 sub sudo {
-	my $cat = utils::which('cat');
+	my ($this) = @_;
+	my $cat = $this->which('cat');
 
 	"CHECK_RAID ALL=(root) NOPASSWD: $cat /proc/megaide/0/status";
 }
@@ -698,7 +886,7 @@ sub check {
 
 package mdstat;
 # Linux Multi-Device (md)
-use base 'plugin';
+use parent -norequire, 'plugin';
 
 # register
 push(@utils::plugins, __PACKAGE__);
@@ -709,7 +897,7 @@ sub commands {
 	}
 }
 
-sub active ($) {
+sub active {
 	my ($this) = @_;
 	# easy way out. no /proc/mdstat
 	return 0 unless -e $this->{commands}{mdstat}[1];
@@ -908,7 +1096,7 @@ sub check {
 
 package lsraid;
 # Linux, software RAID
-use base 'plugin';
+use parent -norequire, 'plugin';
 
 # register
 # Broken: missing test data
@@ -968,7 +1156,7 @@ package megacli;
 # TODO: process drive temperatures
 # TODO: check error counts
 # TODO: hostspare information
-use base 'plugin';
+use parent -norequire, 'plugin';
 
 # register
 push(@utils::plugins, __PACKAGE__);
@@ -1348,7 +1536,7 @@ sub check {
 
 package lsvg;
 # AIX LVM
-use base 'plugin';
+use parent -norequire, 'plugin';
 
 # register
 # Status: broken (no test data)
@@ -1422,7 +1610,7 @@ package ips;
 # Serveraid IPS
 # Tested on IBM xSeries 346 servers with Adaptec ServeRAID 7k controllers.
 # The ipssend version was v7.12.14.
-use base 'plugin';
+use parent -norequire, 'plugin';
 
 # register
 push(@utils::plugins, __PACKAGE__);
@@ -1481,7 +1669,7 @@ sub check {
 
 package aaccli;
 # Adaptec ServeRAID
-use base 'plugin';
+use parent -norequire, 'plugin';
 
 # register
 push(@utils::plugins, __PACKAGE__);
@@ -1559,7 +1747,7 @@ sub check {
 
 package afacli;
 # Adaptec AACRAID
-use base 'plugin';
+use parent -norequire, 'plugin';
 
 # register
 push(@utils::plugins, __PACKAGE__);
@@ -1613,7 +1801,7 @@ sub check {
 }
 
 package mpt;
-use base 'plugin';
+use parent -norequire, 'plugin';
 
 # LSILogic MPT ServeRAID
 
@@ -1646,7 +1834,7 @@ sub sudo {
 	);
 }
 
-sub active ($) {
+sub active {
 	my ($this) = @_;
 
 	# return if parent said NO
@@ -1828,14 +2016,15 @@ sub check {
 
 package megaraid;
 # MegaRAID
-use base 'plugin';
+use parent -norequire, 'plugin';
 
 # register
 # Status: BROKEN: no test data
 #push(@utils::plugins, __PACKAGE__);
 
 sub sudo {
-	my $cat = utils::which('cat');
+	my ($this) = @_;
+	my $cat = $this->which('cat');
 
 	my @sudo;
 	foreach my $mr (</proc/mega*/*/raiddrives*>) {
@@ -1881,7 +2070,7 @@ sub check {
 
 package gdth;
 # Linux gdth RAID
-use base 'plugin';
+use parent -norequire, 'plugin';
 
 # register
 push(@utils::plugins, __PACKAGE__);
@@ -1893,7 +2082,7 @@ sub commands {
 	}
 }
 
-sub active ($) {
+sub active {
 	my ($this) = @_;
 	return -d $this->{commands}{proc}[1];
 }
@@ -2109,7 +2298,7 @@ sub check {
 }
 
 package dpt_i2o;
-use base 'plugin';
+use parent -norequire, 'plugin';
 
 # register
 push(@utils::plugins, __PACKAGE__);
@@ -2121,7 +2310,7 @@ sub commands {
 	}
 }
 
-sub active ($) {
+sub active {
 	my ($this) = @_;
 	return -d $this->{commands}{proc}[1];
 }
@@ -2164,7 +2353,7 @@ package tw_cli;
 # Owned by LSI currently: https://en.wikipedia.org/wiki/3ware
 #
 # http://www.cyberciti.biz/files/tw_cli.8.html
-use base 'plugin';
+use parent -norequire, 'plugin';
 
 # register
 push(@utils::plugins, __PACKAGE__);
@@ -2422,7 +2611,7 @@ sub check {
 		push(@status, "Drives($c->{drives}): ".$this->join_status(\%ds)) if %ds;
 
 		# check BBU
-		if ($c->{bbu} && $c->{bbu} ne '-') {
+		if ($this->bbu_monitoring && $c->{bbu} && $c->{bbu} ne '-') {
 			$this->critical if $c->{bbu} ne 'OK';
 			push(@status, "BBU: $c->{bbu}");
 		}
@@ -2438,7 +2627,7 @@ package arcconf;
 # check designed from check-aacraid.py, Anchor System - <http://www.anchor.com.au>
 # Oliver Hookins, Paul De Audney, Barney Desmond.
 # Perl port (check_raid) by Elan Ruusamäe.
-use base 'plugin';
+use parent -norequire, 'plugin';
 
 # register
 push(@utils::plugins, __PACKAGE__);
@@ -2450,7 +2639,8 @@ sub program_names {
 sub commands {
 	{
 		'getstatus' => ['-|', '@CMD', 'GETSTATUS', '1'],
-		'getconfig' => ['-|', '@CMD', 'GETCONFIG', '1', 'AL'],
+		# 'nologs' does not exist in arcconf 6.50. #118
+		'getconfig' => ['-|', '@CMD', 'GETCONFIG', '$ctrl', 'AL'],
 	}
 }
 
@@ -2462,7 +2652,7 @@ sub sudo {
 	my $cmd = $this->{program};
 	(
 		"CHECK_RAID ALL=(root) NOPASSWD: $cmd GETSTATUS 1",
-		"CHECK_RAID ALL=(root) NOPASSWD: $cmd GETCONFIG 1 AL",
+		"CHECK_RAID ALL=(root) NOPASSWD: $cmd GETCONFIG * AL",
 	);
 }
 
@@ -2532,12 +2722,6 @@ sub parse_status {
 	# Tasks seem to be Controller specific, but as we don't support over one controller, let it be global
 	$s{tasks} = { %task } if %task;
 
-	if ($count > 1) {
-		# don't know how to handle this, so better just fail
-		$this->unknown->message("More than one Controller found, this is not yet supported due lack of input data.");
-		return undef;
-	}
-
 	if ($count == 0) {
 		# if command completed, but no controllers,
 		# assume no hardware present
@@ -2547,21 +2731,31 @@ sub parse_status {
 		return undef;
 	}
 
-	$s{controllers} = $count;
+	$s{ctrl_count} = $count;
 
 	return \%s;
 }
 
-# parse GETCONFIG command
-# parses
-# - ...
+# parse GETCONFIG for all controllers
 sub parse_config {
 	my ($this, $status) = @_;
+
+	my %c;
+	for (my $i = 1; $i <= $status->{ctrl_count}; $i++) {
+		$c{$i} = $this->parse_ctrl_config($i, $status->{ctrl_count});
+	}
+
+	return { controllers => \%c };
+}
+
+# parse GETCONFIG command for specific controller
+sub parse_ctrl_config {
+	my ($this, $ctrl, $ctrl_count) = @_;
 
 	# Controller information, Logical/Physical device info
 	my (%c, @ld, $ld, @pd, $ch, $pd);
 
-	my $fh = $this->cmd('getconfig');
+	my $fh = $this->cmd('getconfig', { '$ctrl' => $ctrl });
 	my ($section, $subsection, $ok);
 	while (<$fh>) {
 		chomp;
@@ -2576,7 +2770,7 @@ sub parse_config {
 		}
 
 		if (my($c) = /^Controllers found: (\d+)/) {
-			if ($c != $status->{controllers}) {
+			if ($c != $ctrl_count) {
 				# internal error?!
 				$this->unknown->message("Controller count mismatch");
 			}
@@ -2758,7 +2952,7 @@ sub parse_config {
 					# not parsed yet
 				} elsif (/Expander SAS Address\s+:/) {
 					# not parsed yet
-				} elsif (/MaxCache (Capable|Assigned)\s+:\s+(.+)/) {
+				} elsif (/[Mm]axCache (Capable|Assigned)\s+:\s+(.+)/) {
 					# not parsed yet
 				} elsif (/Power supply \d+ status/) {
 					# not parsed yet
@@ -2815,6 +3009,7 @@ sub parse {
 	my ($this) = @_;
 
 	# we chdir to /var/log, as tool is creating 'UcliEvt.log'
+	# this can be disabled with 'nologs' parameter, but not sure do all versions support it
 	chdir('/var/log') || chdir('/');
 
 	my ($status, $config);
@@ -2824,71 +3019,66 @@ sub parse {
 	return { %$status, %$config };
 }
 
-sub check {
-	my $this = shift;
+# check for controller status
+sub check_controller {
+	my ($this, $c) = @_;
 
-	my $data = $this->parse;
-	$this->unknown,return unless $data;
-
-	# status messages pushed here
 	my @status;
 
-	# check for controller status
-	for my $c ($data->{controller}) {
-		$this->critical if $c->{status} !~ /Optimal|Okay/;
-		push(@status, "Controller:$c->{status}");
+	$this->critical if $c->{status} !~ /Optimal|Okay/;
+	push(@status, "Controller:$c->{status}");
 
-		if ($c->{defunct_count} > 0) {
-			$this->critical;
-			push(@status, "Defunct drives:$c->{defunct_count}");
-		}
+	if ($c->{defunct_count} > 0) {
+		$this->critical;
+		push(@status, "Defunct drives:$c->{defunct_count}");
+	}
 
-		if (defined $c->{logical_failed} && $c->{logical_failed} > 0) {
-			$this->critical;
-			push(@status, "Failed drives:$c->{logical_failed}");
-		}
+	if (defined $c->{logical_failed} && $c->{logical_failed} > 0) {
+		$this->critical;
+		push(@status, "Failed drives:$c->{logical_failed}");
+	}
 
-		if (defined $c->{logical_degraded} && $c->{logical_degraded} > 0) {
-			$this->critical;
-			push(@status, "Degraded drives:$c->{logical_degraded}");
-		}
+	if (defined $c->{logical_degraded} && $c->{logical_degraded} > 0) {
+		$this->critical;
+		push(@status, "Degraded drives:$c->{logical_degraded}");
+	}
 
-		if (defined $c->{logical_offline} && $c->{logical_offline} > 0) {
-			$this->critical;
-			push(@status, "Offline drives:$c->{logical_offline}");
-		}
+	if (defined $c->{logical_offline} && $c->{logical_offline} > 0) {
+		$this->critical;
+		push(@status, "Offline drives:$c->{logical_offline}");
+	}
 
-		if (defined $c->{logical_critical} && $c->{logical_critical} > 0) {
-			$this->critical;
-			push(@status, "Critical drives:$c->{logical_critical}");
-		}
+	if (defined $c->{logical_critical} && $c->{logical_critical} > 0) {
+		$this->critical;
+		push(@status, "Critical drives:$c->{logical_critical}");
+	}
 
-		if (defined $c->{logical_degraded} && $c->{logical_degraded} > 0) {
-			$this->critical;
-			push(@status, "Degraded drives:$c->{logical_degraded}");
-		}
+	if (defined $c->{logical_degraded} && $c->{logical_degraded} > 0) {
+		$this->critical;
+		push(@status, "Degraded drives:$c->{logical_degraded}");
+	}
 
-		# current (logical device) tasks
-		if ($data->{tasks}->{operation} ne 'None') {
-			# just print it. no status change
-			my $task = $data->{tasks};
-			push(@status, "$task->{type} #$task->{device}: $task->{operation}: $task->{status} $task->{percent}%");
-		}
+	# ZMM (Zero-Maintenance Module) status
+	if (defined($c->{zmm_status})) {
+		push(@status, "ZMM Status: $c->{zmm_status}");
+	}
 
-		# ZMM (Zero-Maintenance Module) status
-		if (defined($c->{zmm_status})) {
-			push(@status, "ZMM Status: $c->{zmm_status}");
-		}
-
-		# Battery status
+	# Battery status
+	if ($this->bbu_monitoring) {
 		my @s = $this->battery_status($c);
 		push(@status, @s) if @s;
 	}
 
-	# check for physical devices
+	return @status;
+}
+
+# check for physical devices
+sub check_physical {
+	my ($this, $p) = @_;
+
 	my %pd;
-	my $pd_resync = 0;
-	for my $ch (@{$data->{physical}}) {
+	$this->{pd_resync} = 0;
+	for my $ch (@$p) {
 		for my $pd (@{$ch}) {
 			# skip not disks
 			next if not defined $pd;
@@ -2896,7 +3086,7 @@ sub check {
 
 			if ($pd->{status} eq 'Rebuilding') {
 				$this->resync;
-				$pd_resync++;
+				$this->{pd_resync}++;
 
 			} elsif ($pd->{status} eq 'Dedicated Hot-Spare') {
 				$this->spare;
@@ -2911,11 +3101,18 @@ sub check {
 		}
 	}
 
-	# check for logical devices
-	for my $ld (@{$data->{logical}}) {
+	return \%pd;
+}
+
+# check for logical devices
+sub check_logical {
+	my ($this, $l) = @_;
+
+	my @status;
+	for my $ld (@$l) {
 		next unless $ld; # FIXME: fix that script assumes controllers start from '0'
 
-		if ($ld->{status} eq 'Degraded' && $pd_resync) {
+		if ($ld->{status} eq 'Degraded' && $this->{pd_resync}) {
 			$this->warning;
 		} elsif ($ld->{status} !~ /Optimal|Okay/) {
 			$this->critical;
@@ -2935,7 +3132,37 @@ sub check {
 		}
 	}
 
-	push(@status, "Drives: ".$this->join_status(\%pd)) if %pd;
+	return @status;
+}
+
+sub check {
+	my $this = shift;
+
+	my $data = $this->parse;
+	$this->unknown,return unless $data;
+
+	my @status;
+
+	for my $i (sort {$a cmp $b} keys %{$data->{controllers}}) {
+		my $c = $data->{controllers}->{$i};
+
+		push(@status, $this->check_controller($c->{controller}));
+
+		# current (logical device) tasks
+		if ($data->{tasks}->{operation} ne 'None') {
+			# just print it. no status change
+			my $task = $data->{tasks};
+			push(@status, "$task->{type} #$task->{device}: $task->{operation}: $task->{status} $task->{percent}%");
+		}
+
+		# check physical first, as it setups pd_resync flag
+		my $pd = $this->check_physical($c->{physical});
+
+		push(@status, $this->check_logical($c->{logical}));
+
+		# but report after logical devices
+		push(@status, "Drives: ".$this->join_status($pd)) if $pd;
+	}
 
 	$this->ok->message(join(', ', @status));
 }
@@ -2997,7 +3224,7 @@ package megarc;
 # check designed from check_lsi_megaraid:
 # http://www.monitoringexchange.org/cgi-bin/page.cgi?g=Detailed/2416.html;d=1
 # Perl port (check_raid) by Elan Ruusamäe.
-use base 'plugin';
+use parent -norequire, 'plugin';
 
 # register
 push(@utils::plugins, __PACKAGE__);
@@ -3101,7 +3328,7 @@ sub check {
 }
 
 package cmdtool2;
-use base 'plugin';
+use parent -norequire, 'plugin';
 
 # register
 push(@utils::plugins, __PACKAGE__);
@@ -3180,7 +3407,7 @@ sub check {
 }
 
 package cciss;
-use base 'plugin';
+use parent -norequire, 'plugin';
 
 # register
 push(@utils::plugins, __PACKAGE__);
@@ -3686,7 +3913,7 @@ sub check {
 }
 
 package hp_msa;
-use base 'plugin';
+use parent -norequire, 'plugin';
 
 # do not register, better use hpacucli
 push(@utils::plugins, __PACKAGE__);
@@ -3829,7 +4056,7 @@ package sas2ircu;
 # LSI SAS-2 controllers using the SAS-2 Integrated RAID Configuration Utility (SAS2IRCU)
 # Based on the SAS-2 Integrated RAID Configuration Utility (SAS2IRCU) User Guide
 # http://www.lsi.com/downloads/Public/Host%20Bus%20Adapters/Host%20Bus%20Adapters%20Common%20Files/SAS_SATA_6G_P12/SAS2IRCU_User_Guide.pdf
-use base 'plugin';
+use parent -norequire, 'plugin';
 
 # register
 push(@utils::plugins, __PACKAGE__);
@@ -4096,7 +4323,7 @@ sub check {
 }
 
 package smartctl;
-use base 'plugin';
+use parent -norequire, 'plugin';
 
 # no registering as standalone plugin
 #push(@utils::plugins, __PACKAGE__);
@@ -4171,13 +4398,13 @@ sub check {
 }
 
 package hpacucli;
-use base 'plugin';
+use parent -norequire, 'plugin';
 
 # register
 push(@utils::plugins, __PACKAGE__);
 
 sub program_names {
-	qw(hpacucli hpssacli);
+	qw(hpacucli);
 }
 
 sub commands {
@@ -4339,12 +4566,23 @@ sub check {
 	$this->ok->message(join(', ', @status));
 }
 
+package hpssacli;
+# extend hpacucli,
+# with the only difference that different program name is used
+use parent -norequire, 'hpacucli';
+
+push(@utils::plugins, __PACKAGE__);
+
+sub program_names {
+	qw(hpssacli);
+}
+
 package areca;
 ## Areca SATA RAID Support
 ## requires cli64 or cli32 binaries
 ## For links to manuals and binaries, see this issue:
 ## https://github.com/glensc/nagios-plugin-check_raid/issues/10
-use base 'plugin';
+use parent -norequire, 'plugin';
 
 # register
 push(@utils::plugins, __PACKAGE__);
@@ -4488,7 +4726,7 @@ sub check {
 }
 
 package dmraid;
-use base 'plugin';
+use parent -norequire, 'plugin';
 
 # register
 push(@utils::plugins, __PACKAGE__);
@@ -4503,7 +4741,7 @@ sub commands {
 	}
 }
 
-sub active ($) {
+sub active {
 	my ($this) = @_;
 
 	# easy way out. no executable
@@ -4589,6 +4827,134 @@ sub check {
 	$this->ok->message(join(' ', @status));
 }
 
+package mvcli;
+use parent -norequire, 'plugin';
+
+#push(@utils::plugins, __PACKAGE__);
+
+sub program_names {
+	qw(mvcli);
+}
+
+sub commands {
+	{
+		'mvcli blk' => ['-|', '@CMD'],
+		'mvcli smart' => ['-|', '@CMD'],
+	}
+}
+
+sub sudo {
+	my ($this, $deep) = @_;
+	# quick check when running check
+	return 1 unless $deep;
+
+	my $cmd = $this->{program};
+	"CHECK_RAID ALL=(root) NOPASSWD: $cmd"
+}
+
+sub parse_blk {
+	my $this = shift;
+
+	my (@blk, %blk);
+
+	my $fh = $this->cmd('mvcli blk');
+	while (<$fh>) {
+		chomp;
+
+		if (my ($blk_id) = /Block id:\s+(\d+)/) {
+			# block id is first item, so push previous item to list
+			if (%blk) {
+				push(@blk, { %blk });
+				%blk = ();
+			}
+			$blk{blk_id} = int($blk_id);
+		} elsif (my($pd_id) = /PD id:\s+(\d+)/) {
+			$blk{pd_id} = int($pd_id);
+		} elsif (my($vd_id) = /VD id:\s+(\d+)/) {
+			$blk{vd_id} = int($vd_id);
+		} elsif (my($bstatus) = /Block status:\s+(.+)/) {
+			$blk{block_status} = $bstatus;
+		} elsif (my($size) = /Size:\s+(\d+) K/) {
+			$blk{size} = int($size);
+		} elsif (my($offset) = /Starting offset:\s+(\d+) K/) {
+			$blk{offset} = int($offset);
+		} else {
+#			warn "[$_]\n";
+		}
+	}
+	close $fh;
+
+	if (%blk) {
+		push(@blk, { %blk });
+	}
+
+	return wantarray ? @blk : \@blk;
+}
+
+sub parse_smart {
+	my ($this, $blk) = @_;
+
+	# collect pd numbers
+	my @pd = map { $_->{pd_id} } @$blk;
+
+	my %smart;
+	foreach my $pd (@pd) {
+		my $fh = $this->cmd('mvcli smart', { '$pd' => $pd });
+		my %attrs = ();
+		while (<$fh>) {
+			chomp;
+
+			if (my($id, $name, $current, $worst, $treshold, $raw) = /
+				([\dA-F]{2})\s+ # attr
+				(.*?)\s+        # name
+				(\d+)\s+        # current
+				(\d+)\s+        # worst
+				(\d+)\s+        # treshold
+				([\dA-F]+)      # raw
+			/x) {
+				my %attr = ();
+				$attr{id} = $id;
+				$attr{name} = $name;
+				$attr{current} = int($current);
+				$attr{worst} = int($worst);
+				$attr{treshold} = int($treshold);
+				$attr{raw} = $raw;
+				$attrs{$id} = { %attr };
+			} else {
+#				warn "[$_]\n";
+			}
+		}
+
+		$smart{$pd} = { %attrs };
+	}
+
+	return \%smart;
+}
+
+sub parse {
+	my $this = shift;
+
+	my $blk = $this->parse_blk;
+	my $smart = $this->parse_smart($blk);
+
+	return {
+		blk => $blk,
+		smart => $smart,
+	};
+}
+
+sub check {
+	my $this = shift;
+
+	my (@status);
+	my @d = $this->parse;
+
+	# not implemented yet
+	$this->unknown;
+
+	$this->message(join('; ', @status));
+}
+
 {
 package main;
 
@@ -4599,25 +4965,19 @@ use strict;
 use warnings;
 use Getopt::Long;
 
+utils->import;
+sudoers->import;
+
 my ($opt_V, $opt_d, $opt_h, $opt_W, $opt_S, $opt_p, $opt_l);
 my (%ERRORS) = (OK => 0, WARNING => 1, CRITICAL => 2, UNKNOWN => 3);
-my ($VERSION) = "3.2.4";
-my ($message, $status, $perfdata, $longoutput);
-my ($noraid_state) = $ERRORS{UNKNOWN};
+my ($VERSION) = "3.2.5";
+my ($message, $status);
 
 #####################################################################
 $ENV{'BASH_ENV'} = '';
 $ENV{'ENV'} = '';
 
-# find first existing file from list of file paths
-sub find_file {
-	for my $file (@_) {
-		return $file if -f $file;
-	}
-	return undef;
-}
-
-sub print_usage() {
+sub print_usage {
 	print join "\n",
 	"Usage: check_raid [-h] [-V] [-S] [list of devices to ignore]",
 	"",
@@ -4649,7 +5009,7 @@ sub print_usage() {
 	"";
 }
 
-sub print_help() {
+sub print_help {
 	print "check_raid, v$VERSION\n";
 	print "Copyright (c) 2004-2006 Steve Shipway,
 Copyright (c) 2009-2015, Elan Ruusamäe <glen\@pld-linux.org>
@@ -4659,161 +5019,6 @@ https://github.com/glensc/nagios-plugin-check_raid
 
 ";
 	print_usage();
-}
-
-# return first "#includedir" directive from $sudoers file
-sub parse_sudoers_includedir {
-	my ($sudoers) = @_;
-
-	open my $fh, '<', $sudoers or die "Can't open: $sudoers: $!";
-	while (<$fh>) {
-		if (my ($dir) = /^#includedir\s+(.+)$/) {
-			return $dir;
-		}
-	}
-	close $fh or die $!;
-
-	return undef;
-}
-
-# return size of file
-# does not check for errors
-sub filesize {
-	my ($file) = @_;
-	return (stat($file))[7];
-}
-
-# get contents of a file
-sub cat {
-	my ($file) = @_;
-	open(my $fh, '<', $file) or die "Can't open $file: $!";
-	local $/ = undef;
-	local $_ = <$fh>;
-	close($fh) or die $!;
-
-	return $_;
-}
-
-# return FALSE if files are identical
-# return TRUE if files are different
-# return TRUE if any of the files is missing
-sub filediff {
-	my ($file1, $file2) = @_;
-
-	# return TRUE if neither of them exist
-	return 1 unless -f $file1;
-	return 1 unless -f $file2;
-
-	my $f1 = cat($file1);
-	my $f2 = cat($file2);
-
-	# wipe comments
-	$f1 =~ s/^#.+$//m;
-	$f2 =~ s/^#.+$//m;
-
-	# return TRUE if they differ
-	return $f1 ne $f2;
-}
-
-# update sudoers file
-#
-# if sudoers config has "#includedir" directive, add file to that dir
-# otherwise update main sudoers file
-sub sudoers {
-	my ($dry_run) = @_;
-
-	# build values to be added
-	# go over all registered plugins
-	my @sudo;
-	foreach my $pn (@utils::plugins) {
-		my $plugin = $pn->new;
-
-		# skip inactive plugins (disabled or no tools available)
-		next unless $plugin->active;
-
-		# collect sudo rules
-		my @rules = $plugin->sudo(1) or next;
-
-		push(@sudo, @rules);
-	}
-
-	unless (@sudo) {
-		warn "Your configuration does not need to use sudo, sudoers not updated\n";
-		return;
-	}
-
-	my @rules = join "\n", (
-		"",
-		# setup alias, so we could easily remove these later by matching lines with 'CHECK_RAID'
-		# also this avoids installing ourselves twice.
-		"# Lines matching CHECK_RAID added by $0 -S on ". scalar localtime,
-		"User_Alias CHECK_RAID=nagios",
-		"Defaults:CHECK_RAID !requiretty",
-
-		# actual rules from plugins
-		join("\n", @sudo),
-		"",
-	);
-
-	if ($dry_run) {
-		warn "Content to be inserted to sudo rules:\n";
-		warn "--- sudoers ---\n";
-		print @rules;
-		warn "--- sudoers ---\n";
-		return;
-	}
-
-	my $sudoers = find_file('/usr/local/etc/sudoers', '/etc/sudoers');
-	my $visudo = utils::which('visudo');
-
-	die "Unable to find sudoers file.\n" unless -f $sudoers;
-	die "Unable to write to sudoers file '$sudoers'.\n" unless -w $sudoers;
-	die "visudo program not found\n" unless -x $visudo;
-
-	# parse sudoers file for "#includedir" directive
-	my $sudodir = parse_sudoers_includedir($sudoers);
-	if ($sudodir) {
-		# sudo will read each file in /etc/sudoers.d, skipping file names that
-		# end in ~ or contain a . character to avoid causing problems with
-		# package manager or editor temporary/backup files
-		$sudoers = "$sudodir/check_raid";
-	}
-
-	warn "Updating file $sudoers\n";
-
-	# NOTE: secure as visudo itself: /etc is root owned
-	my $new = $sudoers.".new.".$$;
-
-	# setup to have sane perm for new sudoers file
-	umask(0227);
-
-	open my $fh, '>', $new or die $!;
-
-	# insert old sudoers
-	if (!$sudodir) {
-		open my $old, '<', $sudoers or die $!;
-		while (<$old>) {
-			print $fh $_;
-		}
-		close $old or die $!;
-	}
-
-	# insert the rules
-	print $fh @rules;
-	close $fh;
-
-	# validate sudoers
-	system($visudo, '-c', '-f', $new) == 0 or unlink($new),exit $? >> 8;
-
-	# check if they differ
-	if (filediff($sudoers, $new)) {
-		# use the new file
-		rename($new, $sudoers) or die $!;
-		warn "$sudoers file updated.\n";
-	} else {
-		warn "$sudoers file not changed.\n";
-		unlink($new);
-	}
 }
 
 # Print active plugins
@@ -4842,7 +5047,7 @@ sub setstate {
 
 # obtain git hash of check_raid.pl
 # http://stackoverflow.com/questions/460297/git-finding-the-sha1-of-an-individual-file-in-the-index#comment26055597_460315
-sub git_hash_object() {
+sub git_hash_object {
 	my $content = "blob ";
 	$content .= -s $0;
 	$content .= "\0";
@@ -4877,13 +5082,13 @@ GetOptions(
 	'h' => \$opt_h, 'help' => \$opt_h,
 	'S' => \$opt_S, 'sudoers' => \$opt_S,
 	'W' => \$opt_W, 'warnonly' => \$opt_W,
-	'resync=s' => sub { setstate(\$plugin::resync_status, @_); },
-	'check=s' => sub { setstate(\$plugin::check_status, @_); },
-	'noraid=s' => sub { setstate(\$noraid_state, @_); },
-	'bbulearn=s' => sub { setstate(\$plugin::bbulearn_status, @_); },
-	'cache-fail=s' => sub { setstate(\$plugin::cache_fail_status, @_); },
+	'resync=s' => sub { setstate(\$plugin_options{resync_status}, @_); },
+	'check=s' => sub { setstate(\$plugin_options{check_status}, @_); },
+	'noraid=s' => sub { setstate(\$plugin_options{noraid_state}, @_); },
+	'bbulearn=s' => sub { setstate(\$plugin_options{bbulearn_status}, @_); },
+	'cache-fail=s' => sub { setstate(\$plugin_options{cache_fail_status}, @_); },
 	'plugin-option=s' => sub { my($k, $v) = split(/=/, $_[1], 2); $plugin_options{$k} = $v; },
-	'bbu-monitoring' => \$plugin::bbu_monitoring,
+	'bbu-monitoring' => \$plugin_options{bbu_monitoring},
 	'p=s' => \$opt_p, 'plugin=s' => \$opt_p,
 	'l' => \$opt_l, 'list-plugins' => \$opt_l,
 ) or exit($ERRORS{UNKNOWN});
@@ -4952,10 +5157,10 @@ foreach my $pn (@plugins) {
 		$message .= "$pn:[Plugin error]";
 		next;
 	}
-	if ($plugin->message or $noraid_state == $ERRORS{UNKNOWN}) {
+	if ($plugin->message or $plugin->{options}{noraid_state} == $ERRORS{UNKNOWN}) {
 		$status = $plugin->status if $plugin->status > $status;
 	} else {
-		$status = $noraid_state if $noraid_state > $status;
+		$status = $plugin->{options}{noraid_state} if $plugin->{options}{noraid_state} > $status;
 	}
 	$message .= '; ' if $message;
 	$message .= "$pn:[".$plugin->message."]";
@@ -4974,8 +5179,8 @@ if ($message) {
 		print "UNKNOWN: ";
 	}
 	print "$message\n";
-} elsif ($noraid_state != $ERRORS{UNKNOWN}) {
-	$status = $noraid_state;
+} elsif ($plugin::options{noraid_state} != $ERRORS{UNKNOWN}) {
+	$status = $plugin::options{noraid_state};
 	print "No RAID configuration found\n";
 } else {
 	$status = $ERRORS{UNKNOWN};

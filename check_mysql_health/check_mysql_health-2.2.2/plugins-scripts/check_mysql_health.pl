@@ -237,7 +237,7 @@ EOUS
   option and it will encode the standard input.
 
   You can find the full documentation at 
-  http://www.consol.de/opensource/nagios/check-mysql-health
+  https://labs.consol.de/nagios/check_mysql_health/
 
 EOUS
   
