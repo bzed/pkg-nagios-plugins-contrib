@@ -1,4 +1,4 @@
 Homepage: http://exchange.nagios.org/directory/Plugins/Operating-Systems/Linux/check_nfsmounts/details
-Recommends: libnagios-plugin-perl 
+Recommends: libmonitoring-plugin-perl | libnagios-plugin-perl
 Uploaders: Bernd Zeimetz <bzed@debian.org>
 Description: checks whether there are stale NFS mounts on the host

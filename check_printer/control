@@ -4,4 +4,4 @@ Uploaders: Bernd Zeimetz <bzed@debian.org>
 Description: plugin to check printer supply levels using SNMP
  It outputs performance data for all supplies
  found, for example toner and drum.
-Recommends: snmp
+Recommends: snmp, libmonitoring-plugin-perl | libnagios-plugin-perl

@@ -1,5 +1,5 @@
 Uploaders: Jan Wagner <waja@cyconet.org>
-Recommends: libnagios-plugin-perl
+Recommends: libmonitoring-plugin-perl | libnagios-plugin-perl
 Suggests: backuppc
 Version: 1.1.0
 Homepage: http://n-backuppc.sourceforge.net/
