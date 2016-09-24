@@ -1,7 +1,7 @@
 .\" Process this file with
 .\" groff -man -Tascii foo.1
 .\"
-.TH "check_ssl_cert" 1 "April, 2015" "1.17.1" "USER COMMANDS"
+.TH "check_ssl_cert" 1 "July, 2016" "1.34.0" "USER COMMANDS"
 .SH NAME
 check_ssl_cert \- checks the validity of X.509 certificates
 .SH SYNOPSIS
@@ -33,6 +33,9 @@ set passphrase for client certificate.
 .BR "-c,--critical" " days"
 minimum number of days a certificate has to be valid to issue a critical status
 .TP
+.BR "-d,--debug"
+produces debugging output
+.TP
 .BR "-e,--email" " address"
 pattern to match the email address contained in the certificate
 .TP
@@ -42,21 +45,48 @@ local file path (works with -H localhost only)
 .BR "-h,--help,-?"
 this help message
 .TP
-.BR "--long-output" " list"
-append the specified comma separated (no spaces) list of attributes to the plugin output on additional lines.
-Valid attributes are: enddate, startdate, subject, issuer, modulus, serial, hash, email, ocsp_uri and fingerprint. 'all' will include all the available attributes.
+.BR "   --ignore-exp"
+ignore expiration date
+.TP
+.BR "   --ignore-sig-alg"
+do not check if the certificate was signed with SHA1 or MD5
+.TP
+.BR "   --ignore-ocsp"
+do not check revocation with OCSP
 .TP
 .BR "-i,--issuer" " issuer"
 pattern to match the issuer of the certificate
 .TP
+.BR "-L,--check-ssl-labs grade"
+SSL Labs assestment (please check https://www.ssllabs.com/about/terms.html)
+.TP
+.BR "   --ignore-ssl-labs-cache"
+Forces a new check by SSL Labs (see -L)
+.TP
+.BR "   --long-output" " list"
+append the specified comma separated (no spaces) list of attributes to the plugin output on additional lines.
+Valid attributes are: enddate, startdate, subject, issuer, modulus, serial, hash, email, ocsp_uri and fingerprint. 'all' will include all the available attributes.
+.TP
 .BR "-n,---cn" " name"
 pattern to match the CN of the certificate
 .TP
+.BR "   --no_ssl2"
+disable SSL version 2
+.TP
+.BR "   --no_ssl3"
+disable SSL version 3
+.TP
+.BR "   --no_tls1"
+disable TLS version 1
+.TP
+.BR "   --no_tls1_1"
+disable TLS version 1.1
+.TP
+.BR "   --no_tls1_2"
+disable TLS version 1.2
+.TP
 .BR "-N,--host-cn"
 match CN with the host name
-.TP
-.BR "--ocsp"
-check revocation via OCSP
 .TP
 .BR "-o,--org" " org"
 pattern to match the organization of the certificate
@@ -68,13 +98,19 @@ path of the openssl binary to be used
 TCP port
 .TP
 .BR "-P,--protocol" " protocol"
-use the specific protocol: http (default) or smtp,pop3,imap,ftp (switch to TLS)
+use the specific protocol: http (default), irc or smtp,pop3,imap,ftp (switch to TLS)
 .TP
 .BR "-s,--selfsigned"
 allows self-signed certificates
 .TP
-.BR "-S,--ssl" " version"
-force SSL version (2,3)
+.BR "   --serial serialnum"
+pattern to match the serial number
+.TP
+.BR "   --ssl2"
+force SSL version 2
+.TP
+.BR "   --ssl3"
+force SSL version 3
 .TP
 .BR "-r,--rootcert" " cert"
 root certificate or directory to be used for certficate validation (passed to openssl's -CAfile or -CApath)
@@ -82,10 +118,10 @@ root certificate or directory to be used for certficate validation (passed to op
 .BR "-t,--timeout"
 seconds timeout after the specified time (defaults to 15 seconds)
 .TP
-.BR "--temp" " dir"
+.BR "   --temp" " dir"
 directory where to store the temporary files
 .TP
-.BR "--tls1"
+.BR "   --tls1"
 force TLS version 1
 .TP
 .BR "-v,--verbose"
@@ -100,6 +136,15 @@ minimum number of days a certificate has to be valid to issue a warning status
 .TP
 .BR "-d,--days" " days"
 minimum number of days a certificate has to be valid (see --critical and --warning)
+.TP
+.BR "   --ocsp"
+check revocation via OCSP
+.TP
+.BR "-S,--ssl" " version"
+force SSL version (2,3) (see: --ss2 or --ssl3)
+
+.SH MULTIPLE CERTIFICATES
+If the host has multiple certificates and the installed openssl version supports the -servername option it is possible to specify the TLS SNI (Server Name Idetificator) with the -N (or --host-cn) option.
 
 .SH "SEE ALSO"
 x509(1), openssl(1), expect(1), timeout(1)

@@ -1,12 +1,4 @@
-################################################################################
-# File version information:
-# $Id: check_updates.spec 1126 2010-02-16 20:06:11Z corti $
-# $Revision: 1126 $
-# $HeadURL: https://svn.id.ethz.ch/nagios_plugins/check_updates/check_updates.spec $
-# $Date: 2010-02-16 21:06:11 +0100 (Tue, 16 Feb 2010) $
-################################################################################
-
-%define version          1.17.1
+%define version          1.34.0
 %define release          0
 %define sourcename       check_ssl_cert
 %define packagename      nagios-plugins-check_ssl_cert
@@ -21,11 +13,11 @@ Version:   %{version}
 Obsoletes: check_ssl_cert
 Release:   %{release}%{?dist}
 License:   GPLv3+
-Packager:  Matteo Corti <matteo.corti@id.ethz.ch>
+Packager:  Matteo Corti <matteo@corti.li>
 Group:     Applications/System
 BuildRoot: %{_tmppath}/%{packagename}-%{version}-%{release}-root-%(%{__id_u} -n)
-URL:       https://trac.id.ethz.ch/projects/nagios_plugins/wiki/check_ssl_cert
-Source:    https://trac.id.ethz.ch/projects/nagios_plugins/downloads/%{sourcename}-%{version}.tar.gz
+URL:       https://github.com/matteocorti/check_ssl_cert
+Source:    https://github.com/matteocorti/check_ssl_cert/releases/download/v%{version}/check_ssl_cert-%{version}.tar.gz
 
 Requires:  nagios-plugins expect perl(Date::Parse)
 
@@ -48,11 +40,65 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root,-)
-%doc AUTHORS ChangeLog NEWS README INSTALL TODO COPYING VERSION COPYRIGHT
+%doc AUTHORS ChangeLog NEWS README TODO COPYING VERSION COPYRIGHT
 %attr(0755, root, root) %{nagiospluginsdir}/check_ssl_cert
 %{_mandir}/man1/%{sourcename}.1*
 
 %changelog
+* Mon Sep 19 2016 Matteo Corti <matteo@corti.li> - 1.34.0-0
+- Updated to 1.34.0
+
+* Thu Aug  4 2016 Matteo Corti <matteo@corti.li> - 1.33.0-0
+- Updated to 1.33.0
+
+* Fri Jul 29 2016 Matteo Corti <matteo@corti.li> - 1.32.0-0
+- Updated to 1.32.0
+
+* Tue Jul 12 2016 Matteo Corti <matteo@corti.li> - 1.31.0-0
+- Updated to 1.31.0
+
+* Thu Jun 30 2016 Matteo Corti <matteo@corti.li> - 1.30.0-0
+- Updated to 1.30.0
+
+* Wed Jun 15 2016 Matteo Corti <matteo@corti.li> - 1.29.0-0
+- Updated to 1.29.0
+
+* Wed Jun 01 2016 Matteo Corti <matteo@corti.li> - 1.28.0-0
+- Updated to 1.28.0
+
+* Wed Apr 27 2016 Matteo Corti <matteo@corti.li> - 1.27.0-0
+- Updated to 1.27.0
+
+* Tue Mar 29 2016 Matteo Corti <matteo@corti.li> - 1.26.0-0
+- Updated to 1.26.0
+
+* Mon Mar 21 2016 Matteo Corti <matteo@corti.li> - 1.25.0-0
+- Updated to 1.25.0
+
+* Wed Mar  9 2016 Matteo Corti <matteo@corti.li> - 1.24.0-0
+- Updated to 1.24.0
+
+* Mon Mar  7 2016 Matteo Corti <matteo@corti.li> - 1.23.0-0
+- Updated to 1.23.0
+
+* Thu Mar  3 2016 Matteo Corti <matteo@corti.li> - 1.22.0-0
+- Updated to 1.22.0
+
+* Tue Mar  1 2016 Matteo Corti <matteo@corti.li> - 1.21.0-0
+- Updated to 1.21.0
+
+* Fri Feb 26 2016 Matteo Corti <matteo@corti.li> - 1.20.0-0
+- Updated to 1.20.0
+
+* Thu Feb 25 2016 Matteo Corti <matteo@corti.li> - 1.19.0-0
+- Updated to 1.19.0
+
+* Sat Oct 31 2015 Matteo Corti <matteo@corti.li> - 1.18.0-0
+- Updated to 1.18.0
+
+* Tue Oct 20 2015 Matteo Corti <matteo@corti.li> - 1.17.2-0
+- Updated to 1.17.2
+
 * Tue Apr  7 2015 Matteo Corti <matteo@corti.li> - 1.17.1-0
 - Updated to 1.17.1
 

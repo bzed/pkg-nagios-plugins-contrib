@@ -1,6 +1,116 @@
+2016-09-19  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: enabling proxy support in the OCSP check (thanks to Leynos)
+
+2016-08-04  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: disabling OCSP checks when no issuer URI is found
+
+2016-07-29  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: fixed case insensitive comparison of CNs
+
+2016-07-29  https://github.com/bb-Ricardo
+
+	* check_ssl_cert: calculate expiration primary with date
+
+2016-07-12  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: fixed the parsing of the CN field
+
+2016-06-25  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: fixed OSCP header on old OpenSSL versions
+
+2016-06-24  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: OCSP is now default
+
+	* check_ssl_certe: Fixed OCSP host
+
+2016-06-15  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Better curl error handling
+
+2016-06-10  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Added an option to clear the cached result at SSLLabs
+
+2016-06-01  juckerf (https://github.com/juckerf)
+
+	* check_ssl_cert: Increase control over which SSL/TLS versions to use
+
+2016-05-17  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: added more debugging info (-v is automatic if -d is spefied, system info and cert written to a file)
+
+2016-04-27  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Fixes a bug in the OpenSSL error parsing
+
+2016-04-05  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: In case of an s_client error does not output the full (ugly) error. The error is shown in verbose mode
+
+2016-03-29  Sergei Shmanko
+
+	* check_ssl_cert: Fix wildcard match regex, add additional unit tests
+
+2016-03-21  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert (exec_with_timeout): issues a critical status
+	when using the 'timout' utility
+
+2016-03-19  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: fixed CN parsing on non-GNU systems
+
+2016-03-19  Sergei https://github.com/sshmanko
+
+	* check_ssl_cert: handle wildcard certificates
+
+2016-03-10  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert (check_attr): Better handling of verification errors
+
+2016-03-09  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert (convert_ssl_lab_grade): accepts lowercase letters for SSL Labs grades
+	* check_ssl_cert (check_attr): waits for SSL Labs results
+
+2016-03-08  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Tries to extract an error message from SSL Labs
+			  if no status is returned
+
+2016-03-07  Sam Richards
+	* check_ssl_cert: Support SNI even when we don't want to check cn
+
+2016-03-07  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: DNS errors by SSL Labs are ignored (as they are just
+			  a sign that the result is not cached)
+
+2016-03-03  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Initial support for SSL Labs checks
+
+2016-03-01  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Fixed a bug which prevented the check on the expiration
+
+2015-10-31  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: added a patch to check the certificate's serial number
+	                  (thanks to Milan Koudelka)
+
+2015-10-20  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: fixex a problem with OCSP paths w/o URLs
+
 2015-04-07  Matteo Corti  <matteo@corti.li>
 
-	* check_ssl_cert: corrected some typos (thanks to Jérémy Lecour)
+	* check_ssl_cert: corrected some typos (thanks to JÃ©rÃ©my Lecour)
 	* check_ssl_cert: removed check on the openssl binary name
 
 2014-10-21  Matteo Corti  <matteo@corti.li>
@@ -180,7 +290,7 @@
 
 2010-03-08  Matteo Corti  <matteo.corti@id.ethz.ch>
 
-	* check_ssl_cert: applied patch from Marcus Rejås with the -n and -N options
+	* check_ssl_cert: applied patch from Marcus RejÃ¥s with the -n and -N options
 
 2009-12-02  Matteo Corti  <matteo.corti@id.ethz.ch>
 
@@ -240,9 +350,3 @@
 2007-08-10  Matteo Corti  <matteo.corti@id.ethz.ch>
 
 	* check_ssl_cert: initial release
-
-# File version information:
-# $Id: AUTHORS 1103 2009-12-07 07:49:19Z corti $
-# $Revision: 1103 $
-# $HeadURL: https://svn.id.ethz.ch/nagios_plugins/check_updates/AUTHORS $
-# $Date: 2009-12-07 08:49:19 +0100 (Mon, 07 Dec 2009) $
