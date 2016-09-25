@@ -1,0 +1,6 @@
+Depends: cups, libdate-manip-perl, libmonitoring-plugin-perl, libnet-cups-perl, @
+Test-Command: /usr/lib/nagios/plugins/check_cups -H localhost
+
+Depends: apache2, liblocale-gettext-perl, libmonitoring-plugin-perl, liblwp-useragent-determined-perl, @
+Test-Command: /usr/lib/nagios/plugins/check_httpd_status -H localhost
+

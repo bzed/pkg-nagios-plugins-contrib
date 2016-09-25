@@ -1,3 +1,9 @@
+nagios-plugins-contrib (16.20151226+nmu1) UNRELEASED; urgency=medium
+
+  * Non-maintainer upload.
+
+ -- Evgeni Golov <evgeni@debian.org>  Sat, 24 Sep 2016 23:04:27 +0200
+
 nagios-plugins-contrib (16.20151226) unstable; urgency=medium
 
   [ Jan Wagner ]
