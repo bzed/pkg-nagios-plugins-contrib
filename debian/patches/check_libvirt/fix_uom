@@ -1,0 +1,28 @@
+From ebbf45f0dcbe150f4f8ccb306c8e72e95dbe29d9 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Bj=C3=B6rn=20L=C3=A4ssig?= <b.laessig@pengutronix.de>
+Date: Thu, 1 Dec 2016 13:42:17 +0100
+Subject: [PATCH] fix uom of check_libvirt
+
+ * the actual unit of check_libvirt is 'units', which is not a valid UOM
+   (https://www.monitoring-plugins.org/doc/guidelines.html#AEN201)
+   so tools like icinga2 cannot interprete the performance data
+ * remove the UOM to an empty string
+   -> no unit specified - assume a number (int or float) of things
+      (eg, users, processes, load averages)
+---
+ check_libvirt/check_libvirt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/check_libvirt/check_libvirt b/check_libvirt/check_libvirt
+index 2029c9e..437c3fa 100755
+--- a/check_libvirt/check_libvirt
++++ b/check_libvirt/check_libvirt
+@@ -224,7 +224,7 @@ eval
+ 			chop($output);
+ 			chop($output);
+ 			$output = $up . "/" . $cnt . " VMs up: " . $output;
+-			$np->add_perfdata(label => "vmcount", value => $up, uom => 'units', threshold => $np->threshold);
++			$np->add_perfdata(label => "vmcount", value => $up, uom => '', threshold => $np->threshold);
+ 			$result = $np->check_threshold(check => $up);
+ 		}
+ 		elsif (uc($command) eq "POOL")
