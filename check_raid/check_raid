@@ -110,8 +110,8 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugin.pm"} = '#line '.(1+__LINE__).
   	# status to set when RAID is in resync state
   	resync_status => $ERRORS{WARNING},
   
-  	# Status code to use when no raid was detected
-  	noraid_state => $ERRORS{UNKNOWN},
+  	# Status code to use when no raid volumes were detected
+  	noraid_status => $ERRORS{UNKNOWN},
   
   	# status to set when RAID is in check state
   	check_status => $ERRORS{OK},
@@ -263,6 +263,14 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugin.pm"} = '#line '.(1+__LINE__).
   sub check_status {
   	my ($this) = @_;
   	$this->status($this->{options}{check_status});
+  	return $this;
+  }
+  
+  # helper to set status for no raid condition
+  # returns $this to allow fluent api
+  sub noraid {
+  	my ($this) = @_;
+  	$this->status($this->{options}{noraid_status});
   	return $this;
   }
   
@@ -689,8 +697,8 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/arcconf.pm"} = '#line '.(1+_
   	my %task;
   	while (<$fh>) {
   		chomp;
-  		# empty line
-  		next if /^$/;
+  		# empty line or comment
+  		next if /^$/ or /^#/;
   
   		# termination
   		if (/^Command completed successfully/) {
@@ -698,12 +706,11 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/arcconf.pm"} = '#line '.(1+_
   			last;
   		}
   
-  		if (my($c) = /^Controllers found: (\d+)/) {
+  		if (my($c) = /^Controllers [Ff]ound: (\d+)/) {
   			$count = int($c);
   			next;
   		}
   
-  		# termination
   		if (/^(\S.+) Task:$/) {
   			$task{type} = $1;
   			next;
@@ -765,10 +772,21 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/arcconf.pm"} = '#line '.(1+_
   	my ($this, $ctrl, $ctrl_count) = @_;
   
   	# Controller information, Logical/Physical device info
-  	my (%c, @ld, $ld, @pd, $ch, $pd);
+  	my ($ld, $ch, $pd);
+  
+  	my $res = { controller => {}, logical => [], physical => [] };
   
   	my $fh = $this->cmd('getconfig', { '$ctrl' => $ctrl });
   	my ($section, $subsection, $ok);
+  	my %sectiondata = ();
+  
+  	# called when data for section needs to be processed
+  	my $flush = sub {
+  		my $method = 'process_' . lc($section);
+  		$method =~ s/[.\s]+/_/g;
+  		$this->$method($res, \%sectiondata);
+  		%sectiondata = ();
+  	};
   	while (<$fh>) {
   		chomp;
   		# empty line
@@ -792,6 +810,11 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/arcconf.pm"} = '#line '.(1+_
   		# section start
   		if (/^---+/) {
   			if (my($s) = <$fh> =~ /^(\w.+)$/) {
+  				# flush the lines
+  				if (defined($section)) {
+  					&$flush();
+  				}
+  
   				$section = $s;
   				unless (<$fh> =~ /^---+/) {
   					$this->parse_error($_);
@@ -821,199 +844,254 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/arcconf.pm"} = '#line '.(1+_
   
   		next unless defined $section;
   
-  		if ($section eq 'Controller information') {
-  			if (not defined $subsection) {
-  				# TODO: battery stuff is under subsection "Controller Battery Information"
-  				if (my($s) = /Controller Status\s*:\s*(.+)/) {
-  					$c{status} = $s;
+  		# regex notes:
+  		# - value portion may be missing
+  		# - value may be empty
+  		# - value may be truncated (t/data/arcconf/issue47/getconfig)
+  		my ($key, $value) = /^\s*(.+?)(?:\s+:\s*(.*?))?$/;
   
-  				} elsif (my($df) = /Defunct disk drive count\s+:\s*(\d+)/) {
-  					$c{defunct_count} = int($df);
+  		if ($section =~ /Controller [Ii]nformation/) {
+  			$sectiondata{$subsection || '_'}{$key} = $value;
   
-  				} elsif (my($td, $fd, $dd) = m{Logical devices/Failed/Degraded\s*:\s*(\d+)/(\d+)/(\d+)}) {
-  					$c{logical_count} = int($td);
-  					$c{logical_failed} = int($fd);
-  					$c{logical_degraded} = int($fd);
-  
-  				} elsif (my($td2, $fd2, $dd2) = m{Logical drives/Offline/Critical\s*:\s*(\d+)/(\d+)/(\d+)}) {
-  					# ARCCONF 9.30
-  					$c{logical_count} = int($td2);
-  					$c{logical_offline} = int($fd2);
-  					$c{logical_critical} = int($fd2);
-  				}
-  
-  			} elsif ($subsection eq 'Controller Battery Information') {
-  				if (my($bs) = /^\s+Status\s*:\s*(.*)$/) {
-  					$c{battery_status} = $bs;
-  
-  				} elsif (my($bt) = /Over temperature\s*:\s*(.+)$/) {
-  					$c{battery_overtemp} = $bt;
-  
-  				} elsif (my($bc) = /Capacity remaining\s*:\s*(\d+)\s*percent.*$/) {
-  					$c{battery_capacity} = int($bc);
-  
-  				} elsif (my($d, $h, $m) = /Time remaining \(at current draw\)\s*:\s*(\d+) days, (\d+) hours, (\d+) minutes/) {
-  					$c{battery_time} = int($d) * 1440 + int($h) * 60 + int($m);
-  					$c{battery_time_full} = "${d}d${h}h${m}m";
-  
-  				} else {
-  					warn "Battery not parsed: [$_]";
-  				}
-  
-  			} elsif ($subsection eq 'Controller ZMM Information') {
-  				if (my($bs) = /^\s+Status\s*:\s*(.*)$/) {
-  					$c{zmm_status} = $bs;
-  				} else {
-  					warn "ZMM not parsed: [$_]";
-  				}
-  
-  			} elsif ($subsection eq 'Controller Version Information') {
-  				# not parsed yet
-  			} elsif ($subsection eq 'Controller Vital Product Data') {
-  				# not parsed yet
-  			} elsif ($subsection eq 'Controller Cache Backup Unit Information') {
-  				# not parsed yet
-  			} elsif ($subsection eq 'Supercap Information') {
-  				# this is actually sub section of cache backup unit
-  				# not parsed yet
-  			} elsif ($subsection eq 'Controller Vital Product Data') {
-  				# not parsed yet
-  			} elsif ($subsection eq 'RAID Properties') {
-  				# not parsed yet
-  			} elsif ($subsection eq 'Controller BIOS Setting Information') {
-  				# not parsed yet
-  			} else {
-  				warn "SUBSECTION of [$section] NOT PARSED: [$subsection] [$_]";
-  			}
-  
-  		} elsif ($section eq 'Physical Device information') {
+  		} elsif ($section =~ /Physical Device [Ii]nformation/) {
   			if (my($c) = /Channel #(\d+)/) {
   				$ch = int($c);
   				undef($pd);
-  			} elsif (my($n) = /Device #(\d+)/) {
+  			} elsif (my($n) = /^\s+Device #(\d+)/) {
   				$pd = int($n);
-  			} elsif (not defined $pd) {
-  				if (/Transfer Speed\s+:\s+(.+)/) {
-  					# not parsed yet
-  				} elsif (/Initiator at SCSI ID/) {
-  					# not parsed yet
-  				} elsif (/No physical drives attached/) {
-  					# ignored
-  				} else {
-  					warn "Unparsed Physical Device data: [$_]";
-  				}
   			} else {
-  				if (my($ps) = /Power State\s+:\s+(.+)/) {
-  					$pd[$ch][$pd]{power_state} = $ps;
-  				} elsif (my($st) = /^\s+State\s+:\s+(.+)/) {
-  					$pd[$ch][$pd]{status} = $st;
-  				} elsif (my($su) = /Supported\s+:\s+(.+)/) {
-  					$pd[$ch][$pd]{supported} = $su;
-  				} elsif (my($sf) = /Dedicated Spare for\s+:\s+(.+)/) {
-  					$pd[$ch][$pd]{spare} = $sf;
-  				} elsif (my($vnd) = /Vendor\s+:\s*(.*)/) {
-  					# allow edits, i.e removed 'Vendor' value from test data
-  					$pd[$ch][$pd]{vendor} = $vnd;
-  				} elsif (my($mod) = /Model\s+:\s+(.+)/) {
-  					$pd[$ch][$pd]{model} = $mod;
-  				} elsif (my($fw) = /Firmware\s+:\s*(.*)/) {
-  					$pd[$ch][$pd]{firmware} = $fw;
-  				} elsif (my($sn) = /Serial number\s+:\s+(.+)/) {
-  					$pd[$ch][$pd]{serial} = $sn;
-  				} elsif (my($wwn) = /World-wide name\s+:\s+(.+)/) {
-  					$pd[$ch][$pd]{wwn} = $wwn;
-  				} elsif (my($sz) = /Size\s+:\s+(.+)/) {
-  					$pd[$ch][$pd]{size} = $sz;
-  				} elsif (my($wc) = /Write Cache\s+:\s+(.+)/) {
-  					$pd[$ch][$pd]{write_cache} = $wc;
-  				} elsif (my($ssd) = /SSD\s+:\s+(.+)/) {
-  					$pd[$ch][$pd]{ssd} = $ssd;
-  				} elsif (my($fru) = /FRU\s+:\s+(.+)/) {
-  					$pd[$ch][$pd]{fru} = $fru;
-  				} elsif (my($esd) = /Reported ESD(?:\(.+\))?\s+:\s+(.+)/) {
-  					$pd[$ch][$pd]{esd} = $esd;
-  				} elsif (my($ncq) = /NCQ status\s+:\s+(.+)/) {
-  					$pd[$ch][$pd]{ncq} = $ncq;
-  				} elsif (my($pfa) = /PFA\s+:\s+(.+)/) {
-  					$pd[$ch][$pd]{pfa} = $pfa;
-  				} elsif (my($eid) = /Enclosure ID\s+:\s+(.+)/) {
-  					$pd[$ch][$pd]{enclosure} = $eid;
-  				} elsif (my($t) = /Type\s+:\s+(.+)/) {
-  					$pd[$ch][$pd]{type} = $t;
-  				} elsif (my($smart) = /S\.M\.A\.R\.T\.(?:\s+warnings)?\s+:\s+(.+)/) {
-  					$pd[$ch][$pd]{smart} = $smart;
-  				} elsif (my($speed) = /Transfer Speed\s+:\s+(.+)/) {
-  					$pd[$ch][$pd]{speed} = $speed;
-  				} elsif (my($e, $s) = /Reported Location\s+:\s+(?:Enclosure|Connector) (\d+), (?:Slot|Device) (\d+)/) {
-  					$pd[$ch][$pd]{location} = "$e:$s";
-  				} elsif (my($sps) = /Supported Power States\s+:\s+(.+)/) {
-  					$pd[$ch][$pd]{power_states} = $sps;
-  				} elsif (my($cd) = /Reported Channel,Device(?:\(.+\))?\s+:\s+(.+)/) {
-  					$pd[$ch][$pd]{cd} = $cd;
-  				} elsif (my($type) = /Device is an?\s+(.+)/) {
-  					$pd[$ch][$pd]{devtype} = $type;
-  				} elsif (/Status of Enclosure/) {
-  					# ignored
-  				} elsif (my($temp) = /Temperature.*:\s+(.+)/) {
-  					$pd[$ch][$pd]{temperature} = $temp;
-  				} elsif (/(Fan \d+|Speaker) status/) {
-  					# not parsed yet
-  				} elsif (/Expander ID\s+:/) {
-  					# not parsed yet
-  				} elsif (/Enclosure Logical Identifier\s+:/) {
-  					# not parsed yet
-  				} elsif (/Expander SAS Address\s+:/) {
-  					# not parsed yet
-  				} elsif (/[Mm]axCache (Capable|Assigned)\s+:\s+(.+)/) {
-  					# not parsed yet
-  				} elsif (/Power supply \d+ status/) {
-  					# not parsed yet
-  				} else {
-  					warn "Unparsed Physical Device data: [$_]";
-  				}
+  				# FIXME: $pdk hack for t/data/arcconf/issue67/getconfig
+  				my $pdk = $pd;
+  				$pdk = '' unless defined $pdk;
+  				$sectiondata{$ch}{$pdk}{$subsection || '_'}{$key} = $value;
   			}
   
-  		} elsif ($section =~ /Logical (device|drive) information/) {
-  			if (my($n) = /Logical (?:device|drive) number (\d+)/) {
+  		} elsif ($section =~ /Logical ([Dd]evice|drive) [Ii]nformation/) {
+  			if (my($n) = /Logical (?:[Dd]evice|drive) [Nn]umber (\d+)/) {
   				$ld = int($n);
-  				$ld[$ld]{id} = $n;
-  
-  			} elsif (my($s) = /Status of logical (?:device|drive)\s+:\s+(.+)/) {
-  				$ld[$ld]{status} = $s;
-  
-  			} elsif (my($ln) = /Logical (?:device|drive) name\s+:\s+(.+)/) {
-  				$ld[$ld]{name} = $ln;
-  
-  			} elsif (my($rl) = /RAID level\s+:\s+(.+)/) {
-  				$ld[$ld]{raid} = $rl;
-  
-  			} elsif (my($sz) = /Size\s+:\s+(.+)/) {
-  				$ld[$ld]{size} = $sz;
-  
-  			} elsif (my($fs) = /Failed stripes\s+:\s+(.+)/) {
-  				$ld[$ld]{failed_stripes} = $fs;
-  
-  			} elsif (my($ds) = /Defunct segments\s+:\s+(.+)/) {
-  				$ld[$ld]{defunct_segments} = $ds;
-  
   			} else {
-  				#   Write-cache mode                         : Not supported]
-  				#   Partitioned                              : Yes]
-  				#   Number of segments                       : 2]
-  				#   Drive(s) (Channel,Device)                : 0,0 0,1]
-  				#   Defunct segments                         : No]
+  				$sectiondata{$ld}{$subsection || '_'}{$key} = $value;
   			}
-  		} elsif ($section =~ /MaxCache 3\.0 information/) {
+  
+  		} elsif ($section eq 'MaxCache 3.0 information') {
+  			# not parsed yet
+  		} elsif ($section eq 'Connector information') {
   			# not parsed yet
   		} else {
   			warn "NOT PARSED: [$section] [$_]";
   		}
   	}
   	close $fh;
+  	&$flush() if $section;
   
   	$this->unknown->message("Command did not succeed") unless defined $ok;
   
-  	return { controller => \%c, logical => \@ld, physical => \@pd };
+  	return $res;
+  }
+  
+  # Process Controller Information section
+  sub process_controller_information {
+  	my ($this, $res, $data) = @_;
+  	my $c = {};
+  	my $s;
+  
+  	# current section
+  	my $cs = $data->{_};
+  
+  	# TODO: battery stuff is under subsection "Controller Battery Information"
+  	$c->{status} = $cs->{'Controller Status'};
+  
+  	if (exists $cs->{$s = 'Defunct Disk Drive Count'} || exists $cs->{$s = 'Defunct disk drive count'}) {
+  		$c->{defunct_count} = int($cs->{$s});
+  	}
+  
+  	if ($s = $cs->{'Logical devices/Failed/Degraded'}) {
+  		my($td, $fd, $dd) = $s =~ m{(\d+)/(\d+)/(\d+)};
+  		$c->{logical_count} = int($td);
+  		$c->{logical_failed} = int($fd);
+  		$c->{logical_degraded} = int($dd);
+  	}
+  	# ARCCONF 9.30: Logical drives/Offline/Critical
+  	if ($s = $cs->{'Logical drives/Offline/Critical'}) {
+  		my($td2, $fd2, $dd2) = $s =~ m{(\d+)/(\d+)/(\d+)};
+  		$c->{logical_count} = int($td2);
+  		$c->{logical_offline} = int($fd2);
+  		$c->{logical_critical} = int($dd2);
+  	}
+  
+  	$cs = $data->{'Controller Battery Information'};
+  	$c->{battery_status} = $cs->{Status} if exists $cs->{Status};
+  	$c->{battery_overtemp} = $cs->{'Over temperature'} if exists $cs->{'Over temperature'};
+  
+  	if ($s = $cs->{'Capacity remaining'}) {
+  		my ($bc) = $s =~ m{(\d+)\s*percent.*$};
+  		$c->{battery_capacity} = int($bc);
+  	}
+  
+  	if ($s = $cs->{'Time remaining (at current draw)'}) {
+  		my($d, $h, $m) = $s =~ /(\d+) days, (\d+) hours, (\d+) minutes/;
+  		$c->{battery_time} = int($d) * 1440 + int($h) * 60 + int($m);
+  		$c->{battery_time_full} = "${d}d${h}h${m}m";
+  	}
+  
+  
+  	$cs = $data->{'Controller ZMM Information'};
+  	$c->{zmm_status} = $cs->{Status} if exists $cs->{'Status'};
+  
+  	$res->{controller} = $c;
+  }
+  
+  sub process_logical_device_information {
+  	my ($this, $res, $data) = @_;
+  	my $s;
+  
+  	my @ld;
+  	while (my($ld, $d) = each %$data) {
+  		# FIXME: parser fails to reset subsection
+  		my $cs = $d->{_} || $d->{'Logical device segment information'};
+  
+  		$ld[$ld]{id} = $ld;
+  		if (exists $cs->{$s = 'RAID Level'} || exists $cs->{$s = 'RAID level'}) {
+  			$ld[$ld]{raid} = $cs->{$s};
+  		}
+  		$ld[$ld]{size} = $cs->{'Size'};
+  		$ld[$ld]{failed_stripes} = $cs->{'Failed stripes'} if exists $cs->{'Failed stripes'};
+  		$ld[$ld]{defunct_segments} = $cs->{'Defunct segments'} if exists $cs->{'Defunct segments'};
+  
+  		if ($s = $cs->{'Status of Logical Device'} || $cs->{'Status of logical device'} || $cs->{'Status of logical drive'}) {
+  			$ld[$ld]{status} = $s;
+  		}
+  		if ($s = $cs->{'Logical Device name'} || $cs->{'Logical device name'} || $cs->{'Logical drive name'}) {
+  			$ld[$ld]{name} = $s;
+  		}
+  
+  		#   Write-cache mode                         : Not supported]
+  		#   Partitioned                              : Yes]
+  		#   Number of segments                       : 2]
+  		#   Drive(s) (Channel,Device)                : 0,0 0,1]
+  		#   Defunct segments                         : No]
+  	}
+  
+  	$res->{logical} = \@ld;
+  }
+  
+  sub process_physical_device_information {
+  	my ($this, $res, $data) = @_;
+  
+  	# Keys with no values:
+  	# "Device #0"
+  	# "Device is a Hard drive"
+  	#
+  	# ignored:
+  	# /Transfer Speed\s+:\s+(.+)/
+  	# /Initiator at SCSI ID/
+  	# /No physical drives attached/
+  	#
+  	# has only one subsection:
+  	# 'Device Phy Information', which is not yet processed
+  
+  	my (@pd, $cs, $s);
+  	while (my($ch, $channel_data) = each %$data) {
+  		while (my($pd, $d) = each %$channel_data) {
+  			# FIXME: fallback to 'Device Phy Information' due parser bug
+  			$cs = $d->{_} || $d->{'Device Phy Information'};
+  
+  			# FIXME: this should be skipped in check process, not here
+  			if ($pd eq '') {
+  				next;
+  			}
+  
+  			$pd[$ch][$pd]{device_id} = $pd;
+  			$pd[$ch][$pd]{power_state} = $cs->{'Power State'} if exists $cs->{'Power State'};
+  			$pd[$ch][$pd]{status} = $cs->{'State'} if exists $cs->{'State'};
+  			$pd[$ch][$pd]{supported} = $cs->{'Supported'} if exists $cs->{'Supported'};
+  			$pd[$ch][$pd]{spare} = $cs->{'Dedicated Spare for'} if exists $cs->{'Dedicated Spare for'};
+  			$pd[$ch][$pd]{model} = $cs->{'Model'};
+  			$pd[$ch][$pd]{serial} = $cs->{'Serial number'} if exists $cs->{'Serial number'};
+  			$pd[$ch][$pd]{wwn} = $cs->{'World-wide name'} if exists $cs->{'World-wide name'};
+  			$pd[$ch][$pd]{write_cache} = $cs->{'Write Cache'} if exists $cs->{'Write Cache'};
+  			$pd[$ch][$pd]{ssd} = $cs->{'SSD'} if exists $cs->{'SSD'};
+  			$pd[$ch][$pd]{fru} = $cs->{'FRU'} if exists $cs->{'FRU'};
+  			$pd[$ch][$pd]{ncq} = $cs->{'NCQ status'} if exists $cs->{'NCQ status'};
+  			$pd[$ch][$pd]{pfa} = $cs->{'PFA'} if exists $cs->{'PFA'};
+  			$pd[$ch][$pd]{enclosure} = $cs->{'Enclosure ID'} if exists $cs->{'Enclosure ID'};
+  			$pd[$ch][$pd]{type} = $cs->{'Type'} if exists $cs->{'Type'};
+  			$pd[$ch][$pd]{smart} = $cs->{'S.M.A.R.T.'} if exists $cs->{'S.M.A.R.T.'};
+  			$pd[$ch][$pd]{smart_warn} = $cs->{'S.M.A.R.T. warnings'} if exists $cs->{'S.M.A.R.T. warnings'};
+  			$pd[$ch][$pd]{speed} = $cs->{'Transfer Speed'} if $cs->{'Transfer Speed'};
+  			$pd[$ch][$pd]{power_states} = $cs->{'Supported Power States'} if exists $cs->{'Supported Power States'};
+  			$pd[$ch][$pd]{fail_ldev_segs} = $cs->{'Failed logical device segments'} if exists $cs->{'Failed logical device segments'};
+  
+  			# allow edits, i.e removed 'Vendor'/'Firmware' value from test data
+  			$pd[$ch][$pd]{vendor} = $cs->{'Vendor'} || '';
+  			$pd[$ch][$pd]{firmware} = $cs->{'Firmware'} if exists $cs->{'Firmware'};
+  
+  			# previous parser was not exact line match
+  			if ($s = $cs->{'Size'} || $cs->{'Total Size'}) {
+  				$pd[$ch][$pd]{size} = $s;
+  			}
+  
+  			$s = $cs->{'Reported ESD'} || $cs->{'Reported ESD(T:L)'};
+  			$pd[$ch][$pd]{esd} = $s if $s;
+  
+  			if ($s = $cs->{'Reported Location'}) {
+  				my($e, $s) = $s =~ /(?:Enclosure|Connector) (\d+), (?:Slot|Device) (\d+)/;
+  				$pd[$ch][$pd]{location} = "$e:$s";
+  			}
+  
+  			if ($s = $cs->{'Reported Channel,Device'} || $cs->{'Reported Channel,Device(T:L)'}) {
+  				$pd[$ch][$pd]{cd} = $s;
+  			}
+  
+  			if (exists $cs->{$s = 'Device is a Hard drive'}
+  				|| exists $cs->{$s = 'Device is an Enclosure'}
+  				|| exists $cs->{$s = 'Device is an Enclosure services device'}
+  				|| exists $cs->{$s = 'Device is an Enclosure Services Device'}
+  			) {
+  				($pd[$ch][$pd]{devtype}) = $s =~ /Device is an?\s+(.+)/;
+  			}
+  
+  			# TODO: normalize and other formats:
+  			# Current Temperature                : 27 deg C
+  			# Life-time Temperature Recorded
+  			# Temperature                              : 51 C/ 123 F (Normal)
+  			# Temperature                     : Normal
+  			# Temperature                        : Not Supported
+  			# Temperature Sensor Status 1     : 21 C/ 69 F (Normal)
+  			# Temperature Sensor Status 1     : 23 C/ 73 F (Normal)
+  			# Temperature Sensor Status 1     : 27 C/ 80 F (Normal)
+  			# Temperature Sensor Status 1     : 46 C/ 114 F (Abnormal)
+  			# Temperature status              : Normal
+  			# Threshold Temperature              : 51 deg C
+  			# FIXME: previous code used last line with /Temperature/ match
+  			if ($s = $cs->{'Temperature'} || $cs->{'Temperature Sensor Status 1'} || $cs->{'Temperature status'}) {
+  				$pd[$ch][$pd]{temperature} = $s;
+  			}
+  
+  			# ignored:
+  			# Status of Enclosure
+  			# (Fan \d+|Speaker) status/
+  			# /Expander ID\s+:/
+  			# /Enclosure Logical Identifier\s+:/
+  			# /Expander SAS Address\s+:/
+  			# /[Mm]axCache (Capable|Assigned)\s+:\s+(.+)/
+  			# /Power supply \d+ status/
+  		}
+  	}
+  
+  
+  	$res->{physical} = \@pd;
+  }
+  
+  sub process_logical_drive_information {
+  	shift->process_logical_device_information(@_);
+  }
+  
+  sub process_maxcache_3_0_information {
+  }
+  
+  # TODO: issue152/arc2_getconfig.txt
+  sub process_connector_information {
   }
   
   # NB: side effect: ARCCONF changes current directory to /var/log
@@ -1037,7 +1115,7 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/arcconf.pm"} = '#line '.(1+_
   
   	my @status;
   
-  	$this->critical if $c->{status} !~ /Optimal|Okay/;
+  	$this->critical if $c->{status} !~ /Optimal|Okay|OK/;
   	push(@status, "Controller:$c->{status}");
   
   	if ($c->{defunct_count} > 0) {
@@ -1063,11 +1141,6 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/arcconf.pm"} = '#line '.(1+_
   	if (defined $c->{logical_critical} && $c->{logical_critical} > 0) {
   		$this->critical;
   		push(@status, "Critical drives:$c->{logical_critical}");
-  	}
-  
-  	if (defined $c->{logical_degraded} && $c->{logical_degraded} > 0) {
-  		$this->critical;
-  		push(@status, "Degraded drives:$c->{logical_degraded}");
   	}
   
   	# ZMM (Zero-Maintenance Module) status
@@ -1108,7 +1181,7 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/arcconf.pm"} = '#line '.(1+_
   				$this->critical;
   			}
   
-  			my $id = $pd->{serial} || $pd->{wwn} || $pd->{location};
+  			my $id = $pd->{serial} || $pd->{wwn} || $pd->{location} || $pd->{cd};
   			push(@{$pd{$pd->{status}}}, $id);
   		}
   	}
@@ -2155,7 +2228,7 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/dm.pm"} = '#line '.(1+__LINE
   	my $c = $this->parse;
   
   	if (!@$c) {
-  		$this->warning->message("No devices to check");
+  		$this->noraid->message("No devices to check");
   		return;
   	}
   
@@ -2219,8 +2292,12 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/dmraid.pm"} = '#line '.(1+__
   sub active {
   	my ($this) = @_;
   
-  	# easy way out. no executable
-  	return 0 unless -e $this->{commands}{dmraid}[1];
+  	# allow --plugin-option=dmraid-enabled to force this plugin to be enabled
+  	return 1 if exists $this->{options}{'dmraid-enabled'};
+  
+  	# return if parent said NO
+  	my $res = $this->SUPER::active(@_);
+  	return $res unless $res;
   
   	# check if dmraid is empty
   	return keys %{$this->parse} > 0;
@@ -2245,10 +2322,11 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/dmraid.pm"} = '#line '.(1+__
   		chomp;
   		next unless (my($device, $format, $name, $type, $status, $sectors) = m{^
   			# /dev/sda: jmicron, "jmicron_JRAID", mirror, ok, 781385728 sectors, data@ 0
+  			# /dev/sdb: ddf1, ".ddf1_disks", GROUP, ok, 1953253376 sectors, data@ 0
   			(/dev/\S+):\s # device
   			(\S+),\s # format
   			"([^"]+)",\s # name
-  			(mirror|stripe[d]?),\s # type
+  			(mirror|stripe[d]?|GROUP),\s # type
   			(\w+),\s # status
   			(\d+)\ssectors,.* # sectors
   		$}x);
@@ -2753,6 +2831,8 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/hpacucli.pm"} = '#line '.(1+
   use strict;
   use warnings;
   
+  use constant E_NO_LOGICAL_DEVS => 'The specified device does not have any logical drives';
+  
   sub program_names {
   	shift->{name};
   }
@@ -2776,6 +2856,40 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/hpacucli.pm"} = '#line '.(1+
   	);
   }
   
+  # if --plugin-option=hpacucli-target=slot=0 is specified
+  # filter only allowed values
+  sub filter_targets {
+  	my ($this, $targets) = @_;
+  
+  	my $cli_opts = $this->{options}{'hpacucli-target'};
+  	if (!$cli_opts) {
+  		return $targets;
+  	}
+  
+  	my %res;
+  	my @filters = split(/,/, $cli_opts);
+  	for my $filter (@filters) {
+  		if (exists $targets->{$filter}) {
+  			$res{$filter} = $targets->{$filter};
+  		} else {
+  			$this->critical->message("Controller $filter not found");
+  		}
+  	}
+  
+  	return \%res;
+  }
+  
+  # split:
+  # '(Embedded) (RAID Mode)'
+  # to:
+  # [ 'Embedded', 'RAID Mode' ]
+  sub split_controller_modes {
+  	my ($modes) = @_;
+  	my @parts;
+  	push @parts, $1 while $modes =~ /\((.*?)\)/g;
+  	return \@parts;
+  }
+  
   sub scan_targets {
   	my $this = shift;
   
@@ -2789,71 +2903,130 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/hpacucli.pm"} = '#line '.(1+
   	#  [licensekey all|<key>]
   
   	# Scan controllers
-  	my (%targets);
+  	my (%targets, $target);
   	my $fh = $this->cmd('controller status');
   	while (<$fh>) {
+  		chomp;
+  		# skip empty lines and artificial comments (added by this project)
+  		next if /^$/ or /^#/;
+  
   		# Numeric slot
-  		if (my($model, $slot) = /^(\S.+) in Slot (.+)/) {
-  			$slot =~ s/ \(RAID Mode\)//;
-  			$slot =~ s/ \(Embedded\)//;
-  			$targets{"slot=$slot"} = $model;
-  			$this->unknown if $slot !~ /^\d+$/;
+  		if (my($controller, $slot, $modes) = /
+  				^(\S.+)\sin\sSlot
+  				\s(\S+?) # slot number
+  				(?:     # optional mode
+  					\s(\(.+\))
+  				)?$
+  			/x) {
+  
+  			$target = "slot=$slot";
+  			$targets{$target} = {
+  				target => $target,
+  				controller => $controller,
+  				slot => $slot,
+  				modes => split_controller_modes($modes || ''),
+  			};
+  			$this->unknown if $slot !~ /^\d+/;
   			next;
   		}
   		# Named Entry
-  		if (my($model, $cn) = /^(\S.+) in (.+)/) {
-  			$targets{"chassisname=$cn"} = $cn;
+  		if (my($controller, $cn) = /^(\S.+) in (.+)/) {
+  			$target = "chassisname=$cn";
+  			$targets{$target} = {
+  				target => $target,
+  				controller => $controller,
+  				chassisname => $cn,
+  			};
   			next;
+  		}
+  
+  		# Other statuses, try "key: value" pairs
+  		if (my ($key, $value) = /^\s*(.+?):\s+(.+?)$/) {
+  			$targets{$target}{$key} = $value;
+  		} else {
+  			warn "Unparsed: [$_]\n";
   		}
   	}
   	close $fh;
   
-  	return \%targets;
+  	return $this->filter_targets(\%targets);
   }
   
   # Scan logical drives
   sub scan_luns {
   	my ($this, $targets) = @_;
   
-  	my %luns;
-  	while (my($target, $model) = each %$targets) {
+  	my @luns;
+  	# sort by target to ensure consistent results
+  	for my $target (sort {$a->{target} cmp $b->{target}} values(%$targets)) {
   		# check each controller
-  		my $fh = $this->cmd('logicaldrive status', { '$target' => $target });
+  		my $fh = $this->cmd('logicaldrive status', { '$target' => $target->{target} });
   
-  		my ($array, %array);
+  		my $index = -1;
+  		my @array;
+  		my %array;
   		while (<$fh>) {
+  			chomp;
+  			# skip empty lines and artificial comments (added by this project)
+  			next if /^$/ or /^#/;
+  
+  			# Error: The controller identified by "slot=attr_value_slot_unknown" was not detected.
+  			if (/^Error:\s/) {
+  				# store it somewhere. should it be appended?
+  				($target->{'error'}) = /^Error:\s+(.+?)\.?\s*$/;
+  				$this->unknown;
+  				next;
+  			}
+  
   			# "array A"
   			# "array A (Failed)"
   			# "array B (Failed)"
   			if (my($a, $s) = /^\s+array (\S+)(?:\s*\((\S+)\))?$/) {
-  				$array = $a;
+  				$index++;
   				# Offset 0 is Array own status
   				# XXX: I don't like this one: undef could be false positive
-  				$array{$array}[0] = $s || 'OK';
-  			}
-  
-  			# skip if no active array yet
-  			next unless $array;
-  
-  			# logicaldrive 1 (68.3 GB, RAID 1, OK)
-  			# capture only status
-  			if (my($drive, $s) = /^\s+logicaldrive (\d+) \([\d.]+ .B, [^,]+, ([^\)]+)\)$/) {
-  				# Offset 1 is each logical drive status
-  				$array{$array}[1]{$drive} = $s;
+  				$target->{'array'}[$index]{status} = $s || 'OK';
+  				$target->{'array'}[$index]{name} = $a;
   				next;
   			}
   
-  			# Error: The controller identified by "slot=attr_value_slot_unknown" was not detected.
-  			if (/Error:/) {
-  				$this->unknown;
+  			# logicaldrive 1 (68.3 GB, RAID 1, OK)
+  			# capture only status
+  			if (my($drive, $size, $raid, $status) = /^\s+logicaldrive (\d+) \(([\d.]+ .B), ([^,]+), ([^\)]+)\)$/) {
+  				warn "Index out of bounds" if $index < 0; # XXX should not happen
+  
+  				# Offset 1 is each logical drive status
+  				my $ld = {
+  					'id' => $drive,
+  					'status' => $status,
+  					'size' => $size,
+  					'raid' => $raid,
+  				};
+  				push(@{$target->{'array'}[$index]{logicaldrives}}, $ld);
+  				next;
   			}
+  
+  			# skip known noise
+  			if (
+  				/\s+Type "help" for more details/
+  				# Controller name: exact match
+  				|| /^\Q$target->{controller}\E\s/
+  				# loose match, some test data seems malformed
+  				|| / in Slot \d/
+  				|| /^FIRMWARE UPGRADE REQUIRED:/
+  				|| /^\s{27}/
+  			) {
+  				next;
+  			}
+  
+  			warn "Unhandled: [$_]\n";
   		}
   		$this->unknown unless close $fh;
   
-  		$luns{$target} = { %array };
+  		push(@luns, $target);
   	}
   
-  	return \%luns;
+  	return \@luns;
   }
   
   # parse hpacucli output into logical structure
@@ -2864,51 +3037,99 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/hpacucli.pm"} = '#line '.(1+
   	if (!$targets) {
   		return $targets;
   	}
-  	my $luns = $this->scan_luns($targets);
-  	return { 'targets' => $targets, 'luns' => $luns };
+  
+  	return $this->scan_luns($targets);
+  }
+  
+  # format lun (logicaldevice) status
+  # update check status if problems found
+  sub lstatus {
+  	my ($this, $ld) = @_;
+  
+  	my $s = $ld->{status};
+  
+  	if ($s eq 'OK' or $s eq 'Disabled') {
+  	} elsif ($s eq 'Failed' or $s eq 'Interim Recovery Mode') {
+  		$this->critical;
+  	} elsif ($s eq 'Rebuild' or $s eq 'Recover') {
+  		$this->warning;
+  	}
+  
+  	return "LUN$ld->{id}:$s";
+  }
+  
+  # format array status
+  # update check status if problems found
+  sub astatus {
+  	my ($this, $array) = @_;
+  
+  	if ($array->{status} ne 'OK') {
+  		$this->critical;
+  	}
+  
+  	return "Array $array->{name}($array->{status})";
+  }
+  
+  # format controller status
+  # updates check status if problems found
+  sub cstatus {
+  	my ($this, $c) = @_;
+  	my (@s, $s);
+  
+  	# always include controller status
+  	push(@s, $c->{'Controller Status'} || 'ERROR');
+  	if ($c->{'Controller Status'} ne 'OK') {
+  		$this->critical;
+  	}
+  
+  	if ($c->{error}) {
+  		if ($c->{error} eq E_NO_LOGICAL_DEVS) {
+  			$this->noraid;
+  			push(@s, 'Not configured');
+  		} else {
+  			$this->unknown;
+  			push(@s, $c->{error});
+  		}
+  	}
+  
+  	# print those only if not ok and configured
+  	if (($s = $c->{'Cache Status'}) && $s !~ /^(OK|Not Configured)/) {
+  		push(@s, "Cache: $s");
+  		$this->critical;
+  	}
+  	if (($s = $c->{'Battery/Capacitor Status'}) && $s !~ /^(OK|Not Configured)/) {
+  		push(@s, "Battery: $s");
+  		$this->critical;
+  	}
+  
+  	# start with identifyier
+  	my $name = $c->{chassisname} || $c->{controller};
+  
+  	return $name . '[' . join(', ', @s) . ']';
   }
   
   sub check {
   	my $this = shift;
   
-  	my $ctrl = $this->parse;
-  	unless ($ctrl) {
+  	my $ctrls = $this->parse;
+  	unless ($ctrls) {
   		$this->warning->message("No Controllers were found on this machine");
   		return;
   	}
   
-  	# status messages pushed here
   	my @status;
-  
-  	for my $target (sort {$a cmp $b} keys %{$ctrl->{targets}}) {
-  		my $model = $ctrl->{targets}->{$target};
-  
-  		my @cstatus;
-  		foreach my $array (sort { $a cmp $b } keys %{$ctrl->{luns}->{$target}}) {
-  			my ($astatus, $ld) = @{$ctrl->{luns}->{$target}{$array}};
-  
-  			# check array status
-  			if ($astatus ne 'OK') {
-  				$this->critical;
+  	foreach my $ctrl (@$ctrls) {
+  		my @astatus;
+  		foreach my $array (@{$ctrl->{array}}) {
+  			my @lstatus;
+  			foreach my $ld (@{$array->{logicaldrives}}) {
+  				push(@lstatus, $this->lstatus($ld));
   			}
-  
-  			my @astatus;
-  			# extra details for non-normal arrays
-  			foreach my $lun (sort { $a cmp $b } keys %$ld) {
-  				my $s = $ld->{$lun};
-  				push(@astatus, "LUN$lun:$s");
-  
-  				if ($s eq 'OK' or $s eq 'Disabled') {
-  				} elsif ($s eq 'Failed' or $s eq 'Interim Recovery Mode') {
-  					$this->critical;
-  				} elsif ($s eq 'Rebuild' or $s eq 'Recover') {
-  					$this->warning;
-  				}
-  			}
-  			push(@cstatus, "Array $array($astatus)[". join(',', @astatus). "]");
+  			push(@astatus, $this->astatus($array). '['. join(',', @lstatus). ']');
   		}
-  
-  		push(@status, "$model: ".join(', ', @cstatus));
+  		my $cstatus = $this->cstatus($ctrl);
+  		$cstatus .= ': '. join(', ', @astatus) if @astatus;
+  		push(@status, $cstatus);
   	}
   
   	return unless @status;
@@ -4092,8 +4313,9 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/metastat.pm"} = '#line '.(1+
   sub active {
   	my ($this) = @_;
   
-  	# program not found
-  	return 0 unless $this->{program};
+  	# return if parent said NO
+  	my $res = $this->SUPER::active(@_);
+  	return $res unless $res;
   
   	my $output = $this->get_metastat;
   	return !!@$output;
@@ -5738,7 +5960,7 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Utils.pm"} = '#line '.(1+__LINE__).'
   
   # paths for which()
   our @paths = split /:/, $ENV{'PATH'};
-  unshift(@paths, qw(/usr/local/nrpe /usr/local/bin /sbin /usr/sbin /bin /usr/sbin /opt/bin /opt/MegaRAID/MegaCli));
+  unshift(@paths, qw(/usr/local/nrpe /usr/local/bin /sbin /usr/sbin /bin /usr/sbin /opt/bin /opt/MegaRAID/MegaCli /usr/StorMan));
   
   # lookup program from list of possible filenames
   # search is performed from $PATH plus additional hardcoded @paths
@@ -5792,7 +6014,7 @@ $fatpacked{"Class/Accessor/Faster.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"
 CLASS_ACCESSOR_FASTER
 
 $fatpacked{"Config/Tiny.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'CONFIG_TINY';
-  package Config::Tiny;use strict;our$VERSION='2.23';BEGIN {require 5.008001;$Config::Tiny::errstr=''}sub new {return bless {},shift}sub read {my($class)=ref $_[0]? ref shift : shift;my($file,$encoding)=@_;return$class -> _error('No file name provided')if (!defined$file || ($file eq ''));$encoding=$encoding ? "<:$encoding" : '<';local $/=undef;open(CFG,$encoding,$file)or return$class -> _error("Failed to open file '$file' for reading: $!");my$contents=<CFG>;close(CFG);return$class -> _error("Reading from '$file' returned undef")if (!defined$contents);return$class -> read_string($contents)}sub read_string {my($class)=ref $_[0]? ref shift : shift;my($self)=bless {},$class;return undef unless defined $_[0];my$ns='_';my$counter=0;for (split /(?:\015{1,2}\012|\015|\012)/,shift){$counter++;next if /^\s*(?:\#|\;|$)/;s/\s\;\s.+$//g;if (/^\s*\[\s*(.+?)\s*\]\s*$/){$self->{$ns=$1}||={};next}if (/^\s*([^=]+?)\s*=\s*(.*?)\s*$/){$self->{$ns}->{$1}=$2;next}return$self -> _error("Syntax error at line $counter: '$_'")}return$self}sub write {my($self)=shift;my($file,$encoding)=@_;return$self -> _error('No file name provided')if (!defined$file or ($file eq ''));$encoding=$encoding ? ">:$encoding" : '>';my($string)=$self->write_string;return undef unless defined$string;open(CFG,$encoding,$file)or return$self->_error("Failed to open file '$file' for writing: $!");print CFG$string;close CFG;return 1}sub write_string {my($self)=shift;my($contents)='';for my$section (sort {(($b eq '_')<=> ($a eq '_'))|| ($a cmp $b)}keys %$self){return$self->_error("Illegal whitespace in section name '$section'")if$section =~ /(?:^\s|\n|\s$)/s;my$block=$self->{$section};$contents .= "\n" if length$contents;$contents .= "[$section]\n" unless$section eq '_';for my$property (sort keys %$block){return$self->_error("Illegal newlines in property '$section.$property'")if$block->{$property}=~ /(?:\012|\015)/s;$contents .= "$property=$block->{$property}\n"}}return$contents}sub errstr {$Config::Tiny::errstr}sub _error {$Config::Tiny::errstr=$_[1];undef}1;
+  package Config::Tiny;use strict;our$VERSION='2.23';BEGIN {require 5.008001;$Config::Tiny::errstr=''}sub new {return bless {},shift}sub read {my($class)=ref $_[0]? ref shift : shift;my($file,$encoding)=@_;return$class -> _error('No file name provided')if (!defined$file || ($file eq ''));$encoding=$encoding ? "<:$encoding" : '<';local $/=undef;open(CFG,$encoding,$file)or return$class -> _error("Failed to open file '$file' for reading: $!");my$contents=<CFG>;close(CFG);return$class -> _error("Reading from '$file' returned undef")if (!defined$contents);return$class -> read_string($contents)}sub read_string {my($class)=ref $_[0]? ref shift : shift;my($self)=bless {},$class;return undef unless defined $_[0];my$ns='_';my$counter=0;for (split /(?:\015{1,2}\012|\015|\012)/,shift){$counter++;next if /^\s*(?:\#|\;|$)/;s/\s\;\s.+$//g;if (/^\s*\[\s*(.+?)\s*\]\s*$/){$self->{$ns=$1}||= {};next}if (/^\s*([^=]+?)\s*=\s*(.*?)\s*$/){$self->{$ns}->{$1}=$2;next}return$self -> _error("Syntax error at line $counter: '$_'")}return$self}sub write {my($self)=shift;my($file,$encoding)=@_;return$self -> _error('No file name provided')if (!defined$file or ($file eq ''));$encoding=$encoding ? ">:$encoding" : '>';my($string)=$self->write_string;return undef unless defined$string;open(CFG,$encoding,$file)or return$self->_error("Failed to open file '$file' for writing: $!");print CFG$string;close CFG;return 1}sub write_string {my($self)=shift;my($contents)='';for my$section (sort {(($b eq '_')<=> ($a eq '_'))|| ($a cmp $b)}keys %$self){return$self->_error("Illegal whitespace in section name '$section'")if$section =~ /(?:^\s|\n|\s$)/s;my$block=$self->{$section};$contents .= "\n" if length$contents;$contents .= "[$section]\n" unless$section eq '_';for my$property (sort keys %$block){return$self->_error("Illegal newlines in property '$section.$property'")if$block->{$property}=~ /(?:\012|\015)/s;$contents .= "$property=$block->{$property}\n"}}return$contents}sub errstr {$Config::Tiny::errstr}sub _error {$Config::Tiny::errstr=$_[1];undef}1;
 CONFIG_TINY
 
 $fatpacked{"Devel/InnerPackage.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'DEVEL_INNERPACKAGE';
@@ -5804,7 +6026,7 @@ $fatpacked{"Math/Calc/Units.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<
 MATH_CALC_UNITS
 
 $fatpacked{"Math/Calc/Units/Compute.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'MATH_CALC_UNITS_COMPUTE';
-  package Math::Calc::Units::Compute;use base 'Exporter';use vars qw(@EXPORT_OK);@EXPORT_OK=qw(compute plus minus mult divide power unit_mult unit_divide unit_power construct);use strict;use Math::Calc::Units::Convert qw(reduce);use Math::Calc::Units::Rank qw(render_unit);use Math::Calc::Units::Convert::Base;require Math::Calc::Units::Grammar;sub equivalent {my ($u,$v)=@_;return Math::Calc::Units::Convert::Base->same($u,$v)}sub is_unit {my ($x,$unit)=@_;return equivalent($x,{$unit=>1 })}sub plus {my ($u,$v)=@_;$u=reduce($u);$v=reduce($v);if (equivalent($u->[1],$v->[1])){return [$u->[0]+ $v->[0],$u->[1]]}elsif (is_unit($u->[1],'timestamp')&& is_unit($v->[1],'sec')){return [$u->[0]+ $v->[0],$u->[1]]}elsif (is_unit($u->[1],'sec')&& is_unit($v->[1],'timestamp')){return [$u->[0]+ $v->[0],$v->[1]]}die "Unable to add incompatible units `".render_unit($u->[1])."' and `".render_unit($v->[1])."'"}sub minus {my ($u,$v)=@_;$u=reduce($u);$v=reduce($v);if (is_unit($u->[1],'timestamp')&& is_unit($v->[1],'timestamp')){return [$u->[0]- $v->[0],{sec=>1 }]}elsif (equivalent($u->[1],$v->[1])){return [$u->[0]- $v->[0],$u->[1]]}elsif (is_unit($u->[1],'timestamp')&& is_unit($v->[1],'sec')){return [$u->[0]- $v->[0],$u->[1]]}die "Unable to subtract incompatible units `".render_unit($u->[1])."' and `".render_unit($v->[1])."'"}sub mult {my ($u,$v)=@_;return [$u->[0]* $v->[0],unit_mult($u->[1],$v->[1])]}sub divide {my ($u,$v)=@_;return [$u->[0]/ $v->[0],unit_divide($u->[1],$v->[1])]}sub power {my ($u,$v)=@_;die "Can only raise to unit-less powers" if keys %{$v->[1]};$u=reduce($u);if (keys %{$u->[1]}!=0){my$power=$v->[0];die "Can only raise a value with units to an integral power" if abs($power - int($power))> 1e-20;return [$u->[0]** $power,unit_power($u->[1],$power)]}return [$u->[0]** $v->[0],{}]}sub unit_mult {my ($u,$v,$mult)=@_;$mult ||=1;while (my ($unit,$vp)=each %$v){$u->{$unit}+= $vp * $mult;delete$u->{$unit}if$u->{$unit}==0}return$u}sub unit_divide {my ($u,$v)=@_;return unit_mult($u,$v,-1)}sub unit_power {my ($u,$power)=@_;return {}if$power==0;$u->{$_}*= $power foreach (keys %$u);return$u}sub construct {my$s=shift;my ($constructor,$args)=$s =~ /^(\w+)\((.*)\)/;return Math::Calc::Units::Convert::construct($constructor,$args)}package Math::Calc::Units::Compute;sub tokenize {my$data=shift;my@tokens=$data =~ m{\s*
+  package Math::Calc::Units::Compute;use base 'Exporter';use vars qw(@EXPORT_OK);@EXPORT_OK=qw(compute plus minus mult divide power unit_mult unit_divide unit_power construct);use strict;use Math::Calc::Units::Convert qw(reduce);use Math::Calc::Units::Rank qw(render_unit);use Math::Calc::Units::Convert::Base;require Math::Calc::Units::Grammar;sub equivalent {my ($u,$v)=@_;return Math::Calc::Units::Convert::Base->same($u,$v)}sub is_unit {my ($x,$unit)=@_;return equivalent($x,{$unit=>1 })}sub plus {my ($u,$v)=@_;$u=reduce($u);$v=reduce($v);if (equivalent($u->[1],$v->[1])){return [$u->[0]+ $v->[0],$u->[1]]}elsif (is_unit($u->[1],'timestamp')&& is_unit($v->[1],'sec')){return [$u->[0]+ $v->[0],$u->[1]]}elsif (is_unit($u->[1],'sec')&& is_unit($v->[1],'timestamp')){return [$u->[0]+ $v->[0],$v->[1]]}die "Unable to add incompatible units `".render_unit($u->[1])."' and `".render_unit($v->[1])."'"}sub minus {my ($u,$v)=@_;$u=reduce($u);$v=reduce($v);if (is_unit($u->[1],'timestamp')&& is_unit($v->[1],'timestamp')){return [$u->[0]- $v->[0],{sec=>1 }]}elsif (equivalent($u->[1],$v->[1])){return [$u->[0]- $v->[0],$u->[1]]}elsif (is_unit($u->[1],'timestamp')&& is_unit($v->[1],'sec')){return [$u->[0]- $v->[0],$u->[1]]}die "Unable to subtract incompatible units `".render_unit($u->[1])."' and `".render_unit($v->[1])."'"}sub mult {my ($u,$v)=@_;return [$u->[0]* $v->[0],unit_mult($u->[1],$v->[1])]}sub divide {my ($u,$v)=@_;return [$u->[0]/ $v->[0],unit_divide($u->[1],$v->[1])]}sub power {my ($u,$v)=@_;die "Can only raise to unit-less powers" if keys %{$v->[1]};$u=reduce($u);if (keys %{$u->[1]}!=0){my$power=$v->[0];die "Can only raise a value with units to an integral power" if abs($power - int($power))> 1e-20;return [$u->[0]** $power,unit_power($u->[1],$power)]}return [$u->[0]** $v->[0],{}]}sub unit_mult {my ($u,$v,$mult)=@_;$mult ||= 1;while (my ($unit,$vp)=each %$v){$u->{$unit}+= $vp * $mult;delete$u->{$unit}if$u->{$unit}==0}return$u}sub unit_divide {my ($u,$v)=@_;return unit_mult($u,$v,-1)}sub unit_power {my ($u,$power)=@_;return {}if$power==0;$u->{$_}*= $power foreach (keys %$u);return$u}sub construct {my$s=shift;my ($constructor,$args)=$s =~ /^(\w+)\((.*)\)/;return Math::Calc::Units::Convert::construct($constructor,$args)}package Math::Calc::Units::Compute;sub tokenize {my$data=shift;my@tokens=$data =~ m{\s*
                              (
                                \w+\([^\(\)]*\) # constructed (eg date(2001...))
                               |[\d.]+       # Numbers
@@ -5819,7 +6041,7 @@ $fatpacked{"Math/Calc/Units/Convert.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."
 MATH_CALC_UNITS_CONVERT
 
 $fatpacked{"Math/Calc/Units/Convert/Base.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'MATH_CALC_UNITS_CONVERT_BASE';
-  package Math::Calc::Units::Convert::Base;use strict;sub major_pref {return 0}sub major_variants {my ($self,$unit)=@_;return$unit}sub singular {my$self=shift;local $_=shift;return $_ unless /s$/;return $1 if /^(.*[^e])s$/;return $1 if /^(.*(ch|sh))es$/;return $1 if /^(.*[aeiou][^aeiou]e)s$/;chop;return $_}sub unit_map {return {}}sub variants {my ($self,$base)=@_;my$map=$self->unit_map();return ($base,keys %$map)}sub same {my ($self,$u,$v)=@_;return 0 if keys %$u!=keys %$v;while (my ($name,$power)=each %$u){return 0 if!exists$v->{$name};return 0 if$v->{$name}!=$power}return 1}sub simple_convert {my ($self,$from,$to)=@_;return 1 if$from eq $to;my$map=$self->unit_map();my$w=$map->{$from}|| $map->{lc($from)};if (!$w){$from=$self->singular($from);$w=$map->{$from}|| $map->{lc($from)}}return if!$w;if ($w->[1]ne $to){my$submult=$self->simple_convert($w->[1],$to);return if!defined$submult;return$w->[0]* $submult}else {return$w->[0]}}sub to_canonical {my ($self,$unitName)=@_;my$canon=$self->canonical_unit();if ($canon){my$mult=$self->simple_convert($unitName,$canon);return if!defined$mult;return ($mult,$canon)}else {return (1,$self->singular($unitName))}}sub canonical_unit {return}sub abbreviated_canonical_unit {my ($self)=@_;return$self->canonical_unit}my$THRESHOLD=0.01;sub spread {my ($self,$mag,$base,$start,$units)=@_;die if$mag < 0;return [0,$base ]if$mag==0;my$orig=$mag;my@desc;my$started=0;for my$unit (@$units){$started=1 if$unit eq $start;next unless$started;last if ($mag / $orig)< $THRESHOLD;my$mult=$self->simple_convert($unit,$base);my$n=int($mag / $mult);next if$n==0;$mag -= $n * $mult;push@desc,[$n,$unit ]}return@desc}sub range_score {my ($self,$val,$unitName)=@_;my$ranges=$self->get_ranges();my$range=$ranges->{$unitName}|| $ranges->{default};if ($val >= $range->[0]){if (!defined$range->[1]|| ($val <= $range->[1])){return 1}}$val=_sillylog($val);my$r0=_sillylog($range->[0]);my$r1;if (defined$range->[1]){$r1=_sillylog($range->[1])}else {$r1=4}my$width=$r1 - $r0;my$mean=($r0 + $r1)/ 2;my$stddev=$width / 2;my$n=($val - $mean)/ $stddev;our$mulconst;$mulconst ||=0.999 * exp(1/8);return 0.001 + $mulconst * exp(-$n**2/2)}sub _sillylog {my$x=shift;return log($x)if$x;return log(1e-50)}sub pref_score {my ($self,$unitName)=@_;my$prefs=$self->get_prefs();my$specific=$prefs->{$unitName};return defined($specific)? $specific : $prefs->{default}}sub get_prefs {return {default=>0.1 }}sub get_ranges {return {default=>[1,undef ]}}sub render_unit {my ($self,$name,$power,$options)=@_;if ($power==1){return$name}else {return "$name**$power"}}sub render {my ($self,$val,$name,$power,$options)=@_;return sprintf("%.5g ",$val).$self->render_unit($name,$power,$options)}sub construct {return}1;
+  package Math::Calc::Units::Convert::Base;use strict;sub major_pref {return 0}sub major_variants {my ($self,$unit)=@_;return$unit}sub singular {my$self=shift;local $_=shift;return $_ unless /s$/;return $1 if /^(.*[^e])s$/;return $1 if /^(.*(ch|sh))es$/;return $1 if /^(.*[aeiou][^aeiou]e)s$/;chop;return $_}sub unit_map {return {}}sub variants {my ($self,$base)=@_;my$map=$self->unit_map();return ($base,keys %$map)}sub same {my ($self,$u,$v)=@_;return 0 if keys %$u!=keys %$v;while (my ($name,$power)=each %$u){return 0 if!exists$v->{$name};return 0 if$v->{$name}!=$power}return 1}sub simple_convert {my ($self,$from,$to)=@_;return 1 if$from eq $to;my$map=$self->unit_map();my$w=$map->{$from}|| $map->{lc($from)};if (!$w){$from=$self->singular($from);$w=$map->{$from}|| $map->{lc($from)}}return if!$w;if ($w->[1]ne $to){my$submult=$self->simple_convert($w->[1],$to);return if!defined$submult;return$w->[0]* $submult}else {return$w->[0]}}sub to_canonical {my ($self,$unitName)=@_;my$canon=$self->canonical_unit();if ($canon){my$mult=$self->simple_convert($unitName,$canon);return if!defined$mult;return ($mult,$canon)}else {return (1,$self->singular($unitName))}}sub canonical_unit {return}sub abbreviated_canonical_unit {my ($self)=@_;return$self->canonical_unit}my$THRESHOLD=0.01;sub spread {my ($self,$mag,$base,$start,$units)=@_;die if$mag < 0;return [0,$base ]if$mag==0;my$orig=$mag;my@desc;my$started=0;for my$unit (@$units){$started=1 if$unit eq $start;next unless$started;last if ($mag / $orig)< $THRESHOLD;my$mult=$self->simple_convert($unit,$base);my$n=int($mag / $mult);next if$n==0;$mag -= $n * $mult;push@desc,[$n,$unit ]}return@desc}sub range_score {my ($self,$val,$unitName)=@_;my$ranges=$self->get_ranges();my$range=$ranges->{$unitName}|| $ranges->{default};if ($val >= $range->[0]){if (!defined$range->[1]|| ($val <= $range->[1])){return 1}}$val=_sillylog($val);my$r0=_sillylog($range->[0]);my$r1;if (defined$range->[1]){$r1=_sillylog($range->[1])}else {$r1=4}my$width=$r1 - $r0;my$mean=($r0 + $r1)/ 2;my$stddev=$width / 2;my$n=($val - $mean)/ $stddev;our$mulconst;$mulconst ||= 0.999 * exp(1/8);return 0.001 + $mulconst * exp(-$n**2/2)}sub _sillylog {my$x=shift;return log($x)if$x;return log(1e-50)}sub pref_score {my ($self,$unitName)=@_;my$prefs=$self->get_prefs();my$specific=$prefs->{$unitName};return defined($specific)? $specific : $prefs->{default}}sub get_prefs {return {default=>0.1 }}sub get_ranges {return {default=>[1,undef ]}}sub render_unit {my ($self,$name,$power,$options)=@_;if ($power==1){return$name}else {return "$name**$power"}}sub render {my ($self,$val,$name,$power,$options)=@_;return sprintf("%.5g ",$val).$self->render_unit($name,$power,$options)}sub construct {return}1;
 MATH_CALC_UNITS_CONVERT_BASE
 
 $fatpacked{"Math/Calc/Units/Convert/Base2Metric.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'MATH_CALC_UNITS_CONVERT_BASE2METRIC';
@@ -5843,7 +6065,7 @@ $fatpacked{"Math/Calc/Units/Convert/Date.pm"} = '#line '.(1+__LINE__).' "'.__FIL
                      (\d\d\d\d)$/x){(undef,$Mon,$d,$h,$m,$s,$tz,$y)=($1,$2,$3,$4,$5,$6,$7,$8)}elsif ($args =~ /^(\w\w\w)[\s-]*
                           (\d+)[,\s-]+
                           (\d\d\d\d)$/x){($Mon,$d,$y)=($1,$2,$3)}elsif ($args =~ /^(\d\d\d\d)-(\d+)-(\d+)\s+
-                          (\d+):(\d+)[:.](\d+)$/x){($y,$M,$d,$h,$m,$s)=($1,$2,$3,$4,$5,$6);$M--}elsif ($args =~ /^(\d\d\d\d)-(\d+)-(\d+)$/){($y,$M,$d)=($1,$2,$3);$M--}else {die "Unparseable date string '$args'"}$h ||=0;$m ||=0;$s ||=0;if (defined$Mon){$M=0;for (@MonthNames){last if lc($_)eq lc($Mon);$M++}die "Unparseable month '$Mon'" if$M > 11}if (defined($tz)&& $tz ne 'GMT'){warn "Timezones not supported. Assuming GMT.\n"}my$timestamp=timegm($s,$m,$h,$d,$M,$y-1900);die "Date '$args' is out of range" if$timestamp==-1;return [$timestamp,{'timestamp'=>1 }]}sub render {my ($self,$mag,$name,$power)=@_;return "\@$mag" if$power!=1;return "\@$mag" if$mag < $min_nice_time;return "\@$mag" if$mag > $max_nice_time;return gmtime($mag)." (\@$mag)"}1;
+                          (\d+):(\d+)[:.](\d+)$/x){($y,$M,$d,$h,$m,$s)=($1,$2,$3,$4,$5,$6);$M--}elsif ($args =~ /^(\d\d\d\d)-(\d+)-(\d+)$/){($y,$M,$d)=($1,$2,$3);$M--}else {die "Unparseable date string '$args'"}$h ||= 0;$m ||= 0;$s ||= 0;if (defined$Mon){$M=0;for (@MonthNames){last if lc($_)eq lc($Mon);$M++}die "Unparseable month '$Mon'" if$M > 11}if (defined($tz)&& $tz ne 'GMT'){warn "Timezones not supported. Assuming GMT.\n"}my$timestamp=timegm($s,$m,$h,$d,$M,$y-1900);die "Date '$args' is out of range" if$timestamp==-1;return [$timestamp,{'timestamp'=>1 }]}sub render {my ($self,$mag,$name,$power)=@_;return "\@$mag" if$power!=1;return "\@$mag" if$mag < $min_nice_time;return "\@$mag" if$mag > $max_nice_time;return gmtime($mag)." (\@$mag)"}1;
 MATH_CALC_UNITS_CONVERT_DATE
 
 $fatpacked{"Math/Calc/Units/Convert/Distance.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'MATH_CALC_UNITS_CONVERT_DISTANCE';
@@ -5855,7 +6077,7 @@ $fatpacked{"Math/Calc/Units/Convert/Metric.pm"} = '#line '.(1+__LINE__).' "'.__F
 MATH_CALC_UNITS_CONVERT_METRIC
 
 $fatpacked{"Math/Calc/Units/Convert/Multi.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'MATH_CALC_UNITS_CONVERT_MULTI';
-  package Math::Calc::Units::Convert::Multi;use base 'Exporter';use vars qw(@EXPORT_OK);BEGIN {@EXPORT_OK=qw(to_canonical simple_convert singular variants major_variants major_pref range_score pref_score get_class construct)};require Math::Calc::Units::Convert::Time;require Math::Calc::Units::Convert::Byte;require Math::Calc::Units::Convert::Date;require Math::Calc::Units::Convert::Distance;require Math::Calc::Units::Convert::Combo;use strict;use vars qw(@UnitClasses);@UnitClasses=qw(Math::Calc::Units::Convert::Time Math::Calc::Units::Convert::Byte Math::Calc::Units::Convert::Date Math::Calc::Units::Convert::Distance Math::Calc::Units::Convert::Combo);sub to_canonical {my ($unit)=@_;my$val=1;my%newUnit;while (my ($unitName,$power)=each %$unit){my ($mult,$canon)=name_to_canonical($unitName);$val *= $mult ** $power;if (ref$canon){my$c=to_canonical($canon);$val *= $c->[0]** $power;while (my ($name,$subPower)=each %{$c->[1]}){if (($newUnit{$name}+= $subPower * $power)==0){delete$newUnit{$name}}}}else {if (($newUnit{$canon}+= $power)==0){delete$newUnit{$canon}}}}return [$val,\%newUnit ]}my%CANON_CACHE;sub name_to_canonical {my$unitName=shift;$CANON_CACHE{$unitName}||=[_name_to_canonical($unitName)];return @{$CANON_CACHE{$unitName}}}sub _name_to_canonical {my ($unitName)=@_;if (my$v=Math::Calc::Units::Convert::Combo->lookup_compound($unitName)){return @$v}for my$uclass (@UnitClasses){if (my ($val,$base)=$uclass->to_canonical($unitName)){return ($val,$base)}}return Math::Calc::Units::Convert::Base->to_canonical($unitName)}sub get_class {my ($unitName)=@_;my (undef,$canon)=name_to_canonical($unitName);for my$uclass (@UnitClasses){my$canon_unit=$uclass->canonical_unit();next if!defined$canon_unit;return$uclass if$canon_unit eq $canon}return 'Math::Calc::Units::Convert::Base'}sub simple_convert {my ($u,$v)=@_;for my$uclass (@UnitClasses){my$c;return$c if$c=$uclass->simple_convert($u,$v)}return}sub singular {my ($unitName)=@_;return get_class($unitName)->singular($unitName)}sub variants {my ($base)=@_;return get_class($base)->variants($base)}sub major_variants {my ($base)=@_;return get_class($base)->major_variants($base)}sub major_pref {my ($base)=@_;return get_class($base)->major_pref($base)}sub range_score {my ($val,$unitName)=@_;die if ref$unitName;return get_class($unitName)->range_score($val,$unitName)}sub pref_score {my ($unitName)=@_;die if ref$unitName;return get_class($unitName)->pref_score($unitName)}sub construct {my ($constructor,$args)=@_;for my$uclass (@UnitClasses){my$c;return$c if$c=$uclass->construct($constructor,$args)}return}1;
+  package Math::Calc::Units::Convert::Multi;use base 'Exporter';use vars qw(@EXPORT_OK);BEGIN {@EXPORT_OK=qw(to_canonical simple_convert singular variants major_variants major_pref range_score pref_score get_class construct)};require Math::Calc::Units::Convert::Time;require Math::Calc::Units::Convert::Byte;require Math::Calc::Units::Convert::Date;require Math::Calc::Units::Convert::Distance;require Math::Calc::Units::Convert::Combo;use strict;use vars qw(@UnitClasses);@UnitClasses=qw(Math::Calc::Units::Convert::Time Math::Calc::Units::Convert::Byte Math::Calc::Units::Convert::Date Math::Calc::Units::Convert::Distance Math::Calc::Units::Convert::Combo);sub to_canonical {my ($unit)=@_;my$val=1;my%newUnit;while (my ($unitName,$power)=each %$unit){my ($mult,$canon)=name_to_canonical($unitName);$val *= $mult ** $power;if (ref$canon){my$c=to_canonical($canon);$val *= $c->[0]** $power;while (my ($name,$subPower)=each %{$c->[1]}){if (($newUnit{$name}+= $subPower * $power)==0){delete$newUnit{$name}}}}else {if (($newUnit{$canon}+= $power)==0){delete$newUnit{$canon}}}}return [$val,\%newUnit ]}my%CANON_CACHE;sub name_to_canonical {my$unitName=shift;$CANON_CACHE{$unitName}||= [_name_to_canonical($unitName)];return @{$CANON_CACHE{$unitName}}}sub _name_to_canonical {my ($unitName)=@_;if (my$v=Math::Calc::Units::Convert::Combo->lookup_compound($unitName)){return @$v}for my$uclass (@UnitClasses){if (my ($val,$base)=$uclass->to_canonical($unitName)){return ($val,$base)}}return Math::Calc::Units::Convert::Base->to_canonical($unitName)}sub get_class {my ($unitName)=@_;my (undef,$canon)=name_to_canonical($unitName);for my$uclass (@UnitClasses){my$canon_unit=$uclass->canonical_unit();next if!defined$canon_unit;return$uclass if$canon_unit eq $canon}return 'Math::Calc::Units::Convert::Base'}sub simple_convert {my ($u,$v)=@_;for my$uclass (@UnitClasses){my$c;return$c if$c=$uclass->simple_convert($u,$v)}return}sub singular {my ($unitName)=@_;return get_class($unitName)->singular($unitName)}sub variants {my ($base)=@_;return get_class($base)->variants($base)}sub major_variants {my ($base)=@_;return get_class($base)->major_variants($base)}sub major_pref {my ($base)=@_;return get_class($base)->major_pref($base)}sub range_score {my ($val,$unitName)=@_;die if ref$unitName;return get_class($unitName)->range_score($val,$unitName)}sub pref_score {my ($unitName)=@_;die if ref$unitName;return get_class($unitName)->pref_score($unitName)}sub construct {my ($constructor,$args)=@_;for my$uclass (@UnitClasses){my$c;return$c if$c=$uclass->construct($constructor,$args)}return}1;
 MATH_CALC_UNITS_CONVERT_MULTI
 
 $fatpacked{"Math/Calc/Units/Convert/Time.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'MATH_CALC_UNITS_CONVERT_TIME';
@@ -5879,7 +6101,7 @@ $fatpacked{"Module/Pluggable.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<
 MODULE_PLUGGABLE
 
 $fatpacked{"Module/Pluggable/Object.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'MODULE_PLUGGABLE_OBJECT';
-  package Module::Pluggable::Object;use strict;use File::Find ();use File::Basename;use File::Spec::Functions qw(splitdir catdir curdir catfile abs2rel);use Carp qw(croak carp confess);use Devel::InnerPackage;use vars qw($VERSION $MR);use if $] > 5.017,'deprecate';$VERSION='5.2';BEGIN {eval {require Module::Runtime};unless ($@){Module::Runtime->import('require_module')}else {*require_module=sub {my$module=shift;my$path=$module .".pm";$path =~ s{::}{/}g;require$path}}}sub new {my$class=shift;my%opts=@_;return bless \%opts,$class}sub plugins {my$self=shift;my@args=@_;$self->{'require'}=1 if$self->{'inner'};my$filename=$self->{'filename'};my$pkg=$self->{'package'};$self->_setup_exceptions;for (qw(search_path search_dirs)){$self->{$_}=[$self->{$_}]if exists$self->{$_}&&!ref($self->{$_})}$self->{'search_path'}||=["${pkg}::Plugin"];$self->{'on_require_error'}||=sub {my ($plugin,$err)=@_;carp "Couldn't require $plugin : $err";return 0};$self->{'on_instantiate_error'}||=sub {my ($plugin,$err)=@_;carp "Couldn't instantiate $plugin: $err";return 0};$self->{'follow_symlinks'}=1 unless exists$self->{'follow_symlinks'};my@SEARCHDIR=exists$INC{"blib.pm"}&& defined$filename && $filename =~ m!(^|/)blib/! &&!$self->{'force_search_all_paths'}? grep {/blib/}@INC : @INC;unshift@SEARCHDIR,@{$self->{'search_dirs'}}if defined$self->{'search_dirs'};my@tmp=@INC;unshift@tmp,@{$self->{'search_dirs'}|| []};local@INC=@tmp if defined$self->{'search_dirs'};my@plugins=$self->search_directories(@SEARCHDIR);push(@plugins,$self->handle_inc_hooks($_,@SEARCHDIR))for @{$self->{'search_path'}};push(@plugins,$self->handle_innerpackages($_))for @{$self->{'search_path'}};return ()unless@plugins;my%plugins;for(@plugins){next unless$self->_is_legit($_);$plugins{$_}=1}if (defined$self->{'instantiate'}){my$method=$self->{'instantiate'};my@objs=();for my$package (sort keys%plugins){next unless$package->can($method);my$obj=eval {$package->$method(@_)};$self->{'on_instantiate_error'}->($package,$@)if $@;push@objs,$obj if$obj}return@objs}else {my@objs=sort keys%plugins;return@objs}}sub _setup_exceptions {my$self=shift;my%only;my%except;my$only;my$except;if (defined$self->{'only'}){if (ref($self->{'only'})eq 'ARRAY'){%only=map {$_=>1}@{$self->{'only'}}}elsif (ref($self->{'only'})eq 'Regexp'){$only=$self->{'only'}}elsif (ref($self->{'only'})eq ''){$only{$self->{'only'}}=1}}if (defined$self->{'except'}){if (ref($self->{'except'})eq 'ARRAY'){%except=map {$_=>1}@{$self->{'except'}}}elsif (ref($self->{'except'})eq 'Regexp'){$except=$self->{'except'}}elsif (ref($self->{'except'})eq ''){$except{$self->{'except'}}=1}}$self->{_exceptions}->{only_hash}=\%only;$self->{_exceptions}->{only}=$only;$self->{_exceptions}->{except_hash}=\%except;$self->{_exceptions}->{except}=$except}sub _is_legit {my$self=shift;my$plugin=shift;my%only=%{$self->{_exceptions}->{only_hash}||{}};my%except=%{$self->{_exceptions}->{except_hash}||{}};my$only=$self->{_exceptions}->{only};my$except=$self->{_exceptions}->{except};my$depth=()=split '::',$plugin,-1;return 0 if (keys%only &&!$only{$plugin});return 0 unless (!defined$only || $plugin =~ m!$only!);return 0 if (keys%except && $except{$plugin});return 0 if (defined$except && $plugin =~ m!$except!);return 0 if defined$self->{max_depth}&& $depth>$self->{max_depth};return 0 if defined$self->{min_depth}&& $depth<$self->{min_depth};return 1}sub search_directories {my$self=shift;my@SEARCHDIR=@_;my@plugins;for my$dir (@SEARCHDIR){push@plugins,$self->search_paths($dir)}return@plugins}sub search_paths {my$self=shift;my$dir=shift;my@plugins;my$file_regex=$self->{'file_regex'}|| qr/\.pm$/;for my$searchpath (@{$self->{'search_path'}}){my$sp=catdir($dir,(split /::/,$searchpath));next unless (-e $sp && -d _);my@files=$self->find_files($sp);for my$file (@files){next unless ($file)=($file =~ /(.*$file_regex)$/);my ($name,$directory,$suffix)=fileparse($file,$file_regex);next if (!$self->{include_editor_junk}&& $self->_is_editor_junk($name));$directory=abs2rel($directory,$sp);my@pkg_dirs=();if ($name eq lc($name)|| $name eq uc($name)){my$pkg_file=catfile($sp,$directory,"$name$suffix");open PKGFILE,"<$pkg_file" or die "search_paths: Can't open $pkg_file: $!";my$in_pod=0;while (my$line=<PKGFILE>){$in_pod=1 if$line =~ m/^=\w/;$in_pod=0 if$line =~ /^=cut/;next if ($in_pod || $line =~ /^=cut/);next if$line =~ /^\s*#/;if ($line =~ m/^\s*package\s+(.*::)?($name)\s*;/i){@pkg_dirs=split /::/,$1 if defined $1;;$name=$2;last}}close PKGFILE}$directory =~ s/^[a-z]://i if($^O =~ /MSWin32|dos/);my@dirs=();if ($directory){($directory)=($directory =~ /(.*)/);@dirs=grep(length($_),splitdir($directory))unless$directory eq curdir();for my$d (reverse@dirs){my$pkg_dir=pop@pkg_dirs;last unless defined$pkg_dir;$d =~ s/\Q$pkg_dir\E/$pkg_dir/i}}else {$directory=""}my$plugin=join '::',$searchpath,@dirs,$name;next unless$plugin =~ m!(?:[a-z\d]+)[a-z\d]*!i;$self->handle_finding_plugin($plugin,\@plugins)}push@plugins,$self->handle_innerpackages($searchpath)}return@plugins}sub _is_editor_junk {my$self=shift;my$name=shift;return 1 if$name =~ /~$/;return 1 if$name =~ /^\.#/;return 1 if$name =~ /\.sw[po]$/;return 0}sub handle_finding_plugin {my$self=shift;my$plugin=shift;my$plugins=shift;my$no_req=shift || 0;return unless$self->_is_legit($plugin);unless (defined$self->{'instantiate'}|| $self->{'require'}){push @$plugins,$plugin;return}$self->{before_require}->($plugin)|| return if defined$self->{before_require};unless ($no_req){my$tmp=$@;my$res=eval {require_module($plugin)};my$err=$@;$@=$tmp;if ($err){if (defined$self->{on_require_error}){$self->{on_require_error}->($plugin,$err)|| return}else {return}}}$self->{after_require}->($plugin)|| return if defined$self->{after_require};push @$plugins,$plugin}sub find_files {my$self=shift;my$search_path=shift;my$file_regex=$self->{'file_regex'}|| qr/\.pm$/;my@files=();{local $_;File::Find::find({no_chdir=>1,follow=>$self->{'follow_symlinks'},wanted=>sub {return unless$File::Find::name =~ /$file_regex/;(my$path=$File::Find::name)=~ s#^\\./##;push@files,$path}},$search_path)}return@files}sub handle_inc_hooks {my$self=shift;my$path=shift;my@SEARCHDIR=@_;my@plugins;for my$dir (@SEARCHDIR){next unless ref$dir && eval {$dir->can('files')};for my$plugin ($dir->files){$plugin =~ s/\.pm$//;$plugin =~ s{/}{::}g;next unless$plugin =~ m!^${path}::!;$self->handle_finding_plugin($plugin,\@plugins)}}return@plugins}sub handle_innerpackages {my$self=shift;return ()if (exists$self->{inner}&&!$self->{inner});my$path=shift;my@plugins;for my$plugin (Devel::InnerPackage::list_packages($path)){$self->handle_finding_plugin($plugin,\@plugins,1)}return@plugins}1;
+  package Module::Pluggable::Object;use strict;use File::Find ();use File::Basename;use File::Spec::Functions qw(splitdir catdir curdir catfile abs2rel);use Carp qw(croak carp confess);use Devel::InnerPackage;use vars qw($VERSION $MR);use if $] > 5.017,'deprecate';$VERSION='5.2';BEGIN {eval {require Module::Runtime};unless ($@){Module::Runtime->import('require_module')}else {*require_module=sub {my$module=shift;my$path=$module .".pm";$path =~ s{::}{/}g;require$path}}}sub new {my$class=shift;my%opts=@_;return bless \%opts,$class}sub plugins {my$self=shift;my@args=@_;$self->{'require'}=1 if$self->{'inner'};my$filename=$self->{'filename'};my$pkg=$self->{'package'};$self->_setup_exceptions;for (qw(search_path search_dirs)){$self->{$_}=[$self->{$_}]if exists$self->{$_}&&!ref($self->{$_})}$self->{'search_path'}||= ["${pkg}::Plugin"];$self->{'on_require_error'}||= sub {my ($plugin,$err)=@_;carp "Couldn't require $plugin : $err";return 0};$self->{'on_instantiate_error'}||= sub {my ($plugin,$err)=@_;carp "Couldn't instantiate $plugin: $err";return 0};$self->{'follow_symlinks'}=1 unless exists$self->{'follow_symlinks'};my@SEARCHDIR=exists$INC{"blib.pm"}&& defined$filename && $filename =~ m!(^|/)blib/! &&!$self->{'force_search_all_paths'}? grep {/blib/}@INC : @INC;unshift@SEARCHDIR,@{$self->{'search_dirs'}}if defined$self->{'search_dirs'};my@tmp=@INC;unshift@tmp,@{$self->{'search_dirs'}|| []};local@INC=@tmp if defined$self->{'search_dirs'};my@plugins=$self->search_directories(@SEARCHDIR);push(@plugins,$self->handle_inc_hooks($_,@SEARCHDIR))for @{$self->{'search_path'}};push(@plugins,$self->handle_innerpackages($_))for @{$self->{'search_path'}};return ()unless@plugins;my%plugins;for(@plugins){next unless$self->_is_legit($_);$plugins{$_}=1}if (defined$self->{'instantiate'}){my$method=$self->{'instantiate'};my@objs=();for my$package (sort keys%plugins){next unless$package->can($method);my$obj=eval {$package->$method(@_)};$self->{'on_instantiate_error'}->($package,$@)if $@;push@objs,$obj if$obj}return@objs}else {my@objs=sort keys%plugins;return@objs}}sub _setup_exceptions {my$self=shift;my%only;my%except;my$only;my$except;if (defined$self->{'only'}){if (ref($self->{'only'})eq 'ARRAY'){%only=map {$_=>1}@{$self->{'only'}}}elsif (ref($self->{'only'})eq 'Regexp'){$only=$self->{'only'}}elsif (ref($self->{'only'})eq ''){$only{$self->{'only'}}=1}}if (defined$self->{'except'}){if (ref($self->{'except'})eq 'ARRAY'){%except=map {$_=>1}@{$self->{'except'}}}elsif (ref($self->{'except'})eq 'Regexp'){$except=$self->{'except'}}elsif (ref($self->{'except'})eq ''){$except{$self->{'except'}}=1}}$self->{_exceptions}->{only_hash}=\%only;$self->{_exceptions}->{only}=$only;$self->{_exceptions}->{except_hash}=\%except;$self->{_exceptions}->{except}=$except}sub _is_legit {my$self=shift;my$plugin=shift;my%only=%{$self->{_exceptions}->{only_hash}||{}};my%except=%{$self->{_exceptions}->{except_hash}||{}};my$only=$self->{_exceptions}->{only};my$except=$self->{_exceptions}->{except};my$depth=()=split '::',$plugin,-1;return 0 if (keys%only &&!$only{$plugin});return 0 unless (!defined$only || $plugin =~ m!$only!);return 0 if (keys%except && $except{$plugin});return 0 if (defined$except && $plugin =~ m!$except!);return 0 if defined$self->{max_depth}&& $depth>$self->{max_depth};return 0 if defined$self->{min_depth}&& $depth<$self->{min_depth};return 1}sub search_directories {my$self=shift;my@SEARCHDIR=@_;my@plugins;for my$dir (@SEARCHDIR){push@plugins,$self->search_paths($dir)}return@plugins}sub search_paths {my$self=shift;my$dir=shift;my@plugins;my$file_regex=$self->{'file_regex'}|| qr/\.pm$/;for my$searchpath (@{$self->{'search_path'}}){my$sp=catdir($dir,(split /::/,$searchpath));next unless (-e $sp && -d _);my@files=$self->find_files($sp);for my$file (@files){next unless ($file)=($file =~ /(.*$file_regex)$/);my ($name,$directory,$suffix)=fileparse($file,$file_regex);next if (!$self->{include_editor_junk}&& $self->_is_editor_junk($name));$directory=abs2rel($directory,$sp);my@pkg_dirs=();if ($name eq lc($name)|| $name eq uc($name)){my$pkg_file=catfile($sp,$directory,"$name$suffix");open PKGFILE,"<$pkg_file" or die "search_paths: Can't open $pkg_file: $!";my$in_pod=0;while (my$line=<PKGFILE>){$in_pod=1 if$line =~ m/^=\w/;$in_pod=0 if$line =~ /^=cut/;next if ($in_pod || $line =~ /^=cut/);next if$line =~ /^\s*#/;if ($line =~ m/^\s*package\s+(.*::)?($name)\s*;/i){@pkg_dirs=split /::/,$1 if defined $1;;$name=$2;last}}close PKGFILE}$directory =~ s/^[a-z]://i if($^O =~ /MSWin32|dos/);my@dirs=();if ($directory){($directory)=($directory =~ /(.*)/);@dirs=grep(length($_),splitdir($directory))unless$directory eq curdir();for my$d (reverse@dirs){my$pkg_dir=pop@pkg_dirs;last unless defined$pkg_dir;$d =~ s/\Q$pkg_dir\E/$pkg_dir/i}}else {$directory=""}my$plugin=join '::',$searchpath,@dirs,$name;next unless$plugin =~ m!(?:[a-z\d]+)[a-z\d]*!i;$self->handle_finding_plugin($plugin,\@plugins)}push@plugins,$self->handle_innerpackages($searchpath)}return@plugins}sub _is_editor_junk {my$self=shift;my$name=shift;return 1 if$name =~ /~$/;return 1 if$name =~ /^\.#/;return 1 if$name =~ /\.sw[po]$/;return 0}sub handle_finding_plugin {my$self=shift;my$plugin=shift;my$plugins=shift;my$no_req=shift || 0;return unless$self->_is_legit($plugin);unless (defined$self->{'instantiate'}|| $self->{'require'}){push @$plugins,$plugin;return}$self->{before_require}->($plugin)|| return if defined$self->{before_require};unless ($no_req){my$tmp=$@;my$res=eval {require_module($plugin)};my$err=$@;$@=$tmp;if ($err){if (defined$self->{on_require_error}){$self->{on_require_error}->($plugin,$err)|| return}else {return}}}$self->{after_require}->($plugin)|| return if defined$self->{after_require};push @$plugins,$plugin}sub find_files {my$self=shift;my$search_path=shift;my$file_regex=$self->{'file_regex'}|| qr/\.pm$/;my@files=();{local $_;File::Find::find({no_chdir=>1,follow=>$self->{'follow_symlinks'},wanted=>sub {return unless$File::Find::name =~ /$file_regex/;(my$path=$File::Find::name)=~ s#^\\./##;push@files,$path}},$search_path)}return@files}sub handle_inc_hooks {my$self=shift;my$path=shift;my@SEARCHDIR=@_;my@plugins;for my$dir (@SEARCHDIR){next unless ref$dir && eval {$dir->can('files')};for my$plugin ($dir->files){$plugin =~ s/\.pm$//;$plugin =~ s{/}{::}g;next unless$plugin =~ m!^${path}::!;$self->handle_finding_plugin($plugin,\@plugins)}}return@plugins}sub handle_innerpackages {my$self=shift;return ()if (exists$self->{inner}&&!$self->{inner});my$path=shift;my@plugins;for my$plugin (Devel::InnerPackage::list_packages($path)){$self->handle_finding_plugin($plugin,\@plugins,1)}return@plugins}1;
 MODULE_PLUGGABLE_OBJECT
 
 $fatpacked{"Module/Runtime.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'MODULE_RUNTIME';
@@ -5897,7 +6119,7 @@ $fatpacked{"Monitoring/Plugin.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".
 MONITORING_PLUGIN
 
 $fatpacked{"Monitoring/Plugin/Config.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'MONITORING_PLUGIN_CONFIG';
-  package Monitoring::Plugin::Config;use 5.006;use strict;use warnings;use Carp;use File::Spec;use base qw(Config::Tiny);my$FILENAME1='plugins.ini';my$FILENAME2='nagios-plugins.ini';my$FILENAME3='monitoring-plugins.ini';my$CURRENT_FILE=undef;my@MONITORING_CONFIG_PATH=qw(/etc/nagios /usr/local/nagios/etc /usr/local/etc/nagios /etc/opt/nagios);my@CONFIG_PATH=qw(/etc /usr/local/etc /etc/opt);sub read {my$class=shift;unless ($_[0]){SEARCH: {if ($ENV{MONITORING_CONFIG_PATH}|| $ENV{NAGIOS_CONFIG_PATH}){for (split /:/,($ENV{MONITORING_CONFIG_PATH}|| $ENV{NAGIOS_CONFIG_PATH})){my$file=File::Spec->catfile($_,$FILENAME1);unshift(@_,$file),last SEARCH if -f $file;$file=File::Spec->catfile($_,$FILENAME2);unshift(@_,$file),last SEARCH if -f $file;$file=File::Spec->catfile($_,$FILENAME3);unshift(@_,$file),last SEARCH if -f $file}}for (@MONITORING_CONFIG_PATH){my$file=File::Spec->catfile($_,$FILENAME1);unshift(@_,$file),last SEARCH if -f $file}for (@CONFIG_PATH){my$file=File::Spec->catfile($_,$FILENAME2);unshift(@_,$file),last SEARCH if -f $file;$file=File::Spec->catfile($_,$FILENAME3);unshift(@_,$file),last SEARCH if -f $file}}die "Cannot find '$FILENAME1', '$FILENAME2' or '$FILENAME3' in any standard location.\n" unless $_[0]}$CURRENT_FILE=$_[0];$class->SUPER::read(@_)}sub read_string {my$class=ref $_[0]? ref shift : shift;my$self=bless {},$class;return undef unless defined $_[0];my$ns='_';my$counter=0;for (split /(?:\015{1,2}\012|\015|\012)/,shift){$counter++;next if /^\s*(?:\#|\;|$)/;if (/^\s*\[\s*(.+?)\s*\]\s*$/){$self->{$ns=$1}||={};next}if (/^\s*([^=]+?)\s*=\s*(.*?)\s*$/){push @{$self->{$ns}->{$1}},$2;next}return$self->_error("Syntax error at line $counter: '$_'")}$self}sub write {croak "Write access not permitted"}sub mp_getfile {return$CURRENT_FILE}1;
+  package Monitoring::Plugin::Config;use 5.006;use strict;use warnings;use Carp;use File::Spec;use base qw(Config::Tiny);my$FILENAME1='plugins.ini';my$FILENAME2='nagios-plugins.ini';my$FILENAME3='monitoring-plugins.ini';my$CURRENT_FILE=undef;my@MONITORING_CONFIG_PATH=qw(/etc/nagios /usr/local/nagios/etc /usr/local/etc/nagios /etc/opt/nagios);my@CONFIG_PATH=qw(/etc /usr/local/etc /etc/opt);sub read {my$class=shift;unless ($_[0]){SEARCH: {if ($ENV{MONITORING_CONFIG_PATH}|| $ENV{NAGIOS_CONFIG_PATH}){for (split /:/,($ENV{MONITORING_CONFIG_PATH}|| $ENV{NAGIOS_CONFIG_PATH})){my$file=File::Spec->catfile($_,$FILENAME1);unshift(@_,$file),last SEARCH if -f $file;$file=File::Spec->catfile($_,$FILENAME2);unshift(@_,$file),last SEARCH if -f $file;$file=File::Spec->catfile($_,$FILENAME3);unshift(@_,$file),last SEARCH if -f $file}}for (@MONITORING_CONFIG_PATH){my$file=File::Spec->catfile($_,$FILENAME1);unshift(@_,$file),last SEARCH if -f $file}for (@CONFIG_PATH){my$file=File::Spec->catfile($_,$FILENAME2);unshift(@_,$file),last SEARCH if -f $file;$file=File::Spec->catfile($_,$FILENAME3);unshift(@_,$file),last SEARCH if -f $file}}die "Cannot find '$FILENAME1', '$FILENAME2' or '$FILENAME3' in any standard location.\n" unless $_[0]}$CURRENT_FILE=$_[0];$class->SUPER::read(@_)}sub read_string {my$class=ref $_[0]? ref shift : shift;my$self=bless {},$class;return undef unless defined $_[0];my$ns='_';my$counter=0;for (split /(?:\015{1,2}\012|\015|\012)/,shift){$counter++;next if /^\s*(?:\#|\;|$)/;if (/^\s*\[\s*(.+?)\s*\]\s*$/){$self->{$ns=$1}||= {};next}if (/^\s*([^=]+?)\s*=\s*(.*?)\s*$/){push @{$self->{$ns}->{$1}},$2;next}return$self->_error("Syntax error at line $counter: '$_'")}$self}sub write {croak "Write access not permitted"}sub mp_getfile {return$CURRENT_FILE}1;
 MONITORING_PLUGIN_CONFIG
 
 $fatpacked{"Monitoring/Plugin/ExitResult.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'MONITORING_PLUGIN_EXITRESULT';
@@ -5905,17 +6127,17 @@ $fatpacked{"Monitoring/Plugin/ExitResult.pm"} = '#line '.(1+__LINE__).' "'.__FIL
 MONITORING_PLUGIN_EXITRESULT
 
 $fatpacked{"Monitoring/Plugin/Functions.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'MONITORING_PLUGIN_FUNCTIONS';
-  package Monitoring::Plugin::Functions;use 5.006;use strict;use warnings;use File::Basename;use Params::Validate qw(:types validate);use Math::Calc::Units;our$VERSION="0.39";our@STATUS_CODES=qw(OK WARNING CRITICAL UNKNOWN DEPENDENT);require Exporter;our@ISA=qw(Exporter);our@EXPORT=(@STATUS_CODES,qw(plugin_exit plugin_die check_messages));our@EXPORT_OK=qw(%ERRORS %STATUS_TEXT @STATUS_CODES get_shortname max_state max_state_alt convert $value_re);our%EXPORT_TAGS=(all=>[@EXPORT,@EXPORT_OK ],codes=>[@STATUS_CODES ],functions=>[qw(plugin_exit plugin_die check_messages max_state max_state_alt convert) ],);use constant OK=>0;use constant WARNING=>1;use constant CRITICAL=>2;use constant UNKNOWN=>3;use constant DEPENDENT=>4;our%ERRORS=('OK'=>OK,'WARNING'=>WARNING,'CRITICAL'=>CRITICAL,'UNKNOWN'=>UNKNOWN,'DEPENDENT'=>DEPENDENT,);our%STATUS_TEXT=reverse%ERRORS;my$value=qr/[-+]?[\d\.]+/;our$value_re=qr/$value(?:e$value)?/;my$_fake_exit=0;sub _fake_exit {@_ ? $_fake_exit=shift : $_fake_exit};my$_use_die=0;sub _use_die {@_ ? $_use_die=shift : $_use_die};sub get_shortname {my$arg=shift;my$shortname=undef;return$arg->{shortname}if (defined($arg->{shortname}));$shortname=$arg->{plugin}if (defined($arg->{plugin}));$shortname=uc basename($shortname || $ENV{PLUGIN_NAME}|| $ENV{NAGIOS_PLUGIN}|| $0);$shortname =~ s/^CHECK_(?:BY_)?//;$shortname =~ s/\..*$//;return$shortname}sub max_state {return CRITICAL if grep {$_==CRITICAL}@_;return WARNING if grep {$_==WARNING}@_;return OK if grep {$_==OK}@_;return UNKNOWN if grep {$_==UNKNOWN}@_;return DEPENDENT if grep {$_==DEPENDENT}@_;return UNKNOWN}sub max_state_alt {return CRITICAL if grep {$_==CRITICAL}@_;return WARNING if grep {$_==WARNING}@_;return UNKNOWN if grep {$_==UNKNOWN}@_;return DEPENDENT if grep {$_==DEPENDENT}@_;return OK if grep {$_==OK}@_;return UNKNOWN}sub plugin_exit {my ($code,$message,$arg)=@_;if (defined$code && ($code eq 'return_code' || $code eq 'message')){if (int(@_ / 2)!=@_ / 2 && ref $_[$#_]){$arg=pop @_}else {undef$arg}my%arg=@_;$code=$arg{return_code};$message=$arg{message}}$arg ||={};$code=$ERRORS{$code}if defined$code && exists$ERRORS{$code};$code=UNKNOWN unless defined$code && exists$STATUS_TEXT{$code};$message='' unless defined$message;if (ref$message && ref$message eq 'ARRAY'){$message=join(' ',map {chomp;$_}@$message)}else {chomp$message}my$output="$STATUS_TEXT{$code}";$output .= " - $message" if defined$message && $message ne '';my$shortname=($arg->{plugin}? $arg->{plugin}->shortname : undef);$shortname ||=get_shortname();$output="$shortname $output" if$shortname;if ($arg->{plugin}){my$plugin=$arg->{plugin};$output .= " | ".$plugin->all_perfoutput if$plugin->perfdata && $plugin->all_perfoutput}$output .= "\n";if ($_fake_exit){require Monitoring::Plugin::ExitResult;return Monitoring::Plugin::ExitResult->new($code,$output)}_plugin_exit($code,$output)}sub _plugin_exit {my ($code,$output)=@_;if ($_use_die){for (my$i=0;;$i++){@_=caller($i);last unless @_;if ($_[3]=~ m/die/){$!=$code;die($output)}}}print$output;exit$code}sub plugin_die {my ($arg1,$arg2,$rest)=@_;if (defined$arg1 && ($arg1 eq 'return_code' || $arg1 eq 'message')){return plugin_exit(@_)}elsif (defined$arg1 && (exists$ERRORS{$arg1}|| exists$STATUS_TEXT{$arg1})){return plugin_exit(@_)}elsif (defined$arg2 && (exists$ERRORS{$arg2}|| exists$STATUS_TEXT{$arg2})){return plugin_exit($arg2,$arg1,$rest)}else {return plugin_exit(UNKNOWN,$arg1,$arg2)}}sub die {plugin_die(@_)}sub convert {my ($value,$from,$to)=@_;my ($newval)=Math::Calc::Units::convert("$value $from",$to,'exact');return$newval}sub check_messages {my%arg=validate(@_,{critical=>{type=>ARRAYREF },warning=>{type=>ARRAYREF },ok=>{type=>ARRAYREF | SCALAR,optional=>1 },'join'=>{default=>' ' },join_all=>0,});$arg{join}=' ' unless defined$arg{join};my$code=OK;$code ||=CRITICAL if @{$arg{critical}};$code ||=WARNING if @{$arg{warning}};return$code unless wantarray;my$message='';if ($arg{join_all}){$message=join($arg{join_all},map {@$_ ? join($arg{'join'},@$_): ()}$arg{critical},$arg{warning},$arg{ok}? (ref$arg{ok}? $arg{ok}: [$arg{ok}]): [])}else {$message ||=join($arg{'join'},@{$arg{critical}})if$code==CRITICAL;$message ||=join($arg{'join'},@{$arg{warning}})if$code==WARNING;$message ||=ref$arg{ok}? join($arg{'join'},@{$arg{ok}}): $arg{ok}if$arg{ok}}return ($code,$message)}1;
+  package Monitoring::Plugin::Functions;use 5.006;use strict;use warnings;use File::Basename;use Params::Validate qw(:types validate);use Math::Calc::Units;our$VERSION="0.39";our@STATUS_CODES=qw(OK WARNING CRITICAL UNKNOWN DEPENDENT);require Exporter;our@ISA=qw(Exporter);our@EXPORT=(@STATUS_CODES,qw(plugin_exit plugin_die check_messages));our@EXPORT_OK=qw(%ERRORS %STATUS_TEXT @STATUS_CODES get_shortname max_state max_state_alt convert $value_re);our%EXPORT_TAGS=(all=>[@EXPORT,@EXPORT_OK ],codes=>[@STATUS_CODES ],functions=>[qw(plugin_exit plugin_die check_messages max_state max_state_alt convert) ],);use constant OK=>0;use constant WARNING=>1;use constant CRITICAL=>2;use constant UNKNOWN=>3;use constant DEPENDENT=>4;our%ERRORS=('OK'=>OK,'WARNING'=>WARNING,'CRITICAL'=>CRITICAL,'UNKNOWN'=>UNKNOWN,'DEPENDENT'=>DEPENDENT,);our%STATUS_TEXT=reverse%ERRORS;my$value=qr/[-+]?[\d\.]+/;our$value_re=qr/$value(?:e$value)?/;my$_fake_exit=0;sub _fake_exit {@_ ? $_fake_exit=shift : $_fake_exit};my$_use_die=0;sub _use_die {@_ ? $_use_die=shift : $_use_die};sub get_shortname {my$arg=shift;my$shortname=undef;return$arg->{shortname}if (defined($arg->{shortname}));$shortname=$arg->{plugin}if (defined($arg->{plugin}));$shortname=uc basename($shortname || $ENV{PLUGIN_NAME}|| $ENV{NAGIOS_PLUGIN}|| $0);$shortname =~ s/^CHECK_(?:BY_)?//;$shortname =~ s/\..*$//;return$shortname}sub max_state {return CRITICAL if grep {$_==CRITICAL}@_;return WARNING if grep {$_==WARNING}@_;return OK if grep {$_==OK}@_;return UNKNOWN if grep {$_==UNKNOWN}@_;return DEPENDENT if grep {$_==DEPENDENT}@_;return UNKNOWN}sub max_state_alt {return CRITICAL if grep {$_==CRITICAL}@_;return WARNING if grep {$_==WARNING}@_;return UNKNOWN if grep {$_==UNKNOWN}@_;return DEPENDENT if grep {$_==DEPENDENT}@_;return OK if grep {$_==OK}@_;return UNKNOWN}sub plugin_exit {my ($code,$message,$arg)=@_;if (defined$code && ($code eq 'return_code' || $code eq 'message')){if (int(@_ / 2)!=@_ / 2 && ref $_[$#_]){$arg=pop @_}else {undef$arg}my%arg=@_;$code=$arg{return_code};$message=$arg{message}}$arg ||= {};$code=$ERRORS{$code}if defined$code && exists$ERRORS{$code};$code=UNKNOWN unless defined$code && exists$STATUS_TEXT{$code};$message='' unless defined$message;if (ref$message && ref$message eq 'ARRAY'){$message=join(' ',map {chomp;$_}@$message)}else {chomp$message}my$output="$STATUS_TEXT{$code}";$output .= " - $message" if defined$message && $message ne '';my$shortname=($arg->{plugin}? $arg->{plugin}->shortname : undef);$shortname ||= get_shortname();$output="$shortname $output" if$shortname;if ($arg->{plugin}){my$plugin=$arg->{plugin};$output .= " | ".$plugin->all_perfoutput if$plugin->perfdata && $plugin->all_perfoutput}$output .= "\n";if ($_fake_exit){require Monitoring::Plugin::ExitResult;return Monitoring::Plugin::ExitResult->new($code,$output)}_plugin_exit($code,$output)}sub _plugin_exit {my ($code,$output)=@_;if ($_use_die){for (my$i=0;;$i++){@_=caller($i);last unless @_;if ($_[3]=~ m/die/){$!=$code;die($output)}}}print$output;exit$code}sub plugin_die {my ($arg1,$arg2,$rest)=@_;if (defined$arg1 && ($arg1 eq 'return_code' || $arg1 eq 'message')){return plugin_exit(@_)}elsif (defined$arg1 && (exists$ERRORS{$arg1}|| exists$STATUS_TEXT{$arg1})){return plugin_exit(@_)}elsif (defined$arg2 && (exists$ERRORS{$arg2}|| exists$STATUS_TEXT{$arg2})){return plugin_exit($arg2,$arg1,$rest)}else {return plugin_exit(UNKNOWN,$arg1,$arg2)}}sub die {plugin_die(@_)}sub convert {my ($value,$from,$to)=@_;my ($newval)=Math::Calc::Units::convert("$value $from",$to,'exact');return$newval}sub check_messages {my%arg=validate(@_,{critical=>{type=>ARRAYREF },warning=>{type=>ARRAYREF },ok=>{type=>ARRAYREF | SCALAR,optional=>1 },'join'=>{default=>' ' },join_all=>0,});$arg{join}=' ' unless defined$arg{join};my$code=OK;$code ||= CRITICAL if @{$arg{critical}};$code ||= WARNING if @{$arg{warning}};return$code unless wantarray;my$message='';if ($arg{join_all}){$message=join($arg{join_all},map {@$_ ? join($arg{'join'},@$_): ()}$arg{critical},$arg{warning},$arg{ok}? (ref$arg{ok}? $arg{ok}: [$arg{ok}]): [])}else {$message ||= join($arg{'join'},@{$arg{critical}})if$code==CRITICAL;$message ||= join($arg{'join'},@{$arg{warning}})if$code==WARNING;$message ||= ref$arg{ok}? join($arg{'join'},@{$arg{ok}}): $arg{ok}if$arg{ok}}return ($code,$message)}1;
 MONITORING_PLUGIN_FUNCTIONS
 
 $fatpacked{"Monitoring/Plugin/Getopt.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'MONITORING_PLUGIN_GETOPT';
   package Monitoring::Plugin::Getopt;use 5.006;use strict;use warnings;use File::Basename;use Getopt::Long qw(:config no_ignore_case bundling);use Carp;use Params::Validate qw(:all);use base qw(Class::Accessor);use Monitoring::Plugin::Functions;use Monitoring::Plugin::Config;use vars qw($VERSION);$VERSION=$Monitoring::Plugin::Functions::VERSION;my%DEFAULT=(timeout=>15,verbose=>0,license=>"This nagios plugin is free software, and comes with ABSOLUTELY NO WARRANTY.
   It may be used, redistributed and/or modified under the terms of the GNU
-  General Public Licence (see http://www.fsf.org/licensing/licenses/gpl.txt).",);my@ARGS=({spec=>'usage|?',help=>"-?, --usage\n   Print usage information",},{spec=>'help|h',help=>"-h, --help\n   Print detailed help screen",},{spec=>'version|V',help=>"-V, --version\n   Print version information",},{spec=>'extra-opts:s@',help=>"--extra-opts=[section][\@file]\n   Read options from an ini file. See https://www.monitoring-plugins.org/doc/extra-opts.html\n   for usage and examples.",},{spec=>'timeout|t=i',help=>"-t, --timeout=INTEGER\n   Seconds before plugin times out (default: %s)",default=>$DEFAULT{timeout},},{spec=>'verbose|v+',help=>"-v, --verbose\n   Show details for command-line debugging (can repeat up to 3 times)",default=>$DEFAULT{verbose},},);my%DEFER_ARGS=map {$_=>1}qw(timeout verbose);sub _die {my$self=shift;my ($msg)=@_;$msg .= "\n" unless substr($msg,-1)eq "\n";Monitoring::Plugin::Functions::_plugin_exit(3,$msg)}sub _attr {my$self=shift;my ($item,$extra)=@_;$extra='' unless defined$extra;return '' unless$self->{_attr}->{$item};$self->{_attr}->{$item}."\n" .$extra}sub _spec_to_help {my ($self,$spec,$label)=@_;my ($opts,$type)=split /=|:/,$spec,2;my$optional=($spec =~ m/:/);my (@short,@long);for (split /\|/,$opts){if (length $_==1){push@short,"-$_"}else {push@long,"--$_"}}my$help=join(', ',@short,@long);if ($type){if (!$label){if ($type eq 'i' || $type eq '+' || $type =~ /\d+/){$label='INTEGER'}else {$label='STRING'}}if ($optional){$help .= '[=' .$label .']'}else {$help .= '=' .$label}}elsif ($label){carp "Label specified, but there's no type in spec '$spec'"}$help .= "\n   ";return$help}sub _options {my$self=shift;my@args=();my@defer=();for (@{$self->{_args}}){if (exists$DEFER_ARGS{$_->{name}}){push@defer,$_}else {push@args,$_}}my@options=();for my$arg (@args,@defer){my$help_array=ref$arg->{help}&& ref$arg->{help}eq 'ARRAY' ? $arg->{help}: [$arg->{help}];my$label_array=$arg->{label}&& ref$arg->{label}&& ref$arg->{label}eq 'ARRAY' ? $arg->{label}: [$arg->{label}];my$help_string='';for (my$i=0;$i <= $#$help_array;$i++){my$help=$help_array->[$i];if ($help =~ m/^\s*-/){$help_string .= $help}else {$help_string .= $self->_spec_to_help($arg->{spec},$label_array->[$i]).$help;$help_string .= "\n " if$i < $#$help_array}}if ($help_string =~ m/%s/){my$default=defined$arg->{default}? $arg->{default}: '';my$replaced=$help_string;$replaced =~ s|%s|$default|gmx;push@options,$replaced}else {push@options,$help_string}}return ' ' .join("\n ",@options)}sub _usage {my$self=shift;my$usage=$self->_attr('usage');$usage =~ s|%s|$self->{_attr}->{plugin}|gmx;return($usage)}sub _revision {my$self=shift;my$revision=sprintf "%s %s",$self->{_attr}->{plugin},$self->{_attr}->{version};$revision .= sprintf " [%s]",$self->{_attr}->{url}if$self->{_attr}->{url};$revision .= "\n";$revision}sub _help {my$self=shift;my$help='';$help .= $self->_revision ."\n";$help .= $self->_attr('license',"\n");$help .= $self->_attr('blurb',"\n");$help .= $self->_usage ? $self->_usage ."\n" : '';$help .= $self->_options ? $self->_options ."\n" : '';$help .= $self->_attr('extra',"\n");return$help}sub _process_specs_getopt_long {my$self=shift;my@opts=();for my$arg (@{$self->{_args}}){push@opts,$arg->{spec};my$spec=$arg->{spec};$spec =~ s/[=:].*$//;my$name=(split /\s*\|\s*/,$spec)[0];$arg->{name}=$name;if (defined$self->{$name}){$arg->{default}=$self->{$name}}else {$self->{$name}=$arg->{default}}}return@opts}sub _check_required_opts {my$self=shift;my@missing=();for my$arg (@{$self->{_args}}){if ($arg->{required}&&!defined$self->{$arg->{name}}){push@missing,$arg->{name}}}if (@missing){$self->_die($self->_usage ."\n" .join("\n",map {sprintf "Missing argument: %s",$_}@missing)."\n")}}sub _process_opts {my$self=shift;$self->_die($self->_usage)if$self->{usage};$self->_die($self->_revision)if$self->{version};$self->_die($self->_help)if$self->{help}}sub _load_config_section {my$self=shift;my ($section,$file,$flags)=@_;$section ||=$self->{_attr}->{plugin};my$Config;eval {$Config=Monitoring::Plugin::Config->read($file)};$self->_die($@)if ($@);$file ||=$Config->mp_getfile();$self->_die("Invalid section '$section' in config file '$file'")unless exists$Config->{$section};return$Config->{$section}}sub _setup_spec_index {my$self=shift;return if defined$self->{_spec};$self->{_spec}={map {$_->{name}=>$_->{spec}}@{$self->{_args}}}}sub _cmdline_value {my$self=shift;local $_=shift;if (m/\s/ && (m/^[^"']/ || m/[^"']$/)){return qq("$_")}elsif ($_ eq ''){return q("")}else {return $_}}sub _cmdline {my$self=shift;my ($hash)=@_;$hash ||=$self;$self->_setup_spec_index;my@args=();for my$key (sort keys %$hash){next if$key =~ m/^_/;next if exists$DEFAULT{$key}&& $hash->{$key}eq $DEFAULT{$key};next if grep {$key eq $_}qw(help usage version extra-opts);next unless defined$hash->{$key};my$spec=$self->{_spec}->{$key}|| '';if ($spec =~ m/[=:].+$/){for my$value (ref$hash->{$key}eq 'ARRAY' ? @{$hash->{$key}}: ($hash->{$key})){$value=$self->_cmdline_value($value);if (length($key)> 1){push@args,sprintf "--%s=%s",$key,$value}else {push@args,"-$key",$value}}}else {push@args,(length($key)> 1 ? '--' : '-').$key}}return wantarray ? @args : join(' ',@args)}sub _process_extra_opts {my$self=shift;my ($args)=@_;my$extopts_list=$args->{'extra-opts'};my@sargs=();for my$extopts (@$extopts_list){$extopts ||=$self->{_attr}->{plugin};my$section=$extopts;my$file='';if ($extopts =~ m/^([^@]*)@(.*?)\s*$/){$section=$1;$file=$2}my$shash=$self->_load_config_section($section,$file);push@sargs,$self->_cmdline($shash)}@ARGV=(@sargs,@{$self->{_attr}->{argv}});printf "[extra-opts] %s %s\n",$self->{_attr}->{plugin},join(' ',@ARGV)if$args->{verbose}&& $args->{verbose}>= 3}sub arg {my$self=shift;my%args;if ($_[0]=~ m/^(spec|help|required|default)$/ && scalar(@_)% 2==0){%args=validate(@_,{spec=>1,help=>1,default=>0,required=>0,label=>0,})}else {my@args=validate_pos(@_,1,1,0,0,0);%args=(spec=>$args[0],help=>$args[1],default=>$args[2],required=>$args[3],label=>$args[4],)}push @{$self->{_args}},\%args}sub getopts {my$self=shift;my@opt_array=$self->_process_specs_getopt_long;$self->{_attr}->{argv}=[@ARGV ];my$args1={};my$ok=GetOptions($args1,@opt_array);$self->_die($self->_usage)unless$ok;$self->_process_extra_opts($args1);$ok=GetOptions($self,@opt_array);$self->_die($self->_usage)unless$ok;$self->_process_opts;$self->_check_required_opts;$self->mk_ro_accessors(grep!/^_/,keys %$self);$SIG{ALRM}=sub {my$plugin=uc$self->{_attr}->{plugin};$plugin =~ s/^check_//;$self->_die(sprintf("%s UNKNOWN - plugin timed out (timeout %ss)",$plugin,$self->timeout))}}sub _init {my$self=shift;my$plugin=basename($ENV{PLUGIN_NAME}|| $ENV{NAGIOS_PLUGIN}|| $0);my%attr=validate(@_,{usage=>1,version=>0,url=>0,plugin=>{default=>$plugin },blurb=>0,extra=>0,'extra-opts'=>0,license=>{default=>$DEFAULT{license}},timeout=>{default=>$DEFAULT{timeout}},});$self->{timeout}=delete$attr{timeout};$self->{_attr}={%attr };chomp foreach values %{$self->{_attr}};$self->{_args}=[@ARGS ];$self}sub new {my$class=shift;my$self=bless {},$class;$self->_init(@_)}1;
+  General Public Licence (see http://www.fsf.org/licensing/licenses/gpl.txt).",);my@ARGS=({spec=>'usage|?',help=>"-?, --usage\n   Print usage information",},{spec=>'help|h',help=>"-h, --help\n   Print detailed help screen",},{spec=>'version|V',help=>"-V, --version\n   Print version information",},{spec=>'extra-opts:s@',help=>"--extra-opts=[section][\@file]\n   Read options from an ini file. See https://www.monitoring-plugins.org/doc/extra-opts.html\n   for usage and examples.",},{spec=>'timeout|t=i',help=>"-t, --timeout=INTEGER\n   Seconds before plugin times out (default: %s)",default=>$DEFAULT{timeout},},{spec=>'verbose|v+',help=>"-v, --verbose\n   Show details for command-line debugging (can repeat up to 3 times)",default=>$DEFAULT{verbose},},);my%DEFER_ARGS=map {$_=>1}qw(timeout verbose);sub _die {my$self=shift;my ($msg)=@_;$msg .= "\n" unless substr($msg,-1)eq "\n";Monitoring::Plugin::Functions::_plugin_exit(3,$msg)}sub _attr {my$self=shift;my ($item,$extra)=@_;$extra='' unless defined$extra;return '' unless$self->{_attr}->{$item};$self->{_attr}->{$item}."\n" .$extra}sub _spec_to_help {my ($self,$spec,$label)=@_;my ($opts,$type)=split /=|:/,$spec,2;my$optional=($spec =~ m/:/);my (@short,@long);for (split /\|/,$opts){if (length $_==1){push@short,"-$_"}else {push@long,"--$_"}}my$help=join(', ',@short,@long);if ($type){if (!$label){if ($type eq 'i' || $type eq '+' || $type =~ /\d+/){$label='INTEGER'}else {$label='STRING'}}if ($optional){$help .= '[=' .$label .']'}else {$help .= '=' .$label}}elsif ($label){carp "Label specified, but there's no type in spec '$spec'"}$help .= "\n   ";return$help}sub _options {my$self=shift;my@args=();my@defer=();for (@{$self->{_args}}){if (exists$DEFER_ARGS{$_->{name}}){push@defer,$_}else {push@args,$_}}my@options=();for my$arg (@args,@defer){my$help_array=ref$arg->{help}&& ref$arg->{help}eq 'ARRAY' ? $arg->{help}: [$arg->{help}];my$label_array=$arg->{label}&& ref$arg->{label}&& ref$arg->{label}eq 'ARRAY' ? $arg->{label}: [$arg->{label}];my$help_string='';for (my$i=0;$i <= $#$help_array;$i++){my$help=$help_array->[$i];if ($help =~ m/^\s*-/){$help_string .= $help}else {$help_string .= $self->_spec_to_help($arg->{spec},$label_array->[$i]).$help;$help_string .= "\n " if$i < $#$help_array}}if ($help_string =~ m/%s/){my$default=defined$arg->{default}? $arg->{default}: '';my$replaced=$help_string;$replaced =~ s|%s|$default|gmx;push@options,$replaced}else {push@options,$help_string}}return ' ' .join("\n ",@options)}sub _usage {my$self=shift;my$usage=$self->_attr('usage');$usage =~ s|%s|$self->{_attr}->{plugin}|gmx;return($usage)}sub _revision {my$self=shift;my$revision=sprintf "%s %s",$self->{_attr}->{plugin},$self->{_attr}->{version};$revision .= sprintf " [%s]",$self->{_attr}->{url}if$self->{_attr}->{url};$revision .= "\n";$revision}sub _help {my$self=shift;my$help='';$help .= $self->_revision ."\n";$help .= $self->_attr('license',"\n");$help .= $self->_attr('blurb',"\n");$help .= $self->_usage ? $self->_usage ."\n" : '';$help .= $self->_options ? $self->_options ."\n" : '';$help .= $self->_attr('extra',"\n");return$help}sub _process_specs_getopt_long {my$self=shift;my@opts=();for my$arg (@{$self->{_args}}){push@opts,$arg->{spec};my$spec=$arg->{spec};$spec =~ s/[=:].*$//;my$name=(split /\s*\|\s*/,$spec)[0];$arg->{name}=$name;if (defined$self->{$name}){$arg->{default}=$self->{$name}}else {$self->{$name}=$arg->{default}}}return@opts}sub _check_required_opts {my$self=shift;my@missing=();for my$arg (@{$self->{_args}}){if ($arg->{required}&&!defined$self->{$arg->{name}}){push@missing,$arg->{name}}}if (@missing){$self->_die($self->_usage ."\n" .join("\n",map {sprintf "Missing argument: %s",$_}@missing)."\n")}}sub _process_opts {my$self=shift;$self->_die($self->_usage)if$self->{usage};$self->_die($self->_revision)if$self->{version};$self->_die($self->_help)if$self->{help}}sub _load_config_section {my$self=shift;my ($section,$file,$flags)=@_;$section ||= $self->{_attr}->{plugin};my$Config;eval {$Config=Monitoring::Plugin::Config->read($file)};$self->_die($@)if ($@);$file ||= $Config->mp_getfile();$self->_die("Invalid section '$section' in config file '$file'")unless exists$Config->{$section};return$Config->{$section}}sub _setup_spec_index {my$self=shift;return if defined$self->{_spec};$self->{_spec}={map {$_->{name}=>$_->{spec}}@{$self->{_args}}}}sub _cmdline_value {my$self=shift;local $_=shift;if (m/\s/ && (m/^[^"']/ || m/[^"']$/)){return qq("$_")}elsif ($_ eq ''){return q("")}else {return $_}}sub _cmdline {my$self=shift;my ($hash)=@_;$hash ||= $self;$self->_setup_spec_index;my@args=();for my$key (sort keys %$hash){next if$key =~ m/^_/;next if exists$DEFAULT{$key}&& $hash->{$key}eq $DEFAULT{$key};next if grep {$key eq $_}qw(help usage version extra-opts);next unless defined$hash->{$key};my$spec=$self->{_spec}->{$key}|| '';if ($spec =~ m/[=:].+$/){for my$value (ref$hash->{$key}eq 'ARRAY' ? @{$hash->{$key}}: ($hash->{$key})){$value=$self->_cmdline_value($value);if (length($key)> 1){push@args,sprintf "--%s=%s",$key,$value}else {push@args,"-$key",$value}}}else {push@args,(length($key)> 1 ? '--' : '-').$key}}return wantarray ? @args : join(' ',@args)}sub _process_extra_opts {my$self=shift;my ($args)=@_;my$extopts_list=$args->{'extra-opts'};my@sargs=();for my$extopts (@$extopts_list){$extopts ||= $self->{_attr}->{plugin};my$section=$extopts;my$file='';if ($extopts =~ m/^([^@]*)@(.*?)\s*$/){$section=$1;$file=$2}my$shash=$self->_load_config_section($section,$file);push@sargs,$self->_cmdline($shash)}@ARGV=(@sargs,@{$self->{_attr}->{argv}});printf "[extra-opts] %s %s\n",$self->{_attr}->{plugin},join(' ',@ARGV)if$args->{verbose}&& $args->{verbose}>= 3}sub arg {my$self=shift;my%args;if ($_[0]=~ m/^(spec|help|required|default)$/ && scalar(@_)% 2==0){%args=validate(@_,{spec=>1,help=>1,default=>0,required=>0,label=>0,})}else {my@args=validate_pos(@_,1,1,0,0,0);%args=(spec=>$args[0],help=>$args[1],default=>$args[2],required=>$args[3],label=>$args[4],)}push @{$self->{_args}},\%args}sub getopts {my$self=shift;my@opt_array=$self->_process_specs_getopt_long;$self->{_attr}->{argv}=[@ARGV ];my$args1={};my$ok=GetOptions($args1,@opt_array);$self->_die($self->_usage)unless$ok;$self->_process_extra_opts($args1);$ok=GetOptions($self,@opt_array);$self->_die($self->_usage)unless$ok;$self->_process_opts;$self->_check_required_opts;$self->mk_ro_accessors(grep!/^_/,keys %$self);$SIG{ALRM}=sub {my$plugin=uc$self->{_attr}->{plugin};$plugin =~ s/^check_//;$self->_die(sprintf("%s UNKNOWN - plugin timed out (timeout %ss)",$plugin,$self->timeout))}}sub _init {my$self=shift;my$plugin=basename($ENV{PLUGIN_NAME}|| $ENV{NAGIOS_PLUGIN}|| $0);my%attr=validate(@_,{usage=>1,version=>0,url=>0,plugin=>{default=>$plugin },blurb=>0,extra=>0,'extra-opts'=>0,license=>{default=>$DEFAULT{license}},timeout=>{default=>$DEFAULT{timeout}},});$self->{timeout}=delete$attr{timeout};$self->{_attr}={%attr };chomp foreach values %{$self->{_attr}};$self->{_args}=[@ARGS ];$self}sub new {my$class=shift;my$self=bless {},$class;$self->_init(@_)}1;
 MONITORING_PLUGIN_GETOPT
 
 $fatpacked{"Monitoring/Plugin/Performance.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'MONITORING_PLUGIN_PERFORMANCE';
-  package Monitoring::Plugin::Performance;use 5.006;use strict;use warnings;use Carp;use base qw(Class::Accessor::Fast);__PACKAGE__->mk_ro_accessors(qw(label value uom warning critical min max));use Monitoring::Plugin::Functions;use Monitoring::Plugin::Threshold;use Monitoring::Plugin::Range;our ($VERSION)=$Monitoring::Plugin::Functions::VERSION;sub import {my ($class,%attr)=@_;$_=$attr{use_die}|| 0;Monitoring::Plugin::Functions::_use_die($_)}my$value=qr/[-+]?[\d\.,]+/;my$value_re=qr/$value(?:e$value)?/;my$value_with_negative_infinity=qr/$value_re|~/;sub _parse {my$class=shift;my$string=shift;$string =~ /^'?([^'=]+)'?=($value_re)([\w%]*);?($value_with_negative_infinity\:?$value_re?)?;?($value_with_negative_infinity\:?$value_re?)?;?($value_re)?;?($value_re)?/o;return undef unless ((defined $1 && $1 ne "")&& (defined $2 && $2 ne ""));my@info=($1,$2,$3,$4,$5,$6,$7);map {defined$info[$_]&& $info[$_]=~ s/,/./go}(1,3,4,5,6);my$performance_value;{my$not_value;local$SIG{__WARN__}=sub {$not_value++};$performance_value=$info[1]+0;return undef if$not_value}my$p=$class->new(label=>$info[0],value=>$performance_value,uom=>$info[2],warning=>$info[3],critical=>$info[4],min=>$info[5],max=>$info[6]);return$p}sub _nvl {my ($self,$value)=@_;defined$value ? $value : ''}sub perfoutput {my$self=shift;my$label=$self->label;if ($label =~ / /){$label="'$label'"}my$out=sprintf "%s=%s%s;%s;%s;%s;%s",$label,$self->value,$self->_nvl($self->uom),$self->_nvl($self->warning),$self->_nvl($self->critical),$self->_nvl($self->min),$self->_nvl($self->max);$out =~ s/;;$//;return$out}sub parse_perfstring {my ($class,$perfstring)=@_;my@perfs=();my$obj;while ($perfstring){$perfstring =~ s/^\s*//;if (@{[$perfstring =~ /=/g]}> 1){$perfstring =~ s/^(.*?=.*?)\s//;if (defined $1){$obj=$class->_parse($1)}else {$perfstring="";$obj=$class->_parse($perfstring)}}else {$obj=$class->_parse($perfstring);$perfstring=""}push@perfs,$obj if$obj}return@perfs}sub rrdlabel {my$self=shift;my$name=$self->clean_label;return substr($name,0,19)}sub clean_label {my$self=shift;my$name=$self->label;if ($name eq "/"){$name="root"}elsif ($name =~ s/^\///){$name =~ s/\//_/g}$name =~ s/\W/_/g;return$name}sub threshold {my$self=shift;return Monitoring::Plugin::Threshold->set_thresholds(warning=>$self->warning,critical=>$self->critical)}sub new {my$class=shift;my%arg=@_;if (my$threshold=delete$arg{threshold}){$arg{warning}||=$threshold->warning ."";$arg{critical}||=$threshold->critical .""}$class->SUPER::new(\%arg)}1;
+  package Monitoring::Plugin::Performance;use 5.006;use strict;use warnings;use Carp;use base qw(Class::Accessor::Fast);__PACKAGE__->mk_ro_accessors(qw(label value uom warning critical min max));use Monitoring::Plugin::Functions;use Monitoring::Plugin::Threshold;use Monitoring::Plugin::Range;our ($VERSION)=$Monitoring::Plugin::Functions::VERSION;sub import {my ($class,%attr)=@_;$_=$attr{use_die}|| 0;Monitoring::Plugin::Functions::_use_die($_)}my$value=qr/[-+]?[\d\.,]+/;my$value_re=qr/$value(?:e$value)?/;my$value_with_negative_infinity=qr/$value_re|~/;sub _parse {my$class=shift;my$string=shift;$string =~ /^'?([^'=]+)'?=($value_re)([\w%]*);?($value_with_negative_infinity\:?$value_re?)?;?($value_with_negative_infinity\:?$value_re?)?;?($value_re)?;?($value_re)?/o;return undef unless ((defined $1 && $1 ne "")&& (defined $2 && $2 ne ""));my@info=($1,$2,$3,$4,$5,$6,$7);map {defined$info[$_]&& $info[$_]=~ s/,/./go}(1,3,4,5,6);my$performance_value;{my$not_value;local$SIG{__WARN__}=sub {$not_value++};$performance_value=$info[1]+0;return undef if$not_value}my$p=$class->new(label=>$info[0],value=>$performance_value,uom=>$info[2],warning=>$info[3],critical=>$info[4],min=>$info[5],max=>$info[6]);return$p}sub _nvl {my ($self,$value)=@_;defined$value ? $value : ''}sub perfoutput {my$self=shift;my$label=$self->label;if ($label =~ / /){$label="'$label'"}my$out=sprintf "%s=%s%s;%s;%s;%s;%s",$label,$self->value,$self->_nvl($self->uom),$self->_nvl($self->warning),$self->_nvl($self->critical),$self->_nvl($self->min),$self->_nvl($self->max);$out =~ s/;;$//;return$out}sub parse_perfstring {my ($class,$perfstring)=@_;my@perfs=();my$obj;while ($perfstring){$perfstring =~ s/^\s*//;if (@{[$perfstring =~ /=/g]}> 1){$perfstring =~ s/^(.*?=.*?)\s//;if (defined $1){$obj=$class->_parse($1)}else {$perfstring="";$obj=$class->_parse($perfstring)}}else {$obj=$class->_parse($perfstring);$perfstring=""}push@perfs,$obj if$obj}return@perfs}sub rrdlabel {my$self=shift;my$name=$self->clean_label;return substr($name,0,19)}sub clean_label {my$self=shift;my$name=$self->label;if ($name eq "/"){$name="root"}elsif ($name =~ s/^\///){$name =~ s/\//_/g}$name =~ s/\W/_/g;return$name}sub threshold {my$self=shift;return Monitoring::Plugin::Threshold->set_thresholds(warning=>$self->warning,critical=>$self->critical)}sub new {my$class=shift;my%arg=@_;if (my$threshold=delete$arg{threshold}){$arg{warning}||= $threshold->warning ."";$arg{critical}||= $threshold->critical .""}$class->SUPER::new(\%arg)}1;
 MONITORING_PLUGIN_PERFORMANCE
 
 $fatpacked{"Monitoring/Plugin/Range.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'MONITORING_PLUGIN_RANGE';
@@ -5927,31 +6149,31 @@ $fatpacked{"Monitoring/Plugin/Threshold.pm"} = '#line '.(1+__LINE__).' "'.__FILE
 MONITORING_PLUGIN_THRESHOLD
 
 $fatpacked{"Params/Validate.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'PARAMS_VALIDATE';
-  package Params::Validate;use 5.008001;use strict;use warnings;our$VERSION='1.22';use Exporter;use Module::Implementation;use Params::Validate::Constants;use vars qw($NO_VALIDATION %OPTIONS $options);our@ISA='Exporter';my@types=qw(SCALAR ARRAYREF HASHREF CODEREF GLOB GLOBREF SCALARREF HANDLE BOOLEAN UNDEF OBJECT);our%EXPORT_TAGS=('all'=>[qw(validate validate_pos validation_options validate_with),@types ],types=>\@types,);our@EXPORT_OK=(@{$EXPORT_TAGS{all}},'set_options');our@EXPORT=qw(validate validate_pos);$NO_VALIDATION=$ENV{PERL_NO_VALIDATION};{my$loader=Module::Implementation::build_loader_sub(implementations=>['XS','PP' ],symbols=>[qw(validate validate_pos validate_with validation_options set_options),],);$ENV{PARAMS_VALIDATE_IMPLEMENTATION}='PP' if$ENV{PV_TEST_PERL};$loader->()}1;
+  package Params::Validate;use 5.008001;use strict;use warnings;our$VERSION='1.26';use Exporter;use Module::Implementation;use Params::Validate::Constants;use vars qw($NO_VALIDATION %OPTIONS $options);our@ISA='Exporter';my@types=qw(SCALAR ARRAYREF HASHREF CODEREF GLOB GLOBREF SCALARREF HANDLE BOOLEAN UNDEF OBJECT);our%EXPORT_TAGS=('all'=>[qw(validate validate_pos validation_options validate_with),@types ],types=>\@types,);our@EXPORT_OK=(@{$EXPORT_TAGS{all}},'set_options');our@EXPORT=qw(validate validate_pos);$NO_VALIDATION=$ENV{PERL_NO_VALIDATION};{my$loader=Module::Implementation::build_loader_sub(implementations=>['XS','PP' ],symbols=>[qw(validate validate_pos validate_with validation_options set_options),],);$ENV{PARAMS_VALIDATE_IMPLEMENTATION}='PP' if$ENV{PV_TEST_PERL};$loader->()}1;
 PARAMS_VALIDATE
 
 $fatpacked{"Params/Validate/Constants.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'PARAMS_VALIDATE_CONSTANTS';
-  package Params::Validate::Constants;use strict;use warnings;our$VERSION='1.22';our@ISA='Exporter';our@EXPORT=qw(SCALAR ARRAYREF HASHREF CODEREF GLOB GLOBREF SCALARREF HANDLE BOOLEAN UNDEF OBJECT UNKNOWN);sub SCALAR () {1}sub ARRAYREF () {2}sub HASHREF () {4}sub CODEREF () {8}sub GLOB () {16}sub GLOBREF () {32}sub SCALARREF () {64}sub UNKNOWN () {128}sub UNDEF () {256}sub OBJECT () {512}sub HANDLE () {16 | 32}sub BOOLEAN () {1 | 256}1;
+  package Params::Validate::Constants;use strict;use warnings;our$VERSION='1.26';our@ISA='Exporter';our@EXPORT=qw(SCALAR ARRAYREF HASHREF CODEREF GLOB GLOBREF SCALARREF HANDLE BOOLEAN UNDEF OBJECT UNKNOWN);sub SCALAR () {1}sub ARRAYREF () {2}sub HASHREF () {4}sub CODEREF () {8}sub GLOB () {16}sub GLOBREF () {32}sub SCALARREF () {64}sub UNKNOWN () {128}sub UNDEF () {256}sub OBJECT () {512}sub HANDLE () {16 | 32}sub BOOLEAN () {1 | 256}1;
 PARAMS_VALIDATE_CONSTANTS
 
 $fatpacked{"Params/Validate/PP.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'PARAMS_VALIDATE_PP';
-  package Params::Validate::PP;use strict;use warnings;our$VERSION='1.22';use Params::Validate::Constants;use Scalar::Util 1.10 ();our$options;sub validate_pos (\@@) {return if$Params::Validate::NO_VALIDATION &&!defined wantarray;my$p=shift;my@specs=@_;my@p=@$p;if ($Params::Validate::NO_VALIDATION){for (my$x=$#p + 1;$x <= $#specs;$x++ ){$p[$x]=$specs[$x]->{default}if ref$specs[$x]&& exists$specs[$x]->{default}}return wantarray ? @p : \@p}local$options ||=_get_options((caller(0))[0])unless defined$options;my$min=0;while (1){last unless (ref$specs[$min]?!(exists$specs[$min]->{default}|| $specs[$min]->{optional}): $specs[$min]);$min++}my$max=scalar@specs;my$actual=scalar@p;unless ($actual >= $min && ($options->{allow_extra}|| $actual <= $max)){my$minmax=($options->{allow_extra}? "at least $min" : ($min!=$max ? "$min - $max" : $max));my$val=$options->{allow_extra}? $min : $max;$minmax .= $val!=1 ? ' were' : ' was';my$called=_get_called();$options->{on_fail}->("$actual parameter" .($actual!=1 ? 's' : '')." " .($actual!=1 ? 'were' : 'was')." passed to $called but $minmax expected\n")}my$bigger=$#p > $#specs ? $#p : $#specs;for (0 .. $bigger){my$spec=$specs[$_];next unless ref$spec;if ($_ <= $#p){_validate_one_param($p[$_],\@p,$spec,'Parameter #' .($_ + 1).' (%s)')}$p[$_]=$spec->{default}if $_ > $#p && exists$spec->{default}}_validate_pos_depends(\@p,\@specs);for (grep {defined$p[$_]&&!ref$p[$_]&& ref$specs[$_]&& $specs[$_]{untaint}}0 .. $bigger){($p[$_])=$p[$_]=~ /(.+)/}return wantarray ? @p : \@p}sub _validate_pos_depends {my ($p,$specs)=@_;for my$p_idx (0 .. $#$p){my$spec=$specs->[$p_idx];next unless$spec && UNIVERSAL::isa($spec,'HASH')&& exists$spec->{depends};my$depends=$spec->{depends};if (ref$depends){require Carp;local$Carp::CarpLevel=2;Carp::croak("Arguments to 'depends' for validate_pos() must be a scalar")}my$p_size=scalar @$p;if ($p_size < $depends - 1){my$error =("Parameter #" .($p_idx + 1)." depends on parameter #" .$depends .", which was not given");$options->{on_fail}->($error)}}return 1}sub _validate_named_depends {my ($p,$specs)=@_;for my$pname (keys %$p){my$spec=$specs->{$pname};next unless$spec && UNIVERSAL::isa($spec,'HASH')&& $spec->{depends};unless (UNIVERSAL::isa($spec->{depends},'ARRAY')||!ref$spec->{depends}){require Carp;local$Carp::CarpLevel=2;Carp::croak("Arguments to 'depends' must be a scalar or arrayref")}for my$depends_name (ref$spec->{depends}? @{$spec->{depends}}: $spec->{depends}){unless (exists$p->{$depends_name}){my$error =("Parameter '$pname' depends on parameter '" .$depends_name ."', which was not given");$options->{on_fail}->($error)}}}}sub validate (\@$) {return if$Params::Validate::NO_VALIDATION &&!defined wantarray;my$p=$_[0];my$specs=$_[1];local$options=_get_options((caller(0))[0])unless defined$options;if (ref$p eq 'ARRAY'){if (ref$p->[0]){$p={%{$p->[0]}}}elsif (@$p % 2){my$called=_get_called();$options->{on_fail}->("Odd number of parameters in call to $called " ."when named parameters were expected\n")}else {$p={@$p}}}if ($options->{normalize_keys}){$specs=_normalize_callback($specs,$options->{normalize_keys});$p=_normalize_callback($p,$options->{normalize_keys})}elsif ($options->{ignore_case}|| $options->{strip_leading}){$specs=_normalize_named($specs);$p=_normalize_named($p)}if ($Params::Validate::NO_VALIDATION){return (wantarray ? ((map {$_=>$specs->{$_}->{default}}grep {ref$specs->{$_}&& exists$specs->{$_}->{default}}keys %$specs),(ref$p eq 'ARRAY' ? (ref$p->[0]? %{$p->[0]}: @$p): %$p)): do {my$ref=(ref$p eq 'ARRAY' ? (ref$p->[0]? $p->[0]: {@$p}): $p);for (grep {ref$specs->{$_}&& exists$specs->{$_}->{default}}keys %$specs){$ref->{$_}=$specs->{$_}->{default}unless exists$ref->{$_}}return$ref})}_validate_named_depends($p,$specs);unless ($options->{allow_extra}){if (my@unmentioned=grep {!exists$specs->{$_}}keys %$p){my$called=_get_called();$options->{on_fail}->("The following parameter" .(@unmentioned > 1 ? 's were' : ' was')." passed in the call to $called but " .(@unmentioned > 1 ? 'were' : 'was')." not listed in the validation options: @unmentioned\n")}}my@missing;keys %$specs;OUTER: while (my ($key,$spec)=each %$specs){if (!exists$p->{$key}&& (ref$spec ?!(do {if (exists$spec->{default}){$p->{$key}=$spec->{default};next OUTER}}|| do {next OUTER if$spec->{optional}}): $spec)){push@missing,$key}elsif (ref$spec){my$value=defined$p->{$key}? qq|"$p->{$key}"| : 'undef';_validate_one_param($p->{$key},$p,$spec,qq{The '$key' parameter (%s)})}}if (@missing){my$called=_get_called();my$missing=join ', ',map {"'$_'"}@missing;$options->{on_fail}->("Mandatory parameter" .(@missing > 1 ? 's' : '')." $missing missing in call to $called\n")}for my$key (grep {defined$p->{$_}&&!ref$p->{$_}&& ref$specs->{$_}&& $specs->{$_}{untaint}}keys %$p){($p->{$key})=$p->{$key}=~ /(.+)/}return wantarray ? %$p : $p}sub validate_with {return if$Params::Validate::NO_VALIDATION &&!defined wantarray;my%p=@_;local$options=_get_options((caller(0))[0],%p);unless ($Params::Validate::NO_VALIDATION){unless (exists$options->{called}){$options->{called}=(caller($options->{stack_skip}))[3]}}if (UNIVERSAL::isa($p{spec},'ARRAY')){return validate_pos(@{$p{params}},@{$p{spec}})}else {return&validate($p{params},$p{spec})}}sub _normalize_callback {my ($p,$func)=@_;my%new;for my$key (keys %$p){my$new_key=$func->($key);unless (defined$new_key){die "The normalize_keys callback did not return a defined value when normalizing the key '$key'"}if (exists$new{$new_key}){die "The normalize_keys callback returned a key that already exists, '$new_key', when normalizing the key '$key'"}$new{$new_key}=$p->{$key}}return \%new}sub _normalize_named {my%h=(ref $_[0])=~ /ARRAY/ ? @{$_[0]}: %{$_[0]};if ($options->{ignore_case}){$h{lc $_ }=delete$h{$_}for keys%h}if ($options->{strip_leading}){for my$key (keys%h){my$new;($new=$key)=~ s/^\Q$options->{strip_leading}\E//;$h{$new}=delete$h{$key}}}return \%h}my%Valid=map {$_=>1}qw(callbacks can default depends isa optional regex type untaint);sub _validate_one_param {my ($value,$params,$spec,$id)=@_;if (exists$spec->{type}){unless (defined$spec->{type}&& Scalar::Util::looks_like_number($spec->{type})&& $spec->{type}> 0){my$msg ="$id has a type specification which is not a number. It is ";if (defined$spec->{type}){$msg .= "a string - $spec->{type}"}else {$msg .= "undef"}$msg .= ".\n Use the constants exported by Params::Validate to declare types.";$options->{on_fail}->(sprintf($msg,_stringify($value)))}unless (_get_type($value)& $spec->{type}){my$type=_get_type($value);my@is=_typemask_to_strings($type);my@allowed=_typemask_to_strings($spec->{type});my$article=$is[0]=~ /^[aeiou]/i ? 'an' : 'a';my$called=_get_called(1);$options->{on_fail}->(sprintf("$id to $called was $article '@is', which " ."is not one of the allowed types: @allowed\n",_stringify($value)))}}return unless ($spec->{isa}|| $spec->{can}|| $spec->{callbacks}|| $spec->{regex});if (exists$spec->{isa}){for (ref$spec->{isa}? @{$spec->{isa}}: $spec->{isa}){unless (do {local $@=q{};eval {$value->isa($_)}}){my$is=ref$value ? ref$value : 'plain scalar';my$article1=$_ =~ /^[aeiou]/i ? 'an' : 'a';my$article2=$is =~ /^[aeiou]/i ? 'an' : 'a';my$called=_get_called(1);$options->{on_fail}->(sprintf("$id to $called was not $article1 '$_' " ."(it is $article2 $is)\n",_stringify($value)))}}}if (exists$spec->{can}){for (ref$spec->{can}? @{$spec->{can}}: $spec->{can}){unless (do {local $@=q{};eval {$value->can($_)}}){my$called=_get_called(1);$options->{on_fail}->(sprintf("$id to $called does not have the method: '$_'\n",_stringify($value)))}}}if ($spec->{callbacks}){unless (UNIVERSAL::isa($spec->{callbacks},'HASH')){my$called=_get_called(1);$options->{on_fail}->("'callbacks' validation parameter for $called must be a hash reference\n")}for (keys %{$spec->{callbacks}}){unless (UNIVERSAL::isa($spec->{callbacks}{$_},'CODE')){my$called=_get_called(1);$options->{on_fail}->("callback '$_' for $called is not a subroutine reference\n")}my$ok;my$e=do {local $@=q{};local$SIG{__DIE__};$ok=eval {$spec->{callbacks}{$_}->($value,$params)};$@};if (!$ok){my$called=_get_called(1);if (ref$e){$options->{on_fail}->($e)}else {my$msg="$id to $called did not pass the '$_' callback";$msg .= ": $e" if length$e;$msg .= "\n";$options->{on_fail}->(sprintf($msg,_stringify($value)))}}}}if (exists$spec->{regex}){unless ((defined$value ? $value : '')=~ /$spec->{regex}/){my$called=_get_called(1);$options->{on_fail}->(sprintf("$id to $called did not pass regex check\n",_stringify($value)))}}}{my%isas=('ARRAY'=>ARRAYREF,'HASH'=>HASHREF,'CODE'=>CODEREF,'GLOB'=>GLOBREF,'SCALAR'=>SCALARREF,'REGEXP'=>SCALARREF,);my%simple_refs=map {$_=>1}keys%isas;sub _get_type {return UNDEF unless defined $_[0];my$ref=ref $_[0];unless ($ref){return GLOB if UNIVERSAL::isa(\$_[0],'GLOB');return SCALAR}return$isas{$ref}if$simple_refs{$ref};for (keys%isas){return$isas{$_}| OBJECT if UNIVERSAL::isa($_[0],$_)}return UNKNOWN}}{my%type_to_string=(SCALAR()=>'scalar',ARRAYREF()=>'arrayref',HASHREF()=>'hashref',CODEREF()=>'coderef',GLOB()=>'glob',GLOBREF()=>'globref',SCALARREF()=>'scalarref',UNDEF()=>'undef',OBJECT()=>'object',UNKNOWN()=>'unknown',);sub _typemask_to_strings {my$mask=shift;my@types;for (SCALAR,ARRAYREF,HASHREF,CODEREF,GLOB,GLOBREF,SCALARREF,UNDEF,OBJECT,UNKNOWN){push@types,$type_to_string{$_}if$mask & $_}return@types ? @types : ('unknown')}}{my%defaults=(ignore_case=>0,strip_leading=>0,allow_extra=>0,on_fail=>sub {require Carp;Carp::croak($_[0])},stack_skip=>1,normalize_keys=>undef,);*set_options=\&validation_options;sub validation_options {my%opts=@_;my$caller=caller;for (keys%defaults){$opts{$_}=$defaults{$_}unless exists$opts{$_}}$Params::Validate::OPTIONS{$caller}=\%opts}sub _get_options {my$caller=shift;if (@_){return ($Params::Validate::OPTIONS{$caller}? {%{$Params::Validate::OPTIONS{$caller}},@_}: {%defaults,@_})}else {return (exists$Params::Validate::OPTIONS{$caller}? $Params::Validate::OPTIONS{$caller}: \%defaults)}}}sub _get_called {my$extra_skip=$_[0]|| 0;$extra_skip++;my$called=(exists$options->{called}? $options->{called}: (caller($options->{stack_skip}+ $extra_skip))[3]);$called='(unknown)' unless defined$called;return$called}sub _stringify {return defined $_[0]? qq{"$_[0]"} : 'undef'}1;
+  package Params::Validate::PP;use strict;use warnings;our$VERSION='1.26';use Params::Validate::Constants;use Scalar::Util 1.10 ();our$options;sub validate_pos (\@@) {return if$Params::Validate::NO_VALIDATION &&!defined wantarray;my$p=shift;my@specs=@_;my@p=@$p;if ($Params::Validate::NO_VALIDATION){for (my$x=$#p + 1;$x <= $#specs;$x++ ){$p[$x]=$specs[$x]->{default}if ref$specs[$x]&& exists$specs[$x]->{default}}return wantarray ? @p : \@p}local$options ||= _get_options((caller(0))[0])unless defined$options;my$min=0;while (1){last unless (ref$specs[$min]?!(exists$specs[$min]->{default}|| $specs[$min]->{optional}): $specs[$min]);$min++}my$max=scalar@specs;my$actual=scalar@p;unless ($actual >= $min && ($options->{allow_extra}|| $actual <= $max)){my$minmax=($options->{allow_extra}? "at least $min" : ($min!=$max ? "$min - $max" : $max));my$val=$options->{allow_extra}? $min : $max;$minmax .= $val!=1 ? ' were' : ' was';my$called=_get_called();$options->{on_fail}->("$actual parameter" .($actual!=1 ? 's' : '')." " .($actual!=1 ? 'were' : 'was')." passed to $called but $minmax expected\n")}my$bigger=$#p > $#specs ? $#p : $#specs;for (0 .. $bigger){my$spec=$specs[$_];next unless ref$spec;if ($_ <= $#p){_validate_one_param($p[$_],\@p,$spec,'Parameter #' .($_ + 1).' (%s)')}$p[$_]=$spec->{default}if $_ > $#p && exists$spec->{default}}_validate_pos_depends(\@p,\@specs);for (grep {defined$p[$_]&&!ref$p[$_]&& ref$specs[$_]&& $specs[$_]{untaint}}0 .. $bigger){($p[$_])=$p[$_]=~ /(.+)/}return wantarray ? @p : \@p}sub _validate_pos_depends {my ($p,$specs)=@_;for my$p_idx (0 .. $#$p){my$spec=$specs->[$p_idx];next unless$spec && UNIVERSAL::isa($spec,'HASH')&& exists$spec->{depends};my$depends=$spec->{depends};if (ref$depends){require Carp;local$Carp::CarpLevel=2;Carp::croak("Arguments to 'depends' for validate_pos() must be a scalar")}my$p_size=scalar @$p;if ($p_size < $depends - 1){my$error =("Parameter #" .($p_idx + 1)." depends on parameter #" .$depends .", which was not given");$options->{on_fail}->($error)}}return 1}sub _validate_named_depends {my ($p,$specs)=@_;for my$pname (keys %$p){my$spec=$specs->{$pname};next unless$spec && UNIVERSAL::isa($spec,'HASH')&& $spec->{depends};unless (UNIVERSAL::isa($spec->{depends},'ARRAY')||!ref$spec->{depends}){require Carp;local$Carp::CarpLevel=2;Carp::croak("Arguments to 'depends' must be a scalar or arrayref")}for my$depends_name (ref$spec->{depends}? @{$spec->{depends}}: $spec->{depends}){unless (exists$p->{$depends_name}){my$error =("Parameter '$pname' depends on parameter '" .$depends_name ."', which was not given");$options->{on_fail}->($error)}}}}sub validate (\@$) {return if$Params::Validate::NO_VALIDATION &&!defined wantarray;my$p=$_[0];my$specs=$_[1];local$options=_get_options((caller(0))[0])unless defined$options;if (ref$p eq 'ARRAY'){if (ref$p->[0]){$p={%{$p->[0]}}}elsif (@$p % 2){my$called=_get_called();$options->{on_fail}->("Odd number of parameters in call to $called " ."when named parameters were expected\n")}else {$p={@$p}}}if ($options->{normalize_keys}){$specs=_normalize_callback($specs,$options->{normalize_keys});$p=_normalize_callback($p,$options->{normalize_keys})}elsif ($options->{ignore_case}|| $options->{strip_leading}){$specs=_normalize_named($specs);$p=_normalize_named($p)}if ($Params::Validate::NO_VALIDATION){return (wantarray ? ((map {$_=>$specs->{$_}->{default}}grep {ref$specs->{$_}&& exists$specs->{$_}->{default}}keys %$specs),(ref$p eq 'ARRAY' ? (ref$p->[0]? %{$p->[0]}: @$p): %$p)): do {my$ref=(ref$p eq 'ARRAY' ? (ref$p->[0]? $p->[0]: {@$p}): $p);for (grep {ref$specs->{$_}&& exists$specs->{$_}->{default}}keys %$specs){$ref->{$_}=$specs->{$_}->{default}unless exists$ref->{$_}}return$ref})}_validate_named_depends($p,$specs);unless ($options->{allow_extra}){if (my@unmentioned=grep {!exists$specs->{$_}}keys %$p){my$called=_get_called();$options->{on_fail}->("The following parameter" .(@unmentioned > 1 ? 's were' : ' was')." passed in the call to $called but " .(@unmentioned > 1 ? 'were' : 'was')." not listed in the validation options: @unmentioned\n")}}my@missing;keys %$specs;OUTER: while (my ($key,$spec)=each %$specs){if (!exists$p->{$key}&& (ref$spec ?!(do {if (exists$spec->{default}){$p->{$key}=$spec->{default};next OUTER}}|| do {next OUTER if$spec->{optional}}): $spec)){push@missing,$key}elsif (ref$spec){my$value=defined$p->{$key}? qq|"$p->{$key}"| : 'undef';_validate_one_param($p->{$key},$p,$spec,qq{The '$key' parameter (%s)})}}if (@missing){my$called=_get_called();my$missing=join ', ',map {"'$_'"}@missing;$options->{on_fail}->("Mandatory parameter" .(@missing > 1 ? 's' : '')." $missing missing in call to $called\n")}for my$key (grep {defined$p->{$_}&&!ref$p->{$_}&& ref$specs->{$_}&& $specs->{$_}{untaint}}keys %$p){($p->{$key})=$p->{$key}=~ /(.+)/}return wantarray ? %$p : $p}sub validate_with {return if$Params::Validate::NO_VALIDATION &&!defined wantarray;my%p=@_;local$options=_get_options((caller(0))[0],%p);unless ($Params::Validate::NO_VALIDATION){unless (exists$options->{called}){$options->{called}=(caller($options->{stack_skip}))[3]}}if (UNIVERSAL::isa($p{spec},'ARRAY')){return validate_pos(@{$p{params}},@{$p{spec}})}else {return&validate($p{params},$p{spec})}}sub _normalize_callback {my ($p,$func)=@_;my%new;for my$key (keys %$p){my$new_key=$func->($key);unless (defined$new_key){die "The normalize_keys callback did not return a defined value when normalizing the key '$key'"}if (exists$new{$new_key}){die "The normalize_keys callback returned a key that already exists, '$new_key', when normalizing the key '$key'"}$new{$new_key}=$p->{$key}}return \%new}sub _normalize_named {my%h=(ref $_[0])=~ /ARRAY/ ? @{$_[0]}: %{$_[0]};if ($options->{ignore_case}){$h{lc $_ }=delete$h{$_}for keys%h}if ($options->{strip_leading}){for my$key (keys%h){my$new;($new=$key)=~ s/^\Q$options->{strip_leading}\E//;$h{$new}=delete$h{$key}}}return \%h}my%Valid=map {$_=>1}qw(callbacks can default depends isa optional regex type untaint);sub _validate_one_param {my ($value,$params,$spec,$id)=@_;if (exists$spec->{type}){unless (defined$spec->{type}&& Scalar::Util::looks_like_number($spec->{type})&& $spec->{type}> 0){my$msg ="$id has a type specification which is not a number. It is ";if (defined$spec->{type}){$msg .= "a string - $spec->{type}"}else {$msg .= "undef"}$msg .= ".\n Use the constants exported by Params::Validate to declare types.";$options->{on_fail}->(sprintf($msg,_stringify($value)))}unless (_get_type($value)& $spec->{type}){my$type=_get_type($value);my@is=_typemask_to_strings($type);my@allowed=_typemask_to_strings($spec->{type});my$article=$is[0]=~ /^[aeiou]/i ? 'an' : 'a';my$called=_get_called(1);$options->{on_fail}->(sprintf("$id to $called was $article '@is', which " ."is not one of the allowed types: @allowed\n",_stringify($value)))}}return unless ($spec->{isa}|| $spec->{can}|| $spec->{callbacks}|| $spec->{regex});if (exists$spec->{isa}){for (ref$spec->{isa}? @{$spec->{isa}}: $spec->{isa}){unless (do {local $@=q{};eval {$value->isa($_)}}){my$is=ref$value ? ref$value : 'plain scalar';my$article1=$_ =~ /^[aeiou]/i ? 'an' : 'a';my$article2=$is =~ /^[aeiou]/i ? 'an' : 'a';my$called=_get_called(1);$options->{on_fail}->(sprintf("$id to $called was not $article1 '$_' " ."(it is $article2 $is)\n",_stringify($value)))}}}if (exists$spec->{can}){for (ref$spec->{can}? @{$spec->{can}}: $spec->{can}){unless (do {local $@=q{};eval {$value->can($_)}}){my$called=_get_called(1);$options->{on_fail}->(sprintf("$id to $called does not have the method: '$_'\n",_stringify($value)))}}}if ($spec->{callbacks}){unless (UNIVERSAL::isa($spec->{callbacks},'HASH')){my$called=_get_called(1);$options->{on_fail}->("'callbacks' validation parameter for $called must be a hash reference\n")}for (keys %{$spec->{callbacks}}){unless (UNIVERSAL::isa($spec->{callbacks}{$_},'CODE')){my$called=_get_called(1);$options->{on_fail}->("callback '$_' for $called is not a subroutine reference\n")}my$ok;my$e=do {local $@=q{};local$SIG{__DIE__};$ok=eval {$spec->{callbacks}{$_}->($value,$params)};$@};if (!$ok){my$called=_get_called(1);if (ref$e){$options->{on_fail}->($e)}else {my$msg="$id to $called did not pass the '$_' callback";$msg .= ": $e" if length$e;$msg .= "\n";$options->{on_fail}->(sprintf($msg,_stringify($value)))}}}}if (exists$spec->{regex}){unless ((defined$value ? $value : '')=~ /$spec->{regex}/){my$called=_get_called(1);$options->{on_fail}->(sprintf("$id to $called did not pass regex check\n",_stringify($value)))}}}{my%isas=('ARRAY'=>ARRAYREF,'HASH'=>HASHREF,'CODE'=>CODEREF,'GLOB'=>GLOBREF,'SCALAR'=>SCALARREF,'REGEXP'=>SCALARREF,);my%simple_refs=map {$_=>1}keys%isas;sub _get_type {return UNDEF unless defined $_[0];my$ref=ref $_[0];unless ($ref){return GLOB if UNIVERSAL::isa(\$_[0],'GLOB');return SCALAR}return$isas{$ref}if$simple_refs{$ref};for (keys%isas){return$isas{$_}| OBJECT if UNIVERSAL::isa($_[0],$_)}return UNKNOWN}}{my%type_to_string=(SCALAR()=>'scalar',ARRAYREF()=>'arrayref',HASHREF()=>'hashref',CODEREF()=>'coderef',GLOB()=>'glob',GLOBREF()=>'globref',SCALARREF()=>'scalarref',UNDEF()=>'undef',OBJECT()=>'object',UNKNOWN()=>'unknown',);sub _typemask_to_strings {my$mask=shift;my@types;for (SCALAR,ARRAYREF,HASHREF,CODEREF,GLOB,GLOBREF,SCALARREF,UNDEF,OBJECT,UNKNOWN){push@types,$type_to_string{$_}if$mask & $_}return@types ? @types : ('unknown')}}{my%defaults=(ignore_case=>0,strip_leading=>0,allow_extra=>0,on_fail=>sub {require Carp;Carp::croak($_[0])},stack_skip=>1,normalize_keys=>undef,);*set_options=\&validation_options;sub validation_options {my%opts=@_;my$caller=caller;for (keys%defaults){$opts{$_}=$defaults{$_}unless exists$opts{$_}}$Params::Validate::OPTIONS{$caller}=\%opts}sub _get_options {my$caller=shift;if (@_){return ($Params::Validate::OPTIONS{$caller}? {%{$Params::Validate::OPTIONS{$caller}},@_ }: {%defaults,@_ })}else {return (exists$Params::Validate::OPTIONS{$caller}? $Params::Validate::OPTIONS{$caller}: \%defaults)}}}sub _get_called {my$extra_skip=$_[0]|| 0;$extra_skip++;my$called=(exists$options->{called}? $options->{called}: (caller($options->{stack_skip}+ $extra_skip))[3]);$called='(unknown)' unless defined$called;return$called}sub _stringify {return defined $_[0]? qq{"$_[0]"} : 'undef'}1;
 PARAMS_VALIDATE_PP
 
 $fatpacked{"Params/Validate/XS.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'PARAMS_VALIDATE_XS';
-  package Params::Validate::XS;use strict;use warnings;our$VERSION='1.22';use Carp;my$default_fail=sub {Carp::confess($_[0])};{my%defaults=(ignore_case=>0,strip_leading=>0,allow_extra=>0,on_fail=>$default_fail,stack_skip=>1,normalize_keys=>undef,);*set_options=\&validation_options;sub validation_options {my%opts=@_;my$caller=caller;for (keys%defaults){$opts{$_}=$defaults{$_}unless exists$opts{$_}}$Params::Validate::OPTIONS{$caller}=\%opts}use XSLoader;XSLoader::load(__PACKAGE__,exists$Params::Validate::XS::{VERSION}? ${$Params::Validate::XS::{VERSION}}: (),)}sub _check_regex_from_xs {return (defined $_[0]? $_[0]: '')=~ /$_[1]/ ? 1 : 0}1;
+  package Params::Validate::XS;use strict;use warnings;our$VERSION='1.26';use Carp;my$default_fail=sub {Carp::confess($_[0])};{my%defaults=(ignore_case=>0,strip_leading=>0,allow_extra=>0,on_fail=>$default_fail,stack_skip=>1,normalize_keys=>undef,);*set_options=\&validation_options;sub validation_options {my%opts=@_;my$caller=caller;for (keys%defaults){$opts{$_}=$defaults{$_}unless exists$opts{$_}}$Params::Validate::OPTIONS{$caller}=\%opts}use XSLoader;XSLoader::load(__PACKAGE__,exists$Params::Validate::XS::{VERSION}? ${$Params::Validate::XS::{VERSION}}: (),)}sub _check_regex_from_xs {return (defined $_[0]? $_[0]: '')=~ /$_[1]/ ? 1 : 0}1;
 PARAMS_VALIDATE_XS
 
 $fatpacked{"Params/ValidatePP.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'PARAMS_VALIDATEPP';
-  package Params::Validate;our$VERSION='1.22';BEGIN {$ENV{PARAMS_VALIDATE_IMPLEMENTATION}='PP'}use Params::Validate;1;
+  package Params::Validate;our$VERSION='1.26';BEGIN {$ENV{PARAMS_VALIDATE_IMPLEMENTATION}='PP'}use Params::Validate;1;
 PARAMS_VALIDATEPP
 
 $fatpacked{"Params/ValidateXS.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'PARAMS_VALIDATEXS';
-  package Params::Validate;our$VERSION='1.22';BEGIN {$ENV{PARAMS_VALIDATE_IMPLEMENTATION}='XS'}use Params::Validate;1;
+  package Params::Validate;our$VERSION='1.26';BEGIN {$ENV{PARAMS_VALIDATE_IMPLEMENTATION}='XS'}use Params::Validate;1;
 PARAMS_VALIDATEXS
 
 $fatpacked{"Try/Tiny.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'TRY_TINY';
-  package Try::Tiny;use 5.006;our$VERSION='0.24';use strict;use warnings;use Exporter 5.57 'import';our@EXPORT=our@EXPORT_OK=qw(try catch finally);use Carp;$Carp::Internal{+__PACKAGE__}++;BEGIN {my$su=$INC{'Sub/Util.pm'}&& defined&Sub::Util::set_subname;my$sn=$INC{'Sub/Name.pm'}&& eval {Sub::Name->VERSION(0.08)};unless ($su || $sn){$su=eval {require Sub::Util}&& defined&Sub::Util::set_subname;unless ($su){$sn=eval {require Sub::Name;Sub::Name->VERSION(0.08)}}}*_subname=$su ? \&Sub::Util::set_subname : $sn ? \&Sub::Name::subname : sub {$_[1]};*_HAS_SUBNAME=($su || $sn)? sub(){1}: sub(){0}}sub try (&;@) {my ($try,@code_refs)=@_;my$wantarray=wantarray;my ($catch,@finally)=();for my$code_ref (@code_refs){if (ref($code_ref)eq 'Try::Tiny::Catch'){croak 'A try() may not be followed by multiple catch() blocks' if$catch;$catch=${$code_ref}}elsif (ref($code_ref)eq 'Try::Tiny::Finally'){push@finally,${$code_ref}}else {croak('try() encountered an unexpected argument (' .(defined$code_ref ? $code_ref : 'undef').') - perhaps a missing semi-colon before or')}}my$caller=caller;_subname("${caller}::try {...} "=>$try)if _HAS_SUBNAME;my$prev_error=$@;my (@ret,$error);my$failed=not eval {$@=$prev_error;if ($wantarray){@ret=$try->()}elsif (defined$wantarray){$ret[0]=$try->()}else {$try->()};return 1};$error=$@;$@=$prev_error;my@guards=map {Try::Tiny::ScopeGuard->_new($_,$failed ? $error : ())}@finally;if ($failed){if ($catch){for ($error){return$catch->($error)}}return}else {return$wantarray ? @ret : $ret[0]}}sub catch (&;@) {my ($block,@rest)=@_;croak 'Useless bare catch()' unless wantarray;my$caller=caller;_subname("${caller}::catch {...} "=>$block)if _HAS_SUBNAME;return (bless(\$block,'Try::Tiny::Catch'),@rest,)}sub finally (&;@) {my ($block,@rest)=@_;croak 'Useless bare finally()' unless wantarray;my$caller=caller;_subname("${caller}::finally {...} "=>$block)if _HAS_SUBNAME;return (bless(\$block,'Try::Tiny::Finally'),@rest,)}{package Try::Tiny::ScopeGuard;use constant UNSTABLE_DOLLARAT=>($] < '5.013002')? 1 : 0;sub _new {shift;bless [@_ ]}sub DESTROY {my ($code,@args)=@{$_[0]};local $@ if UNSTABLE_DOLLARAT;eval {$code->(@args);1}or do {warn "Execution of finally() block $code resulted in an exception, which " .'*CAN NOT BE PROPAGATED* due to fundamental limitations of Perl. ' .'Your program will continue as if this event never took place. ' ."Original exception text follows:\n\n" .(defined $@ ? $@ : '$@ left undefined...')."\n" }}}__PACKAGE__ 
+  package Try::Tiny;use 5.006;our$VERSION='0.27';use strict;use warnings;use Exporter 5.57 'import';our@EXPORT=our@EXPORT_OK=qw(try catch finally);use Carp;$Carp::Internal{+__PACKAGE__}++;BEGIN {my$su=$INC{'Sub/Util.pm'}&& defined&Sub::Util::set_subname;my$sn=$INC{'Sub/Name.pm'}&& eval {Sub::Name->VERSION(0.08)};unless ($su || $sn){$su=eval {require Sub::Util}&& defined&Sub::Util::set_subname;unless ($su){$sn=eval {require Sub::Name;Sub::Name->VERSION(0.08)}}}*_subname=$su ? \&Sub::Util::set_subname : $sn ? \&Sub::Name::subname : sub {$_[1]};*_HAS_SUBNAME=($su || $sn)? sub(){1}: sub(){0}}my%_finally_guards;sub try (&;@) {my ($try,@code_refs)=@_;my$wantarray=wantarray;my ($catch,@finally)=();for my$code_ref (@code_refs){if (ref($code_ref)eq 'Try::Tiny::Catch'){croak 'A try() may not be followed by multiple catch() blocks' if$catch;$catch=${$code_ref}}elsif (ref($code_ref)eq 'Try::Tiny::Finally'){push@finally,${$code_ref}}else {croak('try() encountered an unexpected argument (' .(defined$code_ref ? $code_ref : 'undef').') - perhaps a missing semi-colon before or')}}my$caller=caller;_subname("${caller}::try {...} "=>$try)if _HAS_SUBNAME;local$_finally_guards{guards}=[map {Try::Tiny::ScopeGuard->_new($_)}@finally ];my$prev_error=$@;my (@ret,$error);my$failed=not eval {$@=$prev_error;if ($wantarray){@ret=$try->()}elsif (defined$wantarray){$ret[0]=$try->()}else {$try->()};return 1};$error=$@;$@=$prev_error;if ($failed){push @$_,$error for @{$_finally_guards{guards}};if ($catch){for ($error){return$catch->($error)}}return}else {return$wantarray ? @ret : $ret[0]}}sub catch (&;@) {my ($block,@rest)=@_;croak 'Useless bare catch()' unless wantarray;my$caller=caller;_subname("${caller}::catch {...} "=>$block)if _HAS_SUBNAME;return (bless(\$block,'Try::Tiny::Catch'),@rest,)}sub finally (&;@) {my ($block,@rest)=@_;croak 'Useless bare finally()' unless wantarray;my$caller=caller;_subname("${caller}::finally {...} "=>$block)if _HAS_SUBNAME;return (bless(\$block,'Try::Tiny::Finally'),@rest,)}{package Try::Tiny::ScopeGuard;use constant UNSTABLE_DOLLARAT=>("$]" < '5.013002')? 1 : 0;sub _new {shift;bless [@_ ]}sub DESTROY {my ($code,@args)=@{$_[0]};local $@ if UNSTABLE_DOLLARAT;eval {$code->(@args);1}or do {warn "Execution of finally() block $code resulted in an exception, which " .'*CAN NOT BE PROPAGATED* due to fundamental limitations of Perl. ' .'Your program will continue as if this event never took place. ' ."Original exception text follows:\n\n" .(defined $@ ? $@ : '$@ left undefined...')."\n" }}}__PACKAGE__ 
 TRY_TINY
 
 s/^  //mg for values %fatpacked;
@@ -5962,15 +6184,17 @@ no strict 'refs';
 
 if ($] < 5.008) {
   *{"${class}::INC"} = sub {
-     if (my $fat = $_[0]{$_[1]}) {
-       return sub {
-         return 0 unless length $fat;
-         $fat =~ s/^([^\n]*\n?)//;
-         $_ = $1;
-         return 1;
-       };
-     }
-     return;
+    if (my $fat = $_[0]{$_[1]}) {
+      my $pos = 0;
+      my $last = length $fat;
+      return (sub {
+        return 0 if $pos == $last;
+        my $next = (1 + index $fat, "\n", $pos) || $last;
+        $_ .= substr $fat, $pos, $next - $pos;
+        $pos = $next;
+        return 1;
+      });
+    }
   };
 }
 
@@ -5988,6 +6212,13 @@ else {
 unshift @INC, bless \%fatpacked, $class;
   } # END OF FATPACK CODE
 
+#
+# This is development version of the check_raid.pl plugin
+# If you are running this file directly, you are doing it wrong
+#
+# See installation notes:
+# https://github.com/glensc/nagios-plugin-check_raid#installing
+#
 use Monitoring::Plugin 0.37;
 use App::Monitoring::Plugin::CheckRaid;
 use App::Monitoring::Plugin::CheckRaid::Sudoers;
@@ -5997,7 +6228,7 @@ use warnings;
 use strict;
 
 my $PROGNAME = 'check_raid';
-my $VERSION = q/4.0.2/;
+my $VERSION = q/4.0.3/;
 my $URL = 'https://github.com/glensc/nagios-plugin-check_raid';
 my $BUGS_URL = 'https://github.com/glensc/nagios-plugin-check_raid#reporting-bugs';
 
@@ -6051,7 +6282,7 @@ would define option "serial" for "hp_msa" plugin with value "/dev/ttyS2".
 );
 $mp->add_arg(
 	spec => 'noraid=s',
-	help => 'Return STATE if no RAID controller is found. Defaults to UNKNOWN',
+	help => 'Return STATE if no RAID volumes are found. Defaults to UNKNOWN',
 );
 $mp->add_arg(
 	spec => 'resync=s',
@@ -6099,7 +6330,7 @@ if ($mp->opts->get('bbu-monitoring')) {
 my %state_flags = (
 	'resync' => 'resync_status',
 	'check' => 'check_status',
-	'noraid' => 'noraid_state',
+	'noraid' => 'noraid_status',
 	'bbulearn' => 'bbulearn_status',
 	'cache-fail' => 'cache_fail_status',
 );
@@ -6122,7 +6353,7 @@ if (my $plugins = $mp->opts->plugin) {
 if (my $opts = $mp->opts->get('plugin-option')) {
 	foreach my $o (@$opts) {
 		my($k, $v) = split(/=/, $o, 2);
-		$plugin_options{$k} = $v;
+		$plugin_options{options}{$k} = $v;
 	}
 }
 
@@ -6136,7 +6367,7 @@ if ($mp->opts->debug) {
 
 my @plugins = $mc->active_plugins;
 if (!@plugins) {
-	$mp->plugin_exit($plugin_options{options}{noraid_state}, "No active plugins (No RAID found)");
+	$mp->plugin_exit($plugin_options{options}{noraid_status}, "No active plugins (No RAID found)");
 }
 
 if ($mp->opts->sudoers) {
@@ -6173,10 +6404,10 @@ foreach my $plugin (@plugins) {
 		$message .= "$pn:[Plugin error]";
 		next;
 	}
-	if ($plugin->message or $plugin->{options}{noraid_state} == $ERRORS{UNKNOWN}) {
+	if ($plugin->message or $plugin->{options}{noraid_status} == $ERRORS{UNKNOWN}) {
 		$status = $plugin->status if $plugin->status > $status;
 	} else {
-		$status = $plugin->{options}{noraid_state} if $plugin->{options}{noraid_state} > $status;
+		$status = $plugin->{options}{noraid_status} if $plugin->{options}{noraid_status} > $status;
 	}
 	$message .= '; ' if $message;
 	$message .= "$pn:[".$plugin->message."]";
@@ -6195,8 +6426,8 @@ if ($message) {
 		print "UNKNOWN: ";
 	}
 	print "$message\n";
-} elsif ($plugin::options{noraid_state} != $ERRORS{UNKNOWN}) {
-	$status = $plugin::options{noraid_state};
+} elsif ($plugin::options{noraid_status} != $ERRORS{UNKNOWN}) {
+	$status = $plugin::options{noraid_status};
 	print "No RAID configuration found\n";
 } else {
 	$status = $ERRORS{UNKNOWN};
