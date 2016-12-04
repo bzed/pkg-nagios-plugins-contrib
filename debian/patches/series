@@ -44,3 +44,4 @@ dsa/check_packages-inifile
 dsa/epn
 
 dsa/check_packages_,_fix
+check_cups/ParseDateDelta
