@@ -11,6 +11,7 @@ check_haproxy/epn
 check_haproxy/monitoring-plugin
 check_httpd_status/epn
 check_httpd_status/monitoring-plugin
+check_httpd_status/numeric-uptime
 check_imap_quota/syntax_error_fix
 check_libs/lsof-speedup
 check_libs/config_path
