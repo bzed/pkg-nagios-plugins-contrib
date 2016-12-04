@@ -17,6 +17,7 @@ check_libs/lsof-speedup
 check_libs/config_path
 check_libs/space_before_deleted
 check_libvirt/monitoring-plugin
+check_libvirt/fix_uom
 check_lm_sensors/manpage_whatis_fix
 check_lm_sensors/spelling_errors
 check_lm_sensors/interpreter
