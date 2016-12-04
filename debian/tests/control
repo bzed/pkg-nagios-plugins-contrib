@@ -2,5 +2,5 @@ Depends: cups, libdate-manip-perl, libmonitoring-plugin-perl, libnet-cups-perl, 
 Test-Command: service cups restart && /usr/lib/nagios/plugins/check_cups -H localhost
 
 Depends: apache2, liblocale-gettext-perl, libmonitoring-plugin-perl, liblwp-useragent-determined-perl, @
-Test-Command: service apache2 restart && /usr/lib/nagios/plugins/check_httpd_status -H localhost
+Test-Command: service apache2 restart 2>/dev/null && /usr/lib/nagios/plugins/check_httpd_status -H localhost
 
