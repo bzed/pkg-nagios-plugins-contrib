@@ -149,6 +149,8 @@ def main(argv):
     p.add_option('-M', '--mongoversion', action='store', type='choice', dest='mongo_version', default='2', help='The MongoDB version you are talking with, either 2 or 3',
       choices=['2','3'])
     p.add_option('-a', '--authdb', action='store', type='string', dest='authdb', default='admin', help='The database you want to authenticate against')
+    p.add_option('--insecure', action='store_true', dest='insecure', default=False, help="Don't verify SSL/TLS certificates")
+    p.add_option('-f', '--ssl-cert-file', action='store', type='string', dest='cert_file', default=None, help='Path to PEM encoded key and cert for client authentication')
 
     options, arguments = p.parse_args()
     host = options.host
@@ -174,6 +176,8 @@ def main(argv):
     database = options.database
     ssl = options.ssl
     replicaset = options.replicaset
+    insecure = options.insecure
+    cert_file = options.cert_file
 
     if action == 'replica_primary' and replicaset is None:
         return "replicaset must be passed in when using replica_primary check"
@@ -184,7 +188,7 @@ def main(argv):
     # moving the login up here and passing in the connection
     #
     start = time.time()
-    err, con = mongo_connect(host, port, ssl, user, passwd, replicaset, authdb)
+    err, con = mongo_connect(host, port, ssl, user, passwd, replicaset, authdb, insecure, cert_file)
 
     if err != 0:
         return err
@@ -200,9 +204,9 @@ def main(argv):
     if action == "connections":
         return check_connections(con, warning, critical, perf_data)
     elif action == "replication_lag":
-        return check_rep_lag(con, host, port, warning, critical, False, perf_data, max_lag, user, passwd)
+        return check_rep_lag(con, host, warning, critical, False, perf_data, max_lag, user, passwd)
     elif action == "replication_lag_percent":
-        return check_rep_lag(con, host, port, warning, critical, True, perf_data, max_lag, user, passwd)
+        return check_rep_lag(con, host, warning, critical, True, perf_data, max_lag, user, passwd, ssl, insecure, cert_file)
     elif action == "replset_state":
         return check_replset_state(con, perf_data, warning, critical)
     elif action == "memory":
@@ -214,7 +218,7 @@ def main(argv):
     elif action == "lock":
         return check_lock(con, warning, critical, perf_data, mongo_version)
     elif action == "current_lock":
-        return check_current_lock(con, host, warning, critical, perf_data)
+        return check_current_lock(con, host, port, warning, critical, perf_data)
     elif action == "flushing":
         return check_flushing(con, warning, critical, True, perf_data)
     elif action == "last_flush_time":
@@ -247,9 +251,9 @@ def main(argv):
     elif action == "write_data_files":
         return check_write_to_datafiles(con, warning, critical, perf_data)
     elif action == "opcounters":
-        return check_opcounters(con, host, warning, critical, perf_data)
+        return check_opcounters(con, host, port, warning, critical, perf_data)
     elif action == "asserts":
-        return check_asserts(con, host, warning, critical, perf_data)
+        return check_asserts(con, host, port, warning, critical, perf_data)
     elif action == "replica_primary":
         return check_replica_primary(con, host, warning, critical, perf_data, replicaset, mongo_version)
     elif action == "queries_per_second":
@@ -270,17 +274,29 @@ def main(argv):
         return check_connect(host, port, warning, critical, perf_data, user, passwd, conn_time)
 
 
-def mongo_connect(host=None, port=None, ssl=False, user=None, passwd=None, replica=None, authdb="admin"):
+def mongo_connect(host=None, port=None, ssl=False, user=None, passwd=None, replica=None, authdb="admin", insecure=False, ssl_cert=None):
     from pymongo.errors import ConnectionFailure
     from pymongo.errors import PyMongoError
+    import ssl as SSL
+
+    con_args = dict()
+
+    if ssl:
+        if insecure:
+            con_args['ssl_cert_reqs'] = SSL.CERT_NONE
+        else:
+            con_args['ssl_cert_reqs'] = SSL.CERT_REQUIRED
+        con_args['ssl'] = ssl
+        if ssl_cert:
+	    con_args['ssl_certfile'] = ssl_cert
 
     try:
         # ssl connection for pymongo > 2.3
         if pymongo.version >= "2.3":
             if replica is None:
-                con = pymongo.MongoClient(host, port)
+                con = pymongo.MongoClient(host, port, **con_args)
             else:
-                con = pymongo.MongoClient(host, port, read_preference=pymongo.ReadPreference.SECONDARY, ssl=ssl, replicaSet=replica)
+                con = pymongo.MongoClient(host, port, read_preference=pymongo.ReadPreference.SECONDARY, replicaSet=replica, **con_args)
         else:
             if replica is None:
                 con = pymongo.MongoClient(host, port, slave_okay=True)
@@ -373,7 +389,7 @@ def check_connections(con, warning, critical, perf_data):
         return exit_with_general_critical(e)
 
 
-def check_rep_lag(con, host, port, warning, critical, percent, perf_data, max_lag, user, passwd):
+def check_rep_lag(con, host, warning, critical, percent, perf_data, max_lag, user, passwd, ssl=None, insecure=None, cert_file=None):
     # Get mongo to tell us replica set member name when connecting locally
     if "127.0.0.1" == host:
         if not "me" in con.admin.command("ismaster","1").keys():
@@ -482,7 +498,7 @@ def check_rep_lag(con, host, port, warning, critical, percent, perf_data, max_la
                 lag = float(optime_lag.seconds + optime_lag.days * 24 * 3600)
 
             if percent:
-                err, con = mongo_connect(primary_node['name'].split(':')[0], int(primary_node['name'].split(':')[1]), False, user, passwd)
+                err, con = mongo_connect(primary_node['name'].split(':')[0], int(primary_node['name'].split(':')[1]), ssl, user, passwd, None, None, insecure, cert_file)
                 if err != 0:
                     return err
                 primary_timediff = replication_get_time_diff(con)
@@ -1049,6 +1065,10 @@ def check_queries_per_second(con, query_type, warning, critical, perf_data, mong
             diff_query = num - last_count['data'][query_type]['count']
             diff_ts = ts - last_count['data'][query_type]['ts']
 
+            if diff_ts == 0:
+                message = "diff_query = " + str(diff_query) + " diff_ts = " + str(diff_ts)
+                return check_levels(0, warning, critical, message)
+
             query_per_sec = float(diff_query) / float(diff_ts)
 
             # update the count now
@@ -1183,7 +1203,7 @@ than the amount physically written to disk."""
         return exit_with_general_critical(e)
 
 
-def get_opcounters(data, opcounters_name, host):
+def get_opcounters(data, opcounters_name, host, port):
     try:
         insert = data[opcounters_name]['insert']
         query = data[opcounters_name]['query']
@@ -1195,17 +1215,17 @@ def get_opcounters(data, opcounters_name, host):
         return 0, [0] * 100
     total_commands = insert + query + update + delete + getmore + command
     new_vals = [total_commands, insert, query, update, delete, getmore, command]
-    return  maintain_delta(new_vals, host, opcounters_name)
+    return  maintain_delta(new_vals, host, port, opcounters_name)
 
 
-def check_opcounters(con, host, warning, critical, perf_data):
+def check_opcounters(con, host, port, warning, critical, perf_data):
     """ A function to get all opcounters delta per minute. In case of a replication - gets the opcounters+opcountersRepl"""
     warning = warning or 10000
     critical = critical or 15000
 
     data = get_server_status(con)
-    err1, delta_opcounters = get_opcounters(data, 'opcounters', host)
-    err2, delta_opcounters_repl = get_opcounters(data, 'opcountersRepl', host)
+    err1, delta_opcounters = get_opcounters(data, 'opcounters', host, port)
+    err2, delta_opcounters_repl = get_opcounters(data, 'opcountersRepl', host, port)
     if err1 == 0 and err2 == 0:
         delta = [(x + y) for x, y in zip(delta_opcounters, delta_opcounters_repl)]
         delta[0] = delta_opcounters[0]  # only the time delta shouldn't be summarized
@@ -1220,7 +1240,7 @@ def check_opcounters(con, host, warning, critical, perf_data):
         return exit_with_general_critical("problem reading data from temp file")
 
 
-def check_current_lock(con, host, warning, critical, perf_data):
+def check_current_lock(con, host, port, warning, critical, perf_data):
     """ A function to get current lock percentage and not a global one, as check_lock function does"""
     warning = warning or 10
     critical = critical or 30
@@ -1229,7 +1249,7 @@ def check_current_lock(con, host, warning, critical, perf_data):
     lockTime = float(data['globalLock']['lockTime'])
     totalTime = float(data['globalLock']['totalTime'])
 
-    err, delta = maintain_delta([totalTime, lockTime], host, "locktime")
+    err, delta = maintain_delta([totalTime, lockTime], host, port, "locktime")
     if err == 0:
         lock_percentage = delta[2] / delta[1] * 100     # lockTime/totalTime*100
         message = "Current Lock Percentage: %.2f%%" % lock_percentage
@@ -1239,7 +1259,7 @@ def check_current_lock(con, host, warning, critical, perf_data):
         return exit_with_general_warning("problem reading data from temp file")
 
 
-def check_page_faults(con, host, warning, critical, perf_data):
+def check_page_faults(con, host, port, warning, critical, perf_data):
     """ A function to get page_faults per second from the system"""
     warning = warning or 10
     critical = critical or 30
@@ -1251,7 +1271,7 @@ def check_page_faults(con, host, warning, critical, perf_data):
         # page_faults unsupported on the underlaying system
         return exit_with_general_critical("page_faults unsupported on the underlaying system")
 
-    err, delta = maintain_delta([page_faults], host, "page_faults")
+    err, delta = maintain_delta([page_faults], host, port, "page_faults")
     if err == 0:
         page_faults_ps = delta[1] / delta[0]
         message = "Page faults : %.2f ps" % page_faults_ps
@@ -1261,7 +1281,7 @@ def check_page_faults(con, host, warning, critical, perf_data):
         return exit_with_general_warning("problem reading data from temp file")
 
 
-def check_asserts(con, host, warning, critical, perf_data):
+def check_asserts(con, host, port, warning, critical, perf_data):
     """ A function to get asserts from the system"""
     warning = warning or 1
     critical = critical or 10
@@ -1276,7 +1296,7 @@ def check_asserts(con, host, warning, critical, perf_data):
     user = asserts['user']
     rollovers = asserts['rollovers']
 
-    err, delta = maintain_delta([regular, warning_asserts, msg, user, rollovers], host, "asserts")
+    err, delta = maintain_delta([regular, warning_asserts, msg, user, rollovers], host, port, "asserts")
 
     if err == 0:
         if delta[5] != 0:
@@ -1472,10 +1492,14 @@ def check_row_count(con, database, collection, warning, critical, perf_data):
         return exit_with_general_critical(e)
 
 
-def build_file_name(host, action):
+def build_file_name(host, port, action):
     #done this way so it will work when run independently and from shell
     module_name = re.match('(.*//*)*(.*)\..*', __file__).group(2)
-    return "/tmp/" + module_name + "_data/" + host + "-" + action + ".data"
+
+    if (port == 27017):
+        return "/tmp/" + module_name + "_data/" + host + "-" + action + ".data"
+    else:
+        return "/tmp/" + module_name + "_data/" + host + "-" + str(port) + "-" + action + ".data"
 
 
 def ensure_dir(f):
@@ -1527,8 +1551,8 @@ def calc_delta(old, new):
     return 0, delta
 
 
-def maintain_delta(new_vals, host, action):
-    file_name = build_file_name(host, action)
+def maintain_delta(new_vals, host, port, action):
+    file_name = build_file_name(host, port, action)
     err, data = read_values(file_name)
     old_vals = data.split(';')
     new_vals = [str(int(time.time()))] + new_vals
