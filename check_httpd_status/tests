@@ -1,2 +1,2 @@
-Depends: apache2, liblocale-gettext-perl, libmonitoring-plugin-perl, liblwp-useragent-determined-perl
+Depends: apache2, liblocale-gettext-perl, libmonitoring-plugin-perl | libnagios-plugin-perl, liblwp-useragent-determined-perl
 Test-Command: service apache2 restart 2>/dev/null && /usr/lib/nagios/plugins/check_httpd_status -H localhost
