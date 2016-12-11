@@ -1,8 +1,50 @@
-nagios-plugins-contrib (16.20151226+nmu1) UNRELEASED; urgency=medium
+nagios-plugins-contrib (17.20161211) unstable; urgency=medium
 
-  * Non-maintainer upload.
+  [ Evgeni Golov ]
+  * [743a7ba] implement tests for check_cups and httpd
 
- -- Evgeni Golov <evgeni@debian.org>  Sat, 24 Sep 2016 23:04:27 +0200
+  [ Jan Wagner ]
+  * [f2ad81b] travis-ci: Build against unstable, testing and stable; run lintian
+  * [51e1deb] d/control: Bump Standards-Version to 3.9.8, no changes needed
+  * [a316cb8] check_raid: Update to 4.0.3
+  * [3699879] check_mongodb: Updating to latest version 8c5cc99
+  * [a5b2276] check_ipmi: Update to 3.12
+  * [60319ea] check_ssl_cert: Updating to 1.35.0
+
+  [ Evgeni Golov ]
+  * [a16fc7d] stat daemons before running tests
+  * [65c8472] Auto update of debian/tests/control
+  * [5255d54] check_httpd_status: only accept numeric uptime output
+  * [cd76f3a] apache2 tends to be a bit chatty during restart, shut it up
+  * [b34a201] Auto update of debian/tests/control
+
+  [ Jan Wagner ]
+  * [0a4e29e] check_mongodb: Fix version in control file
+  * [2218a15] check_hpasm: Update to 4.7.5.2
+  * [7bd78e4] Adding d/patches/check_cups/ParseDateDelta (Closes: #844319),
+    thanks Manuel Hachtkemper
+
+  [ Petter Reinholdtsen ]
+  * [789bdb5] Improve check_shutdown control file.
+
+  [ Jan Wagner ]
+  * [1c5fbfe] d/control: Update VCS-URLs to https
+
+  [ Evgeni Golov ]
+  * [ac93909] allow tests to run with libnagios-plugin-perl on jessie
+  * [3478a48] Auto update of debian/tests/control
+
+  [ Jan Wagner ]
+  * [171275f] check_printer: Add missing hostname option into check command
+  * [6e1f6c2] check_printer: Disable epn (Closes: #808722)
+  * [63564c7] check_ssl_cert: Updating to 1.36.1
+  * [1d9afb0] Add d/patches/check_libvirt/fix_uom, thanks Björn Lässig
+  * [827da04] check_raid: Update to 4.0.4
+  * [056d78e] check_ssl_cert: Fix version in control file to 1.36.1
+  * [9fea343] d/control.in: Updating to values committed to control
+  * [15d33f8] d/control: Updating to latest plugin versions
+
+ -- Jan Wagner <waja@cyconet.org>  Sun, 11 Dec 2016 14:33:04 +0100
 
 nagios-plugins-contrib (16.20151226) unstable; urgency=medium
 
