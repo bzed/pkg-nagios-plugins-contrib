@@ -1,3 +1,9 @@
+nagios-plugins-contrib (17.20161212~1) UNRELEASED; urgency=medium
+
+  * UNRELEASED
+
+ -- Jan Wagner <waja@cyconet.org>  Sun, 11 Dec 2016 15:12:48 +0100
+
 nagios-plugins-contrib (17.20161211) unstable; urgency=medium
 
   [ Evgeni Golov ]
