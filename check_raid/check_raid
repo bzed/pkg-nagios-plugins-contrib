@@ -644,9 +644,6 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/arcconf.pm"} = '#line '.(1+_
   package App::Monitoring::Plugin::CheckRaid::Plugins::arcconf;
   
   # Adaptec AAC-RAID
-  # check designed from check-aacraid.py, Anchor System - <http://www.anchor.com.au>
-  # Oliver Hookins, Paul De Audney, Barney Desmond.
-  # Perl port (check_raid) by Elan Ruusamäe.
   
   use base 'App::Monitoring::Plugin::CheckRaid::Plugin';
   use strict;
@@ -787,10 +784,18 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/arcconf.pm"} = '#line '.(1+_
   		$this->$method($res, \%sectiondata);
   		%sectiondata = ();
   	};
+  	my $subsection_reset = sub {
+  		$ch = 0;
+  		undef($ld);
+  		undef($pd);
+  		undef($subsection);
+  	};
   	while (<$fh>) {
   		chomp;
-  		# empty line
-  		if (/^$/) {
+  
+  		# empty line or comment
+  		if (/^$/ or /^#/) {
+  			&$subsection_reset;
   			next;
   		}
   
@@ -799,7 +804,7 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/arcconf.pm"} = '#line '.(1+_
   			last;
   		}
   
-  		if (my($c) = /^Controllers found: (\d+)/) {
+  		if (my($c) = /^Controllers [Ff]ound: (\d+)/) {
   			if ($c != $ctrl_count) {
   				# internal error?!
   				$this->unknown->message("Controller count mismatch");
@@ -819,10 +824,7 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/arcconf.pm"} = '#line '.(1+_
   				unless (<$fh> =~ /^---+/) {
   					$this->parse_error($_);
   				}
-  				undef($ld);
-  				$ch = 0;
-  				undef($pd);
-  				undef($subsection);
+  				&$subsection_reset;
   				next;
   			}
   			$this->parse_error($_);
@@ -842,7 +844,7 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/arcconf.pm"} = '#line '.(1+_
   			$this->parse_error($_);
   		}
   
-  		next unless defined $section;
+  		warn("SKIP without section: [$_]\n"),next unless defined $section;
   
   		# regex notes:
   		# - value portion may be missing
@@ -851,26 +853,49 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/arcconf.pm"} = '#line '.(1+_
   		my ($key, $value) = /^\s*(.+?)(?:\s+:\s*(.*?))?$/;
   
   		if ($section =~ /Controller [Ii]nformation/) {
-  			$sectiondata{$subsection || '_'}{$key} = $value;
+  			if (not defined $subsection) {
+  				$sectiondata{$key} = $value;
+  			} else {
+  				$sectiondata{$subsection}{$key} = $value;
+  			}
   
   		} elsif ($section =~ /Physical Device [Ii]nformation/) {
   			if (my($c) = /Channel #(\d+)/) {
   				$ch = int($c);
   				undef($pd);
+  				next;
+  
   			} elsif (my($n) = /^\s+Device #(\d+)/) {
   				$pd = int($n);
+  				next;
+  
   			} else {
-  				# FIXME: $pdk hack for t/data/arcconf/issue67/getconfig
-  				my $pdk = $pd;
-  				$pdk = '' unless defined $pdk;
-  				$sectiondata{$ch}{$pdk}{$subsection || '_'}{$key} = $value;
+  				if (not defined $pd) {
+  					$sectiondata{$ch}{$key} = $value;
+  				} elsif (not defined $subsection) {
+  					$sectiondata{$ch}{'pd'}{$pd}{$key} = $value;
+  				} else {
+  					$sectiondata{$ch}{'pd'}{$pd}{$subsection}{$key} = $value;
+  				}
   			}
   
   		} elsif ($section =~ /Logical ([Dd]evice|drive) [Ii]nformation/) {
   			if (my($n) = /Logical (?:[Dd]evice|drive) [Nn]umber (\d+)/) {
   				$ld = int($n);
   			} else {
-  				$sectiondata{$ld}{$subsection || '_'}{$key} = $value;
+  				# skip lone line: issue87/getconfig
+  				if (/No logical devices configured/) {
+  					next;
+  				}
+  				if (not defined $ld) {
+  					warn "LD undefined:[$_]\n";
+  					next;
+  				}
+  				if (not defined $subsection) {
+  					$sectiondata{$ld}{$key} = $value;
+  				} else {
+  					$sectiondata{$ld}{$subsection}{$key} = $value;
+  				}
   			}
   
   		} elsif ($section eq 'MaxCache 3.0 information') {
@@ -896,9 +921,8 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/arcconf.pm"} = '#line '.(1+_
   	my $s;
   
   	# current section
-  	my $cs = $data->{_};
+  	my $cs = $data;
   
-  	# TODO: battery stuff is under subsection "Controller Battery Information"
   	$c->{status} = $cs->{'Controller Status'};
   
   	if (exists $cs->{$s = 'Defunct Disk Drive Count'} || exists $cs->{$s = 'Defunct disk drive count'}) {
@@ -946,9 +970,7 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/arcconf.pm"} = '#line '.(1+_
   	my $s;
   
   	my @ld;
-  	while (my($ld, $d) = each %$data) {
-  		# FIXME: parser fails to reset subsection
-  		my $cs = $d->{_} || $d->{'Logical device segment information'};
+  	while (my($ld, $cs) = each %$data) {
   
   		$ld[$ld]{id} = $ld;
   		if (exists $cs->{$s = 'RAID Level'} || exists $cs->{$s = 'RAID level'}) {
@@ -986,21 +1008,10 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/arcconf.pm"} = '#line '.(1+_
   	# /Transfer Speed\s+:\s+(.+)/
   	# /Initiator at SCSI ID/
   	# /No physical drives attached/
-  	#
-  	# has only one subsection:
-  	# 'Device Phy Information', which is not yet processed
   
   	my (@pd, $cs, $s);
   	while (my($ch, $channel_data) = each %$data) {
-  		while (my($pd, $d) = each %$channel_data) {
-  			# FIXME: fallback to 'Device Phy Information' due parser bug
-  			$cs = $d->{_} || $d->{'Device Phy Information'};
-  
-  			# FIXME: this should be skipped in check process, not here
-  			if ($pd eq '') {
-  				next;
-  			}
-  
+  		while (my($pd, $cs) = each %{$channel_data->{pd}}) {
   			$pd[$ch][$pd]{device_id} = $pd;
   			$pd[$ch][$pd]{power_state} = $cs->{'Power State'} if exists $cs->{'Power State'};
   			$pd[$ch][$pd]{status} = $cs->{'State'} if exists $cs->{'State'};
@@ -1078,7 +1089,6 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/arcconf.pm"} = '#line '.(1+_
   			# /Power supply \d+ status/
   		}
   	}
-  
   
   	$res->{physical} = \@pd;
   }
@@ -6228,7 +6238,7 @@ use warnings;
 use strict;
 
 my $PROGNAME = 'check_raid';
-my $VERSION = q/4.0.3/;
+my $VERSION = q/4.0.4/;
 my $URL = 'https://github.com/glensc/nagios-plugin-check_raid';
 my $BUGS_URL = 'https://github.com/glensc/nagios-plugin-check_raid#reporting-bugs';
 
