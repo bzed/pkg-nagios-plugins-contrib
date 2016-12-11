@@ -73,7 +73,7 @@ Description: Plugins for nagios compatible monitoring systems
    * check_hp_bladechassis (1.0.1): plugin to check the hardware health of
      HP blade enclosures via SNMP.
      The plugin is only tested with the c7000 enclosure.
-   * check_hpasm (4.7.3.1): plugin to check the hardware health of
+   * check_hpasm (4.7.5.2): plugin to check the hardware health of
      HP Proliant Servers
      It either uses snmp or - if installed - the hpasm package locally.
      The plugin checks the health of
@@ -87,7 +87,7 @@ Description: Plugins for nagios compatible monitoring systems
      outside its normal parameters.
    * check_httpd_status (rev153): plugin checking Apache or Lighthttpd
      server-status page (using mod_status)
-   * check_ipmi_sensor (3.11): IPMI Sensor Monitoring Plugin
+   * check_ipmi_sensor (3.12): IPMI Sensor Monitoring Plugin
      Plugin to monitor the hardware status (fan speed, temperaturs,
      voltages, power usage, ...) of a server using IPMI.
    * check_ldap_root (?): plugin to check LDAP server response
@@ -109,7 +109,7 @@ Description: Plugins for nagios compatible monitoring systems
      This plugin excludes the system cache and buffer, because
      on some system with very stable memory usage it is perfectly
      normal for system cache to fill in all available memory.
-   * check_mongodb (7ef53f0): Plugin script to monitor your MongoDB server(s)
+   * check_mongodb (7248618): Plugin script to monitor your MongoDB server(s)
    * check_multipath (0.4.7): plugin to monitor the number of available and
      failed paths of multipath devices
    * check_mysql_health (2.2.2): plugin to check various parameters of a
@@ -118,7 +118,7 @@ Description: Plugins for nagios compatible monitoring systems
    * check_printer: plugin to check printer supply levels using SNMP
      It outputs performance data for all supplies
      found, for example toner and drum.
-   * check_raid (4.0.2): plugin to check sw/hw RAID status
+   * check_raid (4.0.4): plugin to check sw/hw RAID status
      The plugin looks for any known types of RAID configurations,
      and checks them all.
      .
@@ -153,9 +153,9 @@ Description: Plugins for nagios compatible monitoring systems
      with special threshold syntax. Plugin also calculates statistics such as
      Hitrate (calculated as rate of change of hits/misses) and memory use and
      can check replication delay.
-   * check_shutdown (?): plugin to check LDAP server response
-     Make sure the LDAP server is able to respond by searching for the
-     root DSE.
+   * check_shutdown (0.0.20110203): plugin to detect shutdown in progress
+     Report when a reboot is in progress.  This is useful to detect if
+     reboot-when-idle or similar have been used on a server.
    * check_smstools: plugin to check GSM Modems using smstools
      check_smstools is a plugin to monitor a GSM modem
      signal quality and registration status with smstools.
@@ -173,7 +173,7 @@ Description: Plugins for nagios compatible monitoring systems
      HOST-RESOURCES-MIB::hrSystemDate.0 used here returns 8 or 11 byte octets.
      SNMP translation needs to be switched off and to be converted the
      received SNMP data into readable strings.
-   * check_ssl_cert (1.34.0): plugin to check the CA and validity of an
+   * check_ssl_cert (1.36.1): plugin to check the CA and validity of an
      X.509 certificate
    * check_uptime (0.521): check_uptime returns uptime of a system
      in text (readable) format as well as in minutes for performance graphing.
