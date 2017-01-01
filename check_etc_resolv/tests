@@ -1,0 +1,2 @@
+Test-Command: /usr/lib/nagios/plugins/check_etc_resolv
+Depends: bind9-host | knot-host
