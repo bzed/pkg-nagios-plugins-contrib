@@ -18,3 +18,5 @@ Test-Command: /usr/lib/nagios/plugins/check_libs
 Depends: libmonitoring-plugin-perl | libnagios-plugin-perl, @
 Test-Command: /usr/lib/nagios/plugins/check_uptime -f
 
+Depends: varnish, @
+Test-Command: service varnish restart 2>/dev/null && /usr/lib/nagios/plugins/check_varnish -p MAIN.pools -w 1: -c 1:
