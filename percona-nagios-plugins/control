@@ -1,5 +1,5 @@
 Watch: http://www.percona.com/downloads/percona-monitoring-plugins/LATEST/source/ >percona-monitoring-plugins-([0-9.]+)\.tar\.gz<
-Version: 1.1.6
+Version: 1.1.7
 Homepage: http://www.percona.com/doc/percona-monitoring-plugins/
 Uploaders: Bernd Zeimetz <bzed@debian.org>
 Description: Percona Monitoring Plugins (nagios)

@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # ########################################################################
-# This program is part of Percona Monitoring Plugins
+# This program is part of $PROJECT_NAME$
 # License: GPL License (see COPYING)
 # Authors:
 #  Baron Schwartz, Ben Mildren
@@ -188,7 +188,7 @@ This plugin executes no UNIX commands that may need special privileges.
 
 =head1 COPYRIGHT, LICENSE, AND WARRANTY
 
-This program is copyright 2012-2016 Baron Schwartz, 2012-2016 Percona Inc.
+This program is copyright 2012-$CURRENT_YEAR$ Baron Schwartz, 2012-$CURRENT_YEAR$ Percona Inc.
 Feedback and improvements are welcome.
 
 THIS PROGRAM IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED
@@ -203,7 +203,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 =head1 VERSION
 
-Percona Monitoring Plugins pmp-check-mysql-ts-count 1.1.6
+$PROJECT_NAME$ pmp-check-mysql-ts-count $VERSION$
 
 =cut
 
