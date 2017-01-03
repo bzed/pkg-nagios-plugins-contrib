@@ -186,7 +186,7 @@ Description: Plugins for nagios compatible monitoring systems
      the wrapper return value, that is, result will be OK only if all checks
      returned OK.  Compatible with any plugin with standard command line options
      -6/-4.
-   * check_varnish (1.1): plugin to monitor varnish instances
+   * check_varnish (258c486): plugin to monitor varnish instances
    * check_webinject (1.80): plugin for testing web services
      It uses the WebInject Perl module for automated testing of
      web applications and web services. It can be used to check
