@@ -36,8 +36,6 @@ check_rbl/additional_rbls
 check_smstools/monitoring-plugin
 check_smstools/operator_siglvl
 check_snmp_time/epn
-check_varnish/automake_foreign
-check_varnish/support-for-varnish-4
 check_v46/no_epn
 check_webinject/epn
 dsa/check_packages_location
@@ -50,3 +48,4 @@ check_cups/ParseDateDelta
 check_printer/epn
 check_nfsmounts/nfs4_support
 check_httpd_status/htdigest_auth
+check_varnish/fix_for_v5
