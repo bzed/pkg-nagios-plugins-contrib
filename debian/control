@@ -8,7 +8,7 @@ Build-Depends: debhelper (>= 8.0.0),
                python,
                python-debian,
                quilt (>= 0.46-7),
-               autotools-dev, flex, libmemcached-dev [!hurd-i386], libvarnishapi-dev [!hurd-i386 !m68k], pkg-config
+               autotools-dev, flex, libmemcached-dev [!hurd-i386]
 Standards-Version: 3.9.8
 Vcs-Git: https://anonscm.debian.org/git/pkg-nagios/pkg-nagios-plugins-contrib.git
 Vcs-Browser: https://anonscm.debian.org/cgit/pkg-nagios/pkg-nagios-plugins-contrib.git
@@ -186,7 +186,6 @@ Description: Plugins for nagios compatible monitoring systems
      the wrapper return value, that is, result will be OK only if all checks
      returned OK.  Compatible with any plugin with standard command line options
      -6/-4.
-   * check_varnish (1.1): plugin to monitor varnish instances
    * check_webinject (1.80): plugin for testing web services
      It uses the WebInject Perl module for automated testing of
      web applications and web services. It can be used to check
@@ -218,7 +217,7 @@ Description: Plugins for nagios compatible monitoring systems
    * extras (1): various scripts and extras
      Not a plugin, but a collection of various useful
      event/obsession handlers and similar scripts.
-   * percona-nagios-plugins (1.1.6): Percona Monitoring Plugins (nagios)
+   * percona-nagios-plugins (1.1.7): Percona Monitoring Plugins (nagios)
      Nagios MySQL Monitoring plugins writting/provided by Percona.
  .
  Some scripts and binaries need more packages installed to work, which is
