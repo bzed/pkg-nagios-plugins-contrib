@@ -48,3 +48,4 @@ dsa/check_packages_,_fix
 check_cups/ParseDateDelta
 check_printer/epn
 check_nfsmounts/nfs4_support
+check_httpd_status/htdigest_auth
