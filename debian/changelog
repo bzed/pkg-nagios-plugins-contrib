@@ -1,8 +1,44 @@
-nagios-plugins-contrib (17.20161212~1) UNRELEASED; urgency=medium
+nagios-plugins-contrib (18.20170103) unstable; urgency=medium
 
-  * UNRELEASED
+  [ Jan Wagner ]
+  * [54e94e9] d/changelog: New changelog
 
- -- Jan Wagner <waja@cyconet.org>  Sun, 11 Dec 2016 15:12:48 +0100
+  [ Bernd Zeimetz ]
+  * [92fd6af] Fix HOST_ARCH detection for check_varnish and others.
+  * [9238b6c] Merge remote-tracking branch 'github/master'
+  * [1ade7ce] check_nfsmount: nfs4 support.
+    Resolves #73
+    Thanks to gvogets
+  * [ed6148e] check_httpd_status-digest: make -r option work.
+    Resolves #61
+    Thanks to Michael Weinrich
+  * [609758d] Merge pull request #71 from waja/check_smstools_pr60.
+    Add debian/patches/check_smstools/operator_siglvl, thanks ZyanKLee
+  * [5ddb796] Merge pull request #72 from evgeni/tests
+    add a few tests
+  * [84c0942] Revert "Remove unused check_varnish Makefile."
+    This reverts commit b6f439c44914471004cf8c8af120bd05f3afcb2e.
+  * [8ecb979] Fix percona-nagios-plugins watch line
+  * [b713758] Fix architecture detection in Makefile
+  * [9fab6a3] Updating percona-monitoring-plugins to 1.1.7
+  * [47f82e5] Remove check_varnish for now.
+    It is not compatible to varnish 5.
+  * [f4f72ee] Auto update of debian/control
+  * [67b7308] Auto update of debian/copyright
+  * [55ac3ea] Revert "Remove check_varnish for now."
+    This reverts commit 47f82e5244a1e6a1874cb20dd497b63ea4d51512.
+  * [c8edb54] Update check_varnish to latest git version.
+  * [ce99574] Add autotools stuff for check_varnish.
+  * [f2c1500] Make varnish build with v5
+  * [3cca7ae] Auto update of debian/control
+  * [cab0430] Use default mirror for travis.
+  * [54c9557] Add autopkgtest for check_varnish
+  * [53b8990] Choose random varnish ports.
+    Otherwise test jobs running in parallel will fail.
+  * [87a77dc] avoid output on stderr in test_check_varnish
+  * [cfb86ca] Make Zhenech happy.
+
+ -- Bernd Zeimetz <bzed@debian.org>  Tue, 03 Jan 2017 18:36:14 +0100
 
 nagios-plugins-contrib (17.20161211) unstable; urgency=medium
 
