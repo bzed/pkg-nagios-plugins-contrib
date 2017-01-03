@@ -1471,6 +1471,7 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/cciss.pm"} = '#line '.(1+__L
   
   use base 'App::Monitoring::Plugin::CheckRaid::Plugin';
   use App::Monitoring::Plugin::CheckRaid::Plugins::lsscsi;
+  use App::Monitoring::Plugin::CheckRaid::Plugins::smartctl;
   use strict;
   use warnings;
   
@@ -1691,6 +1692,9 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/cciss.pm"} = '#line '.(1+__L
   	my $fh = $this->cmd($v1_10 ? 'controller status verbose' : 'controller status', { '@devs' => \@devs });
   	while (<$fh>) {
   		chomp;
+  
+  		# skip empty lines and artificial comments (added by this project)
+  		next if /^$/ or /^#/;
   
   		if (/Controller:/) {
   			# this is first item when new controller is found
@@ -2920,6 +2924,14 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/hpacucli.pm"} = '#line '.(1+
   		# skip empty lines and artificial comments (added by this project)
   		next if /^$/ or /^#/;
   
+  		# skip known noise
+  		if (
+  			/FIRMWARE UPGRADE REQUIRED: /
+  			|| /^\s{27}/
+  		) {
+  			next;
+  		}
+  
   		# Numeric slot
   		if (my($controller, $slot, $modes) = /
   				^(\S.+)\sin\sSlot
@@ -2939,6 +2951,7 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/hpacucli.pm"} = '#line '.(1+
   			$this->unknown if $slot !~ /^\d+/;
   			next;
   		}
+  
   		# Named Entry
   		if (my($controller, $cn) = /^(\S.+) in (.+)/) {
   			$target = "chassisname=$cn";
@@ -2953,9 +2966,10 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/hpacucli.pm"} = '#line '.(1+
   		# Other statuses, try "key: value" pairs
   		if (my ($key, $value) = /^\s*(.+?):\s+(.+?)$/) {
   			$targets{$target}{$key} = $value;
-  		} else {
-  			warn "Unparsed: [$_]\n";
+  			next;
   		}
+  
+  		warn "Unparsed: [$_]\n";
   	}
   	close $fh;
   
@@ -6238,7 +6252,7 @@ use warnings;
 use strict;
 
 my $PROGNAME = 'check_raid';
-my $VERSION = q/4.0.4/;
+my $VERSION = q/4.0.5/;
 my $URL = 'https://github.com/glensc/nagios-plugin-check_raid';
 my $BUGS_URL = 'https://github.com/glensc/nagios-plugin-check_raid#reporting-bugs';
 
@@ -6372,6 +6386,7 @@ my $mc = App::Monitoring::Plugin::CheckRaid->new(%plugin_options);
 $App::Monitoring::Plugin::CheckRaid::Utils::debug = $mp->opts->debug;
 
 if ($mp->opts->debug) {
+	print "$PROGNAME $VERSION\n";
 	print "Visit <$BUGS_URL> how to report bugs\n\n",
 }
 
