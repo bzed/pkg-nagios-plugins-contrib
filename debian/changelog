@@ -1,3 +1,14 @@
+nagios-plugins-contrib (18.20170103~bpo8+1) jessie-backports; urgency=medium
+
+  * Rebuild for jessie-backports.
+
+  * [69e563a] Add gbp.conf
+  * [5fa6fd4] Update changelog for jessie backports.
+  * [e1ce662] Build jessie-backports only on travis.
+  * [8c6eb75] Fix backports handling in .travis.yml
+
+ -- Bernd Zeimetz <bzed@debian.org>  Tue, 03 Jan 2017 18:49:56 +0100
+
 nagios-plugins-contrib (18.20170103) unstable; urgency=medium
 
   [ Jan Wagner ]
