@@ -4,7 +4,7 @@ diff -Nur a/check_libs/nagios-check-libs b/check_libs/nagios-check-libs
 @@ -170,7 +170,7 @@
  	my $inode = $fields{i};
  	my $path  = $fields{n};
- 	if ($path =~ m/\.dpkg-/ || $path =~ m/\(deleted\)/ || $path =~ /path inode=/ || $fd eq 'DEL') {
+ 	if ($path =~ m/\.dpkg-/ || $path =~ m/\(deleted\)/ || $path =~ /path inode=/ || $path =~ m#/\.nfs# || $fd eq 'DEL') {
 -		$path =~ s/^\(deleted\)//; # in some cases "(deleted)" is at the beginning of the string
 +		$path =~ s/^ ?\(deleted\)//; # in some cases "(deleted)" is at the beginning of the string
  		for my $i (@{$config->{'ignorelist'}}) {

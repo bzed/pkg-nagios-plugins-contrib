@@ -1,20 +1,20 @@
 PLUGINS := $(strip $(shell find . -mindepth 2 -maxdepth 2 -name Makefile -printf '%h '))
 
-ifeq ($(wildcard '/etc/debian_version'),'/etc/debian_version')
+ifeq ($(wildcard /etc/debian_version),/etc/debian_version)
 HOST_ARCH := $(strip $(shell dpkg-architecture -q DEB_HOST_ARCH))
 else
-ifeq ($(wildcard '/usr/bin/rpm'),'/usr/bin/rpm')
+ifeq ($(wildcard /usr/bin/rpm),/usr/bin/rpm)
 HOST_ARCH := $(strip $(shell rpm --eval '%{_arch}'))
 endif
 endif
 
-ifeq ($(HOST_ARCH),$(filter $(DEB_HOST_ARCH), hurd-i386))
+ifeq ($(HOST_ARCH),$(filter $(HOST_ARCH),hurd-i386))
 	PLUGINS := $(filter-out check_memcached check_varnish,$(PLUGINS))
 endif
-ifeq ($(HOST_ARCH),$(filter $(DEB_HOST_ARCH), arm64))
+ifeq ($(HOST_ARCH),$(filter $(HOST_ARCH),arm64))
 	PLUGINS := $(filter-out check_memcached,$(PLUGINS))
 endif
-ifeq ($(HOST_ARCH),$(filter $(DEB_HOST_ARCH), m68k))
+ifeq ($(HOST_ARCH),$(filter $(HOST_ARCH),m68k))
 	PLUGINS := $(filter-out check_varnish,$(PLUGINS))
 endif
 
@@ -25,4 +25,3 @@ $(PLUGINS)::
 	$(MAKE) -C $@ $(MAKECMDGOALS)
 
 all clean install : $(PLUGINS)
-

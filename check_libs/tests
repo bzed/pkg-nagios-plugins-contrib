@@ -1,0 +1,2 @@
+Depends: lsof, libyaml-syck-perl
+Test-Command: /usr/lib/nagios/plugins/check_libs

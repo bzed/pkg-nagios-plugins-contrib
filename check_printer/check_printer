@@ -27,8 +27,8 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# $Id$
-# $HeadURL$
+# $Id: check_printer 363 2014-07-23 14:37:59Z ecrist $
+# $HeadURL: trunk/nagios/check_printer $
 
 use strict;
 use warnings;
@@ -44,9 +44,9 @@ use Data::Dumper;
 use Getopt::Long;
 use Pod::Usage;
 
-'$Revision$' =~ m/Revision: (\d+)/;
+'$Revision: 363 $' =~ m/Revision: (\d+)/;
 my $revision = $1;
-'$HeadURL$' =~ m/HeadURL: ([\w\:\/\-\.\_]+) /;
+'$HeadURL: trunk/nagios/check_printer $' =~ m/HeadURL: ([\w\:\/\-\.\_]+) /;
 my $src_url = $1;
 my $debug = 0;
 my ($host, $warning, $critical, @ignore);
@@ -60,7 +60,7 @@ GetOptions(
 	"w|warn=i"	=>	\$warning,
 	"c|crit=i"	=>	\$critical,
 	"i=i"		=>	\@ignore,
-	'V|version'	=>	sub { print '$Id$' ."\n"; exit 0 },
+	'V|version'	=>	sub { print '$Id: check_printer 363 2014-07-23 14:37:59Z ecrist $' ."\n"; exit 0 },
 	"d|debug"	=>	\$debug,
 	"man"		=>	sub { pod2usage(-exitstatus => 0, -verbose => 2); exit 0 }
 ) or pod2usage(2);
@@ -255,7 +255,7 @@ if ($debug){
 	print "please send all of the output, including your command line to\n";
 	print "ecrist\@secure-computing.net with the subject line 'check_printer DEBUG' along\n";
 	print "with a description of the problem you're experiencing.\n###################################\n";
-	print '$Id$'."\n\n";
+	print '$Id: check_printer 363 2014-07-23 14:37:59Z ecrist $'."\n\n";
 }
 if ($is_crit){
 	print "$err_str CRITICAL.  See http://$ARGV[0] | $perf_str\n";

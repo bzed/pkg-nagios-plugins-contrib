@@ -1,0 +1,2 @@
+Depends: cups, libdate-manip-perl, libmonitoring-plugin-perl | libnagios-plugin-perl, libnet-cups-perl
+Test-Command: service cups restart && /usr/lib/nagios/plugins/check_cups -H localhost

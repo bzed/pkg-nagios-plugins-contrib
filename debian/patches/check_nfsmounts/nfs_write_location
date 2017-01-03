@@ -1,8 +1,8 @@
 --- a/check_nfsmounts/check_nfsmounts
 +++ b/check_nfsmounts/check_nfsmounts
 @@ -23,6 +23,7 @@
+ }
  
- use Nagios::Plugin qw(%ERRORS);
  use Time::HiRes qw{time alarm};
 +use Sys::Hostname;
  use Getopt::Long;

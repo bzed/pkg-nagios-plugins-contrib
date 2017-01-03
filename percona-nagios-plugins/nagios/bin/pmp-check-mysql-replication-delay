@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # ########################################################################
-# This program is part of Percona Monitoring Plugins
+# This program is part of $PROJECT_NAME$
 # License: GPL License (see COPYING)
 # Authors:
 #  Baron Schwartz, Roman Vynar
@@ -26,6 +26,8 @@ STATE_DEPENDENT=4
 # ########################################################################
 main() {
    # Get options
+   OPT_ENSURE_SBM=0
+   MIN_DELAY_SET=0
    for o; do
       case "${o}" in
          -c)              shift; OPT_CRIT="${1}"; shift; ;;
@@ -33,7 +35,7 @@ main() {
          -H)              shift; OPT_HOST="${1}"; shift; ;;
          -l)              shift; OPT_USER="${1}"; shift; ;;
          -L)              shift; OPT_LOPA="${1}"; shift; ;;
-         -m)              shift; OPT_MIN="${1}"; shift; ;;
+         -m)              shift; OPT_MIN="${1}"; MIN_DELAY_SET=1; shift; ;;
          -p)              shift; OPT_PASS="${1}"; shift; ;;
          -P)              shift; OPT_PORT="${1}"; shift; ;;
          -S)              shift; OPT_SOCK="${1}"; shift; ;;
@@ -41,6 +43,9 @@ main() {
          -T)              shift; OPT_TABLE="${1}"; shift; ;;
          -u)              shift; OPT_UTC=1; ;;
          -w)              shift; OPT_WARN="${1}"; shift; ;;
+         --master-conn)   shift; OPT_MASTERCONN="${1}"; shift; ;;
+         --unconfigured)  shift; OPT_REPLNOTSET=1; ;;
+         --ensure-sbm)    shift; OPT_ENSURE_SBM=1; ;;
          --version)       grep -A2 '^=head1 VERSION' "$0" | tail -n1; exit 0 ;;
          --help)          perl -00 -ne 'm/^  Usage:/ && print' "$0"; exit 0 ;;
          -*)              echo "Unknown option ${o}.  Try --help."; exit 1; ;;
@@ -66,26 +71,25 @@ main() {
       else
          NOW_FUNC='UNIX_TIMESTAMP(UTC_TIMESTAMP)'
       fi
+      if [ "${OPT_SRVID}" == "MASTER" ]; then
+        get_slave_status $1
+        if [ "${MYSQL_CONN}" = 0 ]; then
+          OPT_SRVID=$(awk '/Master_Server_Id/{print $2}' "${TEMP_SLAVEDATA}")
+        fi
+      fi
       SQL="SELECT MAX(${NOW_FUNC} - ROUND(UNIX_TIMESTAMP(ts))) AS delay
          FROM ${OPT_TABLE} WHERE (${OPT_SRVID:-0} = 0 OR server_id = ${OPT_SRVID:-0})"
       LEVEL=$(mysql_exec "${SQL}")
       MYSQL_CONN=$?
    else
-      local TEMP=$(mktemp -t "${0##*/}.XXXXXX") || exit $?
-      trap "rm -f '${TEMP}' >/dev/null 2>&1" EXIT
-      if [ -z "$1" ]; then
-         # Leverage lock-free SHOW SLAVE STATUS NOLOCK with Percona Server
-         mysql_exec "SHOW SLAVE STATUS NOLOCK\G" > "${TEMP}" 2>/dev/null || mysql_exec "SHOW SLAVE STATUS\G" > "${TEMP}"
-         MYSQL_CONN=$?
-      else
-         # This is for testing only.
-         cat "$1" > "${TEMP}" 2>/dev/null
-         MYSQL_CONN=0
-      fi
+      get_slave_status $1
       if [ "${MYSQL_CONN}" = 0 ]; then
-         LEVEL=$(awk '/Seconds_Behind_Master/{print $2}' "${TEMP}")
+         LEVEL=$(awk '/Seconds_Behind_Master/{print $2}' "${TEMP_SLAVEDATA}")
       fi
    fi
+
+   # Check for SQL thread errors
+   LAST_SLAVE_ERRNO=$(awk '/Last_SQL_Errno/{print $2}' "${TEMP_SLAVEDATA}")
 
    # Build the common perf data output for graph trending
    PERFDATA="replication_delay=${LEVEL:-0};${OPT_WARN};${OPT_CRIT};0;"
@@ -94,7 +98,12 @@ main() {
    if [ "$MYSQL_CONN" = 0 ]; then
       NOTE="${LEVEL:-0} seconds of replication delay"
       if [ "${LEVEL:-""}" = "NULL" ]; then
-         NOTE="UNK replica is stopped"
+         test ${MIN_DELAY_SET} -eq 1 && \
+         test ${LAST_SLAVE_ERRNO} -eq 0 && \
+         test ${OPT_ENSURE_SBM} -eq 0 && \
+            NOTE="OK NULL seconds of replication delay" || NOTE="UNK replica is stopped"
+      elif [ -z "${LEVEL}" -a "${OPT_REPLNOTSET}" ]; then
+         NOTE="UNK This server is not configured as a replica."
       # pt-slave-delayed slave
       elif [ "${LEVEL:-0}" -lt "${OPT_MIN}" ]; then
          NOTE="CRIT (delayed slave) $NOTE | $PERFDATA"
@@ -115,9 +124,11 @@ main() {
 # Execute a MySQL command.
 # ########################################################################
 mysql_exec() {
-   mysql ${OPT_DEFT:+--defaults-file="${OPT_DEFT}"} ${OPT_HOST:+-h"${OPT_HOST}"} ${OPT_USER:+-u"${OPT_USER}"} \
-      ${OPT_PASS:+-p"${OPT_PASS}"} ${OPT_SOCK:+-S"${OPT_SOCK}"} ${OPT_PORT:+-P"${OPT_PORT}"} \
-      ${OPT_LOPA:+--login-path="${OPT_LOPA}"} -ss -e "$1"
+   mysql ${OPT_DEFT:+--defaults-file="${OPT_DEFT}"} \
+      ${OPT_LOPA:+--login-path="${OPT_LOPA}"} \
+      ${OPT_HOST:+-h"${OPT_HOST}"} ${OPT_PORT:+-P"${OPT_PORT}"} \
+      ${OPT_USER:+-u"${OPT_USER}"} ${OPT_PASS:+-p"${OPT_PASS}"} \
+      ${OPT_SOCK:+-S"${OPT_SOCK}"} -ss -e "$1"
 }
 
 # ########################################################################
@@ -126,6 +137,30 @@ mysql_exec() {
 # ########################################################################
 is_not_sourced() {
    [ "${0##*/}" = "pmp-check-mysql-replication-delay" ] || [ "${0##*/}" = "bash" -a "$_" = "$0" ]
+}
+
+# ########################################################################
+# Captures the "SHOW SLAVE STATUS" output into a temp file.
+# ########################################################################
+get_slave_status() {
+  TEMP_SLAVEDATA=$(mktemp -t "${0##*/}.XXXXXX") || exit $?
+  trap "rm -f '${TEMP_SLAVEDATA}' >/dev/null 2>&1" EXIT
+  if [ -z "$1" ]; then
+     if [ "${OPT_MASTERCONN}" ]; then
+        # MariaDB multi-source replication
+        mysql_exec "SHOW SLAVE '${OPT_MASTERCONN}' STATUS\G" > "${TEMP_SLAVEDATA}"
+     else
+        # Leverage lock-free SHOW SLAVE STATUS if available
+        mysql_exec "SHOW SLAVE STATUS NONBLOCKING\G" > "${TEMP_SLAVEDATA}" 2>/dev/null ||
+        mysql_exec "SHOW SLAVE STATUS NOLOCK\G" > "${TEMP_SLAVEDATA}" 2>/dev/null ||
+        mysql_exec "SHOW SLAVE STATUS\G" > "${TEMP_SLAVEDATA}"
+     fi
+     MYSQL_CONN=$?
+  else
+     # This is for testing only.
+     cat "$1" > "${TEMP_SLAVEDATA}" 2>/dev/null
+     MYSQL_CONN=0
+  fi
 }
 
 # ########################################################################
@@ -169,11 +204,16 @@ pmp-check-mysql-replication-delay - Alert when MySQL replication becomes delayed
     -p PASS         MySQL password.
     -P PORT         MySQL port.
     -S SOCKET       MySQL socket file.
-    -s SERVERID     MySQL server ID of master, if using pt-heartbeat table.
+    -s SERVERID     MySQL server ID of master, if using pt-heartbeat table. If
+                    the parameter is set to "MASTER" the plugin will lookup the
+                    server_id of the master
     -T TABLE        Heartbeat table used by pt-heartbeat.
     -u              Use UTC time to count the delay in case pt-heartbeat is run
                     with --utc option.
     -w WARN         Warning threshold; default 300.
+    --master-conn NAME  Master connection name for MariaDB multi-source replication.
+    --unconfigured  Alert when replica is not configured at all; default no.
+    --ensure-sbm    Disallow Seconds_Behind_Master to be NULL for delayed slaves when -m is used
     --help          Print help and exit.
     --version       Print version and exit.
   Options must be given as --option value, not --option=value or -Ovalue.
@@ -186,7 +226,8 @@ default it uses SHOW SLAVE STATUS, but the output of the Seconds_behind_master
 column from this command is unreliable, so it is better to use pt-heartbeat from
 Percona Toolkit instead.  Use the -T option to specify which table pt-heartbeat
 updates.  Use the -s option to specify the master's server_id to compare
-against; otherwise the plugin reports the maximum delay from any server.
+against; otherwise the plugin reports the maximum delay from any server. Use
+the -s options with the value "MASTER" to have plugin lookup the master's server_id
 
 If you want to run this check against the delayed slaves, e.g. those running
 with pt-slave-delay tool, you may want to use -m option specifying the minimal
@@ -200,9 +241,9 @@ This plugin executes the following commands against MySQL:
 
 =item *
 
-C<SHOW SLAVE STATUS NOLOCK> with Percona Server and w/o NOLOCK otherwise.
+C<SHOW SLAVE STATUS [NONBLOCKING|NOLOCK]>
 
-or 
+or
 
 =item *
 
@@ -210,11 +251,11 @@ C<SELECT> from the C<pt-heartbeat> table.
 
 =back
 
-This plugin executes no UNIX commands that may need special privileges. 
+This plugin executes no UNIX commands that may need special privileges.
 
 =head1 COPYRIGHT, LICENSE, AND WARRANTY
 
-This program is copyright 2012-2014 Baron Schwartz, 2012-2014 Percona Inc.
+This program is copyright 2012-$CURRENT_YEAR$ Baron Schwartz, 2012-$CURRENT_YEAR$ Percona Inc.
 Feedback and improvements are welcome.
 
 THIS PROGRAM IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED
@@ -229,7 +270,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 =head1 VERSION
 
-Percona Monitoring Plugins pmp-check-mysql-replication-delay 1.1.4
+$PROJECT_NAME$ pmp-check-mysql-replication-delay $VERSION$
 
 =cut
 

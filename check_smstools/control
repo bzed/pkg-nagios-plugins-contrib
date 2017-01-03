@@ -3,4 +3,5 @@ Uploaders: Bernd Zeimetz <bzed@debian.org>
 Description: plugin to check GSM Modems using smstools
  check_smstools is a plugin to monitor a GSM modem
  signal quality and registration status with smstools.
+Recommends: libmonitoring-plugin-perl | libnagios-plugin-perl
 Suggests: smstools (>= 3~)

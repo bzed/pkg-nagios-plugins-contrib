@@ -12,6 +12,6 @@
 +        print "please send all of the output to the Debian Bug Tracking System, either by \n";
 +        print "replying to an existing bug or by opening a new bug.\n";
 +
- 	print '$Id$'."\n\n";
+ 	print '$Id: check_printer 363 2014-07-23 14:37:59Z ecrist $'."\n\n";
  }
  if ($is_crit){

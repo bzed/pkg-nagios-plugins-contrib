@@ -1,0 +1,8 @@
+--- a/check_printer/check_printer
++++ b/check_printer/check_printer
+@@ -1,4 +1,5 @@
+ #!/usr/bin/perl
++# nagios: -epn
+ #
+ # Copyright (c) 2007,2011 Eric F Crist
+ #

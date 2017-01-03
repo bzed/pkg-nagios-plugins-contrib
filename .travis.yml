@@ -1,25 +1,29 @@
-language: c
+sudo: required
 
-before_install:
-    # update package list
-    - sudo apt-get update -qq
+env:
+  - TRAVIS_DEBIAN_DISTRIBUTION=wheezy TRAVIS_DEBIAN_BACKPORTS=true
 
-install:
-    # install implicit build dependencies
-    - sudo apt-get install -qq --no-install-recommends build-essential fakeroot devscripts equivs
-    # install build dependencies
-    - sudo mk-build-deps --install debian/control
-    - sudo apt-get install -qq --no-install-recommends automake1.9
-    # install
-    - sudo add-apt-repository -y ppa:kalon33/gamesgiroll && sudo apt-get update && sudo apt-get install --only-upgrade autoconf
+services:
+  - docker
+
+before_script:
+  # fetch all tags (not done due travis cloning with depth=50)
+  - git fetch --tags
 
 script:
-    # build the debian package
-    - dpkg-buildpackage -uc -us
+  # build the debian package
+  - wget -O- http://travis.debian.net/script.sh | sh -
 
 after_script:
-    # run lintian after build
-    - sudo apt-get install -qq --no-install-recommends lintian
-    - lintian --info --display-info --display-experimental --pedantic --show-overrides ../*.deb && lintian --info --display-info --display-experimental --pedantic --show-overrides ../*.dsc
+  # run lintian after build
+  - sudo add-apt-repository -y ppa:waja/trusty-backports
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq --no-install-recommends lintian
+  - lintian --info --display-info --display-experimental --pedantic --show-overrides ../*.deb && lintian --info --display-info --display-experimental --pedantic --show-overrides ../*.dsc
+
 #notifications:
 #  email: false
+
+branches:
+  except:
+    - /^debian\/\d/

@@ -1,6 +1,8 @@
+diff --git a/check_printer/check_printer b/check_printer/check_printer
+index 6d801de..da8e099 100644
 --- a/check_printer/check_printer
 +++ b/check_printer/check_printer
-@@ -33,12 +33,7 @@
+@@ -33,11 +33,27 @@
  use strict;
  use warnings;
  
@@ -9,8 +11,28 @@
 -	use lib "/usr/local/libexec/nagios";
 -} elsif ($OS =~ m/Linux/){
 -	use lib "/usr/local/nagios/libexec";
--}
-+use Nagios::Plugin qw(%ERRORS);
++sub load_module {
++    my @names = @_;
++    my $module;
++    for my $name (@names) {
++        my $file = $name;
++        # requires need either a bare word or a file name
++        $file =~ s{::}{/}gsxm;
++        $file .= '.pm';
++        eval {
++            require $file;
++            $name->import(qw(%ERRORS));
++            $module = $name;
++		};
++		last if $module;
++    }
++    return $module;
++}
++
++my $plugin_module;
++BEGIN {
++	$plugin_module = load_module( 'Monitoring::Plugin', 'Nagios::Plugin' );
+ }
  
  use Getopt::Long;
  use Pod::Usage;

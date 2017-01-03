@@ -1,5 +1,5 @@
 Uploaders: Bernd Zeimetz <bzed@debian.org>
-Recommends: libnagios-plugin-perl (>= 0.31), libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-smtp-ssl-perl, libnet-ssleay-perl, libnet-smtpauth-perl
+Recommends: libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-smtp-ssl-perl, libnet-ssleay-perl, libnet-smtpauth-perl
 Suggests: perl-doc
 Version: 0.7.1b
 Homepage: http://buhacoff.net/software/check_email_delivery/

@@ -1,0 +1,48 @@
+diff --git a/check_cups/check_cups b/check_cups/check_cups
+index b202fbc..c376b1d 100644
+--- a/check_cups/check_cups
++++ b/check_cups/check_cups
+@@ -38,13 +38,33 @@ use warnings;
+ # http://search.cpan.org/~rgarcia/perl-5.6.2/pod/perllexwarn.pod
+ no warnings qw( redefine prototype );
+ 
++sub load_module {
++    my @names = @_;
++    my $module;
++    for my $name (@names) {
++        my $file = $name;
++        # requires need either a bare word or a file name
++        $file =~ s{::}{/}gsxm;
++        $file .= '.pm';
++        eval {
++            require $file;
++            $name->import();
++            $module = $name;
++		};
++		last if $module;
++    }
++    return $module;
++}
++
++my $plugin_module;
++
+ BEGIN {
+ 
+     # use Opsview libs
+     use lib '/usr/local/nagios/perl/lib';
+     use lib '/usr/local/nagios/lib';
+ 
+-    use Nagios::Plugin;
++    $plugin_module = load_module( 'Monitoring::Plugin', 'Nagios::Plugin' );
+ 
+     use Data::Dumper;
+ 
+@@ -94,7 +114,7 @@ General Public Licence (see http://www.fsf.org/licensing/licenses/gpl.txt).
+ This plugin was written at The Harvard-MIT Data Center
+ (http://www.hmdc.harvard.edu) by Steve Huff (<shuff\@hmdc.harvard.edu>).
+ LICENSE
+-my( $plugin ) = Nagios::Plugin->new( 
++my( $plugin ) = $plugin_module->new(
+                                     shortname   => 'check_cups',
+                                     usage       => $usagemsg,
+                                     version     => '0.2',

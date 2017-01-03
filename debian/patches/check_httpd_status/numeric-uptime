@@ -1,0 +1,13 @@
+diff --git a/check_httpd_status/check_httpd_status b/check_httpd_status/check_httpd_status
+index bc5e809..687870a 100644
+--- a/check_httpd_status/check_httpd_status
++++ b/check_httpd_status/check_httpd_status
+@@ -235,7 +235,7 @@ logD("Web content :\n----------------------------\n".$webcontent."\n------------
+ my $patternFound = 0;
+ 
+ my $Uptime = 0;
+-if ( $webcontent =~ m/Uptime: (.*?)\n/) {
++if ( $webcontent =~ m/Uptime: (\d*?)\n/) {
+ 	$Uptime = $1;
+ 	$patternFound++;
+ }

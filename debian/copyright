@@ -421,7 +421,7 @@ check_ldap_root:
 check_libs:
 
 The plugin was downloaded from: 
-https://www.palfrader.org/gitweb/?p=tools/monitoring.git
+https://gitweb.noreply.org/tools/monitoring.git/
 
   
   check_libs:
@@ -513,7 +513,7 @@ http://git.op5.org/gitweb?p=system-addons/plugins/op5/check_libvirt.git;a=summar
 check_lm_sensors:
 
 The plugin was downloaded from: 
-https://trac.id.ethz.ch/projects/nagios_plugins/wiki/check_lm_sensors
+https://github.com/matteocorti/check_lm_sensors
 
   Copyright (c) 2007, ETH Zurich.
   
@@ -687,7 +687,7 @@ http://exchange.nagios.org/directory/Plugins/Operating-Systems/Linux/check_nfsmo
 check_printer:
 
 The plugin was downloaded from: 
-https://www.secure-computing.net/svn/trunk/nagios/
+https://www.secure-computing.net/trac/browser/SCN%20Open%20Source/trunk/nagios/
 
   Copyright (c) 2007,2011 Eric F Crist
   
@@ -741,7 +741,7 @@ https://github.com/glensc/nagios-plugin-check_raid
 check_rbl:
 
 The plugin was downloaded from: 
-https://svn.id.ethz.ch/projects/nagios_plugins/wiki/check_rbl
+https://github.com/matteocorti/check_rbl
 
   Copyright (c) 2009 ETH Zurich
   Copyright (c) 2010 Elan Ruusamae
@@ -784,7 +784,8 @@ https://github.com/willixix/WL-NagiosPlugins
   
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
-  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+  MA 02110-1301 USA.
   
 
 ------------------------------------------------------------------------------
@@ -865,7 +866,7 @@ https://raw.github.com/mludvig/nagios-plugins/master/check_snmp_time.pl
 check_ssl_cert:
 
 The plugin was downloaded from: 
-https://trac.id.ethz.ch/projects/nagios_plugins/wiki/check_ssl_cert
+https://github.com/matteocorti/check_ssl_cert
 
   Copyright (c) 2007-2011 ETH Zurich
   

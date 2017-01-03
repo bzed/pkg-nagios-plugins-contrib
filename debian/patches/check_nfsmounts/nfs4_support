@@ -1,0 +1,11 @@
+--- a/check_nfsmounts/check_nfsmounts
++++ b/check_nfsmounts/check_nfsmounts
+@@ -101,7 +101,7 @@
+ my @dirs=();
+ my %mountmodes=();
+ while(my $line=<MTAB>) {
+-  if($line =~ /^[^ ]+ [^ ]+ nfs /) {
++  if($line =~ /^[^ ]+ [^ ]+ nfs4? /) {
+     my @fields=split(/\s+/,$line);
+     my $mountpoint=$fields[1];
+     push(@dirs,$mountpoint);

@@ -1,0 +1,35 @@
+#!/bin/bash
+
+VARNISH_PORT=$(( ($RANDOM % 60000) + 1024 ))
+API_PORT=$(( ($RANDOM % 60000) + 1024 ))
+
+systemctl stop varnish.service 2>/dev/null
+
+cat > /etc/systemd/system/varnish.service << __EOF__
+
+[Unit]
+Description=Varnish HTTP accelerator
+Documentation=https://www.varnish-cache.org/docs/4.1/ man:varnishd
+
+[Service]
+Type=simple
+LimitNOFILE=131072
+LimitMEMLOCK=82000
+ExecStart=/usr/sbin/varnishd -j unix,user=vcache -F -a localhost:${VARNISH_PORT} -T localhost:${API_PORT} -f /etc/varnish/default.vcl -S /etc/varnish/secret -s malloc,50m
+ExecReload=/usr/share/varnish/reload-vcl
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+
+[Install]
+WantedBy=multi-user.target
+
+__EOF__
+
+systemctl daemon-reload 2>/dev/null
+systemctl start varnish.service 2>/dev/null
+
+/usr/lib/nagios/plugins/check_varnish -p MAIN.pools -w 1: -c 1:
+exit $?
+
