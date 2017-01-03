@@ -43,8 +43,13 @@
 #include <locale.h>
 #include <assert.h>
 
+#if defined(HAVE_VARNISHAPI_4) || defined(HAVE_VARNISHAPI_4_1)
+#include <vapi/vsc.h>
+#include <vapi/vsm.h>
+#elif defined(HAVE_VARNISHAPI_3)
 #include "vsc.h"
 #include "varnishapi.h"
+#endif
 
 static int verbose = 0;
 
@@ -177,6 +182,26 @@ check_stats_cb(void *priv, const struct VSC_point * const pt)
 	struct stat_priv *p;
 	char tmp[1024];
 
+	if (pt == NULL)
+		return(0);
+
+#if defined(HAVE_VARNISHAPI_4_1) || defined(HAVE_VARNISHAPI_4)
+	assert(sizeof(tmp) > (strlen(pt->section->fantom->type) + 1 +
+			      strlen(pt->section->fantom->ident) + 1 +
+			      strlen(pt->desc->name) + 1));
+	snprintf(tmp, sizeof(tmp), "%s%s%s%s%s",
+		(pt->section->fantom->type[0] == 0 ? "" : pt->section->fantom->type),
+		(pt->section->fantom->type[0] == 0 ? "" : "."),
+		(pt->section->fantom->ident[0] == 0 ? "" : pt->section->fantom->ident),
+		(pt->section->fantom->ident[0] == 0 ? "" : "."),
+		 pt->desc->name);
+	p = priv;
+#endif
+#if defined(HAVE_VARNISHAPI_4_1)
+	assert(!strcmp(pt->desc->ctype, "uint64_t"));
+#elif defined(HAVE_VARNISHAPI_4)
+	assert(!strcmp(pt->desc->fmt, "uint64_t"));
+#elif defined(HAVE_VARNISHAPI_3)
 	assert(sizeof(tmp) > (strlen(pt->class) + 1 +
 			      strlen(pt->ident) + 1 +
 			      strlen(pt->name) + 1));
@@ -188,15 +213,20 @@ check_stats_cb(void *priv, const struct VSC_point * const pt)
 		 pt->name);
 	p = priv;
 	assert(!strcmp(pt->fmt, "uint64_t"));
+#endif
 	if (strcmp(tmp, p->param) == 0) {
 		p->found = 1;
+#if defined(HAVE_VARNISHAPI_4) || defined(HAVE_VARNISHAPI_4_1)
+		p->info = pt->desc->sdesc;
+#elif defined(HAVE_VARNISHAPI_3)
 		p->info = pt->desc;
+#endif
 		p->value = *(const volatile uint64_t*)pt->ptr;
 	} else if (strcmp(p->param, "ratio") == 0) {
-		if (strcmp(tmp, "cache_hit") == 0) {
+		if (strcmp(tmp, "cache_hit") == 0 || strcmp(tmp, "MAIN.cache_hit") == 0) {
 			p->found = 1;
 			p->cache_hit = *(const volatile uint64_t*)pt->ptr;
-		} else if (strcmp(tmp, "cache_miss") == 0) {
+		} else if (strcmp(tmp, "cache_miss") == 0 || strcmp(tmp, "MAIN.cache_miss") == 0) {
 			p->cache_miss = *(const volatile uint64_t*)pt->ptr;
 		}
 	}
@@ -215,7 +245,11 @@ check_stats(struct VSM_data *vd, char *param)
 	priv.found = 0;
 	priv.param = param;
 
+#if defined(HAVE_VARNISHAPI_4) || defined(HAVE_VARNISHAPI_4_1)
+	(void)VSC_Iter(vd, NULL, check_stats_cb, &priv);
+#elif defined(HAVE_VARNISHAPI_3)
 	(void)VSC_Iter(vd, check_stats_cb, &priv);
+#endif
 	if (strcmp(param, "ratio") == 0) {
 		intmax_t total = priv.cache_hit + priv.cache_miss;
 		priv.value = total ? (100 * priv.cache_hit / total) : 0;
@@ -249,13 +283,21 @@ help(void)
 	    "-w [@][lo:]hi   Set warning threshold\n"
 	    "\n"
 	    "All items reported by varnishstat(1) are available - use the\n"
-	    "identifier listed in the left column by 'varnishstat -l'.  In\n"
-	    "addition, the following parameters are available:\n"
+	    "identifier listed in the left column by 'varnishstat -l'.\n"
 	    "\n"
-	    "uptime  How long the cache has been running (in seconds)\n"
-	    "ratio   The cache hit ratio expressed as a percentage of hits to\n"
-	    "        hits + misses.  Default thresholds are 95 and 90.\n"
-	    "usage   Cache file usage as a percentage of the total cache space.\n"
+	    "Examples for Varnish 3.x:\n"
+	    "\n"
+	    "uptime          How long the cache has been running (in seconds)\n"
+	    "ratio           The cache hit ratio expressed as a percentage of hits to\n"
+	    "                hits + misses.  Default thresholds are 95 and 90.\n"
+	    "usage           Cache file usage as a percentage of the total cache space.\n"
+	    "\n"
+	    "Examples for Varnish 4.x:\n"
+	    "\n"
+	    "ratio           The cache hit ratio expressed as a percentage of hits to\n"
+	    "                hits + misses.  Default thresholds are 95 and 90.\n"
+	    "MAIN.uptime     How long the cache has been running (in seconds).\n"
+	    "MAIN.n_purges   Number of purge operations executed.\n"
 	);
 	exit(0);
 }
@@ -280,7 +322,9 @@ main(int argc, char **argv)
 	setlocale(LC_ALL, "");
 
 	vd = VSM_New();
+#if defined(HAVE_VARNISHAPI_3)
 	VSC_Setup(vd);
+#endif
 
 	while ((opt = getopt(argc, argv, VSC_ARGS "c:hn:p:vw:")) != -1) {
 		switch (opt) {
@@ -311,8 +355,13 @@ main(int argc, char **argv)
 		}
 	}
 
+#if defined(HAVE_VARNISHAPI_4) || defined(HAVE_VARNISHAPI_4_1)
+	if (VSM_Open(vd))
+		exit(1);
+#elif defined(HAVE_VARNISHAPI_3)
 	if (VSC_Open(vd, 1))
 		exit(1);
+#endif
 
 	/* Default: if no param specified, check hit ratio.  If no warning
 	 * and critical values are specified either, set these to default.

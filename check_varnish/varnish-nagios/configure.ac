@@ -21,7 +21,17 @@ AC_PROG_LIBTOOL
 AC_PROG_MAKE_SET
 
 # Checks for libraries.
-PKG_CHECK_MODULES([VARNISHAPI], [varnishapi])
+PKG_CHECK_MODULES([VARNISHAPI], [varnishapi >= 4.1],
+  [AC_DEFINE([HAVE_VARNISHAPI_4_1], [1], [Use VARNISHAPI v4.1])],
+  [PKG_CHECK_MODULES([VARNISHAPI], [varnishapi >= 4],
+    [AC_DEFINE([HAVE_VARNISHAPI_4], [1], [Use VARNISHAPI v4])],
+    [PKG_CHECK_MODULES([VARNISHAPI], [varnishapi >= 3],
+      [AC_DEFINE([HAVE_VARNISHAPI_3], [1], [Use VARNISHAPI v3])],
+      [AC_MSG_ERROR([Could not find neither varnishapi v4 nor v3.])])
+    ]
+  )
+  ]
+)
 
 # Checks for header files.
 AC_HEADER_STDC
@@ -33,6 +43,7 @@ AC_C_CONST
 
 # Checks for library functions.
 AC_TYPE_SIZE_T
+AC_SEARCH_LIBS([pow],[m],[],[AC_MSG_ERROR([unable to find libm])])
 
 # Now that we're done using the compiler to look for functions and
 # libraries, set CFLAGS to what we want them to be for our own code
