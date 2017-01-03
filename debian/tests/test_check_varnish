@@ -3,7 +3,7 @@
 VARNISH_PORT=$(( ($RANDOM % 60000) + 1024 ))
 API_PORT=$(( ($RANDOM % 60000) + 1024 ))
 
-systemctl stop varnish.service
+systemctl stop varnish.service 2>/dev/null
 
 cat > /etc/systemd/system/varnish.service << __EOF__
 
@@ -27,8 +27,8 @@ WantedBy=multi-user.target
 
 __EOF__
 
-systemctl daemon-reload
-systemctl start varnish.service
+systemctl daemon-reload 2>/dev/null
+systemctl start varnish.service 2>/dev/null
 
 /usr/lib/nagios/plugins/check_varnish -p MAIN.pools -w 1: -c 1:
 exit $?
