@@ -8,7 +8,7 @@ Build-Depends: debhelper (>= 8.0.0),
                python,
                python-debian,
                quilt (>= 0.46-7),
-               autotools-dev, flex, libmemcached-dev [!hurd-i386]
+               autotools-dev, flex, libmemcached-dev [!hurd-i386], libvarnishapi-dev [!hurd-i386 !m68k], pkg-config
 Standards-Version: 3.9.8
 Vcs-Git: https://anonscm.debian.org/git/pkg-nagios/pkg-nagios-plugins-contrib.git
 Vcs-Browser: https://anonscm.debian.org/cgit/pkg-nagios/pkg-nagios-plugins-contrib.git
@@ -186,6 +186,7 @@ Description: Plugins for nagios compatible monitoring systems
      the wrapper return value, that is, result will be OK only if all checks
      returned OK.  Compatible with any plugin with standard command line options
      -6/-4.
+   * check_varnish (258c486): plugin to monitor varnish instances
    * check_webinject (1.80): plugin for testing web services
      It uses the WebInject Perl module for automated testing of
      web applications and web services. It can be used to check
