@@ -1,7 +1,7 @@
 sudo: required
 
 env:
-  - TRAVIS_DEBIAN_DISTRIBUTION=jessie-backports   TRAVIS_DEBIAN_MIRROR="http://httpredir.debian.org/debian/"
+  - TRAVIS_DEBIAN_DISTRIBUTION=jessie TRAVIS_DEBIAN_BACKPORTS=true   TRAVIS_DEBIAN_MIRROR="http://httpredir.debian.org/debian/"
 
 services:
   - docker
