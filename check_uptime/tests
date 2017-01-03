@@ -1,0 +1,2 @@
+Depends: libmonitoring-plugin-perl | libnagios-plugin-perl
+Test-Command: /usr/lib/nagios/plugins/check_uptime -f

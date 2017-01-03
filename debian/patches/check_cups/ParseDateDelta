@@ -1,0 +1,11 @@
+--- a/check_cups/check_cups
++++ b/check_cups/check_cups
+@@ -395,7 +395,7 @@
+ 
+         my( $age, $jobs ) = ( $warning{$queue}->{age}, $warning{$queue}->{jobs} );
+ 
+-        my( $prettyage ) = prettyDelta( parseDateDelta( "$age minutes" ) );
++        my( $prettyage ) = prettyDelta( ParseDateDelta( "$age minutes" ) );
+ 
+         my( @messages );
+ 

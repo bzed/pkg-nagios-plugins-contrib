@@ -1,0 +1,96 @@
+check_lm_sensors is a Nagios plugin to monitor the values of on board
+sensors and hard disk temperatures on Linux systems
+
+------------------------------------------------------------------------------
+usage:
+
+  -?, --help      help
+
+  -l, --low       specifies a check for a sensor value which is too low.
+                  Example:
+                    --low fan1=2000,1000
+                  will give a warning if the value of the fan1 sensor drops
+                  below 2000 RPMs and a critical status if it drops below
+                  1000 RPMs
+
+  -h, --high      specifies a check for a sensor value which is too high.
+                  Example:
+                    --high temp1=50,60
+                  will give a warning if the value of the temp1 sensor reaches
+                  50 degrees and a critical status if it reaches 60 degrees
+
+  -r, --range     specifies a check for a sensor value which should stay
+                  in a given range.
+                  Example:
+                    --range v1=1,2,12
+                  will give a warning if the value of the sensor gets outside
+                  the 11-13 range (12+-1) and a critical status if the value is
+                  outside the 10-14 range (12+-2)
+
+  --rename        renames a sensor in the performance output (useful if you
+                  want to have common names for similar sensors across different
+                  machines)
+                  Example:
+                    --rename cputemp=temp1
+
+  --list          list all available sensors
+
+  --nosensors     disable checks on check lm_sensors
+
+  --nodrives      disable checks on drive temperatures
+
+  -d, --drives    enable checks on drive temperature
+
+  --hddtemp_bin   manually specifies the location of the hddtemp binary
+
+  --sensors_bin   manually specified the location of the sensors binary
+
+  -v, --verbose   verbose output
+
+  --version       prints $prog_name's version and exits
+
+------------------------------------------------------------------------------
+Values
+(see also Documentation/hwmon/sysfs-interface in the kernel documentation)
+
+lm-sensors supports the following sensors
+
+* 'in'     voltage channel in millivolt
+* 'cpu'    CPU core reference voltage in millivolt
+* 'fan'    fan speed in revolutions per minute (RPM)
+* 'pwm'    pulse width modulation (255 is 100%)
+* 'temp'   temperature in millidegree Celsius (or millivolt)
+* 'curr'   current in milliampere
+* 'power'  in microWatt
+* 'energy' in microJoule
+
+
+------------------------------------------------------------------------------
+Example:
+
+$ check_lm_sensors --high it8718_temp1=20000,30000 --range it8718_in0=100,200,1200 -v
+hddtemp found at /usr/bin/hddtemp
+Looking for drives in /proc/partitions
+found temperature for drive sda (sda = 47)
+warning: temperature for /dev/sdd not available
+warning: temperature for /dev/sde not available
+found sensor k8temp_temp1 (11000)
+found sensor k8temp_temp2 (7000)
+found sensor k8temp_temp3 (5000)
+found sensor k8temp_temp4 (2000)
+found sensor it8718_in0 (1152)
+found sensor it8718_in1 (0)
+found sensor it8718_in2 (3392)
+found sensor it8718_in3 (3008)
+found sensor it8718_in4 (3024)
+found sensor it8718_in5 (3200)
+found sensor it8718_in6 (3696)
+found sensor it8718_in7 (4016)
+found sensor it8718_in8 (3360)
+found sensor it8718_temp1 (13000)
+found sensor it8718_temp2 (32000)
+found sensor it8718_temp3 (58000)
+found sensor it8718_fan1 (2288)
+found sensor it8718_fan2 (0)
+found sensor it8718_fan3 (0)
+LM_SENSORS OK - it8718_temp1=13000 it8718_in0=1152|it8718_temp1=13000;20000;30000;; it8718_in0=1152;100;200;;

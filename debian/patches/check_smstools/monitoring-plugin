@@ -1,0 +1,46 @@
+diff --git a/check_smstools/bin/check_smstools b/check_smstools/bin/check_smstools
+index a7a0336..707d289 100755
+--- a/check_smstools/bin/check_smstools
++++ b/check_smstools/bin/check_smstools
+@@ -13,9 +13,31 @@
+ 
+ use strict;
+ use warnings;
+-use Nagios::Plugin;
+ use POSIX;
+ 
++sub load_module {
++    my @names = @_;
++    my $module;
++    for my $name (@names) {
++        my $file = $name;
++        # requires need either a bare word or a file name
++        $file =~ s{::}{/}gsxm;
++        $file .= '.pm';
++        eval {
++            require $file;
++            $name->import();
++            $module = $name;
++		};
++		last if $module;
++    }
++    return $module;
++}
++
++my $plugin_module;
++BEGIN {
++	$plugin_module = load_module( 'Monitoring::Plugin', 'Nagios::Plugin' );
++}
++
+ # Define regular expressions used to find the correct lines from
+ # the status file
+ my $signal_command = 'AT\+CSQ';
+@@ -45,7 +67,7 @@ my $timestamp;
+ my $np;
+ 
+ sub init_plugin {
+-	$np = Nagios::Plugin->new(usage => "usage: %s");
++	$np = $plugin_module->new(usage => "usage: %s");
+ 
+ 	$np->add_arg(
+ 		spec => 'warning|w=f',

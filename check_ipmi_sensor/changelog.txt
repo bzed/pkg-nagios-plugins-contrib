@@ -2,6 +2,24 @@
 Changelog for check_ipmi_sensor, a Nagios/Icinga plugin to check IPMI sensors
 ################################################################################
 
+Version 3.12 20161005
+  * New Options added (closes issue #6)
+    Option -xT to exclude monitored sensor types
+    Option -xST to exclude SEL entries of specific sensor types
+  * Improved error message when a monitored server seems to be powered off
+  * More comprehensible output for warnings caused by SEL entries
+    (closes issue #7)
+
+Version 3.11 20160524
+  * Skip entities which are absent if '--noentityabsent' is present
+  * Per default monitor all SEL sensor types 
+    Add command line flag to specify entry types for SEL
+
+Version 3.10 20151020
+  * Only monitor specific sensor types from the system event log (SEL).
+    The check with ipmi-sel is limited to types of Memory and Processor for
+    monitoring.
+
 Version 3.9 20150624
   * Add exclude files for sensors - use name and type in a file to exclude not
     needed sensors (-xx for normal sensors, -sx for SEL entries).

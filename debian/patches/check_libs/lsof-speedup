@@ -6,7 +6,7 @@
  
 -my $LSOF = '/usr/bin/lsof -F0';
 +my $LSOF = '/usr/bin/lsof -nPF0 -a +L1';
- my $VERSION = '0.2012042101';
+ my $VERSION = '0.2015012901';
  
  # nagios exit codes
 @@ -141,12 +141,12 @@ sub inVserver() {

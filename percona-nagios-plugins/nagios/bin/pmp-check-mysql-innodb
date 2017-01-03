@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # ########################################################################
-# This program is part of Percona Monitoring Plugins
+# This program is part of $PROJECT_NAME$
 # License: GPL License (see COPYING)
 # Authors:
 #  Baron Schwartz, Roman Vynar
@@ -103,6 +103,7 @@ main() {
          OPT_WARN=${OPT_WARN:-60}
          OPT_CRIT=${OPT_CRIT:-600}
          OUTPUT=$(mysql_exec "
+            SET @@time_zone='SYSTEM';
             SELECT   UNIX_TIMESTAMP() - UNIX_TIMESTAMP(t.trx_started),
                      p.id,
                      CONCAT(p.user, '@', p.host)
@@ -163,9 +164,11 @@ main() {
 # Execute a MySQL command.
 # ########################################################################
 mysql_exec() {
-   mysql ${OPT_DEFT:+--defaults-file="${OPT_DEFT}"} ${OPT_HOST:+-h"${OPT_HOST}"} ${OPT_USER:+-u"${OPT_USER}"} \
-      ${OPT_PASS:+-p"${OPT_PASS}"} ${OPT_SOCK:+-S"${OPT_SOCK}"} ${OPT_PORT:+-P"${OPT_PORT}"} \
-      ${OPT_LOPA:+--login-path="${OPT_LOPA}"} -ss -e "$1"
+   mysql ${OPT_DEFT:+--defaults-file="${OPT_DEFT}"} \
+      ${OPT_LOPA:+--login-path="${OPT_LOPA}"} \
+      ${OPT_HOST:+-h"${OPT_HOST}"} ${OPT_PORT:+-P"${OPT_PORT}"} \
+      ${OPT_USER:+-u"${OPT_USER}"} ${OPT_PASS:+-p"${OPT_PASS}"} \
+      ${OPT_SOCK:+-S"${OPT_SOCK}"} -ss -e "$1"
 }
 
 # ########################################################################
@@ -339,11 +342,11 @@ C<SELECT> against the C<INFORMATION_SCHEMA> InnoDB transaction and lock tables.
 
 =back
 
-This plugin executes no UNIX commands that may need special privileges. 
+This plugin executes no UNIX commands that may need special privileges.
 
 =head1 COPYRIGHT, LICENSE, AND WARRANTY
 
-This program is copyright 2012-2014 Baron Schwartz, 2012-2014 Percona Inc.
+This program is copyright 2012-$CURRENT_YEAR$ Baron Schwartz, 2012-$CURRENT_YEAR$ Percona Inc.
 Feedback and improvements are welcome.
 
 THIS PROGRAM IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED
@@ -358,7 +361,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 =head1 VERSION
 
-Percona Monitoring Plugins pmp-check-mysql-innodb 1.1.4
+$PROJECT_NAME$ pmp-check-mysql-innodb $VERSION$
 
 =cut
 

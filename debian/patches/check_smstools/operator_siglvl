@@ -1,0 +1,32 @@
+From 75a6f801a18961b1abd169046a105813da6c3424 Mon Sep 17 00:00:00 2001
+From: ZyanKLee <zyanklee@gmail.com>
+Date: Thu, 28 Apr 2016 12:51:42 +0200
+Subject: [PATCH] operator string, siglvl
+
+operator string has a " at the end, too - removing it
+siglvl at our modem is 31.99 - but still works
+---
+ check_smstools/bin/check_smstools | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/check_smstools/bin/check_smstools b/check_smstools/bin/check_smstools
+index a7a0336..a0adcf6 100755
+--- a/check_smstools/bin/check_smstools
++++ b/check_smstools/bin/check_smstools
+@@ -169,6 +169,7 @@ sub process_statusfile {
+ 			if ($result{'cmd'} =~ /$operator_command/) {
+ 				$operator = $result{'answer'};
+ 				$operator =~ s/0,0,"//g;
++				$operator =~ s/"$//g;
+ 			}
+ 		}
+ 		# No need to parse the rest of the file, if signal
+@@ -196,7 +197,7 @@ sub check_signal {
+ 		$np->nagios_die("Unable to determine the modem signal strength.");
+ 	}
+ 
+-	if (($siglvl < 0) or ($siglvl > 31)) {
++	if (($siglvl < 0) or ($siglvl > 32)) {
+ 		$np->nagios_die("Unable to determine the modem signal strength.");
+ 	}
+ 

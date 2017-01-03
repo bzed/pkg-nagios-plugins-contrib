@@ -8,7 +8,7 @@ Description: plugins from the Debian System Administrators
    delegation
  * check_entropy: check if there is enough entropy available.
  * check_packages: replacement for check_apt; needs a cronjob
-   to update the apt database regularily
+   to update the apt database regularly
  * check_running_kernel: check if a system was rebooted after
    a kernel upgrade
  * check_soas: check SOA records

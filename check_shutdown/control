@@ -1,6 +1,6 @@
 Uploaders: Petter Reinholdtsen <pere@hungry.com>
-Description: plugin to check LDAP server response
- Make sure the LDAP server is able to respond by searching for the
- root DSE.
+Description: plugin to detect shutdown in progress
+ Report when a reboot is in progress.  This is useful to detect if
+ reboot-when-idle or similar have been used on a server.
 Recommends: procps
-Version: ?
+Version: 0.0.20110203

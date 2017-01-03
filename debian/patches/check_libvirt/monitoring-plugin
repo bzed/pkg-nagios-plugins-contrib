@@ -1,0 +1,48 @@
+diff --git a/check_libvirt/check_libvirt b/check_libvirt/check_libvirt
+index 2029c9e..618d1ac 100755
+--- a/check_libvirt/check_libvirt
++++ b/check_libvirt/check_libvirt
+@@ -27,11 +27,33 @@
+ use strict;
+ use warnings;
+ use vars qw($PROGNAME $VERSION $output $result);
+-use Nagios::Plugin;
+ use File::Basename;
+ use Sys::Virt;
+ use XML::Simple;
+ 
++sub load_module {
++    my @names = @_;
++    my $module;
++    for my $name (@names) {
++        my $file = $name;
++        # requires need either a bare word or a file name
++        $file =~ s{::}{/}gsxm;
++        $file .= '.pm';
++        eval {
++            require $file;
++            $name->import();
++            $module = $name;
++		};
++		last if $module;
++    }
++    return $module;
++}
++
++my $plugin_module;
++BEGIN {
++	$plugin_module = load_module( 'Monitoring::Plugin', 'Nagios::Plugin' );
++}
++
+ $PROGNAME = basename($0);
+ $VERSION = '0.1.0';
+ my $spooldir="/opt/monitor/var/check_libvirt";
+@@ -41,7 +63,7 @@ if (!-d $spooldir)
+ 	mkdir($spooldir);
+ }
+ 
+-my $np = Nagios::Plugin->new(
++my $np = $plugin_module->new(
+   usage => "Usage: %s -H <hosturl> [ -N <vmname> ]\n"
+     . "    [-u <user> -p <pass>]\n"
+     . "    -l <command> [ -s <subcommand> ]\n"

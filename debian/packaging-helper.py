@@ -16,6 +16,10 @@ ALLOWED_FIELDS = ('Suggests',
                   'Description',
                   'Build-Depends')
 
+ALLOWED_TESTS_FIELDS = ('Depends',
+                  'Tests',
+                  'Test-Command')
+
 # find all plugins
 __basedir__ = os.path.realpath(os.path.dirname(sys.argv[0]) + os.path.sep + '..')
 __plugins__ = [p for p in os.listdir(__basedir__) 
@@ -35,6 +39,18 @@ def __get_control_data__():
             if key not in ALLOWED_FIELDS:
                 raise Exception("Unknown control field in plugin %s: %s" %(data[0],key))
         yield data
+
+def __get_tests_data__():
+    # returns (plug, parsed control field data)
+    # We look at the first paragraph only!
+    for plugin in __plugins__:
+        tests_file = __basedir__ + os.path.sep+ plugin + os.path.sep + 'tests'
+        if os.path.exists(tests_file):
+            data=(plugin, [x for x in deb822.Packages.iter_paragraphs(file(tests_file))][0])
+            for key in data[1].iterkeys():
+                if key not in ALLOWED_TESTS_FIELDS:
+                    raise Exception("Unknown tests/control field in plugin %s: %s" %(data[0],key))
+            yield data
 
 def generate_debian_readme_plugins():
     plugins_depends={}
@@ -146,6 +162,13 @@ def update_control():
         f.write(control_in)
 
 
+def update_tests():
+    with open(__basedir__ + os.path.sep + 'debian' + os.path.sep + 'tests' + os.path.sep + 'control', 'w') as f:
+        for plugin, _control in __get_tests_data__():
+            if 'Depends' in _control and '@' not in _control['Depends']:
+                _control['Depends'] += ', @'
+            f.write(str(_control))
+            f.write("\n")
 
 
 def update_copyright():
@@ -263,6 +286,14 @@ if __name__ == '__main__':
     )
 
     parser.add_option(
+        '--tests',
+        dest='tests',
+        action='store_true',
+        default=False,
+        help='Update debian/tests/control'
+    )
+
+    parser.add_option(
         '--watch',
         dest='watch',
         action='store_true',
@@ -278,12 +309,15 @@ if __name__ == '__main__':
     )
     (options, args) = parser.parse_args()
 
-    if not (options.control or options.copyright or options.watch or options.generate_readme):
+    if not (options.control or options.copyright or options.watch or options.tests or options.generate_readme):
         parser.print_help()
         sys.exit(1)
 
     if options.control:
         update_control()
+
+    if options.tests:
+        update_tests()
 
     if options.copyright:
         update_copyright()

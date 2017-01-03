@@ -1,0 +1,50 @@
+diff --git a/check_haproxy/check_haproxy b/check_haproxy/check_haproxy
+index 1da4240..875ab1f 100644
+--- a/check_haproxy/check_haproxy
++++ b/check_haproxy/check_haproxy
+@@ -30,7 +30,28 @@ use POSIX qw(setlocale);
+ use Time::HiRes qw(time);			# get microtime
+ use POSIX qw(mktime);
+ 
+-use Nagios::Plugin ;
++sub load_module {
++    my @names = @_;
++    my $module;
++    for my $name (@names) {
++        my $file = $name;
++        # requires need either a bare word or a file name
++        $file =~ s{::}{/}gsxm;
++        $file .= '.pm';
++        eval {
++            require $file;
++            $name->import();
++            $module = $name;
++		};
++		last if $module;
++    }
++    return $module;
++}
++
++my $plugin_module;
++BEGIN {
++	$plugin_module = load_module( 'Monitoring::Plugin', 'Nagios::Plugin' );
++}
+ 
+ use LWP::UserAgent;			# http client
+ use HTTP::Request;			# used by LWP::UserAgent
+@@ -52,7 +73,7 @@ setlocale(LC_MESSAGES, '');
+ textdomain('nagios-plugins-perl');
+ 
+ 
+-my $np = Nagios::Plugin->new(
++my $np = $plugin_module->new(
+ 	version => $VERSION,
+ 	blurb => _gt('Plugin to check HAProxy stats url'),
+ 	usage => "Usage: %s [ -v|--verbose ]  -u <url> [-t <timeout>] [-U <username>] [-P <password>] [ -c|--critical=<threshold> ] [ -w|--warning=<threshold> ]",
+@@ -318,4 +339,4 @@ In F<services.cfg> you just have to add something like :
+ 
+ Stéphane Urbanovski <stephane.urbanovski@ac-nancy-metz.fr>
+ 
+-=cut
+\ No newline at end of file
++=cut
