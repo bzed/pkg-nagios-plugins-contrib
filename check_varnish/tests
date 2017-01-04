@@ -1,0 +1,3 @@
+Depends: varnish, systemd, dbus
+Restrictions: needs-root
+Tests: test_check_varnish
