@@ -118,7 +118,7 @@ Description: Plugins for nagios compatible monitoring systems
    * check_printer: plugin to check printer supply levels using SNMP
      It outputs performance data for all supplies
      found, for example toner and drum.
-   * check_raid (4.0.4): plugin to check sw/hw RAID status
+   * check_raid (4.0.5): plugin to check sw/hw RAID status
      The plugin looks for any known types of RAID configurations,
      and checks them all.
      .
@@ -173,7 +173,7 @@ Description: Plugins for nagios compatible monitoring systems
      HOST-RESOURCES-MIB::hrSystemDate.0 used here returns 8 or 11 byte octets.
      SNMP translation needs to be switched off and to be converted the
      received SNMP data into readable strings.
-   * check_ssl_cert (1.36.1): plugin to check the CA and validity of an
+   * check_ssl_cert (1.37.0): plugin to check the CA and validity of an
      X.509 certificate
    * check_uptime (0.521): check_uptime returns uptime of a system
      in text (readable) format as well as in minutes for performance graphing.
