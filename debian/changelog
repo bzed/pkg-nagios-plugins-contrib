@@ -1,8 +1,20 @@
-nagios-plugins-contrib (18.20170104~1.gbp7d8975) UNRELEASED; urgency=medium
+nagios-plugins-contrib (19.20170104) unstable; urgency=medium
 
-  * UNRELEASED
+  [ Jan Wagner ]
+  * [985772d] check_raid: Update to 4.0.5
+  * [59eb257] check_ssl_cert: Updating to 1.37
+  * [19d36d2] Update d/copyright
+  * [2b665d0] check_ssl_cert: Fix vesion in control file
+  * [55e47ca] Updating d/control
 
- -- Jan Wagner <waja@cyconet.org>  Wed, 04 Jan 2017 00:20:14 +0100
+  [ Evgeni Golov ]
+  * [2f8ecec] allow Restrictions in tests
+  * [1f127a6] add test restrictions
+  * [225d1df] check_varnish: add test
+  * [00da8b9] fix trailing space
+  * [5ed4f55] Auto update of debian/tests/control
+
+ -- Jan Wagner <waja@cyconet.org>  Wed, 04 Jan 2017 13:50:13 +0100
 
 nagios-plugins-contrib (18.20170103) unstable; urgency=medium
 
