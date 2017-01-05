@@ -1,2 +1,2 @@
 Test-Command: mkdir -p /etc/nagios/ && sha256sum /bin/true > /etc/nagios/check_checksums.sha256 && /usr/lib/nagios/plugins/check_checksums
-Restrictions: needs-root
+Restrictions: needs-root breaks-testbed
