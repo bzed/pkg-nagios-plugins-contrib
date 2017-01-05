@@ -1,3 +1,3 @@
 Depends: libnet-dns-perl
 Test-Command: echo "127.0.0.1 localhost" > /etc/hosts && /usr/lib/nagios/plugins/check_etc_hosts
-Restrictions: needs-root
+Restrictions: needs-root breaks-testbed
