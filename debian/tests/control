@@ -1,20 +1,20 @@
 Test-Command: mkdir -p /etc/nagios/ && sha256sum /bin/true > /etc/nagios/check_checksums.sha256 && /usr/lib/nagios/plugins/check_checksums
-Restrictions: needs-root
+Restrictions: needs-root, breaks-testbed
 
 Depends: cups, libdate-manip-perl, libmonitoring-plugin-perl | libnagios-plugin-perl, libnet-cups-perl, @
-Test-Command: service cups restart && /usr/lib/nagios/plugins/check_cups -H localhost
-Restrictions: needs-root
+Test-Command: /usr/lib/nagios/plugins/check_cups -H localhost
+Restrictions: needs-root, isolation-container
 
 Depends: libnet-dns-perl, @
 Test-Command: echo "127.0.0.1 localhost" > /etc/hosts && /usr/lib/nagios/plugins/check_etc_hosts
-Restrictions: needs-root
+Restrictions: needs-root, breaks-testbed
 
 Test-Command: /usr/lib/nagios/plugins/check_etc_resolv
 Depends: bind9-host | knot-host, @
 
 Depends: apache2, liblocale-gettext-perl, libmonitoring-plugin-perl | libnagios-plugin-perl, liblwp-useragent-determined-perl, @
-Test-Command: service apache2 restart && /usr/lib/nagios/plugins/check_httpd_status -H localhost
-Restrictions: needs-root allow-stderr
+Test-Command: /usr/lib/nagios/plugins/check_httpd_status -H localhost
+Restrictions: needs-root, allow-stderr, isolation-container
 
 Depends: lsof, libyaml-syck-perl, @
 Test-Command: /usr/lib/nagios/plugins/check_libs
@@ -23,6 +23,6 @@ Depends: libmonitoring-plugin-perl | libnagios-plugin-perl, @
 Test-Command: /usr/lib/nagios/plugins/check_uptime -f
 
 Depends: varnish, systemd, dbus, @
-Restrictions: needs-root
+Restrictions: needs-root, isolation-container
 Tests: test_check_varnish
 
