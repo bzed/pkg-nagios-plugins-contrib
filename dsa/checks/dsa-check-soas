@@ -1,6 +1,6 @@
 #!/usr/bin/ruby
 
-# Copyright 2006, 2012 Peter Palfrader
+# Copyright 2006, 2012, 2014 Peter Palfrader
 #           2012  Uli Martens
 #
 # Permission is hereby granted, free of charge, to any person obtaining
@@ -21,6 +21,35 @@
 # LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+# the each_resource function is lifted from ruby 1.9.1's resolv.rb, with the
+# minor modification that we do not unconditionally set the message's RD flag
+# to 1.  Its license is:
+#
+# Copyright (C) 1993-2010 Yukihiro Matsumoto. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+# notice, this list of conditions and the following disclaimer in the
+# documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+
 
 require 'ipaddr'
 require 'resolv'
@@ -53,6 +82,57 @@ if @additional_nameservers.count <= 1 and not @check_soa_nameservers
 	exit(1)
 end
 
+class DSADNS < Resolv::DNS
+	attr_reader :rd
+	attr_writer :rd
+
+	def initialize(*args)
+		super
+		@rd = 1
+	end
+
+	def each_resource(name, typeclass, &proc)
+		lazy_initialize
+		requester = make_udp_requester
+		senders = {}
+		begin
+			@config.resolv(name) {|candidate, tout, nameserver, port|
+				msg = Message.new
+				msg.rd = @rd
+				msg.add_question(candidate, typeclass)
+				unless sender = senders[[candidate, nameserver, port]]
+					sender = senders[[candidate, nameserver, port]] =
+						requester.sender(msg, candidate, nameserver, port)
+				end
+				reply, reply_name = requester.request(sender, tout)
+				case reply.rcode
+				when RCode::NoError
+					if reply.tc == 1 and not Requester::TCP === requester
+						requester.close
+						# Retry via TCP:
+						requester = make_tcp_requester(nameserver, port)
+						senders = {}
+						# This will use TCP for all remaining candidates (assuming the
+						# current candidate does not already respond successfully via
+						# TCP).	This makes sense because we already know the full
+						# response will not fit in an untruncated UDP packet.
+						redo
+					else
+						extract_resources(reply, reply_name, typeclass, &proc)
+					end
+					return
+				when RCode::NXDomain
+					raise Config::NXDomain.new(reply_name.to_s)
+				else
+					raise Config::OtherResolvError.new(reply_name.to_s)
+				end
+			}
+		ensure
+			requester.close
+		end
+	end
+end
+
 warnings = []
 oks = []
 
@@ -67,7 +147,7 @@ end
 
 dns = Resolv::DNS.new
 ARGV.each{ |domain|
-	serial = []
+	serial = {}
 	nameserver_addresses = {}
 	if @check_soa_nameservers
 		nameservers = dns.getresources(domain, Resolv::DNS::Resource::IN::NS)
@@ -94,7 +174,8 @@ ARGV.each{ |domain|
 		addrs.each do |a|
 			puts " Nameserver #{nameserver} is at #{a}" if @verbose > 0
 			begin
-				resolver = Resolv::DNS.new({:nameserver => a})
+				resolver = DSADNS.new({:nameserver => a})
+				resolver.rd = 0
 				soas = resolver.getresources(domain, Resolv::DNS::Resource::IN::SOA)
 			rescue SystemCallError => e
 				warnings << "Could not resolve #{domain} on #{nameserver}: #{e.message}"
@@ -103,18 +184,27 @@ ARGV.each{ |domain|
 				warnings << "Nameserver #{nameserver} for #{domain} returns #{soas.length} SOAs" if soas.length != 1
 				soas.each do |soa|
 					puts " Nameserver #{nameserver} returns serial #{soa.serial} for #{domain}" if @verbose > 0
-					serial << soa.serial unless serial.include? soa.serial
+					sn = soa.serial.to_i
+					if serial.has_key? sn then
+						serial[sn] << nameserver
+					else
+						serial[sn] = [nameserver]
+					end
 				end
 			end
 		end
 	end
-	case serial.length
+	case serial.keys.length
 		when 0
 			warnings << "Found no serials for #{domain}"
 		when 1
-			oks << "#{domain} is at #{serial.first}"
+			oks << "#{domain} is at #{serial.keys.first}"
 		else
-			warnings << "Nameservers disagree on serials for #{domain}: found #{serial.join(', ')}" if serial.length != 1
+			text = []
+			serial.keys.sort.each do |sn|
+				text << "#{sn} (#{serial[sn].join(', ')})"
+			end
+			warnings << "Nameservers disagree on serials for #{domain}: found #{text.join(', ')}"
 	end
 }
 dns.close
