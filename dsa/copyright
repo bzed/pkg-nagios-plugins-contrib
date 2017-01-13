@@ -1,6 +1,7 @@
 checks/dsa-check-cert-expire:# Copyright 2009 Peter Palfrader
-checks/dsa-check-dnssec-delegation:# Copyright (c) 2010 Peter Palfrader <peter@palfrader.org>
-checks/dsa-check-entropy:# Copyright 2011 Peter Palfrader
+checks/dsa-check-cert-expire-dir:# Copyright 2009,2016 Peter Palfrader
+checks/dsa-check-dnssec-delegation:# Copyright (c) 2010, 2014, 2015 Peter Palfrader <peter@palfrader.org>
+checks/dsa-check-entropy:# Copyright 2011 Peter Palfrader, Copyright 2014 Hendrik Koehler
 checks/dsa-check-soas:# Copyright 2006, 2012 Peter Palfrader
 checks/dsa-check-packages:# Copyright (C) 2008, 2009 Peter Palfrader <peter@palfrader.org>
 checks/dsa-check-statusfile:# Copyright 2008, 2012 Peter Palfrader
