@@ -6,6 +6,8 @@ nagios-plugins-contrib (20.20170118~bpo70+1) wheezy-backports-sloppy; urgency=me
   * [5fa6fd4] Update changelog for jessie backports.
   * [e1ce662] Build jessie-backports only on travis.
   * [8c6eb75] Fix backports handling in .travis.yml
+  * [b30847e] Revert "Remove check_shutdown."
+              Still works in wheezy.
 
  -- Bernd Zeimetz <bzed@debian.org>  Tue, 03 Jan 2017 18:49:56 +0100
 
