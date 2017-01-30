@@ -16,7 +16,7 @@ Vcs-Browser: https://anonscm.debian.org/cgit/pkg-nagios/pkg-nagios-plugins-contr
 Package: nagios-plugins-contrib
 Architecture: any
 Depends: ${misc:Depends}
-Recommends: libsocket-perl, libmonitoring-plugin-perl | libnagios-plugin-perl, libnet-snmp-perl, whois, nagios-plugins-basic, libnet-dns-perl, libdate-manip-perl, libmonitoring-plugin-perl | libnagios-plugin-perl (>= 0.31), libnet-cups-perl, libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-smtp-ssl-perl, libnet-ssleay-perl, libnet-smtpauth-perl, bind9-host | knot-host, python, liblocale-gettext-perl, liblwp-useragent-determined-perl, snmp, freeipmi-tools, libipc-run-perl, lsof, libyaml-syck-perl, libxml-simple-perl, python-pymongo, libdbd-mysql-perl, libreadonly-perl, libdata-validate-domain-perl, libdata-validate-ip-perl, libredis-perl, libnet-snmp-perl (>= 5), libtimedate-perl, openssl, libwebinject-perl, libnet-dns-sec-perl, ruby | ruby-interpreter, binutils,
+Recommends: libsocket-perl, libmonitoring-plugin-perl | libnagios-plugin-perl, libnet-snmp-perl, whois, nagios-plugins-basic, libnet-dns-perl, libdate-manip-perl, libmonitoring-plugin-perl | libnagios-plugin-perl (>= 0.31), libnet-cups-perl, libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-smtp-ssl-perl, libnet-ssleay-perl, libnet-smtpauth-perl, bind9-host | knot-host, python, liblocale-gettext-perl, liblwp-useragent-determined-perl, snmp, freeipmi-tools, libipc-run-perl, lsof, libyaml-syck-perl, libxml-simple-perl, python-pymongo, libdbd-mysql-perl, libreadonly-perl, libdata-validate-domain-perl, libdata-validate-ip-perl, libredis-perl, procps, libnet-snmp-perl (>= 5), libtimedate-perl, openssl, libwebinject-perl, libnet-dns-sec-perl, ruby | ruby-interpreter, binutils,
             ${perl:Depends},
             ${python:Depends},
             ${shlibs:Depends}
@@ -150,6 +150,9 @@ Description: Plugins for nagios compatible monitoring systems
      with special threshold syntax. Plugin also calculates statistics such as
      Hitrate (calculated as rate of change of hits/misses) and memory use and
      can check replication delay.
+   * check_shutdown (0.0.20110203): plugin to detect shutdown in progress
+     Report when a reboot is in progress.  This is useful to detect if
+     reboot-when-idle or similar have been used on a server.
    * check_smstools: plugin to check GSM Modems using smstools
      check_smstools is a plugin to monitor a GSM modem
      signal quality and registration status with smstools.
