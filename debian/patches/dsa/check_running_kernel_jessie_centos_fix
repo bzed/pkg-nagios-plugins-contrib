@@ -1,0 +1,42 @@
+--- a/dsa/checks/dsa-check-running-kernel
++++ b/dsa/checks/dsa-check-running-kernel
+@@ -129,6 +129,11 @@
+ 	filter="$3"
+ 	hdroff="$4"
+ 
++	if ! which $filter >/dev/null; then
++		echo "UNKNOWN: filter command '$filter' missing, perhaps install xz-utils?" >&2
++		exit $UNKNOWN
++	fi
++
+ 	get_offset "$image" $header | head -n 5 | while read off; do
+ 		(if [ "$off" != 0 ]; then
+ 		   dd ibs="$((off+hdroff))" skip=1 count=0
+@@ -180,9 +185,8 @@
+ 
+ searched=""
+ for on_disk in \
+-	"/boot/vmlinuz-`uname -r`"\
+-	"/boot/vmlinux-`uname -r`"\
+-	"/boot/kfreebsd-`uname -r`.gz"; do
++	$([ -f "/boot/vmlinuz-$(uname -r)" ] && find /boot/ -name 'vmlinuz*' -and -name "vmlinuz-$(uname -r)" -or -name 'vmlinuz*' -and -newer "/boot/vmlinuz-$(uname -r)" | sort) \
++	$([ -f "/boot/kfreebsd-$(uname -r).gz" ] && find /boot/ -name 'kfreebsd*' -and -name "kfreebsd-$(uname -r).gz" -or -name 'kfreebsd*' -and -newer "/boot/kfreebsd-$(uname -r).gz" | sort); do
+ 
+ 	if [ -e "$on_disk" ]; then
+ 		if [ -z "$STRINGS" ]; then
+@@ -194,12 +198,12 @@
+ 			if [ -x /usr/bin/lsb_release ] ; then
+ 				vendor=$(lsb_release -i -s)
+ 				if [ -n "$vendor" ] && [ "xDebian" != "x$vendor" ] ; then
+-					on_disk_version=$( echo $on_disk_version|sed -e "s/ ($vendor [[:alnum:]\.-]\+ [[:alnum:]\.]\+)//")
++					on_disk_version=$( echo $on_disk_version|sed -e "s/ ($vendor [[:alnum:]\.-]\+ [[:alnum:]\.-]\+)//")
+ 				fi
+ 			fi
+-			[ -z "$on_disk_version" ] || break
++			[ -z "$on_disk_version" ] || continue
+ 			on_disk_version="`cat "$on_disk" | $STRINGS | grep 'Linux version' | head -n1`"
+-			[ -z "$on_disk_version" ] || break
++			[ -z "$on_disk_version" ] || continue
+ 
+ 			echo "UNKNOWN: Failed to get a version string from image $on_disk"
+ 			exit $UNKNOWN

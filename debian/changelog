@@ -1,4 +1,4 @@
-nagios-plugins-contrib (18.20170103~bpo8+1) jessie-backports; urgency=medium
+nagios-plugins-contrib (20.20170118~bpo8+1) jessie-backports; urgency=medium
 
   * Rebuild for jessie-backports.
 
@@ -8,6 +8,55 @@ nagios-plugins-contrib (18.20170103~bpo8+1) jessie-backports; urgency=medium
   * [8c6eb75] Fix backports handling in .travis.yml
 
  -- Bernd Zeimetz <bzed@debian.org>  Tue, 03 Jan 2017 18:49:56 +0100
+
+nagios-plugins-contrib (20.20170118) unstable; urgency=medium
+
+  [ Evgeni Golov ]
+  * [3a9cdf5] more test restrictions
+  * [49b66d4] simplify tests
+  * [3253d36] Auto update of debian/tests/control
+  * [7383aed] cleanup travis.yml
+    travis.d.n already does git fetch and lintian for us
+  * [3b61c62] call lintian with extended flags as before
+  * [8ffd6ec] add python2.7 and python-pymongo to percona control
+  * [8486be7] Auto update of debian/control
+
+  [ Bernd Zeimetz ]
+  * [f84c6a0] Remove check_shutdown.
+    Does not work with systemd.
+    Resolves #54
+  * [9038743] Remove check_ldap_root.
+    This is nothing check_ldap could not handle.
+    Please use check_ldap.
+  * [6083eb6] Updating checks from DSA.
+  * [fbd854d] Enhance check_running_kernel.
+    Support Ubuntu and CentOS, also warn about missing filter utils.
+    Thanks to Jonas Meurer (Closes: #780098)
+  * [0174352] Auto update of debian/copyright
+  * [95b656e] Auto update of debian/control
+  * [1e2803d] Merge remote-tracking branch 'origin/master'
+  * [a238057] Install check_mongodb.py symlink.
+    Resolves #77.
+
+ -- Bernd Zeimetz <bzed@debian.org>  Wed, 18 Jan 2017 22:18:18 +0100
+
+nagios-plugins-contrib (19.20170104) unstable; urgency=medium
+
+  [ Jan Wagner ]
+  * [985772d] check_raid: Update to 4.0.5
+  * [59eb257] check_ssl_cert: Updating to 1.37
+  * [19d36d2] Update d/copyright
+  * [2b665d0] check_ssl_cert: Fix vesion in control file
+  * [55e47ca] Updating d/control
+
+  [ Evgeni Golov ]
+  * [2f8ecec] allow Restrictions in tests
+  * [1f127a6] add test restrictions
+  * [225d1df] check_varnish: add test
+  * [00da8b9] fix trailing space
+  * [5ed4f55] Auto update of debian/tests/control
+
+ -- Jan Wagner <waja@cyconet.org>  Wed, 04 Jan 2017 13:50:13 +0100
 
 nagios-plugins-contrib (18.20170103) unstable; urgency=medium
 

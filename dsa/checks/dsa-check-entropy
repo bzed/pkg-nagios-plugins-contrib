@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 # Copyright 2011 Peter Palfrader
+# Copyright 2014 Hendrik Koehler
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -64,16 +65,16 @@ while tries <= options.retries:
 
     if avail >= options.watermark:
         if tries > 0:
-            print "OK: %d bytes in the pool after %d attempts."%(avail, tries)
+            print "OK: %d bytes in the pool after %d attempts.|entropy=%d bytes"%(avail, tries, avail)
         else:
-            print "OK: %d bytes in the pool."%(avail)
+            print "OK: %d bytes in the pool.|entropy=%d bytes"%(avail, avail)
         sys.exit(0)
 
     values.append(avail)
     time.sleep(1.0 * options.sleep / 1000)
     tries += 1
 
-print "WARNING: Too little entropy in the pool (min: %d, max: %d in %d reads)"%(min(values), max(values), tries-1)
+print "WARNING: Too little entropy in the pool (min: %d, max: %d in %d reads)|entropy=%d bytes"%(min(values), max(values), tries-1, avail)
 sys.exit(1)
 
 # vim:set et:

@@ -8,3 +8,7 @@ check_mongodb:
 	cp $@.py $@
 	chmod 755 $@
 
+install::
+	install -d $(DESTDIR)$(PLUGINDIR)
+	ln -s $(PLUGINDIR)/$(PLUGIN) $(DESTDIR)$(PLUGINDIR)/$(PLUGIN).py
+
