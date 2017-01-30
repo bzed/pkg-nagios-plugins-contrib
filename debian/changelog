@@ -6,6 +6,8 @@ nagios-plugins-contrib (20.20170118~bpo8+1) jessie-backports; urgency=medium
   * [5fa6fd4] Update changelog for jessie backports.
   * [e1ce662] Build jessie-backports only on travis.
   * [8c6eb75] Fix backports handling in .travis.yml
+  * [87b3fd9] Revert "Remove check_shutdown."
+              Should work in jessie, leave it in there for backports.
 
  -- Bernd Zeimetz <bzed@debian.org>  Tue, 03 Jan 2017 18:49:56 +0100
 
