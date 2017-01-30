@@ -398,26 +398,6 @@ http://www.thomas-krenn.com/en/oss/ipmi-plugin.html
 
 ------------------------------------------------------------------------------
 
-check_ldap_root:
-
-  Copyright (C) 2011 Petter Reinholdtsen <pere@hungry.com>
-  
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation; either version 2 of the License, or (at
-  your option) any later version.
-  
-  This program is distributed in the hope that it will be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-  General Public License for more details.
-  
-  You should have received a copy of the GNU General Public License
-  along with this program; if not, see <http://www.gnu.org/licenses/>.
-  
-
-------------------------------------------------------------------------------
-
 check_libs:
 
 The plugin was downloaded from: 
@@ -790,26 +770,6 @@ https://github.com/willixix/WL-NagiosPlugins
 
 ------------------------------------------------------------------------------
 
-check_shutdown:
-
-  Copyright (C) 2011 Petter Reinholdtsen <pere@hungry.com>
-  
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation; either version 2 of the License, or (at
-  your option) any later version.
-  
-  This program is distributed in the hope that it will be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-  General Public License for more details.
-  
-  You should have received a copy of the GNU General Public License
-  along with this program; if not, see <http://www.gnu.org/licenses/>.
-  
-
-------------------------------------------------------------------------------
-
 check_smstools:
 
 The plugin was downloaded from: 
@@ -947,7 +907,7 @@ https://gitorious.org/nagios-monitoring-tools/nagios-monitoring-tools/
 check_varnish:
 
 The plugin was downloaded from: 
-http://repo.varnish-cache.org/source/
+https://github.com/varnish/varnish-nagios
 
   
   Copyright (c) 2007-2009 Linpro AS
@@ -1112,11 +1072,12 @@ http://dns.measurement-factory.com/tools/nagios-plugins/check_zone_rrsig_expirat
 dsa:
 
 The plugin was downloaded from: 
-http://anonscm.debian.org/gitweb/?p=mirror/dsa-nagios.git;a=tree;f=dsa-nagios-checks;hb=HEAD
+https://anonscm.debian.org/cgit/mirror/dsa-nagios.git/
 
   checks/dsa-check-cert-expire:# Copyright 2009 Peter Palfrader
-  checks/dsa-check-dnssec-delegation:# Copyright (c) 2010 Peter Palfrader <peter@palfrader.org>
-  checks/dsa-check-entropy:# Copyright 2011 Peter Palfrader
+  checks/dsa-check-cert-expire-dir:# Copyright 2009,2016 Peter Palfrader
+  checks/dsa-check-dnssec-delegation:# Copyright (c) 2010, 2014, 2015 Peter Palfrader <peter@palfrader.org>
+  checks/dsa-check-entropy:# Copyright 2011 Peter Palfrader, Copyright 2014 Hendrik Koehler
   checks/dsa-check-soas:# Copyright 2006, 2012 Peter Palfrader
   checks/dsa-check-packages:# Copyright (C) 2008, 2009 Peter Palfrader <peter@palfrader.org>
   checks/dsa-check-statusfile:# Copyright 2008, 2012 Peter Palfrader

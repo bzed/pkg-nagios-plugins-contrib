@@ -105,6 +105,27 @@ testAltNames2() {
     assertEquals "wrong exit code" ${NAGIOS_CRITICAL} "${EXIT_CODE}"
 }
 
+testMultipleAltNamesOK() {
+    # Test with multiple CN's
+    ${SCRIPT} -H inf.ethz.ch -n www.ethz.ch -n ethz.ch --rootcert cabundle.crt --altnames
+    EXIT_CODE=$?
+    assertEquals "wrong exit code" ${NAGIOS_OK} "${EXIT_CODE}"
+}
+
+testMultipleAltNamesFailOne() {
+    # Test with wiltiple CN's but last one is wrong
+    ${SCRIPT} -H inf.ethz.ch -n www.ethz.ch -n wrong.ch --rootcert cabundle.crt --altnames
+    EXIT_CODE=$?
+    assertEquals "wrong exit code" ${NAGIOS_CRITICAL} "${EXIT_CODE}"
+}
+
+testMultipleAltNamesFailTwo() {
+    # Test with multiple CN's but first one is wrong
+    ${SCRIPT} -H inf.ethz.ch -n wrong.ch -n www.ethz.ch --rootcert cabundle.crt --altnames
+    EXIT_CODE=$?
+    assertEquals "wrong exit code" ${NAGIOS_CRITICAL} "${EXIT_CODE}"
+}
+
 testAltNames2CaseInsensitive() {
     # should fail: inf.ethz.ch has the same ip as www.inf.ethz.ch but inf.ethz.ch is not in the certificate
     ${SCRIPT} -H inf.ethz.ch --cn INF.ETHZ.CH --rootcert cabundle.crt --altnames
@@ -162,7 +183,7 @@ unset SOURCE_ONLY
 # We clone to output to pass it to grep as shunit does always return 0
 # We parse the output to check if a test failed
 #
-if ! . "${SHUNIT2}" | tee /dev/tty | grep -q 'success rate: 100%' ; then
+if ! . "${SHUNIT2}" | tee /dev/tty | grep -q 'tests\ total:\ *[0-9]*\ 100%' ; then
     # at least one of the tests failed
     exit 1
 fi

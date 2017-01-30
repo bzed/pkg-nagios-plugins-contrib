@@ -1,6 +1,0 @@
-Uploaders: Petter Reinholdtsen <pere@hungry.com>
-Description: plugin to detect shutdown in progress
- Report when a reboot is in progress.  This is useful to detect if
- reboot-when-idle or similar have been used on a server.
-Recommends: procps
-Version: 0.0.20110203

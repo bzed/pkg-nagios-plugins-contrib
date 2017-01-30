@@ -16,11 +16,11 @@ Vcs-Browser: https://anonscm.debian.org/cgit/pkg-nagios/pkg-nagios-plugins-contr
 Package: nagios-plugins-contrib
 Architecture: any
 Depends: ${misc:Depends}
-Recommends: libsocket-perl, libmonitoring-plugin-perl | libnagios-plugin-perl, libnet-snmp-perl, whois, nagios-plugins-basic, libnet-dns-perl, libdate-manip-perl, libmonitoring-plugin-perl | libnagios-plugin-perl (>= 0.31), libnet-cups-perl, libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-smtp-ssl-perl, libnet-ssleay-perl, libnet-smtpauth-perl, bind9-host | knot-host, python, liblocale-gettext-perl, liblwp-useragent-determined-perl, snmp, freeipmi-tools, libipc-run-perl, ldap-utils, lsof, libyaml-syck-perl, libxml-simple-perl, python-pymongo, libdbd-mysql-perl, libreadonly-perl, libdata-validate-domain-perl, libdata-validate-ip-perl, libredis-perl, procps, libnet-snmp-perl (>= 5), libtimedate-perl, openssl, libwebinject-perl, libnet-dns-sec-perl, ruby | ruby-interpreter, binutils,
+Recommends: libsocket-perl, libmonitoring-plugin-perl | libnagios-plugin-perl, libnet-snmp-perl, whois, nagios-plugins-basic, libnet-dns-perl, libdate-manip-perl, libmonitoring-plugin-perl | libnagios-plugin-perl (>= 0.31), libnet-cups-perl, libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-smtp-ssl-perl, libnet-ssleay-perl, libnet-smtpauth-perl, bind9-host | knot-host, python, liblocale-gettext-perl, liblwp-useragent-determined-perl, snmp, freeipmi-tools, libipc-run-perl, lsof, libyaml-syck-perl, libxml-simple-perl, python-pymongo, libdbd-mysql-perl, libreadonly-perl, libdata-validate-domain-perl, libdata-validate-ip-perl, libredis-perl, libnet-snmp-perl (>= 5), libtimedate-perl, openssl, libwebinject-perl, libnet-dns-sec-perl, ruby | ruby-interpreter, binutils,
             ${perl:Depends},
             ${python:Depends},
             ${shlibs:Depends}
-Suggests: backuppc, perl-doc, libsys-virt-perl, cciss-vol-status (>= 1.10), mpt-status, smstools (>= 3~), expect, nagios-plugin-check-multi, moreutils, percona-toolkit
+Suggests: backuppc, perl-doc, libsys-virt-perl, cciss-vol-status (>= 1.10), mpt-status, smstools (>= 3~), expect, nagios-plugin-check-multi, moreutils, percona-toolkit, python2.7, python-pymongo
 Enhances: nagios-plugins, nagios-plugins-basic, nagios-plugins-standard
 Description: Plugins for nagios compatible monitoring systems
  This package provides various plugins for Nagios compatible monitoring
@@ -90,9 +90,6 @@ Description: Plugins for nagios compatible monitoring systems
    * check_ipmi_sensor (3.12): IPMI Sensor Monitoring Plugin
      Plugin to monitor the hardware status (fan speed, temperaturs,
      voltages, power usage, ...) of a server using IPMI.
-   * check_ldap_root (?): plugin to check LDAP server response
-     Make sure the LDAP server is able to respond by searching for the
-     root DSE.
    * check_libs (0.2015012901 ): plugin to report the usage of no longer existing
      libraries by running processes
    * check_libvirt (v7.0.3): monitor virtualization solutions using libvirt
@@ -118,7 +115,7 @@ Description: Plugins for nagios compatible monitoring systems
    * check_printer: plugin to check printer supply levels using SNMP
      It outputs performance data for all supplies
      found, for example toner and drum.
-   * check_raid (4.0.4): plugin to check sw/hw RAID status
+   * check_raid (4.0.5): plugin to check sw/hw RAID status
      The plugin looks for any known types of RAID configurations,
      and checks them all.
      .
@@ -153,9 +150,6 @@ Description: Plugins for nagios compatible monitoring systems
      with special threshold syntax. Plugin also calculates statistics such as
      Hitrate (calculated as rate of change of hits/misses) and memory use and
      can check replication delay.
-   * check_shutdown (0.0.20110203): plugin to detect shutdown in progress
-     Report when a reboot is in progress.  This is useful to detect if
-     reboot-when-idle or similar have been used on a server.
    * check_smstools: plugin to check GSM Modems using smstools
      check_smstools is a plugin to monitor a GSM modem
      signal quality and registration status with smstools.
@@ -173,7 +167,7 @@ Description: Plugins for nagios compatible monitoring systems
      HOST-RESOURCES-MIB::hrSystemDate.0 used here returns 8 or 11 byte octets.
      SNMP translation needs to be switched off and to be converted the
      received SNMP data into readable strings.
-   * check_ssl_cert (1.36.1): plugin to check the CA and validity of an
+   * check_ssl_cert (1.37.0): plugin to check the CA and validity of an
      X.509 certificate
    * check_uptime (0.521): check_uptime returns uptime of a system
      in text (readable) format as well as in minutes for performance graphing.
@@ -201,10 +195,12 @@ Description: Plugins for nagios compatible monitoring systems
      for a given zone remain in sync.
    * check_zone_rrsig_expiration (1.14): plugin to check for expiration of
      signatures in dnssec-enabled zones.
-   * dsa: plugins from the Debian System Administrators
+   * dsa (1c0b9ec): plugins from the Debian System Administrators
      nagios plugins repository.
      * check_cert_expire: check for certificate expiration
        using openssl on the certificate file
+     * check_cert_expire_dir: checks if any of the *.crt files in
+       a directory on disk will expire soon
      * check_dnssec_delegation: check for correct DNSSEC
        delegation
      * check_entropy: check if there is enough entropy available.

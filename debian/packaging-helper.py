@@ -17,6 +17,7 @@ ALLOWED_FIELDS = ('Suggests',
                   'Build-Depends')
 
 ALLOWED_TESTS_FIELDS = ('Depends',
+                  'Restrictions',
                   'Tests',
                   'Test-Command')
 

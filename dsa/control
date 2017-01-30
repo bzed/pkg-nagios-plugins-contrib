@@ -1,9 +1,11 @@
-Homepage: http://anonscm.debian.org/gitweb/?p=mirror/dsa-nagios.git;a=tree;f=dsa-nagios-checks;hb=HEAD
+Homepage: https://anonscm.debian.org/cgit/mirror/dsa-nagios.git/
 Uploaders: Bernd Zeimetz <bzed@debian.org>
 Description: plugins from the Debian System Administrators
  nagios plugins repository.
  * check_cert_expire: check for certificate expiration
    using openssl on the certificate file
+ * check_cert_expire_dir: checks if any of the *.crt files in
+   a directory on disk will expire soon
  * check_dnssec_delegation: check for correct DNSSEC
    delegation
  * check_entropy: check if there is enough entropy available.
@@ -15,3 +17,4 @@ Description: plugins from the Debian System Administrators
  * check_statusfile: deliver the content of a status file
    as check result
 Recommends: ruby | ruby-interpreter, openssl, libnet-dns-perl, binutils
+Version: 1c0b9ec
