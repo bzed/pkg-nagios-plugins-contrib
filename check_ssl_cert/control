@@ -1,5 +1,5 @@
 Uploaders: Jan Wagner <waja@cyconet.org>
-Recommends: openssl
+Recommends: curl, file, openssl
 Suggests: expect
 Version: 1.37.0
 Homepage: https://github.com/matteocorti/check_ssl_cert
