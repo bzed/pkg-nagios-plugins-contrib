@@ -1,0 +1,14 @@
+--- a/dsa/checks/dsa-check-cert-expire-dir
++++ b/dsa/checks/dsa-check-cert-expire-dir
+@@ -26,9 +26,9 @@
+ 
+ sn="$0"
+ if [ "${sn%/*}" = "$sn" ]; then
+-  CERT_CHECK=dsa-check-cert-expire
++  CERT_CHECK=check_cert_expire
+ else
+-  CERT_CHECK="${sn%/*}/dsa-check-cert-expire"
++  CERT_CHECK="${sn%/*}/check_cert_expire"
+ fi
+ 
+ if [ "$#" != 1 ] ; then
