@@ -10,7 +10,7 @@ nagios-plugins-contrib (21.20170222) unstable; urgency=medium
 
   [ Stefan Schörghofer ]
   * [6495faa] Fixes check_ssl_cert problems with Openssl > 1.1.x
-    (Closes: 855253)
+    (Closes: #855253)
 
   [ Bernd Zeimetz ]
   * [bf4fb49] Add autopkgtest for check_ssl_cert.
