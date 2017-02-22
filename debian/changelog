@@ -9,13 +9,17 @@ nagios-plugins-contrib (21.20170222) unstable; urgency=medium
     Thanks to Raphael Geissert (Closes: #772278)
 
   [ Stefan Schörghofer ]
-  * [6495faa] Fixes check_ssl_cert problems with Openssl > 1.1.x (Closes: 855253)
+  * [6495faa] Fixes check_ssl_cert problems with Openssl > 1.1.x
+    (Closes: 855253)
 
   [ Bernd Zeimetz ]
   * [bf4fb49] Add autopkgtest for check_ssl_cert.
   * [9aacdb6] Auto update of debian/tests/control
+  * [0d7ac29] Fix check_cert_expire_dirs to make it work at all.
+    check_cert_expire_dirs was not able to find
+    check_cert_expire. Fixing that. (Closes: #855155)
 
- -- Bernd Zeimetz <bzed@debian.org>  Wed, 22 Feb 2017 14:20:52 +0100
+ -- Bernd Zeimetz <bzed@debian.org>  Wed, 22 Feb 2017 14:32:22 +0100
 
 nagios-plugins-contrib (20.20170118) unstable; urgency=medium
 
