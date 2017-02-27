@@ -1,0 +1,2 @@
+Depends: debsecan
+Test-Command: /usr/lib/nagios/plugins/check_debsecan -f 9998 -F 9999 -o 9998 -O 9999 -l 9998 -L 9999 -m 9998 -M 9999 -u 9998 -U 9999 -r
