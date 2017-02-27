@@ -1,0 +1,306 @@
+#!/bin/sh
+#
+# check_debsecan
+#
+# Check uses debsecan to query a list of vulnerabilies which affect a particular
+# Debian installation.
+#
+# Copyright (c) 2017 Stefan Schörghofer <amd@4md.gr>
+#
+# This module is free software; you can redistribute it and/or modify it
+# under the terms of GNU general public license (gpl) version 3.
+# See the LICENSE file for details.
+
+# Functions
+debug() {
+  if ${debug} ; then
+    echo "DEBUG: ${1}"
+  fi
+}
+
+error() {
+  echo "ERROR: ${1}"
+  exit 3
+}
+
+print_help() {
+	#### The following line is 80 characters long (helps to fit the help text in a standard terminal)
+  ######--------------------------------------------------------------------------------
+
+  echo 
+  echo "Usage: check_debsecan [OPTIONS]"
+  echo 
+  echo "Arguments:"
+  echo "   -f                 warning  value for fixed packages | default = 20"
+  echo "   -F                 critical value for fixed packages | default = 30"
+  echo "   -o                 warning  value for obsolete packages | default = 1"
+  echo "   -O                 critical value for obsolete packages | default = 1"
+  echo "   -l                 warning  value for \"low urgency\" fixes | default = 10"
+  echo "   -L                 critical value for \"low urgency\" fixes | default = 20"
+  echo "   -m                 warning  value for \"medium urgency\" fixes | default = 5" 
+  echo "   -M                 critical value for \"medium urgency\" fixes | default = 10"
+  echo "   -u                 warning  value for urgent \"high urgency\" fixes | default = 1" 
+  echo "   -U                 critical value for urgent \"high urgency\" fixes | default = 1" 
+  echo "   -s                 set the suite parameter manually"
+  echo "   -P \"[proxy-url]\"   set the proxy manually"
+  echo 
+  echo "Options:"
+  echo "   -d                 produces debugging output"
+  echo "   -r                 disables the cve/packages report"
+  echo "   -h                 print this help"
+	echo
+
+	exit 3
+}
+
+argument_check() {
+  debug "Runnig argument check"
+  debug "fixed_warn is set to ${fixed_warn}, fixed_crit is set to ${fixed_crit}"
+  if [ ${fixed_warn} -gt ${fixed_crit} ] ; then
+    error "Value of -F needs to be bigger or equal than value of -f (Warning can't be bigger than critical)"
+  fi
+  debug "obsolete_warn is set to ${obsolete_warn}, obsolete_crit is set to ${obsolete_crit}"
+  if [ ${obsolete_warn} -gt ${obsolete_crit} ] ; then
+    error "Value of -O needs to be bigger or equal than value of -o (Warning can't be bigger than critical)"
+  fi
+  debug "low_urgency_warn is set to ${low_urgency_warn}, low_urgency_crit is set to ${low_urgency_crit}"
+  if [ ${low_urgency_warn} -gt ${low_urgency_crit} ] ; then
+    error "Value of -L needs to be bigger or equal than value of -l (Warning can't be bigger than critical)"
+  fi
+  debug "medium_urgency_warn is set to ${medium_urgency_warn}, medium_urgency_crit is set to ${medium_urgency_crit}"
+  if [ ${medium_urgency_warn} -gt ${medium_urgency_crit} ] ; then
+    error "Value of -M needs to be bigger or equal than value of -m (Warning can't be bigger than critical)"
+  fi
+  debug "high_urgency_warn is set to ${high_urgency_warn}, high_urgency_crit is set to ${high_urgency_crit}"
+  if [ ${high_urgency_warn} -gt ${high_urgency_crit} ] ; then
+    error "Value of -U needs to be bigger or equal than value of -u (Warning can't be bigger than critical)"
+  fi
+}
+
+check_if_numeric() {
+  case $1 in
+    ''|*[!0-9]*)
+      debug "Argument ${1} is not numeric but has to be"
+      echo "ERROR: Argument ${1} has to be numeric"
+      print_help
+      exit 3
+    ;;
+    *)
+      debug "Argument ${1} checked and is numeric"
+    ;;
+  esac
+}
+
+print_perfdata() {
+  echo "| 'fixed'=${fixed_num};${fixed_warn};${fixed_crit};0;${fixed_crit} 'obsolete'=${obsolete_num};${obsolete_warn};${obsolete_crit};0;${obsolete_crit} 'high-urgency'=${high_urgency_num};${high_urgency_warn};${high_urgency_crit};0;${high_urgency_crit} 'medium-urgency'=${medium_urgency_num};${medium_urgency_warn};${medium_urgency_crit};0;${medium_urgency_crit} 'low-urgency'=${low_urgency_num};${low_urgency_warn};${low_urgency_crit};0;${low_urgency_crit}"
+}
+
+print_numbers() {
+  echo -n "(F:${fixed_num};O:${obsolete_num};H:${high_urgency_num};M:${medium_urgency_num};L:${low_urgency_num})"
+}
+
+print_report() {
+  if ${critical} || ${warning} ; then
+    if ${report} ; then
+      cat ${debsecan_report}
+    fi
+  fi
+}
+
+cleanup() {
+  rm ${debsecan_report}
+}
+
+myexit() {
+  if ${critical} ; then
+    cleanup
+    exit 2
+  elif ${warning} ; then
+    cleanup
+    exit 1
+  else
+    cleanup
+    exit 0
+  fi
+}
+
+# Checks to execute before wasting CPU-Cycles
+# Checking for needed debsecan binary
+if ! [ -x /usr/bin/debsecan ] ; then
+  echo "ERROR: debsecan not found"
+  exit 3
+fi
+
+# Vars
+suite=$(grep "PRETTY_NAME" /etc/os-release | cut -d "(" -f 2 | cut -d ")" -f 1)
+fixed_warn=20
+fixed_crit=30
+obsolete_warn=1
+obsolete_crit=1
+low_urgency_warn=10
+low_urgency_crit=20
+medium_urgency_warn=5
+medium_urgency_crit=10
+high_urgency_warn=1
+high_urgency_crit=1
+debug=false
+report=true
+critical=false
+warning=false
+
+case ${suite} in
+  buzz|rex|bo|hamm|slink|potato)
+    echo "ERROR: The suite you are using is to old. Please upgrade to something newer, like Woody"
+    exit 3
+  ;;
+  stretch)
+    debug "Stretch is not supported at the moment. Switching suite to sid."
+    suite="sid"
+  ;;
+esac
+
+while getopts "dP:hf:F:o:O:l:L:m:M:u:U:s:r" opt; do
+  case ${opt} in
+    h)
+      print_help
+    ;;
+    d)
+      debug=true
+      debug "-d given, enabling debug"
+    ;;
+    f)
+      debug "Warning parameter for fixed triggered - setting to ${OPTARG}"
+      check_if_numeric ${OPTARG}
+      fixed_warn=${OPTARG}
+    ;;
+    F)
+      debug "Critical parameter for fixed triggered - setting to ${OPTARG}"
+      check_if_numeric ${OPTARG}
+      fixed_crit=${OPTARG}
+    ;;
+    o)
+      debug "Warning parameter for obsolete triggered - setting to ${OPTARG}"
+      check_if_numeric ${OPTARG}
+      obsolete_warn=${OPTARG}
+    ;;
+    O)
+      debug "Critical parameter for obsolete triggered - setting to ${OPTARG}"
+      check_if_numeric ${OPTARG}
+      obsolete_crit=${OPTARG}
+    ;;
+    l)
+      debug "Warning parameter for low urgency fixes triggered - setting to ${OPTARG}"
+      check_if_numeric ${OPTARG}
+      low_urgency_warn=${OPTARG}
+    ;;
+    L)
+      debug "Critical parameter for low urgency fixes triggered - setting to ${OPTARG}"
+      check_if_numeric ${OPTARG}
+      low_urgency_crit=${OPTARG}
+    ;;
+    m)
+      debug "Warning parameter for medium urgency fixes triggered - setting to ${OPTARG}"
+      check_if_numeric ${OPTARG}
+      medium_urgency_warn=${OPTARG}
+    ;;
+    M)
+      debug "Critical parameter for medium urgency fixes triggered - setting to ${OPTARG}"
+      check_if_numeric ${OPTARG}
+      medium_urgency_crit=${OPTARG}
+    ;;
+    u)
+      debug "Warning parameter for high urgency fixes triggered - setting to ${OPTARG}"
+      check_if_numeric ${OPTARG}
+      high_urgency_warn=${OPTARG}
+    ;;
+    U)
+      debug "Critical parameter for high urgency fixes triggered - setting to ${OPTARG}"
+      check_if_numeric ${OPTARG}
+      high_urgency_crit=${OPTARG}
+    ;;
+    r)
+      report=false
+      debug "-r given, disabling report"
+    ;;
+    s)
+      debug "Forcing suite to ${OPTARG} because parameter was given"
+      suite=${OPTARG}
+    ;;
+    P)
+      debug "Forcing proxy-setting to ${OPTARG}"
+      export http_proxy="${OPTARG}"
+      export https_proxy="${OPTARG}"
+    ;;
+    \?)
+      echo "ERROR: Invalid option ${OPTARG}"
+      exit 3
+    ;;
+    :)
+      echo "ERROR: Option -${OPTARG} requires an argument."
+      exit 3
+    ;;
+  esac
+done
+argument_check
+
+# Creating tempfile to store data
+debsecan_report=$(mktemp)
+
+# Execute debsecan
+debsecan --suite ${suite} --only-fixed >> ${debsecan_report}
+# Checking results
+if [ $? -ne 0 ] ; then
+  echo "ERROR: Problem executing debsecan. Check if your host is allowed to connect to the internet."
+  echo "       If a proxy server should be used please export the http_proxy variable."
+  exit 3
+fi
+
+# Counting, printing and checking
+fixed_num=$(grep -E '[(, ]fixed[), ]' ${debsecan_report} | wc -l)
+obsolete_num=$(grep '[( ]obsolete[), ]' ${debsecan_report} | wc -l)
+low_urgency_num=$(grep '[( ]low urgency[), ]' ${debsecan_report} | wc -l)
+medium_urgency_num=$(grep '[( ]medium urgency[), ]' ${debsecan_report} | wc -l)
+high_urgency_num=$(grep '[( ]high urgency[), ]' ${debsecan_report} | wc -l)
+
+# Check for criticals
+if [ ${fixed_num} -ge ${fixed_crit} ] ; then
+  echo "CRITICAL: $(print_numbers) - ${fixed_num} security fixes ready to install found!"
+  critical=true
+elif [ ${obsolete_num} -ge ${obsolete_crit} ] ; then
+  echo "CRITICAL: $(print_numbers) - ${obsolete_num} obsolete package(s) found!"
+  critical=true
+elif [ ${high_urgency_num} -ge ${high_urgency_crit} ] ; then
+  echo "CRITICAL: $(print_numbers) - ${high_urgency_num} high urgency fixes ready to install found!"
+  critical=true
+elif [ ${medium_urgency_num} -ge ${medium_urgency_crit} ] ; then
+  echo "CRITICAL: $(print_numbers) - ${medium_urgency_num} medium urgency fixes ready to install found!"
+  critical=true
+elif [ ${low_urgency_num} -ge ${low_urgency_crit} ] ; then
+  echo "CRITICAL: $(print_numbers) - ${low_urgency_num} low urgency fixes ready to install found!"
+  critical=true
+
+# Check for warnings
+elif [ ${fixed_num} -ge ${fixed_warn} ] ; then
+  echo "WARNING: $(print_numbers) - ${fixed_num} security fixes ready to install found!"
+  warning=true
+elif [ ${obsolete_num} -ge ${obsolete_warn} ] ; then
+  echo "WARNING: $(print_numbers) - ${obsolete_num} obsolete package(s) found!"
+  warning=true
+elif [ ${high_urgency_num} -ge ${high_urgency_warn} ] ; then
+  echo "WARNING: $(print_numbers) - ${high_urgency_num} high urgency fixes ready to install found!"
+  warning=true
+elif [ ${medium_urgency_num} -ge ${medium_urgency_warn} ] ; then
+  echo "WARNING: $(print_numbers) - ${medium_urgency_num} medium urgency fixes ready to install found!"
+  warning=true
+elif [ ${low_urgency_num} -ge ${low_urgency_warn} ] ; then
+  echo "WARNING: $(print_numbers) - ${low_urgency_num} low urgency fixes ready to install found!"
+  warning=true
+else
+  # Everything OK
+  echo "OK: $(print_numbers) - There are ${fixed_num} security fixes to install and ${obsolete_num} obsolete packages to remove"
+fi
+
+print_report
+print_perfdata
+myexit
+
