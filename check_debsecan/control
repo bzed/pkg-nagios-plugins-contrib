@@ -1,5 +1,0 @@
-Uploaders: Stefan Schoerghofer <amd1212@4md.gr>
-Recommends: debsecan
-Version: 1.0.0
-Homepage: https://github.com/AMD1212/check_debsecan
-Description: plugin to check the Debian CVE lists against your installed packages
