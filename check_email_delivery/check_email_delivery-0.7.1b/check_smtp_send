@@ -1,4 +1,6 @@
 #!/usr/bin/perl
+# nagios: -epn
+
 use strict;
 use POSIX qw(strftime);
 my $VERSION = '0.7.3';
