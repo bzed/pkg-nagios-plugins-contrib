@@ -1,3 +1,4 @@
+dsa/check_cert_expire_dir_check_name_fix
 dsa/check_running_kernel_jessie_centos_fix
 check_ajp/return_critical_on_failed_connection
 check_backuppc/use_nagios_plugins
@@ -43,10 +44,13 @@ dsa/check_packages_location
 dsa/status_directory
 dsa/check_packages-inifile
 dsa/epn
-
 dsa/check_packages_,_fix
 check_cups/ParseDateDelta
 check_printer/epn
 check_nfsmounts/nfs4_support
 check_httpd_status/htdigest_auth
 check_varnish/fix_for_v5
+check_raid/no_epn
+check_raid/fix_mdadm_hotspare_failure_detection
+percona-nagios-plugins/fix_bashism
+check_ssl_cert/bug-855253-fix

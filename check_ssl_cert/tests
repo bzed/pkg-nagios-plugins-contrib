@@ -1,0 +1,2 @@
+Depends: openssl, curl, file
+Test-Command: /usr/lib/nagios/plugins/check_ssl_cert -H www.debian.org
