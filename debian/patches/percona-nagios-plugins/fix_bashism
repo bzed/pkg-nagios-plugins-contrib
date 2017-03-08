@@ -1,0 +1,8 @@
+--- a/percona-nagios-plugins/nagios/bin/pmp-check-mysql-ts-count
++++ b/percona-nagios-plugins/nagios/bin/pmp-check-mysql-ts-count
+@@ -1,4 +1,4 @@
+-#!/bin/sh
++#!/bin/bash
+ 
+ # ########################################################################
+ # This program is part of $PROJECT_NAME$
