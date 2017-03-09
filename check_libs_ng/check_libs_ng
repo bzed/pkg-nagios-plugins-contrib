@@ -1,0 +1,89 @@
+#!/usr/bin/python
+
+# Copyright (c) 2017 Leo Antunes <leo@costela.net>
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+from __future__ import print_function
+
+import os
+import sys
+from glob import glob
+import argparse
+import logging
+
+__version__ = '0.1.0'
+
+OK = 0
+WARNING = 1
+CRITICAL = 2
+UNKNOWN = 3
+
+
+def main():
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
+    argparser.add_argument('--quiet', action='store_true', help='no output if nothing found')
+    argparser.add_argument('--verbose', action='store_true', help='be verbose about the search process')
+
+    args = argparser.parse_args()
+
+    logger = logging.getLogger(os.path.basename(sys.argv[0]))
+    if args.verbose:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.WARNING)
+
+    needs_reload = dict()
+    for proc in glob('/proc/[0-9]*'):  # numbers to avoid e.g. /proc/self
+        exe = os.path.join(proc, 'exe')
+        if os.path.exists(exe):
+            proc_pid = os.path.basename(proc)
+            proc_name = os.path.basename(os.path.realpath(exe))
+            logger.debug('checking process %s', proc_name)
+            for map_file in os.listdir(os.path.join(proc, 'map_files')):
+                full_map_file_path = os.path.join(proc, 'map_files', map_file)
+                real_map_file_path = os.path.realpath(full_map_file_path)
+                if not '/lib/' in real_map_file_path:
+                    logger.debug('skipping non-lib path %s', real_map_file_path)
+                    continue
+                else:
+                    logger.debug('checking lib %s', real_map_file_path)
+                if os.stat(full_map_file_path).st_nlink == 0:
+                    needs_reload.setdefault(proc_name, set()).add(proc_pid)
+        else:
+            logger.debug('skipping kernel process %s', os.path.basename(proc))
+
+    if needs_reload:
+        procs_with_pids = ', '.join(map(lambda x: '%s (%s)' % (x, ', '.join(needs_reload[x])), needs_reload))
+        print('The following processes have libs linked that were upgraded:', procs_with_pids)
+        exit(WARNING)
+    elif not args.quiet:
+        print('No upgraded libs linked in running processes')
+
+    exit(OK)
+
+if __name__ == '__main__':
+    try:
+        main()
+    except Exception as e:
+        print('Exception:', e)
+        exit(UNKNOWN)

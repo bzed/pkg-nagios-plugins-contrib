@@ -1,0 +1,4 @@
+Uploaders: Leo Antunes <leo@costela.net>
+Description: plugin to report processes using outdated libraries
+  depents on kernel features present in kernels newer than 3.3
+Version: 0.1.0
