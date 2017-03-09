@@ -1,4 +1,4 @@
-nagios-plugins-contrib (21.20170222~bpo70+1) wheezy-backports-sloppy; urgency=medium
+nagios-plugins-contrib (21.20170222~bpo7+1) wheezy-backports-sloppy; urgency=medium
 
   * Rebuild for wheezy-backports-sloppy.
 
@@ -9,7 +9,7 @@ nagios-plugins-contrib (21.20170222~bpo70+1) wheezy-backports-sloppy; urgency=me
   * [b30847e] Revert "Remove check_shutdown."
               Still works in wheezy.
 
- -- Bernd Zeimetz <bzed@debian.org>  Wed, 08 Mar 2017 11:30:18 +0100
+ -- Bernd Zeimetz <bzed@debian.org>  Thu, 09 Mar 2017 12:08:15 +0100
 
 nagios-plugins-contrib (21.20170222) unstable; urgency=medium
 
