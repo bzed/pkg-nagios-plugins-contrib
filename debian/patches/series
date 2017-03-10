@@ -37,6 +37,7 @@ check_rbl/disable_dul.ru
 check_rbl/additional_rbls
 check_smstools/monitoring-plugin
 check_smstools/operator_siglvl
+check_snmp_environment/epn
 check_snmp_time/epn
 check_v46/no_epn
 check_webinject/epn
