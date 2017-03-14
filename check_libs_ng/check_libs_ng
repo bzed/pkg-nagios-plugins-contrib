@@ -59,15 +59,16 @@ def main():
             proc_pid = os.path.basename(proc)
             proc_name = os.path.basename(os.path.realpath(exe))
             logger.debug('checking process %s', proc_name)
-            for map_file in os.listdir(os.path.join(proc, 'map_files')):
-                full_map_file_path = os.path.join(proc, 'map_files', map_file)
-                real_map_file_path = os.path.realpath(full_map_file_path)
+            os.chdir(os.path.join(proc, 'map_files'))
+            for map_file in os.listdir('.'):
+                # all files in /map_files/ are absolute symlinks, so we don't need abspath()
+                real_map_file_path = os.path.realpath(map_file)
                 if not '/lib/' in real_map_file_path:
                     logger.debug('skipping non-lib path %s', real_map_file_path)
                     continue
                 else:
                     logger.debug('checking lib %s', real_map_file_path)
-                if os.stat(full_map_file_path).st_nlink == 0:
+                if os.stat(map_file).st_nlink == 0:
                     needs_reload.setdefault(proc_name, set()).add(proc_pid)
         else:
             logger.debug('skipping kernel process %s', os.path.basename(proc))
