@@ -224,7 +224,7 @@ eval
 			chop($output);
 			chop($output);
 			$output = $up . "/" . $cnt . " VMs up: " . $output;
-			$np->add_perfdata(label => "vmcount", value => $up, uom => 'units', threshold => $np->threshold);
+			$np->add_perfdata(label => "vmcount", value => $up, uom => '', threshold => $np->threshold);
 			$result = $np->check_threshold(check => $up);
 		}
 		elsif (uc($command) eq "POOL")
