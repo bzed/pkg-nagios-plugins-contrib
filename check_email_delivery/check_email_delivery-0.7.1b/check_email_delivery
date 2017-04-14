@@ -36,6 +36,7 @@ my $username = "";
 my $password = "";
 my $ssl = "";
 my $imap_ssl = "";
+my $imap_ssl_ca_file = "";
 my $mailto = "";
 my $mailfrom = "";
 my @header = ();
@@ -90,7 +91,7 @@ $ok = Getopt::Long::GetOptions(
 	"imap-username=s"=>\$imap_username,"imap-password=s"=>\$imap_password,
 	"imap-mailbox=s"=>\$imap_mailbox,
 	"imap-check-interval=i"=>\$imap_interval,"imap-retries=i"=>\$imap_retries,
-	"imapssl!"=>\$imap_ssl,
+	"imapssl!"=>\$imap_ssl,"imap-ssl-ca-file=s"=>\$imap_ssl_ca_file,
 	# Time
 	"hires"=>\$time_hires,
 	);
@@ -138,13 +139,13 @@ if( $help_usage
 		&&
 		(
 			$smtp_server eq "" || $mailto eq "" || $mailfrom eq "" 
-			|| $imap_server eq "" || $username eq "" || $password eq ""
+			|| $imap_server eq ""
 		)
 	)
 	) {
 	print "Usage 1: $0 -H host \n\t".
 			"--mailto recipient\@your.net --mailfrom sender\@your.net --body 'message' \n\t".
-			"--username username --password password \n\t".
+			"[--username username] [--password password] \n\t".
 			"[-w <seconds>] [-c <seconds>]\n\t" .
 			"[--imap-check-interval <seconds> ] [--imap-retries <times> ]\n";
 	print "Usage 2: $0 \n\t".
@@ -199,6 +200,8 @@ $imap_options .= "-U ".shellquote($imap_username)." " if defined $imap_username 
 $imap_options .= "-P ".shellquote($imap_password)." " if defined $imap_password and $imap_password ne "";
 $imap_options .= "--mailbox ".shellquote($imap_mailbox)." " if defined $imap_mailbox and $imap_mailbox ne "";
 $imap_options .= "--ssl " if defined $imap_ssl and $imap_ssl;
+$imap_options .= "--ssl-ca-file ".shellquote($imap_ssl_ca_file)." " if defined $imap_ssl and $imap_ssl and defined $imap_ssl_ca_file and $imap_ssl_ca_file ne "";
+
 
 
 # create the report object
