@@ -32,7 +32,6 @@ check_printer/use_nagios_plugin
 check_printer/debian_bts
 #check_raid/prefer_cciss_vol_status_over_hpacucli
 check_rbl/interpreter
-check_rbl/disable_dul.ru
 check_rbl/additional_rbls
 check_smstools/monitoring-plugin
 check_smstools/operator_siglvl
