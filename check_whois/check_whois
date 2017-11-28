@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # nagios: -epn
 
-# $Id: check_whois,v 1.21 2015/10/12 16:44:13 wessels Exp $
+# $Id: check_whois,v 1.23 2017/03/31 23:37:49 wessels Exp $
 #
 # check_whois
 #
@@ -80,7 +80,7 @@ my $string_found = 0;
 my $name = shift or die usage();
 $name =~ s/^zone\.//;
 my $whoiscmd = findwhois();
-print STDERR "$0 version ". '$Id: check_whois,v 1.21 2015/10/12 16:44:13 wessels Exp $'. "\n" if $opts{d};
+print STDERR "$0 version ". '$Id: check_whois,v 1.23 2017/03/31 23:37:49 wessels Exp $'. "\n" if $opts{d};
 print STDERR "Whois command = $whoiscmd\n" if $opts{d};
 grok($whoiscmd, $name);
 exit 0;
@@ -152,17 +152,17 @@ sub grok {
 
                 if (/expiration date:\s*(\d\d-\w\w\w-\d\d\d\d)/) {
                         $expires = $1;
-                } elsif (/(record )?(will )?expires? on[ :](.*)\.?$/) {
+                } elsif (/(record )?(will )?expires? on[ :](\S.*\S)\.?$/) {
                         $expires = $3;
                 } elsif (/expires:\s+([-\w\s]+)/) {
                         $expires = $1;
-                } elsif (/(domain )?expiration date:\s+(.*)/) {
+                } elsif (/(domain )?expiration date:\s+(\S.*\S)/) {
                         $expires = $2;
                 } elsif ($name =~ /\.gov\.uk$/ && /renewal date:/) {
 			chomp($_ = <CMD>);
                 	tr/A-Z/a-z/;
 			$expires = $_;
-                } elsif (/(expiry|renewal) date:\s+(.*)/) {
+                } elsif (/(expiry|renewal) date:\s+(\S.*\S)/) {
                         $expires = $2;
                 }
 
