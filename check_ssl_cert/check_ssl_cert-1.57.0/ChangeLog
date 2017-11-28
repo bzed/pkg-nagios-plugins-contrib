@@ -1,6 +1,94 @@
+2017-11-28  Georg https://github.com/gbotti
+
+	* check_ssl_cert: added --fingerprint to check the SHA1 fingerprint of the certificate
+
+2017-11-17  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert (fetch_certificate): adding support for -xmpphost if available
+
+2017-11-16  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert (fetch_certificate): fixing XMPP support
+
+2017-11-16    <corti@corti.li>
+
+	* check_ssl_cert (fetch_certificate): adding support for IPv6 addresses
+
+2017-09-18 Bernd Stroessenreuther <booboo@gluga.de>
+
+	* check_ssl_cert: with -f option you now can also pass a certificate revocation list (CRL) to check its validity period
+
+2017-09-10  Matteo Corti  <corti@mac-mini-1.home>
+
+	* check_ssl_cert: OCSP check is now terminated by a timeout
+
+2017-09-09  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: The SAN requirement is now optional
+
+2017-07-28  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Use openssl s_client's -help option to test for SNI support (thanks to d7415)
+
+2017-07-24  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Fix in the Common Name parsing
+
+2017-06-23  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Checks for missing subjectAlternativeName extension
+
+2017-06-15  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Do not try to check OCSP if the protocol is not HTTP or HTTPS
+
+2017-05-15  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Fixed a problem with the detection of OCSP URLs
+
+2017-05-02  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Added --location to curl to follow redirects
+	* check_ssl_cert: Fixed the indentation of EOF in the embedded Perl script
+        * check_ssl_cert: Added --force-date-perl to force the usage of Perl for date computations and a test to be sure no errors in Perl are left undetected
+
+2017-04-28  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Fixed a bug occurring when more than one issuNer URI is present
+
+2017-03-07  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Added LDAP support
+
+2017-03-01  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: By errors it makes more sense to show the supplied host instead of the CN
+
+2017-02-16  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Support for newer OpenSSL versions (1.1)
+
+2017-02-10  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Added the --sni option
+
+2017-02-08  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Patch from Pavel Rochnyak: Changed the CN output when --altnames is used
+
+2017-02-02  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Fixed the command line argument parsing
+	* check_ssl_cert: Fixed -servername
+
+2017-01-29  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Added patches from Pavel Rochnyak for the issuer certificate cache patch
+	                  and the wildcard support in alternative names
+
 2016-12-23  Matteo Corti  <matteo@corti.li>
 
-	* check_ssl_cert: Added patch to specify multiple CNs (see https://github.com/matteocorti/check_ssl_cert/pull/35) 
+	* check_ssl_cert: Added patch to specify multiple CNs (see https://github.com/matteocorti/check_ssl_cert/pull/35)
 
 2016-12-13  Matteo Corti  <matteo@corti.li>
 

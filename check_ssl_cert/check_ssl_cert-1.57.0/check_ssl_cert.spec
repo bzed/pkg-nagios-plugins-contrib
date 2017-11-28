@@ -1,4 +1,4 @@
-%define version          1.37.0
+%define version          1.57.0
 %define release          0
 %define sourcename       check_ssl_cert
 %define packagename      nagios-plugins-check_ssl_cert
@@ -45,6 +45,72 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/%{sourcename}.1*
 
 %changelog
+* Tue Nov 28 2017 Matteo Corti <matteo@corti.li> - 1.57.0-0
+- Updated to 1.57.0
+
+* Fri Nov 17 2017 Matteo Corti <matteo@corti.li> - 1.56.0-0
+- Updated to 1.56.0
+
+* Thu Nov 16 2017 Matteo Corti <matteo@corti.li> - 1.55.0-0
+- Updated to 1.55.0
+
+* Tue Sep 19 2017 Matteo Corti <matteo@corti.li> - 1.54.0-0
+- Updated to 1.54.0
+
+* Sun Sep 10 2017 Matteo Corti <matteo@corti.li> - 1.53.0-0
+- Updated to 1.53.0
+
+* Sat Sep  9 2017 Matteo Corti <matteo@corti.li> - 1.52.0-0
+- Updated to 1.52.0
+
+* Fri Jul 28 2017 Matteo Corti <matteo@corti.li> - 1.51.0-0
+- Updated to 1.51.0
+
+* Mon Jul 24 2017 Matteo Corti <matteo@corti.li> - 1.50.0-0
+- Updated to 1.50.0
+
+* Mon Jul 17 2017 Matteo Corti <matteo@corti.li> - 1.49.0-0
+- Updated to 1.49.0
+
+* Fri Jun 23 2017 Matteo Corti <matteo@corti.li> - 1.48.0-0
+- Updated to 1.48.0
+
+* Thu Jun 15 2017 Matteo Corti <matteo@corti.li> - 1.47.0-0
+- Updated to 1.47.0
+
+* Mon May 15 2017 Matteo Corti <matteo@corti.li> - 1.46.0-0
+- Updated to 1.46.0
+
+* Tue May  2 2017 Matteo Corti <matteo@corti.li> - 1.45.0-0
+- Updated to 1.45.0
+
+* Fri Apr 28 2017 Matteo Corti <matteo@corti.li> - 1.44.0-0
+- Updated to 1.44.0
+
+* Thu Mar  7 2017 Matteo Corti <matteo@corti.li> - 1.43.0-0
+- Updated to 1.43.0
+
+* Thu Feb 16 2017 Matteo Corti <matteo@corti.li> - 1.42.0-0
+- Updated to 1.42.0
+
+* Wed Feb 10 2017 Matteo Corti <matteo@corti.li> - 1.41.0-0
+- Updated to 1.41.0
+
+* Wed Feb  8 2017 Matteo Corti <matteo@corti.li> - 1.40.0-0
+- Updated to 1.40.0
+
+* Thu Feb  2 2017 Matteo Corti <matteo@corti.li> - 1.39.0-0
+- Updated to 1.39.0
+
+* Thu Feb  2 2017 Matteo Corti <matteo@corti.li> - 1.38.2-0
+- Updated to 1.38.2
+
+* Sun Jan 29 2017 Matteo Corti <matteo@corti.li> - 1.38.1-0
+- Updated to 1.38.1
+
+* Sat Jan 28 2017 Matteo Corti <matteo@corti.li> - 1.38.0-0
+- Updated to 1.38.0
+
 * Fri Dec 23 2016 Matteo Corti <matteo@corti.li> - 1.37.0-0
 - Updated to 1.37.0
 

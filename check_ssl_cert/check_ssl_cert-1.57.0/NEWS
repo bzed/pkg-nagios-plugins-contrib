@@ -1,3 +1,25 @@
+2017-11-28 Version 1.57.0: Added --fingerprint to check the SHA1 fingerprint of the certificate
+2017-11-17 Version 1.56.0: Added support for -xmpphost if available
+2017-11-16 Version 1.55.0: Fixed XMPP support and IPv6 addresses as host
+2017-09-19 Version 1.54.0: With the -f command line option, you can also specify a certificate revocation list (CRL)
+2017-09-10 Version 1.53.0: The timeout is applied to OCSP checks
+2017-09-09 Version 1.52.0: The SAN requirement check is now optional
+2017-07-28 Version 1.51.0: Use openssl s_client's -help option to test for SNI support
+2017-07-24 Version 1.50.0: Fix in the Common Name parsing
+2017-07-17 Version 1.49.0: Support for OpenSSL 1.1
+2017-06-22 Version 1.48.0: Checks for missing subjectAlternativeName extension (https://support.google.com/chrome/a/answer/7391219?hl=en)
+2017-06-15 Version 1.47.0: Fixed an issue with OCSP URI with protocols other than HTTP or HTTPS
+2017-05-15 Version 1.46.0: Fixed a problem with the detection of OCSP URLs
+2017-05-02 Version 1.45.0: Fixed bugs in the date computation and OCSP checks
+2017-04-28 Version 1.44.0: Fixed a bug occurring when more than one issuer URI is present
+2017-03-07 Version 1.43.0: Support for LDAP
+2017-02-16 Version 1.42.0: Support for OpenSSL > 1.1.0
+2017-02-10 Version 1.41.0: Added --sni to specify the server name
+2017-02-08 Version 1.40.0: Changed the CN output when --altnames is used
+2017-02-02 Version 1.39.0: Fixed a bug related to SNI
+2017-02-02 Version 1.38.2: Fixed a bug in the command line argument parsing
+2017-01-29 Version 1.38.1: Small corrections in the documentation
+2017-01-28 Version 1.38.0: Added support for wildcards in alternative names and caching of the issuer certificate
 2016-12-23 Version 1.37.0: Added a patch to specify multiple CNs
 2016-12-13 Version 1.36.2: fixed a minor problem with --debug
 2016-12-06 Version 1.36.1: fixed a problem when specifying a CN beginning with *

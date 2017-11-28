@@ -54,3 +54,14 @@ Thanks:
 * Many thanks to Philippe Kueck for the selection of the cipher authentication
 * Many thanks to Jalonet (https://github.com/jalonet) for the file/PEM patch
 * Many thanks to Sander Cornelissen (https://github.com/scornelissen85) for the multiple CNs patch
+* Many thanks to Pavel Rochnyak (https://github.com/rpv-tomsk) for the issuer certificate cache patch and
+  the wildcard support in alternative names
+* Many thanks to Vamp898 (https://github.com/Vamp898) for the LDAP patch
+* Many thanks to Emilian Ertel for the curl and date patches
+* Many thanks to Kosta Velikov for the grep patch
+* Many thanks to Vojtech Horky for the OpenSSL 1.1 patch
+* Many thanks to Nicolas Lafont (https://github.com/ManicoW) for the Common Name fix
+* Many thanks to d7415 (https://github.com/d7415) for the -help patch
+* Many thanks to Łukasz Wąsikowski (https://github.com/IdahoPL) for the curl and date display patches
+* Many thanks to booboo-at-gluga-de (https://github.com/booboo-at-gluga-de) for the CRL patch
+* Many thanks to Georg (https://github.com/gbotti) for the fingerprint patch
