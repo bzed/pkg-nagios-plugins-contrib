@@ -35,18 +35,18 @@ sub overall_init {
 
 sub overall_check {
   my $self = shift;
-  if ($self->{cpqHoMibStatusArray} & 1) {
-    $self->add_info('overall status is other');
-    $self->add_message(UNKNOWN, 'overall status is other');
-  } elsif ($self->{cpqHoMibStatusArray} & 2) {
-    $self->add_info('overall status is ok');
-    $self->add_message(OK, 'overall status is ok');
-  } elsif ($self->{cpqHoMibStatusArray} & 3) {
-    $self->add_info('overall status is degraded');
-    $self->add_message(WARNING, 'overall status is degraded');
-  } elsif ($self->{cpqHoMibStatusArray} & 4) {
+  if ($self->{cpqHoMibStatusArray} == 4) {
     $self->add_info('overall status is failed');
     $self->add_message(CRITICAL, 'overall status is failed');
+  } elsif ($self->{cpqHoMibStatusArray} == 3) {
+    $self->add_info('overall status is degraded');
+    $self->add_message(WARNING, 'overall status is degraded');
+  } elsif ($self->{cpqHoMibStatusArray} == 2) {
+    $self->add_info('overall status is ok');
+    $self->add_message(OK, 'overall status is ok');
+  } elsif ($self->{cpqHoMibStatusArray} == 1) {
+    $self->add_info('overall status is other');
+    $self->add_message(UNKNOWN, 'overall status is other');
   }
 }
 

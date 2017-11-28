@@ -1,3 +1,7 @@
+* 4.7.5.4 2017-02-01
+  allow snmpv3 in a flat community-string
+* 4.7.5.3 2016-12-05
+  reorder cpqHoMibStatusArray
 * 4.7.5.2 2016-12-02
   Detect more MSA devices (P2000)
 * 4.7.5.1 2016-11-18

@@ -183,6 +183,16 @@ sub check_snmp_and_model {
         if ($self->{runtime}->{plugin}->opts->privprotocol) {
           $params{'-privprotocol'} = $self->{runtime}->{plugin}->opts->privprotocol;
         }
+      } elsif ($self->decode_password($self->{runtime}->{plugin}->opts->community) =~ /^snmpv3(.)(.+)/) {
+        my $separator = $1;
+        my ($authprotocol, $authpassword, $privprotocol, $privpassword,
+          $username, $contextengineid, $contextname) = split(/$separator/, $2);
+        $params{'-version'} = 3;
+        $params{'-username'} = $self->decode_password($username) if $username;
+        $params{'-authprotocol'} = $self->decode_password($authprotocol) if $authprotocol;
+        $params{'-authpassword'} = $self->decode_password($authpassword) if $authpassword;
+        $params{'-privprotocol'} = $self->decode_password($privprotocol) if $privprotocol;
+        $params{'-privpassword'} = $self->decode_password($privpassword) if $privpassword;
       } else {
         $params{'-community'} = $self->decode_password($self->{runtime}->{plugin}->opts->community);
       }
