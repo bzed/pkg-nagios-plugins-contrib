@@ -74,6 +74,8 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid.pm"} = '#line '.(1+__LINE__).' "'.__
   # Returns the plugin objects
   sub active_plugins {
   	my $this = shift;
+  	# whether the query is for sudo rules
+  	my $sudo = shift || 0;
   
   	my @plugins = ();
   
@@ -83,7 +85,7 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid.pm"} = '#line '.(1+__LINE__).' "'.__
   		next unless $plugin->can('check');
   
   		# skip inactive plugins (disabled or no tools available)
-  		next unless $plugin->active;
+  		next unless $plugin->active($sudo);
   
   		push(@plugins, $plugin);
   	}
@@ -2087,6 +2089,18 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/dm.pm"} = '#line '.(1+__LINE
   	qw(dmsetup);
   }
   
+  sub active {
+  	my ($this, $sudo) = @_;
+  
+  	# return if parent said NO
+  	my $res = $this->SUPER::active(@_);
+  	return $res unless $res;
+  
+  	# check if there really are any devices
+  	my $c = $this->parse;
+  	return !!@$c;
+  }
+  
   sub sudo {
   	my ($this, $deep) = @_;
   	# quick check when running check
@@ -2121,7 +2135,7 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/dm.pm"} = '#line '.(1+__LINE
   		sync_ratio
   		sync_action
   		mismatch_cnt
-  		);
+  	);
   
   	my %h;
   	@h{@cols} = split;
@@ -2194,6 +2208,17 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/dm.pm"} = '#line '.(1+__LINE
   }
   
   sub parse {
+  	my $this = shift;
+  
+  	# cache for single run
+  	if (!defined($this->{parsed})) {
+  		$this->{parsed} = $this->_parse;
+  	}
+  
+  	return $this->{parsed};
+  }
+  
+  sub _parse {
   	my $this = shift;
   
   	my @devices;
@@ -3660,8 +3685,7 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Plugins/mdstat.pm"} = '#line '.(1+__
   		} elsif (@fd > 0) {
   			# FIXME: this is same as above?
   			$this->warning;
-  			$s .= "hot-spare failure:". join(",", @{$md{failed_disks}}) .":$md{status}";
-  
+  			$s .= "hot-spare failure:". join(",", @fd) .":$md{status}";
   		} else {
   			$s .= "$md{status}";
   		}
@@ -5814,6 +5838,7 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Sudoers.pm"} = '#line '.(1+__LINE__)
   #
   # if sudoers config has "#includedir" directive, add file to that dir
   # otherwise update main sudoers file
+  # @returns true if file was updated
   sub sudoers {
   	my $dry_run = shift;
   	my @plugins = @_;
@@ -5830,7 +5855,7 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Sudoers.pm"} = '#line '.(1+__LINE__)
   
   	unless (@sudo) {
   		warn "Your configuration does not need to use sudo, sudoers not updated\n";
-  		return;
+  		return 0;
   	}
   
   	my @rules = join "\n", (
@@ -5838,7 +5863,7 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Sudoers.pm"} = '#line '.(1+__LINE__)
   		# setup alias, so we could easily remove these later by matching lines with 'CHECK_RAID'
   		# also this avoids installing ourselves twice.
   		"# Lines matching CHECK_RAID added by $0 -S on ". scalar localtime,
-  		"User_Alias CHECK_RAID=nagios",
+  		"User_Alias CHECK_RAID=nagios, icinga",
   		"Defaults:CHECK_RAID !requiretty",
   
   		# actual rules from plugins
@@ -5851,7 +5876,7 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Sudoers.pm"} = '#line '.(1+__LINE__)
   		warn "--- sudoers ---\n";
   		print @rules;
   		warn "--- sudoers ---\n";
-  		return;
+  		return 0;
   	}
   
   	my $sudoers = find_file('/usr/local/etc/sudoers', '/etc/sudoers');
@@ -5901,10 +5926,12 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Sudoers.pm"} = '#line '.(1+__LINE__)
   		# use the new file
   		rename($new, $sudoers) or die $!;
   		warn "$sudoers file updated.\n";
-  	} else {
-  		warn "$sudoers file not changed.\n";
-  		unlink($new);
+  		return 1;
   	}
+  
+  	warn "$sudoers file not changed.\n";
+  	unlink($new);
+  	return 0;
   }
   
   # return first "#includedir" directive from $sudoers file
@@ -6017,6 +6044,9 @@ $fatpacked{"App/Monitoring/Plugin/CheckRaid/Utils.pm"} = '#line '.(1+__LINE__).'
   	local $/ = undef;
   	local $_ = <$fh>;
   	close($fh) or die $!;
+  	# prefer -n to skip password prompt
+  	push(@sudo, '-n') if /-n/;
+  	# ..if not supported, add -A as well
   	push(@sudo, '-A') if /-A/;
   
   	return \@sudo;
@@ -6129,7 +6159,7 @@ $fatpacked{"Module/Pluggable/Object.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."
 MODULE_PLUGGABLE_OBJECT
 
 $fatpacked{"Module/Runtime.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'MODULE_RUNTIME';
-  package Module::Runtime;BEGIN {require 5.006}BEGIN {${^WARNING_BITS}=""}our$VERSION="0.014";our@EXPORT_OK=qw($module_name_rx is_module_name is_valid_module_name check_module_name module_notional_filename require_module use_module use_package_optimistically $top_module_spec_rx $sub_module_spec_rx is_module_spec is_valid_module_spec check_module_spec compose_module_name);my%export_ok=map {($_=>undef)}@EXPORT_OK;sub import {my$me=shift;my$callpkg=caller(0);my$errs="";for(@_){if(exists$export_ok{$_}){if(/\A\$(.*)\z/s){*{$callpkg."::".$1}=\$$1}else {*{$callpkg."::".$_}=\&$_}}else {$errs .= "\"$_\" is not exported by the $me module\n"}}if($errs ne ""){die "${errs}Can't continue after import errors "."at @{[(caller(0))[1]]} line @{[(caller(0))[2]]}.\n"}}sub _is_string($) {my($arg)=@_;return defined($arg)&& ref(\$arg)eq "SCALAR"}our$module_name_rx=qr/[A-Z_a-z][0-9A-Z_a-z]*(?:::[0-9A-Z_a-z]+)*/;my$qual_module_spec_rx=qr#(?:/|::)[A-Z_a-z][0-9A-Z_a-z]*(?:(?:/|::)[0-9A-Z_a-z]+)*#;my$unqual_top_module_spec_rx=qr#[A-Z_a-z][0-9A-Z_a-z]*(?:(?:/|::)[0-9A-Z_a-z]+)*#;our$top_module_spec_rx=qr/$qual_module_spec_rx|$unqual_top_module_spec_rx/o;my$unqual_sub_module_spec_rx=qr#[0-9A-Z_a-z]+(?:(?:/|::)[0-9A-Z_a-z]+)*#;our$sub_module_spec_rx=qr/$qual_module_spec_rx|$unqual_sub_module_spec_rx/o;sub is_module_name($) {_is_string($_[0])&& $_[0]=~ /\A$module_name_rx\z/o}*is_valid_module_name=\&is_module_name;sub check_module_name($) {unless(&is_module_name){die +(_is_string($_[0])? "`$_[0]'" : "argument")." is not a module name\n"}}sub module_notional_filename($) {&check_module_name;my($name)=@_;$name =~ s!::!/!g;return$name.".pm"}BEGIN {*_WORK_AROUND_HINT_LEAKAGE="$]" < 5.011 &&!("$]" >= 5.009004 && "$]" < 5.010001)? sub(){1}: sub(){0};*_WORK_AROUND_BROKEN_MODULE_STATE="$]" < 5.009 ? sub(){1}: sub(){0}}BEGIN {if(_WORK_AROUND_BROKEN_MODULE_STATE){eval q{
+  package Module::Runtime;BEGIN {require 5.006}BEGIN {${^WARNING_BITS}=""}our$VERSION="0.015";our@EXPORT_OK=qw($module_name_rx is_module_name is_valid_module_name check_module_name module_notional_filename require_module use_module use_package_optimistically $top_module_spec_rx $sub_module_spec_rx is_module_spec is_valid_module_spec check_module_spec compose_module_name);my%export_ok=map {($_=>undef)}@EXPORT_OK;sub import {my$me=shift;my$callpkg=caller(0);my$errs="";for(@_){if(exists$export_ok{$_}){if(/\A\$(.*)\z/s){*{$callpkg."::".$1}=\$$1}else {*{$callpkg."::".$_}=\&$_}}else {$errs .= "\"$_\" is not exported by the $me module\n"}}if($errs ne ""){die "${errs}Can't continue after import errors "."at @{[(caller(0))[1]]} line @{[(caller(0))[2]]}.\n"}}sub _is_string($) {my($arg)=@_;return defined($arg)&& ref(\$arg)eq "SCALAR"}our$module_name_rx=qr/[A-Z_a-z][0-9A-Z_a-z]*(?:::[0-9A-Z_a-z]+)*/;my$qual_module_spec_rx=qr#(?:/|::)[A-Z_a-z][0-9A-Z_a-z]*(?:(?:/|::)[0-9A-Z_a-z]+)*#;my$unqual_top_module_spec_rx=qr#[A-Z_a-z][0-9A-Z_a-z]*(?:(?:/|::)[0-9A-Z_a-z]+)*#;our$top_module_spec_rx=qr/$qual_module_spec_rx|$unqual_top_module_spec_rx/o;my$unqual_sub_module_spec_rx=qr#[0-9A-Z_a-z]+(?:(?:/|::)[0-9A-Z_a-z]+)*#;our$sub_module_spec_rx=qr/$qual_module_spec_rx|$unqual_sub_module_spec_rx/o;sub is_module_name($) {_is_string($_[0])&& $_[0]=~ /\A$module_name_rx\z/o}*is_valid_module_name=\&is_module_name;sub check_module_name($) {unless(&is_module_name){die +(_is_string($_[0])? "`$_[0]'" : "argument")." is not a module name\n"}}sub module_notional_filename($) {&check_module_name;my($name)=@_;$name =~ s!::!/!g;return$name.".pm"}BEGIN {*_WORK_AROUND_HINT_LEAKAGE="$]" < 5.011 &&!("$]" >= 5.009004 && "$]" < 5.010001)? sub(){1}: sub(){0};*_WORK_AROUND_BROKEN_MODULE_STATE="$]" < 5.009 ? sub(){1}: sub(){0}}BEGIN {if(_WORK_AROUND_BROKEN_MODULE_STATE){eval q{
   	sub Module::Runtime::__GUARD__::DESTROY {
   		delete $INC{$_[0]->[0]} if @{$_[0]};
   	}
@@ -6173,31 +6203,31 @@ $fatpacked{"Monitoring/Plugin/Threshold.pm"} = '#line '.(1+__LINE__).' "'.__FILE
 MONITORING_PLUGIN_THRESHOLD
 
 $fatpacked{"Params/Validate.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'PARAMS_VALIDATE';
-  package Params::Validate;use 5.008001;use strict;use warnings;our$VERSION='1.26';use Exporter;use Module::Implementation;use Params::Validate::Constants;use vars qw($NO_VALIDATION %OPTIONS $options);our@ISA='Exporter';my@types=qw(SCALAR ARRAYREF HASHREF CODEREF GLOB GLOBREF SCALARREF HANDLE BOOLEAN UNDEF OBJECT);our%EXPORT_TAGS=('all'=>[qw(validate validate_pos validation_options validate_with),@types ],types=>\@types,);our@EXPORT_OK=(@{$EXPORT_TAGS{all}},'set_options');our@EXPORT=qw(validate validate_pos);$NO_VALIDATION=$ENV{PERL_NO_VALIDATION};{my$loader=Module::Implementation::build_loader_sub(implementations=>['XS','PP' ],symbols=>[qw(validate validate_pos validate_with validation_options set_options),],);$ENV{PARAMS_VALIDATE_IMPLEMENTATION}='PP' if$ENV{PV_TEST_PERL};$loader->()}1;
+  package Params::Validate;use 5.008001;use strict;use warnings;our$VERSION='1.29';use Exporter;use Module::Implementation;use Params::Validate::Constants;use vars qw($NO_VALIDATION %OPTIONS $options);our@ISA='Exporter';my@types=qw(SCALAR ARRAYREF HASHREF CODEREF GLOB GLOBREF SCALARREF HANDLE BOOLEAN UNDEF OBJECT);our%EXPORT_TAGS=('all'=>[qw(validate validate_pos validation_options validate_with),@types ],types=>\@types,);our@EXPORT_OK=(@{$EXPORT_TAGS{all}},'set_options');our@EXPORT=qw(validate validate_pos);$NO_VALIDATION=$ENV{PERL_NO_VALIDATION};{my$loader=Module::Implementation::build_loader_sub(implementations=>['XS','PP' ],symbols=>[qw(validate validate_pos validate_with validation_options set_options),],);$ENV{PARAMS_VALIDATE_IMPLEMENTATION}='PP' if$ENV{PV_TEST_PERL};$loader->()}1;
 PARAMS_VALIDATE
 
 $fatpacked{"Params/Validate/Constants.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'PARAMS_VALIDATE_CONSTANTS';
-  package Params::Validate::Constants;use strict;use warnings;our$VERSION='1.26';our@ISA='Exporter';our@EXPORT=qw(SCALAR ARRAYREF HASHREF CODEREF GLOB GLOBREF SCALARREF HANDLE BOOLEAN UNDEF OBJECT UNKNOWN);sub SCALAR () {1}sub ARRAYREF () {2}sub HASHREF () {4}sub CODEREF () {8}sub GLOB () {16}sub GLOBREF () {32}sub SCALARREF () {64}sub UNKNOWN () {128}sub UNDEF () {256}sub OBJECT () {512}sub HANDLE () {16 | 32}sub BOOLEAN () {1 | 256}1;
+  package Params::Validate::Constants;use strict;use warnings;our$VERSION='1.29';our@ISA='Exporter';our@EXPORT=qw(SCALAR ARRAYREF HASHREF CODEREF GLOB GLOBREF SCALARREF HANDLE BOOLEAN UNDEF OBJECT UNKNOWN);sub SCALAR () {1}sub ARRAYREF () {2}sub HASHREF () {4}sub CODEREF () {8}sub GLOB () {16}sub GLOBREF () {32}sub SCALARREF () {64}sub UNKNOWN () {128}sub UNDEF () {256}sub OBJECT () {512}sub HANDLE () {16 | 32}sub BOOLEAN () {1 | 256}1;
 PARAMS_VALIDATE_CONSTANTS
 
 $fatpacked{"Params/Validate/PP.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'PARAMS_VALIDATE_PP';
-  package Params::Validate::PP;use strict;use warnings;our$VERSION='1.26';use Params::Validate::Constants;use Scalar::Util 1.10 ();our$options;sub validate_pos (\@@) {return if$Params::Validate::NO_VALIDATION &&!defined wantarray;my$p=shift;my@specs=@_;my@p=@$p;if ($Params::Validate::NO_VALIDATION){for (my$x=$#p + 1;$x <= $#specs;$x++ ){$p[$x]=$specs[$x]->{default}if ref$specs[$x]&& exists$specs[$x]->{default}}return wantarray ? @p : \@p}local$options ||= _get_options((caller(0))[0])unless defined$options;my$min=0;while (1){last unless (ref$specs[$min]?!(exists$specs[$min]->{default}|| $specs[$min]->{optional}): $specs[$min]);$min++}my$max=scalar@specs;my$actual=scalar@p;unless ($actual >= $min && ($options->{allow_extra}|| $actual <= $max)){my$minmax=($options->{allow_extra}? "at least $min" : ($min!=$max ? "$min - $max" : $max));my$val=$options->{allow_extra}? $min : $max;$minmax .= $val!=1 ? ' were' : ' was';my$called=_get_called();$options->{on_fail}->("$actual parameter" .($actual!=1 ? 's' : '')." " .($actual!=1 ? 'were' : 'was')." passed to $called but $minmax expected\n")}my$bigger=$#p > $#specs ? $#p : $#specs;for (0 .. $bigger){my$spec=$specs[$_];next unless ref$spec;if ($_ <= $#p){_validate_one_param($p[$_],\@p,$spec,'Parameter #' .($_ + 1).' (%s)')}$p[$_]=$spec->{default}if $_ > $#p && exists$spec->{default}}_validate_pos_depends(\@p,\@specs);for (grep {defined$p[$_]&&!ref$p[$_]&& ref$specs[$_]&& $specs[$_]{untaint}}0 .. $bigger){($p[$_])=$p[$_]=~ /(.+)/}return wantarray ? @p : \@p}sub _validate_pos_depends {my ($p,$specs)=@_;for my$p_idx (0 .. $#$p){my$spec=$specs->[$p_idx];next unless$spec && UNIVERSAL::isa($spec,'HASH')&& exists$spec->{depends};my$depends=$spec->{depends};if (ref$depends){require Carp;local$Carp::CarpLevel=2;Carp::croak("Arguments to 'depends' for validate_pos() must be a scalar")}my$p_size=scalar @$p;if ($p_size < $depends - 1){my$error =("Parameter #" .($p_idx + 1)." depends on parameter #" .$depends .", which was not given");$options->{on_fail}->($error)}}return 1}sub _validate_named_depends {my ($p,$specs)=@_;for my$pname (keys %$p){my$spec=$specs->{$pname};next unless$spec && UNIVERSAL::isa($spec,'HASH')&& $spec->{depends};unless (UNIVERSAL::isa($spec->{depends},'ARRAY')||!ref$spec->{depends}){require Carp;local$Carp::CarpLevel=2;Carp::croak("Arguments to 'depends' must be a scalar or arrayref")}for my$depends_name (ref$spec->{depends}? @{$spec->{depends}}: $spec->{depends}){unless (exists$p->{$depends_name}){my$error =("Parameter '$pname' depends on parameter '" .$depends_name ."', which was not given");$options->{on_fail}->($error)}}}}sub validate (\@$) {return if$Params::Validate::NO_VALIDATION &&!defined wantarray;my$p=$_[0];my$specs=$_[1];local$options=_get_options((caller(0))[0])unless defined$options;if (ref$p eq 'ARRAY'){if (ref$p->[0]){$p={%{$p->[0]}}}elsif (@$p % 2){my$called=_get_called();$options->{on_fail}->("Odd number of parameters in call to $called " ."when named parameters were expected\n")}else {$p={@$p}}}if ($options->{normalize_keys}){$specs=_normalize_callback($specs,$options->{normalize_keys});$p=_normalize_callback($p,$options->{normalize_keys})}elsif ($options->{ignore_case}|| $options->{strip_leading}){$specs=_normalize_named($specs);$p=_normalize_named($p)}if ($Params::Validate::NO_VALIDATION){return (wantarray ? ((map {$_=>$specs->{$_}->{default}}grep {ref$specs->{$_}&& exists$specs->{$_}->{default}}keys %$specs),(ref$p eq 'ARRAY' ? (ref$p->[0]? %{$p->[0]}: @$p): %$p)): do {my$ref=(ref$p eq 'ARRAY' ? (ref$p->[0]? $p->[0]: {@$p}): $p);for (grep {ref$specs->{$_}&& exists$specs->{$_}->{default}}keys %$specs){$ref->{$_}=$specs->{$_}->{default}unless exists$ref->{$_}}return$ref})}_validate_named_depends($p,$specs);unless ($options->{allow_extra}){if (my@unmentioned=grep {!exists$specs->{$_}}keys %$p){my$called=_get_called();$options->{on_fail}->("The following parameter" .(@unmentioned > 1 ? 's were' : ' was')." passed in the call to $called but " .(@unmentioned > 1 ? 'were' : 'was')." not listed in the validation options: @unmentioned\n")}}my@missing;keys %$specs;OUTER: while (my ($key,$spec)=each %$specs){if (!exists$p->{$key}&& (ref$spec ?!(do {if (exists$spec->{default}){$p->{$key}=$spec->{default};next OUTER}}|| do {next OUTER if$spec->{optional}}): $spec)){push@missing,$key}elsif (ref$spec){my$value=defined$p->{$key}? qq|"$p->{$key}"| : 'undef';_validate_one_param($p->{$key},$p,$spec,qq{The '$key' parameter (%s)})}}if (@missing){my$called=_get_called();my$missing=join ', ',map {"'$_'"}@missing;$options->{on_fail}->("Mandatory parameter" .(@missing > 1 ? 's' : '')." $missing missing in call to $called\n")}for my$key (grep {defined$p->{$_}&&!ref$p->{$_}&& ref$specs->{$_}&& $specs->{$_}{untaint}}keys %$p){($p->{$key})=$p->{$key}=~ /(.+)/}return wantarray ? %$p : $p}sub validate_with {return if$Params::Validate::NO_VALIDATION &&!defined wantarray;my%p=@_;local$options=_get_options((caller(0))[0],%p);unless ($Params::Validate::NO_VALIDATION){unless (exists$options->{called}){$options->{called}=(caller($options->{stack_skip}))[3]}}if (UNIVERSAL::isa($p{spec},'ARRAY')){return validate_pos(@{$p{params}},@{$p{spec}})}else {return&validate($p{params},$p{spec})}}sub _normalize_callback {my ($p,$func)=@_;my%new;for my$key (keys %$p){my$new_key=$func->($key);unless (defined$new_key){die "The normalize_keys callback did not return a defined value when normalizing the key '$key'"}if (exists$new{$new_key}){die "The normalize_keys callback returned a key that already exists, '$new_key', when normalizing the key '$key'"}$new{$new_key}=$p->{$key}}return \%new}sub _normalize_named {my%h=(ref $_[0])=~ /ARRAY/ ? @{$_[0]}: %{$_[0]};if ($options->{ignore_case}){$h{lc $_ }=delete$h{$_}for keys%h}if ($options->{strip_leading}){for my$key (keys%h){my$new;($new=$key)=~ s/^\Q$options->{strip_leading}\E//;$h{$new}=delete$h{$key}}}return \%h}my%Valid=map {$_=>1}qw(callbacks can default depends isa optional regex type untaint);sub _validate_one_param {my ($value,$params,$spec,$id)=@_;if (exists$spec->{type}){unless (defined$spec->{type}&& Scalar::Util::looks_like_number($spec->{type})&& $spec->{type}> 0){my$msg ="$id has a type specification which is not a number. It is ";if (defined$spec->{type}){$msg .= "a string - $spec->{type}"}else {$msg .= "undef"}$msg .= ".\n Use the constants exported by Params::Validate to declare types.";$options->{on_fail}->(sprintf($msg,_stringify($value)))}unless (_get_type($value)& $spec->{type}){my$type=_get_type($value);my@is=_typemask_to_strings($type);my@allowed=_typemask_to_strings($spec->{type});my$article=$is[0]=~ /^[aeiou]/i ? 'an' : 'a';my$called=_get_called(1);$options->{on_fail}->(sprintf("$id to $called was $article '@is', which " ."is not one of the allowed types: @allowed\n",_stringify($value)))}}return unless ($spec->{isa}|| $spec->{can}|| $spec->{callbacks}|| $spec->{regex});if (exists$spec->{isa}){for (ref$spec->{isa}? @{$spec->{isa}}: $spec->{isa}){unless (do {local $@=q{};eval {$value->isa($_)}}){my$is=ref$value ? ref$value : 'plain scalar';my$article1=$_ =~ /^[aeiou]/i ? 'an' : 'a';my$article2=$is =~ /^[aeiou]/i ? 'an' : 'a';my$called=_get_called(1);$options->{on_fail}->(sprintf("$id to $called was not $article1 '$_' " ."(it is $article2 $is)\n",_stringify($value)))}}}if (exists$spec->{can}){for (ref$spec->{can}? @{$spec->{can}}: $spec->{can}){unless (do {local $@=q{};eval {$value->can($_)}}){my$called=_get_called(1);$options->{on_fail}->(sprintf("$id to $called does not have the method: '$_'\n",_stringify($value)))}}}if ($spec->{callbacks}){unless (UNIVERSAL::isa($spec->{callbacks},'HASH')){my$called=_get_called(1);$options->{on_fail}->("'callbacks' validation parameter for $called must be a hash reference\n")}for (keys %{$spec->{callbacks}}){unless (UNIVERSAL::isa($spec->{callbacks}{$_},'CODE')){my$called=_get_called(1);$options->{on_fail}->("callback '$_' for $called is not a subroutine reference\n")}my$ok;my$e=do {local $@=q{};local$SIG{__DIE__};$ok=eval {$spec->{callbacks}{$_}->($value,$params)};$@};if (!$ok){my$called=_get_called(1);if (ref$e){$options->{on_fail}->($e)}else {my$msg="$id to $called did not pass the '$_' callback";$msg .= ": $e" if length$e;$msg .= "\n";$options->{on_fail}->(sprintf($msg,_stringify($value)))}}}}if (exists$spec->{regex}){unless ((defined$value ? $value : '')=~ /$spec->{regex}/){my$called=_get_called(1);$options->{on_fail}->(sprintf("$id to $called did not pass regex check\n",_stringify($value)))}}}{my%isas=('ARRAY'=>ARRAYREF,'HASH'=>HASHREF,'CODE'=>CODEREF,'GLOB'=>GLOBREF,'SCALAR'=>SCALARREF,'REGEXP'=>SCALARREF,);my%simple_refs=map {$_=>1}keys%isas;sub _get_type {return UNDEF unless defined $_[0];my$ref=ref $_[0];unless ($ref){return GLOB if UNIVERSAL::isa(\$_[0],'GLOB');return SCALAR}return$isas{$ref}if$simple_refs{$ref};for (keys%isas){return$isas{$_}| OBJECT if UNIVERSAL::isa($_[0],$_)}return UNKNOWN}}{my%type_to_string=(SCALAR()=>'scalar',ARRAYREF()=>'arrayref',HASHREF()=>'hashref',CODEREF()=>'coderef',GLOB()=>'glob',GLOBREF()=>'globref',SCALARREF()=>'scalarref',UNDEF()=>'undef',OBJECT()=>'object',UNKNOWN()=>'unknown',);sub _typemask_to_strings {my$mask=shift;my@types;for (SCALAR,ARRAYREF,HASHREF,CODEREF,GLOB,GLOBREF,SCALARREF,UNDEF,OBJECT,UNKNOWN){push@types,$type_to_string{$_}if$mask & $_}return@types ? @types : ('unknown')}}{my%defaults=(ignore_case=>0,strip_leading=>0,allow_extra=>0,on_fail=>sub {require Carp;Carp::croak($_[0])},stack_skip=>1,normalize_keys=>undef,);*set_options=\&validation_options;sub validation_options {my%opts=@_;my$caller=caller;for (keys%defaults){$opts{$_}=$defaults{$_}unless exists$opts{$_}}$Params::Validate::OPTIONS{$caller}=\%opts}sub _get_options {my$caller=shift;if (@_){return ($Params::Validate::OPTIONS{$caller}? {%{$Params::Validate::OPTIONS{$caller}},@_ }: {%defaults,@_ })}else {return (exists$Params::Validate::OPTIONS{$caller}? $Params::Validate::OPTIONS{$caller}: \%defaults)}}}sub _get_called {my$extra_skip=$_[0]|| 0;$extra_skip++;my$called=(exists$options->{called}? $options->{called}: (caller($options->{stack_skip}+ $extra_skip))[3]);$called='(unknown)' unless defined$called;return$called}sub _stringify {return defined $_[0]? qq{"$_[0]"} : 'undef'}1;
+  package Params::Validate::PP;use strict;use warnings;our$VERSION='1.29';use Params::Validate::Constants;use Scalar::Util 1.10 ();our$options;sub validate_pos (\@@) {return if$Params::Validate::NO_VALIDATION &&!defined wantarray;my$p=shift;my@specs=@_;my@p=@$p;if ($Params::Validate::NO_VALIDATION){for (my$x=$#p + 1;$x <= $#specs;$x++ ){$p[$x]=$specs[$x]->{default}if ref$specs[$x]&& exists$specs[$x]->{default}}return wantarray ? @p : \@p}local$options ||= _get_options((caller(0))[0])unless defined$options;my$min=0;while (1){last unless (ref$specs[$min]?!(exists$specs[$min]->{default}|| $specs[$min]->{optional}): $specs[$min]);$min++}my$max=scalar@specs;my$actual=scalar@p;unless ($actual >= $min && ($options->{allow_extra}|| $actual <= $max)){my$minmax=($options->{allow_extra}? "at least $min" : ($min!=$max ? "$min - $max" : $max));my$val=$options->{allow_extra}? $min : $max;$minmax .= $val!=1 ? ' were' : ' was';my$called=_get_called();$options->{on_fail}->("$actual parameter" .($actual!=1 ? 's' : '')." " .($actual!=1 ? 'were' : 'was')." passed to $called but $minmax expected\n")}my$bigger=$#p > $#specs ? $#p : $#specs;for (0 .. $bigger){my$spec=$specs[$_];next unless ref$spec;if ($_ <= $#p){_validate_one_param($p[$_],\@p,$spec,'Parameter #' .($_ + 1).' (%s)')}$p[$_]=$spec->{default}if $_ > $#p && exists$spec->{default}}_validate_pos_depends(\@p,\@specs);for (grep {defined$p[$_]&&!ref$p[$_]&& ref$specs[$_]&& $specs[$_]{untaint}}0 .. $bigger){($p[$_])=$p[$_]=~ /(.+)/}return wantarray ? @p : \@p}sub _validate_pos_depends {my ($p,$specs)=@_;for my$p_idx (0 .. $#$p){my$spec=$specs->[$p_idx];next unless$spec && UNIVERSAL::isa($spec,'HASH')&& exists$spec->{depends};my$depends=$spec->{depends};if (ref$depends){require Carp;local$Carp::CarpLevel=2;Carp::croak("Arguments to 'depends' for validate_pos() must be a scalar")}my$p_size=scalar @$p;if ($p_size < $depends - 1){my$error =("Parameter #" .($p_idx + 1)." depends on parameter #" .$depends .", which was not given");$options->{on_fail}->($error)}}return 1}sub _validate_named_depends {my ($p,$specs)=@_;for my$pname (keys %$p){my$spec=$specs->{$pname};next unless$spec && UNIVERSAL::isa($spec,'HASH')&& $spec->{depends};unless (UNIVERSAL::isa($spec->{depends},'ARRAY')||!ref$spec->{depends}){require Carp;local$Carp::CarpLevel=2;Carp::croak("Arguments to 'depends' must be a scalar or arrayref")}for my$depends_name (ref$spec->{depends}? @{$spec->{depends}}: $spec->{depends}){unless (exists$p->{$depends_name}){my$error =("Parameter '$pname' depends on parameter '" .$depends_name ."', which was not given");$options->{on_fail}->($error)}}}}sub validate (\@$) {return if$Params::Validate::NO_VALIDATION &&!defined wantarray;my$p=$_[0];my$specs=$_[1];local$options=_get_options((caller(0))[0])unless defined$options;if (ref$p eq 'ARRAY'){if (ref$p->[0]){$p={%{$p->[0]}}}elsif (@$p % 2){my$called=_get_called();$options->{on_fail}->("Odd number of parameters in call to $called " ."when named parameters were expected\n")}else {$p={@$p}}}if ($options->{normalize_keys}){$specs=_normalize_callback($specs,$options->{normalize_keys});$p=_normalize_callback($p,$options->{normalize_keys})}elsif ($options->{ignore_case}|| $options->{strip_leading}){$specs=_normalize_named($specs);$p=_normalize_named($p)}if ($Params::Validate::NO_VALIDATION){return (wantarray ? ((map {$_=>$specs->{$_}->{default}}grep {ref$specs->{$_}&& exists$specs->{$_}->{default}}keys %$specs),(ref$p eq 'ARRAY' ? (ref$p->[0]? %{$p->[0]}: @$p): %$p)): do {my$ref=(ref$p eq 'ARRAY' ? (ref$p->[0]? $p->[0]: {@$p}): $p);for (grep {ref$specs->{$_}&& exists$specs->{$_}->{default}}keys %$specs){$ref->{$_}=$specs->{$_}->{default}unless exists$ref->{$_}}return$ref})}_validate_named_depends($p,$specs);unless ($options->{allow_extra}){if (my@unmentioned=grep {!exists$specs->{$_}}keys %$p){my$called=_get_called();$options->{on_fail}->("The following parameter" .(@unmentioned > 1 ? 's were' : ' was')." passed in the call to $called but " .(@unmentioned > 1 ? 'were' : 'was')." not listed in the validation options: @unmentioned\n")}}my@missing;keys %$specs;OUTER: while (my ($key,$spec)=each %$specs){if (!exists$p->{$key}&& (ref$spec ?!(do {if (exists$spec->{default}){$p->{$key}=$spec->{default};next OUTER}}|| do {next OUTER if$spec->{optional}}): $spec)){push@missing,$key}elsif (ref$spec){my$value=defined$p->{$key}? qq|"$p->{$key}"| : 'undef';_validate_one_param($p->{$key},$p,$spec,qq{The '$key' parameter (%s)})}}if (@missing){my$called=_get_called();my$missing=join ', ',map {"'$_'"}sort@missing;$options->{on_fail}->("Mandatory parameter" .(@missing > 1 ? 's' : '')." $missing missing in call to $called\n")}for my$key (grep {defined$p->{$_}&&!ref$p->{$_}&& ref$specs->{$_}&& $specs->{$_}{untaint}}keys %$p){($p->{$key})=$p->{$key}=~ /(.+)/}return wantarray ? %$p : $p}sub validate_with {return if$Params::Validate::NO_VALIDATION &&!defined wantarray;my%p=@_;local$options=_get_options((caller(0))[0],%p);unless ($Params::Validate::NO_VALIDATION){unless (exists$options->{called}){$options->{called}=(caller($options->{stack_skip}))[3]}}if (UNIVERSAL::isa($p{spec},'ARRAY')){return validate_pos(@{$p{params}},@{$p{spec}})}else {return&validate($p{params},$p{spec})}}sub _normalize_callback {my ($p,$func)=@_;my%new;for my$key (keys %$p){my$new_key=$func->($key);unless (defined$new_key){die "The normalize_keys callback did not return a defined value when normalizing the key '$key'"}if (exists$new{$new_key}){die "The normalize_keys callback returned a key that already exists, '$new_key', when normalizing the key '$key'"}$new{$new_key}=$p->{$key}}return \%new}sub _normalize_named {my%h=(ref $_[0])=~ /ARRAY/ ? @{$_[0]}: %{$_[0]};if ($options->{ignore_case}){$h{lc $_ }=delete$h{$_}for keys%h}if ($options->{strip_leading}){for my$key (keys%h){my$new;($new=$key)=~ s/^\Q$options->{strip_leading}\E//;$h{$new}=delete$h{$key}}}return \%h}my%Valid=map {$_=>1}qw(callbacks can default depends isa optional regex type untaint);sub _validate_one_param {my ($value,$params,$spec,$id)=@_;if (exists$spec->{type}){unless (defined$spec->{type}&& Scalar::Util::looks_like_number($spec->{type})&& $spec->{type}> 0){my$msg ="$id has a type specification which is not a number. It is ";if (defined$spec->{type}){$msg .= "a string - $spec->{type}"}else {$msg .= "undef"}$msg .= ".\n Use the constants exported by Params::Validate to declare types.";$options->{on_fail}->(sprintf($msg,_stringify($value)))}unless (_get_type($value)& $spec->{type}){my$type=_get_type($value);my@is=_typemask_to_strings($type);my@allowed=_typemask_to_strings($spec->{type});my$article=$is[0]=~ /^[aeiou]/i ? 'an' : 'a';my$called=_get_called(1);$options->{on_fail}->(sprintf("$id to $called was $article '@is', which " ."is not one of the allowed types: @allowed\n",_stringify($value)))}}return unless ($spec->{isa}|| $spec->{can}|| $spec->{callbacks}|| $spec->{regex});if (exists$spec->{isa}){for (ref$spec->{isa}? @{$spec->{isa}}: $spec->{isa}){unless (do {local $@=q{};eval {$value->isa($_)}}){my$is=ref$value ? ref$value : 'plain scalar';my$article1=$_ =~ /^[aeiou]/i ? 'an' : 'a';my$article2=$is =~ /^[aeiou]/i ? 'an' : 'a';my$called=_get_called(1);$options->{on_fail}->(sprintf("$id to $called was not $article1 '$_' " ."(it is $article2 $is)\n",_stringify($value)))}}}if (exists$spec->{can}){for (ref$spec->{can}? @{$spec->{can}}: $spec->{can}){unless (do {local $@=q{};eval {$value->can($_)}}){my$called=_get_called(1);$options->{on_fail}->(sprintf("$id to $called does not have the method: '$_'\n",_stringify($value)))}}}if ($spec->{callbacks}){unless (UNIVERSAL::isa($spec->{callbacks},'HASH')){my$called=_get_called(1);$options->{on_fail}->("'callbacks' validation parameter for $called must be a hash reference\n")}for (keys %{$spec->{callbacks}}){unless (UNIVERSAL::isa($spec->{callbacks}{$_},'CODE')){my$called=_get_called(1);$options->{on_fail}->("callback '$_' for $called is not a subroutine reference\n")}my$ok;my$e=do {local $@=q{};local$SIG{__DIE__};$ok=eval {$spec->{callbacks}{$_}->($value,$params)};$@};if (!$ok){my$called=_get_called(1);if (ref$e){$options->{on_fail}->($e)}else {my$msg="$id to $called did not pass the '$_' callback";$msg .= ": $e" if length$e;$msg .= "\n";$options->{on_fail}->(sprintf($msg,_stringify($value)))}}}}if (exists$spec->{regex}){unless ((defined$value ? $value : '')=~ /$spec->{regex}/){my$called=_get_called(1);$options->{on_fail}->(sprintf("$id to $called did not pass regex check\n",_stringify($value)))}}}{my%isas=('ARRAY'=>ARRAYREF,'HASH'=>HASHREF,'CODE'=>CODEREF,'GLOB'=>GLOBREF,'SCALAR'=>SCALARREF,'REGEXP'=>SCALARREF,);my%simple_refs=map {$_=>1}keys%isas;sub _get_type {return UNDEF unless defined $_[0];my$ref=ref $_[0];unless ($ref){return GLOB if UNIVERSAL::isa(\$_[0],'GLOB');return SCALAR}return$isas{$ref}if$simple_refs{$ref};for (keys%isas){return$isas{$_}| OBJECT if UNIVERSAL::isa($_[0],$_)}return UNKNOWN}}{my%type_to_string=(SCALAR()=>'scalar',ARRAYREF()=>'arrayref',HASHREF()=>'hashref',CODEREF()=>'coderef',GLOB()=>'glob',GLOBREF()=>'globref',SCALARREF()=>'scalarref',UNDEF()=>'undef',OBJECT()=>'object',UNKNOWN()=>'unknown',);sub _typemask_to_strings {my$mask=shift;my@types;for (SCALAR,ARRAYREF,HASHREF,CODEREF,GLOB,GLOBREF,SCALARREF,UNDEF,OBJECT,UNKNOWN){push@types,$type_to_string{$_}if$mask & $_}return@types ? @types : ('unknown')}}{my%defaults=(ignore_case=>0,strip_leading=>0,allow_extra=>0,on_fail=>sub {require Carp;Carp::croak($_[0])},stack_skip=>1,normalize_keys=>undef,);*set_options=\&validation_options;sub validation_options {my%opts=@_;my$caller=caller;for (keys%defaults){$opts{$_}=$defaults{$_}unless exists$opts{$_}}$Params::Validate::OPTIONS{$caller}=\%opts}sub _get_options {my$caller=shift;if (@_){return ($Params::Validate::OPTIONS{$caller}? {%{$Params::Validate::OPTIONS{$caller}},@_ }: {%defaults,@_ })}else {return (exists$Params::Validate::OPTIONS{$caller}? $Params::Validate::OPTIONS{$caller}: \%defaults)}}}sub _get_called {my$extra_skip=$_[0]|| 0;$extra_skip++;my$called=(exists$options->{called}? $options->{called}: (caller($options->{stack_skip}+ $extra_skip))[3]);$called='(unknown)' unless defined$called;return$called}sub _stringify {return defined $_[0]? qq{"$_[0]"} : 'undef'}1;
 PARAMS_VALIDATE_PP
 
 $fatpacked{"Params/Validate/XS.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'PARAMS_VALIDATE_XS';
-  package Params::Validate::XS;use strict;use warnings;our$VERSION='1.26';use Carp;my$default_fail=sub {Carp::confess($_[0])};{my%defaults=(ignore_case=>0,strip_leading=>0,allow_extra=>0,on_fail=>$default_fail,stack_skip=>1,normalize_keys=>undef,);*set_options=\&validation_options;sub validation_options {my%opts=@_;my$caller=caller;for (keys%defaults){$opts{$_}=$defaults{$_}unless exists$opts{$_}}$Params::Validate::OPTIONS{$caller}=\%opts}use XSLoader;XSLoader::load(__PACKAGE__,exists$Params::Validate::XS::{VERSION}? ${$Params::Validate::XS::{VERSION}}: (),)}sub _check_regex_from_xs {return (defined $_[0]? $_[0]: '')=~ /$_[1]/ ? 1 : 0}1;
+  package Params::Validate::XS;use strict;use warnings;our$VERSION='1.29';use Carp;my$default_fail=sub {Carp::confess($_[0])};{my%defaults=(ignore_case=>0,strip_leading=>0,allow_extra=>0,on_fail=>$default_fail,stack_skip=>1,normalize_keys=>undef,);*set_options=\&validation_options;sub validation_options {my%opts=@_;my$caller=caller;for (keys%defaults){$opts{$_}=$defaults{$_}unless exists$opts{$_}}$Params::Validate::OPTIONS{$caller}=\%opts}use XSLoader;XSLoader::load(__PACKAGE__,exists$Params::Validate::XS::{VERSION}? ${$Params::Validate::XS::{VERSION}}: (),)}sub _check_regex_from_xs {return (defined $_[0]? $_[0]: '')=~ /$_[1]/ ? 1 : 0}1;
 PARAMS_VALIDATE_XS
 
 $fatpacked{"Params/ValidatePP.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'PARAMS_VALIDATEPP';
-  package Params::Validate;our$VERSION='1.26';BEGIN {$ENV{PARAMS_VALIDATE_IMPLEMENTATION}='PP'}use Params::Validate;1;
+  package Params::Validate;our$VERSION='1.29';BEGIN {$ENV{PARAMS_VALIDATE_IMPLEMENTATION}='PP'}use Params::Validate;1;
 PARAMS_VALIDATEPP
 
 $fatpacked{"Params/ValidateXS.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'PARAMS_VALIDATEXS';
-  package Params::Validate;our$VERSION='1.26';BEGIN {$ENV{PARAMS_VALIDATE_IMPLEMENTATION}='XS'}use Params::Validate;1;
+  package Params::Validate;our$VERSION='1.29';BEGIN {$ENV{PARAMS_VALIDATE_IMPLEMENTATION}='XS'}use Params::Validate;1;
 PARAMS_VALIDATEXS
 
 $fatpacked{"Try/Tiny.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'TRY_TINY';
-  package Try::Tiny;use 5.006;our$VERSION='0.27';use strict;use warnings;use Exporter 5.57 'import';our@EXPORT=our@EXPORT_OK=qw(try catch finally);use Carp;$Carp::Internal{+__PACKAGE__}++;BEGIN {my$su=$INC{'Sub/Util.pm'}&& defined&Sub::Util::set_subname;my$sn=$INC{'Sub/Name.pm'}&& eval {Sub::Name->VERSION(0.08)};unless ($su || $sn){$su=eval {require Sub::Util}&& defined&Sub::Util::set_subname;unless ($su){$sn=eval {require Sub::Name;Sub::Name->VERSION(0.08)}}}*_subname=$su ? \&Sub::Util::set_subname : $sn ? \&Sub::Name::subname : sub {$_[1]};*_HAS_SUBNAME=($su || $sn)? sub(){1}: sub(){0}}my%_finally_guards;sub try (&;@) {my ($try,@code_refs)=@_;my$wantarray=wantarray;my ($catch,@finally)=();for my$code_ref (@code_refs){if (ref($code_ref)eq 'Try::Tiny::Catch'){croak 'A try() may not be followed by multiple catch() blocks' if$catch;$catch=${$code_ref}}elsif (ref($code_ref)eq 'Try::Tiny::Finally'){push@finally,${$code_ref}}else {croak('try() encountered an unexpected argument (' .(defined$code_ref ? $code_ref : 'undef').') - perhaps a missing semi-colon before or')}}my$caller=caller;_subname("${caller}::try {...} "=>$try)if _HAS_SUBNAME;local$_finally_guards{guards}=[map {Try::Tiny::ScopeGuard->_new($_)}@finally ];my$prev_error=$@;my (@ret,$error);my$failed=not eval {$@=$prev_error;if ($wantarray){@ret=$try->()}elsif (defined$wantarray){$ret[0]=$try->()}else {$try->()};return 1};$error=$@;$@=$prev_error;if ($failed){push @$_,$error for @{$_finally_guards{guards}};if ($catch){for ($error){return$catch->($error)}}return}else {return$wantarray ? @ret : $ret[0]}}sub catch (&;@) {my ($block,@rest)=@_;croak 'Useless bare catch()' unless wantarray;my$caller=caller;_subname("${caller}::catch {...} "=>$block)if _HAS_SUBNAME;return (bless(\$block,'Try::Tiny::Catch'),@rest,)}sub finally (&;@) {my ($block,@rest)=@_;croak 'Useless bare finally()' unless wantarray;my$caller=caller;_subname("${caller}::finally {...} "=>$block)if _HAS_SUBNAME;return (bless(\$block,'Try::Tiny::Finally'),@rest,)}{package Try::Tiny::ScopeGuard;use constant UNSTABLE_DOLLARAT=>("$]" < '5.013002')? 1 : 0;sub _new {shift;bless [@_ ]}sub DESTROY {my ($code,@args)=@{$_[0]};local $@ if UNSTABLE_DOLLARAT;eval {$code->(@args);1}or do {warn "Execution of finally() block $code resulted in an exception, which " .'*CAN NOT BE PROPAGATED* due to fundamental limitations of Perl. ' .'Your program will continue as if this event never took place. ' ."Original exception text follows:\n\n" .(defined $@ ? $@ : '$@ left undefined...')."\n" }}}__PACKAGE__ 
+  package Try::Tiny;use 5.006;our$VERSION='0.28';use strict;use warnings;use Exporter 5.57 'import';our@EXPORT=our@EXPORT_OK=qw(try catch finally);use Carp;$Carp::Internal{+__PACKAGE__}++;BEGIN {my$su=$INC{'Sub/Util.pm'}&& defined&Sub::Util::set_subname;my$sn=$INC{'Sub/Name.pm'}&& eval {Sub::Name->VERSION(0.08)};unless ($su || $sn){$su=eval {require Sub::Util}&& defined&Sub::Util::set_subname;unless ($su){$sn=eval {require Sub::Name;Sub::Name->VERSION(0.08)}}}*_subname=$su ? \&Sub::Util::set_subname : $sn ? \&Sub::Name::subname : sub {$_[1]};*_HAS_SUBNAME=($su || $sn)? sub(){1}: sub(){0}}my%_finally_guards;sub try (&;@) {my ($try,@code_refs)=@_;my$wantarray=wantarray;my ($catch,@finally)=();for my$code_ref (@code_refs){if (ref($code_ref)eq 'Try::Tiny::Catch'){croak 'A try() may not be followed by multiple catch() blocks' if$catch;$catch=${$code_ref}}elsif (ref($code_ref)eq 'Try::Tiny::Finally'){push@finally,${$code_ref}}else {croak('try() encountered an unexpected argument (' .(defined$code_ref ? $code_ref : 'undef').') - perhaps a missing semi-colon before or')}}my$caller=caller;_subname("${caller}::try {...} "=>$try)if _HAS_SUBNAME;local$_finally_guards{guards}=[map {Try::Tiny::ScopeGuard->_new($_)}@finally ];my$prev_error=$@;my (@ret,$error);my$failed=not eval {$@=$prev_error;if ($wantarray){@ret=$try->()}elsif (defined$wantarray){$ret[0]=$try->()}else {$try->()};return 1};$error=$@;$@=$prev_error;if ($failed){push @$_,$error for @{$_finally_guards{guards}};if ($catch){for ($error){return$catch->($error)}}return}else {return$wantarray ? @ret : $ret[0]}}sub catch (&;@) {my ($block,@rest)=@_;croak 'Useless bare catch()' unless wantarray;my$caller=caller;_subname("${caller}::catch {...} "=>$block)if _HAS_SUBNAME;return (bless(\$block,'Try::Tiny::Catch'),@rest,)}sub finally (&;@) {my ($block,@rest)=@_;croak 'Useless bare finally()' unless wantarray;my$caller=caller;_subname("${caller}::finally {...} "=>$block)if _HAS_SUBNAME;return (bless(\$block,'Try::Tiny::Finally'),@rest,)}{package Try::Tiny::ScopeGuard;use constant UNSTABLE_DOLLARAT=>("$]" < '5.013002')? 1 : 0;sub _new {shift;bless [@_ ]}sub DESTROY {my ($code,@args)=@{$_[0]};local $@ if UNSTABLE_DOLLARAT;eval {$code->(@args);1}or do {warn "Execution of finally() block $code resulted in an exception, which " .'*CAN NOT BE PROPAGATED* due to fundamental limitations of Perl. ' .'Your program will continue as if this event never took place. ' ."Original exception text follows:\n\n" .(defined $@ ? $@ : '$@ left undefined...')."\n" }}}__PACKAGE__ 
 TRY_TINY
 
 s/^  //mg for values %fatpacked;
@@ -6252,7 +6282,7 @@ use warnings;
 use strict;
 
 my $PROGNAME = 'check_raid';
-my $VERSION = q/4.0.5/;
+my $VERSION = q/4.0.8/;
 my $URL = 'https://github.com/glensc/nagios-plugin-check_raid';
 my $BUGS_URL = 'https://github.com/glensc/nagios-plugin-check_raid#reporting-bugs';
 
@@ -6328,10 +6358,6 @@ $mp->add_arg(
 	spec => 'bbu-monitoring',
 	help => 'Enable experimental monitoring of the BBU status',
 );
-$mp->add_arg(
-	spec => 'warnonly|W',
-	help => 'Treat CRITICAL errors as WARNING',
-);
 
 $mp->getopts;
 
@@ -6387,17 +6413,18 @@ $App::Monitoring::Plugin::CheckRaid::Utils::debug = $mp->opts->debug;
 
 if ($mp->opts->debug) {
 	print "$PROGNAME $VERSION\n";
-	print "Visit <$BUGS_URL> how to report bugs\n\n",
+	print "Visit <$BUGS_URL> how to report bugs\n";
+	print "Please include output of **ALL** commands in bugreport\n\n";
+}
+
+if ($mp->opts->sudoers) {
+	my $res = sudoers($mp->opts->debug, $mc->active_plugins(1));
+	$mp->plugin_exit(OK, $res ? "sudoers updated" : "sudoers not updated");
 }
 
 my @plugins = $mc->active_plugins;
 if (!@plugins) {
 	$mp->plugin_exit($plugin_options{options}{noraid_status}, "No active plugins (No RAID found)");
-}
-
-if ($mp->opts->sudoers) {
-	sudoers($mp->opts->debug, @plugins);
-	$mp->plugin_exit(OK, "sudoers updated");
 }
 
 # print active plugins
