@@ -50,5 +50,4 @@ check_nfsmounts/nfs4_support
 check_httpd_status/htdigest_auth
 check_varnish/fix_for_v5
 check_raid/no_epn
-check_raid/fix_mdadm_hotspare_failure_detection
 percona-nagios-plugins/fix_bashism
