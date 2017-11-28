@@ -1,4 +1,4 @@
-%define version          1.3.8
+%define version          1.4.1
 %define release          0
 %define sourcename       check_rbl
 %define packagename      nagios-plugins-check-rbl
@@ -13,11 +13,11 @@ Obsoletes: check_rbl
 Version:   %{version}
 Release:   %{release}%{?dist}
 License:   GPLv3+
-Packager:  Matteo Corti <matteo.corti@id.ethz.ch>
+Packager:  Matteo Corti <matteo@corti.li>
 Group:     Applications/System
 BuildRoot: %{_tmppath}/%{packagename}-%{version}-%{release}-root-%(%{__id_u} -n)
-URL:       https://trac.id.ethz.ch/projects/nagios_plugins/wiki/check_rbl
-Source:    http://www.id.ethz.ch/people/allid_list/corti/%{sourcename}-%{version}.tar.gz
+URL:       https://github.com/matteocorti/check_rbl
+Source:    https://github.com/matteocorti/check_rbl/releases/download/v%{version}/check_rbl-%{version}.tar.gz
 
 # Fedora build requirement (not needed for EPEL{4,5})
 BuildRequires: perl(ExtUtils::MakeMaker)
@@ -54,6 +54,12 @@ rm -rf %{buildroot}
 %{_mandir}/man1/%{sourcename}.1*
 
 %changelog
+* Mon Jul 17 2017 Matteo Corti <matteo@corti.li> - 1.4.1-0
+- Update to 1.4.1
+
+* Tue Apr 18 2017 Matteo Corti <matteo@corti.li> - 1.4.0-0
+- Update to 1.4.0
+
 * Wed Dec 30 2015 Matteo Corti <matteo@corti.li> - 1.3.8-0
 - Update to 1.3.8
 

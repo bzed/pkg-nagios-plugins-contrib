@@ -1,4 +1,5 @@
 # Load the Module::Install bundled in ./inc/
+use lib '.'; # added since from Perl 5.26 '.' is no more in @INC
 use inc::Module::Install;
 
 ##############################################################################
@@ -17,6 +18,7 @@ my %prereqs = (
     'Data::Validate::IP'     => 0,
     'English'                => 0,
     'Net::DNS'               => 0,
+    'Net::IP'                => 0,
     'Readonly'               => 0,
     'IO::Select'             => 0,
 );

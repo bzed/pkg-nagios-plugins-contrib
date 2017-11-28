@@ -12,6 +12,7 @@ check_rbl depends on several Perl modules:
  * Monitoring::Plugin::Getopt
  * Monitoring::Plugin::Threshold
  * Net::DNS
+ * Net::IP
  * Readonly
 
 Perl modules can be found on the "Comprehensive Perl Archive Network"
@@ -64,5 +65,10 @@ Generate the man page with pod2man
 
     pod2man check_rbl.pod > CUSTOM_MAN_FILE
 
-Please report any installation problem to <matteo.corti@id.ethz.ch> or
-open a ticket at https://github.com/matteocorti/check_rbl/issues
+Please report any bugs or feature requests through the
+web interface at https://github.com/matteocorti/check_rbl/issues
+
+Dependencies on Debian
+======================
+
+apt-get install libdata-validate-ip-perl libdata-validate-domain-perl
