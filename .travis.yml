@@ -5,6 +5,10 @@ env:
   - TRAVIS_DEBIAN_DISTRIBUTION=testing
   - TRAVIS_DEBIAN_DISTRIBUTION=stable
 
+matrix:
+  allow_failures:
+    - env: TRAVIS_DEBIAN_DISTRIBUTION=unstable
+
 services:
   - docker
 
