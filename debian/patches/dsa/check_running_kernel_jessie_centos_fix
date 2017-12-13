@@ -1,6 +1,6 @@
 --- a/dsa/checks/dsa-check-running-kernel
 +++ b/dsa/checks/dsa-check-running-kernel
-@@ -129,6 +129,11 @@
+@@ -131,6 +131,11 @@
  	filter="$3"
  	hdroff="$4"
  
@@ -12,7 +12,7 @@
  	get_offset "$image" $header | head -n 5 | while read off; do
  		(if [ "$off" != 0 ]; then
  		   dd ibs="$((off+hdroff))" skip=1 count=0
-@@ -180,9 +185,8 @@
+@@ -182,9 +187,8 @@
  
  searched=""
  for on_disk in \
@@ -24,7 +24,7 @@
  
  	if [ -e "$on_disk" ]; then
  		if [ -z "$STRINGS" ]; then
-@@ -194,12 +198,12 @@
+@@ -196,12 +200,12 @@
  			if [ -x /usr/bin/lsb_release ] ; then
  				vendor=$(lsb_release -i -s)
  				if [ -n "$vendor" ] && [ "xDebian" != "x$vendor" ] ; then
