@@ -1,8 +1,6 @@
-diff --git a/check_cups/check_cups b/check_cups/check_cups
-index b202fbc..c376b1d 100644
 --- a/check_cups/check_cups
 +++ b/check_cups/check_cups
-@@ -38,13 +38,33 @@ use warnings;
+@@ -39,13 +39,33 @@
  # http://search.cpan.org/~rgarcia/perl-5.6.2/pod/perllexwarn.pod
  no warnings qw( redefine prototype );
  
@@ -37,7 +35,7 @@ index b202fbc..c376b1d 100644
  
      use Data::Dumper;
  
-@@ -94,7 +114,7 @@ General Public Licence (see http://www.fsf.org/licensing/licenses/gpl.txt).
+@@ -95,7 +115,7 @@
  This plugin was written at The Harvard-MIT Data Center
  (http://www.hmdc.harvard.edu) by Steve Huff (<shuff\@hmdc.harvard.edu>).
  LICENSE

@@ -13,11 +13,9 @@ Subject: [PATCH] fix uom of check_libvirt
  check_libvirt/check_libvirt | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/check_libvirt/check_libvirt b/check_libvirt/check_libvirt
-index 2029c9e..437c3fa 100755
 --- a/check_libvirt/check_libvirt
 +++ b/check_libvirt/check_libvirt
-@@ -224,7 +224,7 @@ eval
+@@ -246,7 +246,7 @@
  			chop($output);
  			chop($output);
  			$output = $up . "/" . $cnt . " VMs up: " . $output;

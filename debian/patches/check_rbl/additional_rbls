@@ -1,8 +1,6 @@
-diff --git a/check_rbl/src/check_rbl.ini b/check_rbl/src/check_rbl.ini
-index aeebf6d..4db4edd 100644
 --- a/check_rbl/src/check_rbl.ini
 +++ b/check_rbl/src/check_rbl.ini
-@@ -42,6 +42,46 @@ server=forbidden.icm.edu.pl
+@@ -36,6 +36,46 @@
  server=hil.habeas.com
  server=rbl.schulte.org
  server=sbl-xbl.spamhaus.org

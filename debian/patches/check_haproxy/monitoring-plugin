@@ -1,8 +1,6 @@
-diff --git a/check_haproxy/check_haproxy b/check_haproxy/check_haproxy
-index 1da4240..875ab1f 100644
 --- a/check_haproxy/check_haproxy
 +++ b/check_haproxy/check_haproxy
-@@ -30,7 +30,28 @@ use POSIX qw(setlocale);
+@@ -31,7 +31,28 @@
  use Time::HiRes qw(time);			# get microtime
  use POSIX qw(mktime);
  
@@ -32,7 +30,7 @@ index 1da4240..875ab1f 100644
  
  use LWP::UserAgent;			# http client
  use HTTP::Request;			# used by LWP::UserAgent
-@@ -52,7 +73,7 @@ setlocale(LC_MESSAGES, '');
+@@ -53,7 +74,7 @@
  textdomain('nagios-plugins-perl');
  
  
@@ -41,7 +39,7 @@ index 1da4240..875ab1f 100644
  	version => $VERSION,
  	blurb => _gt('Plugin to check HAProxy stats url'),
  	usage => "Usage: %s [ -v|--verbose ]  -u <url> [-t <timeout>] [-U <username>] [-P <password>] [ -c|--critical=<threshold> ] [ -w|--warning=<threshold> ]",
-@@ -318,4 +339,4 @@ In F<services.cfg> you just have to add something like :
+@@ -319,4 +340,4 @@
  
  Stéphane Urbanovski <stephane.urbanovski@ac-nancy-metz.fr>
  

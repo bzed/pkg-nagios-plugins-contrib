@@ -1,12 +1,11 @@
-diff --git a/check_httpd_status/check_httpd_status b/check_httpd_status/check_httpd_status
-index bc5e809..f8a1350 100644
 --- a/check_httpd_status/check_httpd_status
 +++ b/check_httpd_status/check_httpd_status
-@@ -32,8 +32,28 @@ use File::Basename;			# get basename()
+@@ -34,8 +34,28 @@
  use POSIX qw(setlocale);
  use Locale::gettext;
  
 -use Nagios::Plugin ;
+-
 +sub load_module {
 +    my @names = @_;
 +    my $module;
@@ -24,7 +23,7 @@ index bc5e809..f8a1350 100644
 +    }
 +    return $module;
 +}
- 
++
 +my $plugin_module;
 +BEGIN {
 +	$plugin_module = load_module( 'Monitoring::Plugin', 'Nagios::Plugin' );
@@ -32,7 +31,7 @@ index bc5e809..f8a1350 100644
  use LWP::UserAgent;
  use HTTP::Status; # get status_message()
  use Time::HiRes qw(gettimeofday tv_interval);
-@@ -90,7 +110,7 @@ my %TranslationTable = (
+@@ -92,7 +112,7 @@
  );
  
  
@@ -41,7 +40,7 @@ index bc5e809..f8a1350 100644
  	version => $VERSION,
  	blurb => _gt('Apache / Lighthttpd server status monitor for Nagios'),
  	usage => "Usage: %s [ -H <host> [-p <port>] [-t <timeout>] [-w <warn_level> -c <crit_level>] [-V] [-u <url>] [-U user -P pass -r realm]",
-@@ -436,4 +456,4 @@ Note :
+@@ -438,4 +458,4 @@
          Warn if less than 100 workers are available
          Crit if less than 10 workers are available
  EOT

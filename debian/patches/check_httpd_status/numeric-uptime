@@ -1,8 +1,6 @@
-diff --git a/check_httpd_status/check_httpd_status b/check_httpd_status/check_httpd_status
-index bc5e809..687870a 100644
 --- a/check_httpd_status/check_httpd_status
 +++ b/check_httpd_status/check_httpd_status
-@@ -235,7 +235,7 @@ logD("Web content :\n----------------------------\n".$webcontent."\n------------
+@@ -257,7 +257,7 @@
  my $patternFound = 0;
  
  my $Uptime = 0;

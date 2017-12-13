@@ -1,6 +1,6 @@
 --- a/check_nfsmounts/check_nfsmounts
 +++ b/check_nfsmounts/check_nfsmounts
-@@ -23,6 +23,7 @@
+@@ -45,6 +45,7 @@
  }
  
  use Time::HiRes qw{time alarm};
@@ -8,7 +8,7 @@
  use Getopt::Long;
  use strict;
  
-@@ -107,7 +108,8 @@ foreach $dir (@dirs) {
+@@ -129,7 +130,8 @@
    if($pid==0) {
      chdir $dir or &bad_mount($dir,$!);
      if($writemode and exists($mountmodes{$dir}->{"rw"})) {
