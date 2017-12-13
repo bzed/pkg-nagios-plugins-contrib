@@ -63,7 +63,7 @@ fi
 # run apt-get update, retry a few times if it fails
 count=0
 while [ "$count" -lt "$UPDATE_RUNS" ]; do
-	apt-get update -qq >/dev/null >&2
+	flock -e /var/lib/apt/lists apt-get update -qq >/dev/null >&2
 	if [ "$?" = "0" ]; then break; fi
 	sleep $(( $RANDOM % 600 ))
 	count="$(( $count + 1 ))"

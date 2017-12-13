@@ -17,4 +17,4 @@ Description: plugins from the Debian System Administrators
  * check_statusfile: deliver the content of a status file
    as check result
 Recommends: ruby | ruby-interpreter, openssl, libnet-dns-perl, binutils
-Version: 1c0b9ec
+Version: 2300473
