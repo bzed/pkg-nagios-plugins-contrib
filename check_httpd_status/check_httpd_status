@@ -235,11 +235,12 @@ logD("Web content :\n----------------------------\n".$webcontent."\n------------
 my $patternFound = 0;
 
 my $Uptime = 0;
-if ( $webcontent =~ m/Uptime: (.*?)\n/) {
-	$Uptime = $1;
-	$patternFound++;
+### FIXME XH 20171204 catch ServerUptimeSeconds, not [Server]Uptime. Change in server-status between 2.2 & 2.4
+if ( $webcontent =~ m/\b(ServerUptimeSeconds|Uptime): (\d+)\n/) {
+    $Uptime = $2;
+    $patternFound++;
 }
-	
+
 my $TotalAccesses = 0;
 if ( $webcontent =~ m/Total Accesses: (.*?)\n/) {
 	$TotalAccesses = $1;
