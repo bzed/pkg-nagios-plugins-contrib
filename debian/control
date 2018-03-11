@@ -10,8 +10,8 @@ Build-Depends: debhelper (>= 8.0.0),
                quilt (>= 0.46-7),
                autotools-dev, flex, libmemcached-dev [!hurd-i386], libvarnishapi-dev [!hurd-i386 !m68k], pkg-config
 Standards-Version: 3.9.8
-Vcs-Git: https://anonscm.debian.org/git/pkg-nagios/pkg-nagios-plugins-contrib.git
-Vcs-Browser: https://anonscm.debian.org/cgit/pkg-nagios/pkg-nagios-plugins-contrib.git
+Vcs-Git: https://salsa.debian.org/nagios-team/pkg-nagios-plugins-contrib.git
+Vcs-Browser: https://salsa.debian.org/nagios-team/pkg-nagios-plugins-contrib
 
 Package: nagios-plugins-contrib
 Architecture: any
