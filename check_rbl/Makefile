@@ -3,7 +3,7 @@
 PLUGIN = src/check_rbl
 MANPAGES = check_rbl.7
 INIFILES = src/check_rbl.ini
-DOCFILES = src/README
+DOCFILES = src/README.md
 CLEANFILES = check_rbl.7
 
 
