@@ -1,3 +1,14 @@
+2018-07-01 Version 1.72.0: Corrected a bug introduced in 1.71.0: remove temporary files
+2018-07-01 Version 1.71.0: Corrected a bug introduced in 1.70.0: wrong exit codes
+2018-06-28 Version 1.70.0: Improved the management of temporary files
+2018-06-25 Version 1.69.0: Added an option to require OCSP stapling
+2018-04-29 Version 1.68.0: Removed the SNI name check
+2018-04-17 Version 1.67.0: Terse output, warning if the specified server name is not found in the certificate and --format option
+2018-04-06 Version 1.66.0: UTF-8 output
+2018-03-29 Version 1.65.0: Bug fix release
+2018-03-28 Version 1.64.0: Remove cURL dependency
+2018-03-17 Version 1.63.0: Support for TLS 1.3
+2018-03-06 Version 1.62.0: Support for LibreSSL
 2018-01-19 Version 1.61.0: Fixed a bug handling more than one OCSP host
 2017-12-15 Version 1.60.0: Fixed a bug related to XMPP introduced in the last version
 2017-12-14 Version 1.59.0: Added an option to specify the 'to' attribute of the XMPP stream element

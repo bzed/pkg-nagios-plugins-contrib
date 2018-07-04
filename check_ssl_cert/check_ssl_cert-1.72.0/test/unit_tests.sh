@@ -45,6 +45,12 @@ testETHZ() {
     assertEquals "wrong exit code" ${NAGIOS_OK} "${EXIT_CODE}"
 }
 
+testLetsEncrypt() {
+    ${SCRIPT} -H helloworld.letsencrypt.org --rootcert cabundle.crt
+    EXIT_CODE=$?
+    assertEquals "wrong exit code" ${NAGIOS_OK} "${EXIT_CODE}"
+}   
+
 testGoDaddy() {
     ${SCRIPT} -H www.godaddy.com --cn www.godaddy.com --rootcert cabundle.crt
     EXIT_CODE=$?
@@ -160,17 +166,26 @@ testAltNames2CaseInsensitive() {
     assertEquals "wrong exit code" ${NAGIOS_CRITICAL} "${EXIT_CODE}"
 }
 
-testXMPP() {
-    ${SCRIPT} -H xmpp.fi --protocol xmpp --port 5269
-    EXIT_CODE=$?
-    assertEquals "wrong exit code" ${NAGIOS_OK} "${EXIT_CODE}"
-}    
+testXMPPHost() {
+    if [ -z "${TRAVIS+x}" ] ; then
+	out=$(${SCRIPT} -H prosody.xmpp.is --port 5222 --protocol xmpp --xmpphost xmpp.is)
+	EXIT_CODE=$?
+	echo "DEBUG TEST: code = $EXIT_CODE, out=${out}"
+	if echo "${out}" | grep -q "s_client' does not support '-xmpphost'" ; then
+	    assertEquals "wrong exit code" ${NAGIOS_UNKNOWN} "${EXIT_CODE}"
+	else
+	    assertEquals "wrong exit code" ${NAGIOS_OK} "${EXIT_CODE}"
+	fi
+    else
+	echo "Skipping XMPP tests on Travis CI"
+    fi	
+}
 
 # SSL Labs
     
 testETHZWithSSLLabs() {
     # we assume www.ethz.ch gets at least a C
-    ${SCRIPT} -H www.ethz.ch --cn www.ethz.ch --check-ssl-labs C --rootcert cabundle.crt
+    ${SCRIPT} -H www.ethz.ch --cn www.ethz.ch --check-ssl-labs A --rootcert cabundle.crt
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
 }
@@ -335,17 +350,36 @@ testBadSSLSHA12017() {
     assertEquals "wrong exit code" "${NAGIOS_CRITICAL}" "${EXIT_CODE}"
 }
 
-testIPv4() {
-    ${SCRIPT} -H 129.132.19.216 --sni www.ethz.ch
+testMultipleOCSPHosts() {
+    ${SCRIPT} -H netlock.hu --rootcert cabundle.crt
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
 }
+
+testRequireOCSP() {
+    ${SCRIPT} -H corti.li --rootcert cabundle.crt --require-ocsp-stapling
+    EXIT_CODE=$?
+    assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
+}
+
+#testIPv4() {
+#    ${SCRIPT} -H 129.132.19.216 --sni www.ethz.ch
+#    EXIT_CODE=$?
+#    assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
+#}
 
 #testIPv6() {
 #    ${SCRIPT} -H 2001:67c:10ec:4380::216 --sni www.ethz.ch
 #    EXIT_CODE=$?
 #    assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
 #}
+
+testFormatShort() {
+    OUTPUT=$( ${SCRIPT} -H www.ethz.ch --cn www.ethz.ch --rootcert cabundle.crt --format "%SHORTNAME% OK %CN% from '%CA_ISSUER_MATCHED%'" | cut '-d|' -f 1 )
+    EXIT_CODE=$?
+    assertEquals "wrong exit code" ${NAGIOS_OK} "${EXIT_CODE}"
+    assertEquals "wrong output" "SSL_CERT OK www.ethz.ch from 'QuoVadis Global SSL ICA G2'" "${OUTPUT}"
+}
 
 # the script will exit without executing main
 export SOURCE_ONLY='test'
@@ -361,7 +395,10 @@ unset SOURCE_ONLY
 # We clone to output to pass it to grep as shunit does always return 0
 # We parse the output to check if a test failed
 #
-if ! . "${SHUNIT2}" | tee /dev/tty | grep -q 'tests\ passed:\ *[0-9]*\ 100%' ; then
-    # at least one of the tests failed    
-    exit 1
-fi
+
+. "${SHUNIT2}"
+
+#if ! . "${SHUNIT2}" | tee /dev/tty | grep -q 'tests\ passed:\ *[0-9]*\ 100%' ; then
+#    # at least one of the tests failed    
+#    exit 1
+#fi

@@ -1,3 +1,57 @@
+2018-07-01  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: do not trap on EXIT
+	* check_ssl_cert: remove temporary file when no signals are trapped
+
+2018-06-28  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: fixed a bug in the deletion of temporary files when a signal is caught
+
+2018-06-25  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: added a check to require OCSP stapling
+
+2018-04-29  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Remooved the SNI name check patch (see #78)
+
+2018-04-19  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Merged the SNI name check patch
+
+2018-04-17  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Merged the --terse patch, added performance data to the terse output and reordered the help
+
+2018-04-12  Matteo Corti  <matteo@corti.li>
+
+	* Makefile: Checks if the copyright year is correct. make test is now dependent on make dist
+
+2018-04-06  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Added UTF8 output
+
+2018-04-05  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Added debugging output for cURL
+
+2018-03-29  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Fixed a bug introduced in the last verstion
+
+2018-03-28  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Removed cURL dependency when not checking SSL Labs
+
+2018-03-17  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Added support for TLS 1.3
+
+2018-03-06  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Fixed OCSP check with LibreSSL
+	* check_ssl_cert: Lists the number or default root certificates in debug mode
+
 2018-01-19  Matteo Corti  <matteo@corti.li>
 
 	* check_ssl_cert: Fixed a bug processing more than one OCSP host
