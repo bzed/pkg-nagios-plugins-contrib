@@ -1,6 +1,6 @@
 nagios-plugins-contrib (21.20170223) UNRELEASED; urgency=medium
 
-  * Bump Standards-Version to 4.1.5, no changes.
+  * Bump Standards-Version to 4.2.0, no changes.
 
  -- Bernd Zeimetz <bzed@debian.org>  Thu, 05 Jul 2018 11:38:01 +0200
 
