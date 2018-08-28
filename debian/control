@@ -9,7 +9,7 @@ Build-Depends: debhelper (>= 8.0.0),
                python-debian,
                quilt (>= 0.46-7),
                autotools-dev, flex, libmemcached-dev [!hurd-i386], libvarnishapi-dev [!hurd-i386 !m68k], pkg-config
-Standards-Version: 4.2.0
+Standards-Version: 4.2.1
 Vcs-Git: https://salsa.debian.org/nagios-team/pkg-nagios-plugins-contrib.git
 Vcs-Browser: https://salsa.debian.org/nagios-team/pkg-nagios-plugins-contrib
 
