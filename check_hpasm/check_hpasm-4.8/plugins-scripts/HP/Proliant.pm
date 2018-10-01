@@ -18,6 +18,7 @@ sub init {
       disk_subsystem => undef,
       asr_subsystem => undef,
       event_subsystem => undef,
+      battery_subsystem => undef,
   };
   $self->{serial} = 'unknown';
   $self->{product} = 'unknown';
@@ -36,6 +37,7 @@ sub init {
     $self->analyze_disk_subsystem();
     $self->analyze_asr_subsystem();
     $self->analyze_event_subsystem();
+    $self->analyze_battery_subsystem();
     $self->auto_blacklist();
     $self->check_cpus();
     $self->check_powersupplies();
@@ -46,6 +48,7 @@ sub init {
     $self->check_disk_subsystem();
     $self->check_asr_subsystem();
     $self->check_event_subsystem();
+    $self->check_battery_subsystem();
   }
 }
 
@@ -176,6 +179,16 @@ sub analyze_event_subsystem {
   );
 }
 
+sub analyze_battery_subsystem {
+  my $self = shift;
+  $self->{components}->{battery_subsystem} =
+      HP::Proliant::Component::BatterySubsystem->new(
+    rawdata => $self->{rawdata},
+    method => $self->{method},
+    runtime => $self->{runtime},
+  );
+}
+
 sub check_cpus {
   my $self = shift;
   $self->{components}->{cpu_subsystem}->check();
@@ -242,6 +255,13 @@ sub check_event_subsystem {
   my $self = shift;
   $self->{components}->{event_subsystem}->check();
   $self->{components}->{event_subsystem}->dump()
+      if $self->{runtime}->{options}->{verbose} >= 2;
+}
+
+sub check_battery_subsystem {
+  my $self = shift;
+  $self->{components}->{battery_subsystem}->check();
+  $self->{components}->{battery_subsystem}->dump()
       if $self->{runtime}->{options}->{verbose} >= 2;
 }
 
@@ -576,6 +596,7 @@ sub collect {
       cpqHeAsr =>          "1.3.6.1.4.1.232.6.2.5",
       cpqNic =>            "1.3.6.1.4.1.232.18.2",
       cpqHeEventLog =>     "1.3.6.1.4.1.232.6.2.11",
+      cpqHeSysBackupBattery => "1.3.6.1.4.1.232.6.2.17",
 
       #    cpqHeComponent =>  "1.3.6.1.4.1.232.6.2",
       #    cpqHeFComponent => "1.3.6.1.4.1.232.6.2.6.7",

@@ -54,6 +54,9 @@ EXTRA_MODULES=\
   HP/Proliant/Component/DiskSubsystem/Fca/SNMP.pm \
   HP/Proliant/Component/DiskSubsystem/Fca.pm \
   HP/Proliant/Component/DiskSubsystem.pm \
+  HP/Proliant/Component/BatterySubsystem/CLI.pm \
+  HP/Proliant/Component/BatterySubsystem/SNMP.pm \
+  HP/Proliant/Component/BatterySubsystem.pm \
   HP/Proliant/Component.pm \
   HP/Proliant.pm \
   HP/BladeSystem/Component/CommonEnclosureSubsystem.pm \
