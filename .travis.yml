@@ -8,6 +8,7 @@ env:
 matrix:
   allow_failures:
     - env: TRAVIS_DEBIAN_DISTRIBUTION=unstable
+    - env: TRAVIS_DEBIAN_DISTRIBUTION=testing
 
 services:
   - docker
