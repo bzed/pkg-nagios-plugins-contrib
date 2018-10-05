@@ -163,7 +163,7 @@ foreach my $p (@protocols) {
 
         # Strip off performance data from the $first line of plugin
         # output.
-        $first =~ s/^([^\|]+)\|(.*)/$1/;
+        $first =~ s/^([^\|]+)\|\s*(.*)/$1/;
         $out->{$p}->{$a}->{first} = $first;
 
         # Add lc($p) as prefix to performance data labels, e.g.
