@@ -1,8 +1,22 @@
-nagios-plugins-contrib (21.20170223) UNRELEASED; urgency=medium
+nagios-plugins-contrib (22.20181105) unstable; urgency=medium
 
+  [ Bernd Zeimetz ]
   * Bump Standards-Version to 4.2.1, no changes.
 
- -- Bernd Zeimetz <bzed@debian.org>  Thu, 05 Jul 2018 11:38:01 +0200
+  [ Jan Wagner ]
+  * [65a0937] check_ssl_cert: Updating to 1.73.0
+  * [eff917b] Update check_hpasm to 4.8
+  * [c7f8ffc] travis-ci: Allow build failing on testing
+
+  [ Bernd Zeimetz ]
+  * [47669a6] Remove check_varnish for now.
+    Does not work with varnish >= 5.2
+    https://github.com/varnish/varnish-nagios/issues/15
+    Thanks to Adrian Bunk (Closes: #878966)
+  * [65f3186] Auto update of debian/copyright
+  * [278c1ee] Auto update of debian/tests/control
+
+ -- Bernd Zeimetz <bzed@debian.org>  Mon, 05 Nov 2018 00:45:48 +0100
 
 nagios-plugins-contrib (21.20170222) unstable; urgency=medium
 
