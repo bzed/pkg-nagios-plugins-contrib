@@ -19,7 +19,7 @@
 ################################################################################
 # Constants
 
-VERSION=1.73.0
+VERSION=1.76.0
 SHORTNAME="SSL_CERT"
 
 VALID_ATTRIBUTES=",startdate,enddate,subject,issuer,serial,modulus,serial,hash,email,ocsp_uri,fingerprint,"
@@ -81,6 +81,7 @@ usage() {
     echo "      --ignore-ssl-labs-cache Forces a new check by SSL Labs (see -L)"
     echo "   -i,--issuer issuer         pattern to match the issuer of the certificate"
     echo "      --issuer-cert-cache dir directory where to store issuer certificates cache"
+    echo "   -K,--clientkey path        use client certificate key to authenticate"
     echo "   -L,--check-ssl-labs grade  SSL Labs assessment"
     echo "                              (please check https://www.ssllabs.com/about/terms.html)"
     echo "      --long-output list      append the specified comma separated (no spaces) list"
@@ -264,15 +265,25 @@ exec_with_timeout() {
 
         eval "${TIMEOUT_BIN} $time $command" > /dev/null 2>&1
 
-        if [ $? = 137 ] ; then
+        if [ $? -eq 137 ] ; then
             critical "Timeout after ${time} seconds"
         fi
 
     elif [ -n "${EXPECT}" ] ; then
 
+        if [ -n "${DEBUG}" ] ; then
+            echo "[DBG]   expect -c \"set echo \\\"-noecho\\\"; set timeout $time; spawn -noecho $command; expect timeout { exit 1 } eof { exit 0 }\""
+        fi
+	
         expect -c "set echo \"-noecho\"; set timeout $time; spawn -noecho $command; expect timeout { exit 1 } eof { exit 0 }"
 
-        if [ $? = 1 ] ; then
+	RET=$?
+
+        if [ -n "${DEBUG}" ] ; then
+            echo "[DBG]   expect returned ${RET}"
+        fi	
+	
+        if [ "${RET}" -eq 1 ] ; then
             critical "Timeout after ${time} seconds"
         fi
 
@@ -434,8 +445,8 @@ fetch_certificate() {
         fi
 
     else
-
-        exec_with_timeout "$TIMEOUT" "echo 'Q' | $OPENSSL s_client ${CLIENT} ${CLIENTPASS} -connect $HOST:$PORT ${SERVERNAME} -showcerts -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} 2> ${ERROR} 1> ${CERT}"
+	
+        exec_with_timeout "$TIMEOUT" "echo '${HTTP_REQUEST}' | $OPENSSL s_client ${CLIENT} ${CLIENTPASS} -crlf -ign_eof -connect $HOST:$PORT ${SERVERNAME} -showcerts -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} 2> ${ERROR} 1> ${CERT}"
         RET=$?
 
     fi
@@ -829,6 +840,14 @@ main() {
                     unknown "-c,--clientcert requires an argument"
                 fi
                 ;;
+            -K|--clientkey)
+                if [ $# -gt 1 ]; then
+                    CLIENT_KEY="$2"
+                    shift 2
+                else
+                    unknown "-K,--clientkey requires an argument"
+                fi
+                ;;
             --clientpass)
                 if [ $# -gt 1 ]; then
                     CLIENT_PASS="$2"
@@ -960,6 +979,14 @@ main() {
 
         if [ ! -r "${CLIENT_CERT}" ] ; then
             unknown "Cannot read client certificate ${CLIENT_CERT}"
+        fi
+
+    fi
+
+    if [ -n "${CLIENT_KEY}" ] ; then
+
+        if [ ! -r "${CLIENT_KEY}" ] ; then
+            unknown "Cannot read client certificate key ${CLIENT_KEY}"
         fi
 
     fi
@@ -1225,6 +1252,15 @@ main() {
     fi
 
     ################################################################################
+    # define the HTTP request string
+    if [ -n "${SNI}" ]; then
+        HOST_HEADER="${SNI}"
+    else
+        HOST_HEADER="${HOST}"
+    fi
+    HTTP_REQUEST="HEAD / HTTP/1.1\\nHost: ${HOST_HEADER}\\nUser-Agent: check_ssl_cert/${VERSION}\\nConnection: close\\n\\n"
+    
+    ################################################################################
     # Fetch the X.509 certificate
 
     # Temporary storage for the certificate and the errors
@@ -1249,6 +1285,9 @@ main() {
     CLIENT=""
     if [ -n "${CLIENT_CERT}" ] ; then
         CLIENT="-cert ${CLIENT_CERT}"
+    fi
+    if [ -n "${CLIENT_KEY}" ] ; then
+        CLIENT="${CLIENT} -key ${CLIENT_KEY}"
     fi
 
     CLIENTPASS=""
@@ -1415,7 +1454,7 @@ main() {
        	    echo "checking OCSP stapling"
 	fi
 
-	exec_with_timeout "$TIMEOUT" "echo QUIT | openssl s_client -connect ${HOST}:${PORT} ${SERVERNAME} -status 2> /dev/null | grep -A 17 'OCSP response:' > $OCSP_RESPONSE_TMP"
+	exec_with_timeout "$TIMEOUT" "echo '${HTTP_REQUEST}' | openssl s_client -connect ${HOST}:${PORT} ${SERVERNAME} -status 2> /dev/null | grep -A 17 'OCSP response:' > $OCSP_RESPONSE_TMP"
 
 	if [ -n "${DEBUG}" ] ; then
 	    sed 's/^/[DBG]\ /' "${OCSP_RESPONSE_TMP}"
