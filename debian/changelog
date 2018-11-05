@@ -1,3 +1,9 @@
+nagios-plugins-contrib (22.20181105+1) unstable; urgency=medium
+
+  * [48122fc] Also remove varnish patches
+
+ -- Bernd Zeimetz <bzed@debian.org>  Mon, 05 Nov 2018 01:01:58 +0100
+
 nagios-plugins-contrib (22.20181105) unstable; urgency=medium
 
   [ Bernd Zeimetz ]
