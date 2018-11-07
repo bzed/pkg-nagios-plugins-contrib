@@ -1,4 +1,4 @@
-Homepage: https://anonscm.debian.org/cgit/mirror/dsa-nagios.git/
+Homepage: https://salsa.debian.org/dsa-team/mirror/dsa-nagios
 Uploaders: Bernd Zeimetz <bzed@debian.org>
 Description: plugins from the Debian System Administrators
  nagios plugins repository.
