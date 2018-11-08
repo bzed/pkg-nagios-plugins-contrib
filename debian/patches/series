@@ -36,6 +36,7 @@ check_smstools/monitoring-plugin
 check_smstools/operator_siglvl
 check_snmp_environment/epn
 check_snmp_time/epn
+check_uptime/missing_backslash
 check_v46/no_epn
 check_webinject/epn
 dsa/check_packages_location

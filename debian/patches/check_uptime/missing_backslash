@@ -1,0 +1,16 @@
+diff --git a/check_uptime/check_uptime b/check_uptime/check_uptime
+index e1e5b99..41b7f26 100644
+--- a/check_uptime/check_uptime
++++ b/check_uptime/check_uptime
+@@ -540,7 +540,7 @@ if ($check_type==1) {  # local
+   elsif ($uptime_output =~ /up\s+(\d+)\s+min/) {
+      ($days, $hrs, $mins) = (0,0,$1);
+   }
+-  elsif ($uptime_output =~ /up\s+(\d+)s+days?,s+(\d+)s+min/) {
++  elsif ($uptime_output =~ /up\s+(\d+)\s+days?,\s+(\d+)\s+min/) {
+      ($days, $hrs, $mins) = ($1,0,$2);
+   }
+   else {
+diff --git a/dsa/checks/dsa-check-cert-expire-dir b/dsa/checks/dsa-check-cert-expire-dir
+old mode 100755
+new mode 100644
