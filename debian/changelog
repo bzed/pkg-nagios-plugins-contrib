@@ -1,13 +1,91 @@
 nagios-plugins-contrib (22.20181105+1) unstable; urgency=medium
 
+  [ Bernd Zeimetz ]
   * [f576fb8] Also remove varnish patches
+
+  [ Jan Wagner ]
+  * [1559617] check_httpd_status: Update to rev204
+  * [1b6db55] check_ssl_cert: Update to 1.76.0
+  * [9ec996e] dsa/control: New homepage
+  * [ab393a4] dsa/update-files.sh: Fix upstream URL
 
  -- Bernd Zeimetz <bzed@debian.org>  Mon, 05 Nov 2018 01:02:43 +0100
 
 nagios-plugins-contrib (22.20181105) unstable; urgency=medium
 
   [ Bernd Zeimetz ]
-  * Bump Standards-Version to 4.2.1, no changes.
+  * [5091e4a] Disable EPN for check_raid.
+    Thanks to Daniel Pocock (Closes: #851351)
+  * [5bdff51] check_raid: fix failed mdadm hotspare detection.
+    Thanks to Sascha Steinbiss (Closes: #855054)
+  * [5232be1] percona-nagios-plugins: fix bashism.
+    Thanks to Raphael Geissert (Closes: #772278)
+
+  [ Stefan Schörghofer ]
+  * [6495faa] Fixes check_ssl_cert problems with Openssl > 1.1.x
+    (Closes: 855253)
+
+  [ Bernd Zeimetz ]
+  * [bf4fb49] Add autopkgtest for check_ssl_cert.
+  * [9aacdb6] Auto update of debian/tests/control
+  * [cd24451] Updating changelog.
+  * [0d7ac29] Fix check_cert_expire_dirs to make it work at all.
+    (Closes: #855155)
+  * [dbf85de] Updating changelog
+  * [d6880e6] style fix ;)
+
+  [ Jan Wagner ]
+  * [200548e] check_ssl_cert: Recommend curl and file as they are needed for a
+    working plugin
+  * [be54bd4] Apply check_snmp_environment/epn we missed to do
+
+  [ Leo Antunes ]
+  * [b76423b] add check_libs_ng script
+  * [273f7a0] check_libs_ng: small performance improvement
+
+  [ Stefan Schörghofer ]
+  * [3cea475] Adds new plugin: check-debsecan. (Closes: 725269)
+  * [202376f] Revert "Adds new plugin: check-debsecan." Forgot something and
+    want to make one fine commit.
+  * [447a438] Adds new plugin: check-debsecan. (Closes: 725269)
+  * [059dbba] Revert "Adds new plugin: check-debsecan." Found problem in the
+    copyright file. Will fix it.
+  * [fca4c0b] Adds new plugin: check-debsecan. (Closes: 725269)
+
+  [ Jan Wagner ]
+  * [190c0b7] check_hpasm: Update to 4.7.5.4
+  * [3eb4cf6] check_mongodb: Updating to latest version 3805751
+  * [7fecaf3] check_raid: Update to 4.0.8
+  * [ce7f6fe] check_whois: Update to latest version 1.23
+  * [3e8a34e] check_ssl_cert: Updating to 1.1.57.0
+  * [ae676d3] check_ssl_cert: Drop patch check_ssl_cert/bug-855253-fix
+  * [e83a665] check_rbl: Update to 1.4.1
+  * [1ec29f1] check_rbl: Drop patch check_rbl/spelling_errors
+  * [3c3a375] check_rbl: Drop patch check_rbl/disable_dul.ru
+  * [0883752] check_rbl: Drop patch 
+    check_raid/fix_mdadm_hotspare_failure_detection
+  * [dcdb4b3] travis-ci: Allow unstable to fail, since varnish has FTBFS
+    (again)
+  * [b21ae15] Update dsa checks to recent git version 2300473
+  * [759820b] Refresh d/p/dsa/check_running_kernel_jessie_centos_fix
+  * [d3c7d47] Refreshing patches against new upstreams
+  * [44c6db8] check_ssl_cert: Updating to 1.58.0
+  * [169de3b] check_ssl_cert: Updating to 1.58.0
+  * [1314c23] check_ssl_cert: Updating to 1.61.0
+  * [180a845] check_httpd_status: Updating to rev193
+  * [91a482c] check_httpd_status: Drop d/p/check_httpd_status/numeric-uptime,
+    it's in rev193
+  * [5c25f57] d/control: Update VCS-headers
+  * [e9f0da6] check_hpasm: Update to 4.7.5.5
+  * [3e81014] check_rbl: Update to 1.4.3
+  * [ad2be8b] check_ssl_cert: Updating to 1.72.0
+  * [be6e9e8] check_whois: Updating to 1.24
+  * [061b662] percona-nagios-plugins: Update to 1.1.8
+
+  [ Bas Couwenberg ]
+  * [5570872] Bump Standards-Version to 4.1.5, no changes.
+  * [dda67f3] Bump Standards-Version to 4.2.0, no changes.
+  * [db13182] Bump Standards-Version to 4.2.1, no changes.
 
   [ Jan Wagner ]
   * [65a0937] check_ssl_cert: Updating to 1.73.0
