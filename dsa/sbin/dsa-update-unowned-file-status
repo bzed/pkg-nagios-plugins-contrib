@@ -22,7 +22,10 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 CUTOFF=40
-STATUS=/var/cache/dsa/nagios/nouser
+STATUSDIR=/var/cache/dsa/nagios
+STATUS="${STATUSDIR}"/nouser
+
+mkdir -p "${STATUSDIR}"
 
 tmp=`tempfile`
 trap "rm -f '$tmp'" exit

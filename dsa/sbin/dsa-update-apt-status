@@ -22,7 +22,8 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 UPDATE_RUNS=3
-STATUS=/var/cache/dsa/nagios/apt
+STATUSDIR=/var/cache/dsa/nagios
+STATUS="${STATUSDIR}"/apt
 SLEEP_MAX=$(( 15 * 60 ))
 MAX_AGE=$(( 23 * 60 * 60 ))
 
@@ -49,6 +50,8 @@ run_required() {
 
 	return $norun
 }
+
+mkdir -p "${STATUSDIR}"
 
 # do stuff only when required, or when asked to
 if [ "${1:-""}" != "-f" ] ; then
