@@ -48,5 +48,6 @@ check_cups/ParseDateDelta
 check_printer/epn
 check_nfsmounts/nfs4_support
 check_httpd_status/htdigest_auth
+check_varnish/fix_for_v56
 check_raid/no_epn
 percona-nagios-plugins/fix_bashism
