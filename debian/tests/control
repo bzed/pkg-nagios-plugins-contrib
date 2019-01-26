@@ -31,3 +31,7 @@ Test-Command: /usr/lib/nagios/plugins/check_ssl_cert -H www.debian.org
 Depends: libmonitoring-plugin-perl | libnagios-plugin-perl, @
 Test-Command: /usr/lib/nagios/plugins/check_uptime -f
 
+Depends: varnish, systemd, dbus, @
+Restrictions: needs-root, isolation-container
+Tests: test_check_varnish
+
