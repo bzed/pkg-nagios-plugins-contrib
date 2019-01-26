@@ -1,5 +1,5 @@
 Uploaders: Bernd Zeimetz <bzed@debian.org>
-Build-Depends: libvarnishapi-dev [!hurd-i386 !m68k], pkg-config
+Build-Depends: libvarnishapi-dev [!hurd-i386 !m68k], pkg-config, automake-1.15
 Version: 258c486
 Homepage: https://github.com/varnish/varnish-nagios
 Watch: https://github.com/varnish/varnish-nagios <a class="commit-tease-sha"[^>]*>\s+([0-9a-f]+)\s+</a>
