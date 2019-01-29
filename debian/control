@@ -121,7 +121,6 @@ Description: Plugins for nagios compatible monitoring systems
    * check_raid (4.0.8): plugin to check sw/hw RAID status
      The plugin looks for any known types of RAID configurations,
      and checks them all.
-     .
      Supports:
      - Adaptec AAC RAID via aaccli or afacli or arcconf
      - AIX software RAID via lsvg
