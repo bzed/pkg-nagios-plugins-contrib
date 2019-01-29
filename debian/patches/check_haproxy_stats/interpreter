@@ -1,0 +1,16 @@
+commit 7ecba59a47bf3a9276d4bb6ef3976ebc2d809e4d
+Author: Jan Wagner <waja@cyconet.org>
+Date:   Tue Jan 29 16:14:46 2019 +0100
+
+    Fixing interpreter
+
+diff --git a/check_haproxy_stats/check_haproxy_stats.pl b/check_haproxy_stats/check_haproxy_stats.pl
+index 9698f78..f776bf6 100644
+--- a/check_haproxy_stats/check_haproxy_stats.pl
++++ b/check_haproxy_stats/check_haproxy_stats.pl
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env perl 
++#/usr/bin/perl
+ # vim: se et ts=4:
+ 
+ #

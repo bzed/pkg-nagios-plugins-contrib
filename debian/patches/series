@@ -11,6 +11,7 @@ check_email_delivery/epn
 check_email_delivery/paths
 check_haproxy/epn
 check_haproxy/monitoring-plugin
+check_haproxy_stats/interpreter
 check_httpd_status/epn
 check_httpd_status/monitoring-plugin
 check_imap_quota/syntax_error_fix
