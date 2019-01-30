@@ -1,6 +1,6 @@
 Source: nagios-plugins-contrib
 Section: net
-Priority: extra
+Priority: optional
 Maintainer: Debian Nagios Maintainer Group <pkg-nagios-devel@lists.alioth.debian.org>
 Uploaders: Bernd Zeimetz <bzed@debian.org>, Jan Wagner <waja@cyconet.org>, Stefan Schoerghofer <amd1212@4md.gr>, Petter Reinholdtsen <pere@hungry.com>, Leo Antunes <leo@costela.net>
 Build-Depends: debhelper (>= 8.0.0),
