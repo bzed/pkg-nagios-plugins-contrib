@@ -1,6 +1,6 @@
 Source: nagios-plugins-contrib
 Section: net
-Priority: extra
+Priority: optional
 Maintainer: Debian Nagios Maintainer Group <pkg-nagios-devel@lists.alioth.debian.org>
 Uploaders: #AUTO_UPDATE_Uploaders#
 Build-Depends: debhelper (>= 8.0.0),
