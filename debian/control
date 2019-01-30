@@ -88,7 +88,7 @@ Description: Plugins for nagios compatible monitoring systems
      outside its normal parameters.
    * check_httpd_status (rev204): plugin checking Apache or Lighthttpd
      server-status page (using mod_status)
-   * check_ipmi_sensor (3.12): IPMI Sensor Monitoring Plugin
+   * check_ipmi_sensor (3.13): IPMI Sensor Monitoring Plugin
      Plugin to monitor the hardware status (fan speed, temperaturs,
      voltages, power usage, ...) of a server using IPMI.
    * check_libs (0.2015012901 ): plugin to report the usage of no longer existing
@@ -118,7 +118,7 @@ Description: Plugins for nagios compatible monitoring systems
    * check_printer: plugin to check printer supply levels using SNMP
      It outputs performance data for all supplies
      found, for example toner and drum.
-   * check_raid (4.0.8): plugin to check sw/hw RAID status
+   * check_raid (4.0.9): plugin to check sw/hw RAID status
      The plugin looks for any known types of RAID configurations,
      and checks them all.
      Supports:
