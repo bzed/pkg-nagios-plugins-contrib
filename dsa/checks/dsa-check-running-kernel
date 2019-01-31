@@ -113,11 +113,12 @@ get_avail() {
 	fi
 
 	local availvrs=$(apt-cache policy ${imagename} 2>/dev/null | grep '^  Candidate' | awk '{print $2}')
-	local kernelversion=$(apt-cache policy ${prefix}-image-${kervers} 2>/dev/null | grep '^  Installed:' | awk '{print $2}')
-
-	if [ "$availvrs" = "$kernelversion" ]; then
-		return 0
-	fi
+	local kernelversion
+	for kernelversion in $(apt-cache policy ${prefix}-image-${kervers} ${prefix}-image-${kervers}-unsigned 2>/dev/null | grep '^  Installed:' | awk '{print $2}' | grep -F -v '(none)' ); do
+		if [ "$availvrs" = "$kernelversion" ]; then
+			return 0
+		fi
+	done
 
 	echo "$kernelversion != $availvrs"
 	return 1
