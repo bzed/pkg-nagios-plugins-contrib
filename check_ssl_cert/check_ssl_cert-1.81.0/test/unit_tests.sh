@@ -176,7 +176,6 @@ testXMPPHost() {
     if [ -z "${TRAVIS+x}" ] ; then
 	out=$(${SCRIPT} -H prosody.xmpp.is --port 5222 --protocol xmpp --xmpphost xmpp.is)
 	EXIT_CODE=$?
-	echo "DEBUG TEST: code = $EXIT_CODE, out=${out}"
 	if echo "${out}" | grep -q "s_client' does not support '-xmpphost'" ; then
 	    assertEquals "wrong exit code" ${NAGIOS_UNKNOWN} "${EXIT_CODE}"
 	else
@@ -204,13 +203,34 @@ testTimeOut() {
 
 testIMAP() {
     if [ -z "${TRAVIS+x}" ] ; then
-	${SCRIPT} --rootcert cabundle.crt -H imap.gmail.com --port 993
+	${SCRIPT} --rootcert cabundle.crt -H imap.gmx.com --port 143 --timeout 30 --protocol imap
 	EXIT_CODE=$?
 	assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
     else
 	echo "Skipping IMAP tests on Travis CI"
     fi	
 }
+
+testIMAPS() {
+    if [ -z "${TRAVIS+x}" ] ; then
+	${SCRIPT} --rootcert cabundle.crt -H imap.gmail.com --port 993 --timeout 30 --protocol imaps
+	EXIT_CODE=$?
+	assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
+    else
+	echo "Skipping IMAP tests on Travis CI"
+    fi	
+}
+
+testPOP3S() {
+    if [ -z "${TRAVIS+x}" ] ; then
+	${SCRIPT} --rootcert cabundle.crt -H pop.gmail.com --port 993 --timeout 30 --protocol pop3s
+	EXIT_CODE=$?
+	assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
+    else
+	echo "Skipping POP3S tests on Travis CI"
+    fi
+}
+
 
 testSMTP() {
     if [ -z "${TRAVIS+x}" ] ; then

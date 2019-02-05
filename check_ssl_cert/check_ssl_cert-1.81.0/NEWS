@@ -1,3 +1,10 @@
+2019-02-01 Version 1.81.0: Added an option to specify a warning level with SSL Labs
+2019-01-16 Version 1.80.1: Fixed a problem on systems not supporting echo -e
+2018-12-24 Version 1.80.0: Better output in case of errors while using SNI
+2018-12-10 Version 1.79.0: Differentiate between IMAP on port 143 and IMAPS on port 993
+                           Fixed a vulnerability in the parsing of the certificate issuer
+2018-11-07 Version 1.78.0: Bug fixes in IMAP and HTTP requests
+2018-11-05 Version 1.77.0: CA file and directory support
 2018-10-19 Version 1.76.0: Sends a correct HTTP request
 2018-10-18 Version 1.75.0: Allow to specify a client certificate key
 2018-10-15 Version 1.74.0: Fixed a bug generating a confusing error message on timeout

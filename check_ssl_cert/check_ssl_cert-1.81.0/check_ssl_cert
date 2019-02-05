@@ -10,7 +10,7 @@
 # See  the INSTALL file for installation instructions
 #
 # Copyright (c) 2007-2012 ETH Zurich.
-# Copyright (c) 2007-2018 Matteo Corti <matteo@corti.li>
+# Copyright (c) 2007-2019 Matteo Corti <matteo@corti.li>
 #
 # This module is free software; you can redistribute it and/or modify it
 # under the terms of GNU general public license (gpl) version 3.
@@ -19,7 +19,7 @@
 ################################################################################
 # Constants
 
-VERSION=1.76.0
+VERSION=1.81.0
 SHORTNAME="SSL_CERT"
 
 VALID_ATTRIBUTES=",startdate,enddate,subject,issuer,serial,modulus,serial,hash,email,ocsp_uri,fingerprint,"
@@ -49,94 +49,97 @@ usage() {
     echo "Usage: check_ssl_cert -H host [OPTIONS]"
     echo
     echo "Arguments:"
-    echo "   -H,--host host             server"
+    echo "   -H,--host host                  server"
     echo
     echo "Options:"
-    echo "   -A,--noauth                ignore authority warnings (expiration only)"
-    echo "      --altnames              matches the pattern specified in -n with alternate"
-    echo "                              names too"
-    echo "   -C,--clientcert path       use client certificate to authenticate"
-    echo "      --clientpass phrase     set passphrase for client certificate."
-    echo "   -c,--critical days         minimum number of days a certificate has to be valid"
-    echo "                              to issue a critical status"
-    echo "      --curl-bin path         path of the curl binary to be used"
-    echo "   -d,--debug                 produces debugging output"
-    echo "      --ecdsa                 cipher selection: force ECDSA authentication"
-    echo "   -e,--email address         pattern to match the email address contained in the"
-    echo "                              certificate"
-    echo "   -f,--file file             local file path (works with -H localhost only)"
-    echo "                              with -f you can not only pass a x509 certificate file"
-    echo "                              but also a certificate revocation list (CRL) to check"
-    echo "                              the validity period"
-    echo "      --file-bin path         path of the file binary to be used"
-    echo "      --fingerprint SHA1      pattern to match the SHA1-Fingerprint"
-    echo "      --force-perl-date       force the usage of Perl for date computations"
-    echo "      --format FORMAT         format output template on success, for example"
-    echo "                              \"%SHORTNAME% OK %CN% from '%CA_ISSUER_MATCHED%'\""
-    echo "   -h,--help,-?               this help message"
-    echo "      --ignore-exp            ignore expiration date"
-    echo "      --ignore-ocsp           do not check revocation with OCSP"
-    echo "      --ignore-sig-alg        do not check if the certificate was signed with SHA1"
-    echo "                              or MD5"
-    echo "      --ignore-ssl-labs-cache Forces a new check by SSL Labs (see -L)"
-    echo "   -i,--issuer issuer         pattern to match the issuer of the certificate"
-    echo "      --issuer-cert-cache dir directory where to store issuer certificates cache"
-    echo "   -K,--clientkey path        use client certificate key to authenticate"
-    echo "   -L,--check-ssl-labs grade  SSL Labs assessment"
-    echo "                              (please check https://www.ssllabs.com/about/terms.html)"
-    echo "      --long-output list      append the specified comma separated (no spaces) list"
-    echo "                              of attributes to the plugin output on additional lines"
-    echo "                              Valid attributes are:"
-    echo "                                enddate, startdate, subject, issuer, modulus,"
-    echo "                                serial, hash, email, ocsp_uri and fingerprint."
-    echo "                              'all' will include all the available attributes."
-    echo "   -n,--cn name               pattern to match the CN of the certificate (can be"
-    echo "                              specified multiple times)"
-    echo "      --no_ssl2               disable SSL version 2"
-    echo "      --no_ssl3               disable SSL version 3"
-    echo "      --no_tls1               disable TLS version 1"
-    echo "      --no_tls1_1             disable TLS version 1.1"
-    echo "      --no_tls1_2             disable TLS version 1.2"
-    echo "   -N,--host-cn               match CN with the host name"
-    echo "   -o,--org org               pattern to match the organization of the certificate"
-    echo "      --openssl path          path of the openssl binary to be used"
-    echo "   -p,--port port             TCP port"
-    echo "   -P,--protocol protocol     use the specific protocol"
-    echo "                              {http|smtp|pop3|imap|ftp|xmpp|irc|ldap}"
-    echo "                              http:                    default"
-    echo "                              smtp,pop3,imap,ftp,ldap: switch to TLS"
-    echo "   -s,--selfsigned            allows self-signed certificates"
-    echo "      --serial serialnum      pattern to match the serial number"
-    echo "      --sni name              sets the TLS SNI (Server Name Indication) extension"
-    echo "                              in the ClientHello message to 'name'"
-    echo "      --ssl2                  forces SSL version 2"
-    echo "      --ssl3                  forces SSL version 3"
-    echo "      --require-ocsp-stapling require OCSP stapling"
-    echo "      --require-san           require the presence of a Subject Alternative Name"
-    echo "                              extension"
-    echo "   -r,--rootcert path         root certificate or directory to be used for"
-    echo "                              certificate validation"
-    echo "      --rsa                   cipher selection: force RSA authentication"
-    echo "      --temp dir              directory where to store the temporary files"
-    echo "      --terse                 terse output"
-    echo "   -t,--timeout               seconds timeout after the specified time"
-    echo "                              (defaults to 15 seconds)"
-    echo "      --tls1                  force TLS version 1"
-    echo "      --tls1_1                force TLS version 1.1"
-    echo "      --tls1_2                force TLS version 1.2"
-    echo "      --tls1_3                force TLS version 1.3"
-    echo "   -v,--verbose               verbose output"
-    echo "   -V,--version               version"
-    echo "   -w,--warning days          minimum number of days a certificate has to be valid"
-    echo "                              to issue a warning status"
-    echo "      --xmpphost name         specifies the host for the 'to' attribute of the stream element"
+    echo "   -A,--noauth                     ignore authority warnings (expiration only)"
+    echo "      --altnames                   matches the pattern specified in -n with alternate"
+    echo "                                   names too"
+    echo "   -C,--clientcert path            use client certificate to authenticate"
+    echo "      --clientpass phrase          set passphrase for client certificate."
+    echo "   -c,--critical days              minimum number of days a certificate has to be valid"
+    echo "                                   to issue a critical status"
+    echo "      --curl-bin path              path of the curl binary to be used"
+    echo "   -d,--debug                      produces debugging output"
+    echo "      --ecdsa                      cipher selection: force ECDSA authentication"
+    echo "   -e,--email address              pattern to match the email address contained in the"
+    echo "                                   certificate"
+    echo "   -f,--file file                  local file path (works with -H localhost only)"
+    echo "                                   with -f you can not only pass a x509 certificate file"
+    echo "                                   but also a certificate revocation list (CRL) to check"
+    echo "                                   the validity period"
+    echo "      --file-bin path              path of the file binary to be used"
+    echo "      --fingerprint SHA1           pattern to match the SHA1-Fingerprint"
+    echo "      --force-perl-date            force the usage of Perl for date computations"
+    echo "      --format FORMAT              format output template on success, for example"
+    echo "                                   \"%SHORTNAME% OK %CN% from '%CA_ISSUER_MATCHED%'\""
+    echo "   -h,--help,-?                    this help message"
+    echo "      --ignore-exp                 ignore expiration date"
+    echo "      --ignore-ocsp                do not check revocation with OCSP"
+    echo "      --ignore-sig-alg             do not check if the certificate was signed with SHA1"
+    echo "                                   or MD5"
+    echo "      --ignore-ssl-labs-cache      Forces a new check by SSL Labs (see -L)"
+    echo "   -i,--issuer issuer              pattern to match the issuer of the certificate"
+    echo "      --issuer-cert-cache dir      directory where to store issuer certificates cache"
+    echo "   -K,--clientkey path             use client certificate key to authenticate"
+    echo "   -L,--check-ssl-labs grade       SSL Labs assessment"
+    echo "                                   (please check https://www.ssllabs.com/about/terms.html)"
+    echo "      --check-ssl-labs-warn-grade  SSL-Labs grade on which to warn"
+    echo "      --long-output list           append the specified comma separated (no spaces) list"
+    echo "                                   of attributes to the plugin output on additional lines"
+    echo "                                   Valid attributes are:"
+    echo "                                     enddate, startdate, subject, issuer, modulus,"
+    echo "                                     serial, hash, email, ocsp_uri and fingerprint."
+    echo "                                   'all' will include all the available attributes."
+    echo "   -n,--cn name                    pattern to match the CN of the certificate (can be"
+    echo "                                   specified multiple times)"
+    echo "      --no_ssl2                    disable SSL version 2"
+    echo "      --no_ssl3                    disable SSL version 3"
+    echo "      --no_tls1                    disable TLS version 1"
+    echo "      --no_tls1_1                  disable TLS version 1.1"
+    echo "      --no_tls1_2                  disable TLS version 1.2"
+    echo "   -N,--host-cn                    match CN with the host name"
+    echo "   -o,--org org                    pattern to match the organization of the certificate"
+    echo "      --openssl path               path of the openssl binary to be used"
+    echo "   -p,--port port                  TCP port"
+    echo "   -P,--protocol protocol          use the specific protocol"
+    echo "                                   {http|smtp|pop3|pops3s|imap|imaps|ftp|xmpp|irc|ldap}"
+    echo "                                   http:                    default"
+    echo "                                   smtp,pop3,imap,ftp,ldap: switch to TLS"
+    echo "   -s,--selfsigned                 allows self-signed certificates"
+    echo "      --serial serialnum           pattern to match the serial number"
+    echo "      --sni name                   sets the TLS SNI (Server Name Indication) extension"
+    echo "                                   in the ClientHello message to 'name'"
+    echo "      --ssl2                       forces SSL version 2"
+    echo "      --ssl3                       forces SSL version 3"
+    echo "      --require-ocsp-stapling      require OCSP stapling"
+    echo "      --require-san                require the presence of a Subject Alternative Name"
+    echo "                                   extension"
+    echo "   -r,--rootcert path              root certificate or directory to be used for"
+    echo "                                   certificate validation"
+    echo "      --rootcert-dir path          root directory to be used for certificate validation"
+    echo "      --rootcert-file path         root certificate to be used for certificate validation"
+    echo "      --rsa                        cipher selection: force RSA authentication"
+    echo "      --temp dir                   directory where to store the temporary files"
+    echo "      --terse                      terse output"
+    echo "   -t,--timeout                    seconds timeout after the specified time"
+    echo "                                   (defaults to 15 seconds)"
+    echo "      --tls1                       force TLS version 1"
+    echo "      --tls1_1                     force TLS version 1.1"
+    echo "      --tls1_2                     force TLS version 1.2"
+    echo "      --tls1_3                     force TLS version 1.3"
+    echo "   -v,--verbose                    verbose output"
+    echo "   -V,--version                    version"
+    echo "   -w,--warning days               minimum number of days a certificate has to be valid"
+    echo "                                   to issue a warning status"
+    echo "      --xmpphost name              specifies the host for the 'to' attribute of the stream element"
     echo
     echo "Deprecated options:"
-    echo "      --days days             minimum number of days a certificate has to be valid"
-    echo "                              (see --critical and --warning)"
-    echo "      --ocsp                  check revocation via OCSP"
-    echo "   -S,--ssl version           force SSL version (2,3)"
-    echo "                              (see: --ssl2 or --ssl3)"
+    echo "      --days days                  minimum number of days a certificate has to be valid"
+    echo "                                   (see --critical and --warning)"
+    echo "      --ocsp                       check revocation via OCSP"
+    echo "   -S,--ssl version                force SSL version (2,3)"
+    echo "                                   (see: --ssl2 or --ssl3)"
     echo
     echo "Report bugs to https://github.com/matteocorti/check_ssl_cert/issues"
     echo
@@ -206,7 +209,11 @@ create_temporary_file() {
 #   $1 error message
 critical() {
     if [ -n "${HOST}" ] ; then
-        tmp=" ${HOST}"
+	if [ -n "${SNI}" ] ; then
+	    tmp=" ${SNI}"
+	else
+            tmp=" ${HOST}"
+	fi
     fi
     remove_temporary_files
     printf '%s CRITICAL%s: %s%s%s\n' "${SHORTNAME}" "${tmp}" "$1" "${PERFORMANCE_DATA}" "${LONG_OUTPUT}"
@@ -219,7 +226,11 @@ critical() {
 #   $1 warning message
 warning() {
     if [ -n "${HOST}" ] ; then
-        tmp=" ${HOST}"
+	if [ -n "${SNI}" ] ; then
+	    tmp=" ${SNI}"
+	else
+            tmp=" ${HOST}"
+	fi
     fi
     remove_temporary_files
     printf '%s WARN%s: %s%s%s\n' "${SHORTNAME}" "${tmp}" "$1" "${PERFORMANCE_DATA}" "${LONG_OUTPUT}"
@@ -232,7 +243,11 @@ warning() {
 #   $1 message
 unknown() {
     if [ -n "${HOST}" ] ; then
-        tmp=" ${HOST}"
+	if [ -n "${SNI}" ] ; then
+	    tmp=" ${SNI}"
+	else
+            tmp=" ${HOST}"
+	fi
     fi
     remove_temporary_files
     printf '%s UNKNOWN%s: %s\n' "${SHORTNAME}" "${tmp}" "$1"
@@ -424,6 +439,10 @@ fetch_certificate() {
                 ;;
             pop3|imap|ftp|ldap)
                 exec_with_timeout "$TIMEOUT" "echo 'Q' | $OPENSSL s_client ${CLIENT} ${CLIENTPASS} -starttls ${PROTOCOL} -connect $HOST:$PORT ${SERVERNAME} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} 2> ${ERROR} 1> ${CERT}"
+                RET=$?
+                ;;
+            pop3s|imaps)
+                exec_with_timeout "$TIMEOUT" "echo 'Q' | $OPENSSL s_client ${CLIENT} ${CLIENTPASS} -connect $HOST:$PORT ${SERVERNAME} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} 2> ${ERROR} 1> ${CERT}"
                 RET=$?
                 ;;
 	    xmpp)
@@ -749,10 +768,18 @@ main() {
                 ;;
             -L|--check-ssl-labs)
                 if [ $# -gt 1 ]; then
-                    SSL_LAB_ASSESSMENT="$2"
+                    SSL_LAB_CRIT_ASSESSMENT="$2"
                     shift 2
                 else
                     unknown "-L|--check-ssl-labs requires an argument"
+                fi
+                ;;
+            --check-ssl-labs-warn-grade)
+                if [ $# -gt 1 ]; then
+                    SSL_LAB_WARN_ASSESTMENT="$2"
+                    shift 2
+                else
+                    unknown "--check-ssl-labs-warn-grade requires an argument"
                 fi
                 ;;
             --serial)
@@ -830,6 +857,22 @@ main() {
                     shift 2
                 else
                     unknown "-r,--rootcert requires an argument"
+                fi
+                ;;
+            --rootcert-dir)
+                if [ $# -gt 1 ]; then
+                    ROOT_CA_DIR="$2"
+                    shift 2
+                else
+                    unknown "--rootcert-dir requires an argument"
+                fi
+                ;;
+            --rootcert-file)
+                if [ $# -gt 1 ]; then
+                    ROOT_CA_FILE="$2"
+                    shift 2
+                else
+                    unknown "--rootcert-file requires an argument"
                 fi
                 ;;
             -C|--clientcert)
@@ -975,6 +1018,32 @@ main() {
 
     fi
 
+    if [ -n "${ROOT_CA_DIR}" ] ; then
+
+        if [ ! -d "${ROOT_CA_DIR}" ] ; then
+            unknown "${ROOT_CA_DIR} is not a directory";
+        fi
+
+        if [ ! -r "${ROOT_CA_DIR}" ] ; then
+            unknown "Cannot read root directory ${ROOT_CA_DIR}"
+        fi
+
+        ROOT_CA_DIR="-CApath ${ROOT_CA_DIR}"
+    fi
+
+    if [ -n "${ROOT_CA_FILE}" ] ; then
+
+        if [ ! -r "${ROOT_CA_FILE}" ] ; then
+            unknown "Cannot read root certificate ${ROOT_CA_FILE}"
+        fi
+
+        ROOT_CA_FILE="-CAfile ${ROOT_CA_FILE}"
+    fi
+
+    if [ -n "${ROOT_CA_DIR}" ] || [ -n "${ROOT_CA_FILE}" ]; then
+        ROOT_CA="${ROOT_CA_DIR} ${ROOT_CA_FILE}"
+    fi
+
     if [ -n "${CLIENT_CERT}" ] ; then
 
         if [ ! -r "${CLIENT_CERT}" ] ; then
@@ -1039,9 +1108,17 @@ main() {
 
     fi
 
-    if [ -n "${SSL_LAB_ASSESSMENT}" ] ; then
-        convert_ssl_lab_grade "${SSL_LAB_ASSESSMENT}"
-        SSL_LAB_ASSESSMENT_NUMERIC="${NUMERIC_SSL_LAB_GRADE}"
+    if [ -n "${SSL_LAB_CRIT_ASSESSMENT}" ] ; then
+        convert_ssl_lab_grade "${SSL_LAB_CRIT_ASSESSMENT}"
+        SSL_LAB_CRIT_ASSESSMENT_NUMERIC="${NUMERIC_SSL_LAB_GRADE}"
+    fi
+
+    if [ -n "${SSL_LAB_WARN_ASSESTMENT}" ] ; then
+        convert_ssl_lab_grade "${SSL_LAB_WARN_ASSESTMENT}"
+        SSL_LAB_WARN_ASSESTMENT_NUMERIC="${NUMERIC_SSL_LAB_GRADE}"
+        if ( $SSL_LAB_WARN_ASSESTMENT_NUMERIC < $SSL_LAB_CRIT_ASSESSMENT_NUMERIC ); then
+            unknown  "--check-ssl-labs-warn-grade must be greater than -L|--check-ssl-labs"
+        fi
     fi
 
     if [ -n "${DEBUG}" ] ; then
@@ -1065,9 +1142,9 @@ main() {
 
     # curl
     if [ -z "${CURL_BIN}" ] ; then
-	if [ -n "${SSL_LAB_ASSESSMENT}" ] || [ -n "${OCSP}" ] ; then
+	if [ -n "${SSL_LAB_CRIT_ASSESSMENT}" ] || [ -n "${OCSP}" ] ; then
 	    if [ -n "${DEBUG}" ] ; then
-		echo "[DBG] cURL binary needed. SSL Labs = ${SSL_LAB_ASSESSMENT}, OCSP = ${OCSP}"
+		echo "[DBG] cURL binary needed. SSL Labs = ${SSL_LAB_CRIT_ASSESSMENT}, OCSP = ${OCSP}"
 		echo "[DBG] cURL binary not specified"
 	    fi
             check_required_prog curl
@@ -1077,7 +1154,7 @@ main() {
 	    fi
 	else
 	    if [ -n "${DEBUG}" ] ; then
-		echo "[DBG] cURL binary not needed. SSL Labs = ${SSL_LAB_ASSESSMENT}, OCSP = ${OCSP}"
+		echo "[DBG] cURL binary not needed. SSL Labs = ${SSL_LAB_CRIT_ASSESSMENT}, OCSP = ${OCSP}"
 	    fi
 	fi
     fi
@@ -1258,8 +1335,9 @@ main() {
     else
         HOST_HEADER="${HOST}"
     fi
+
     HTTP_REQUEST="HEAD / HTTP/1.1\\nHost: ${HOST_HEADER}\\nUser-Agent: check_ssl_cert/${VERSION}\\nConnection: close\\n\\n"
-    
+
     ################################################################################
     # Fetch the X.509 certificate
 
@@ -1432,12 +1510,20 @@ main() {
     ISSUERS=$(echo "$ISSUERS" | sed 's/\\n/\n/g' | sed -e "s/^.*\\/CN=//" -e "s/^.* CN = //" -e "s/^.*, O = //" -e "s/\\/[A-Za-z][A-Za-z]*=.*\$//" -e "s/, [A-Za-z][A-Za-z]* =.*\$//")
 
     # we just consider the first URI
-    # shellcheck disable=SC2086
-    ISSUER_URI="$($OPENSSL "${OPENSSL_COMMAND}" ${OPENSSL_PARAMS} -in "${CERT}" -text -noout | grep "CA Issuers" | head -n 1 | sed -e "s/^.*CA Issuers - URI://")"
+    # TODO check SC2016
+    # shellcheck disable=SC2086,SC2016
+    ISSUER_URI="$($OPENSSL "${OPENSSL_COMMAND}" ${OPENSSL_PARAMS} -in "${CERT}" -text -noout | grep "CA Issuers" | head -n 1 | sed -e "s/^.*CA Issuers - URI://" | tr -d '"!|;$(){}<>`&')"
 
+    # TODO: should be checked
+    # shellcheck disable=SC2021
     if [ -z "${ISSUER_URI}" ] ; then
         if [ -n "${VERBOSE}" ] ; then
             echo "cannot find the CA Issuers in the certificate: disabling OCSP checks"
+        fi
+        OCSP=""
+    elif [ "${ISSUER_URI}" != "$(echo "${ISSUER_URI}" | tr -d '[[:space:]]')" ]; then
+        if [ -n "${VERBOSE}" ] ; then
+            echo "unable to fetch the CA issuer certificate (spaces in URI)"
         fi
         OCSP=""
     elif ! echo "${ISSUER_URI}" | grep -qi '^http' ; then
@@ -1454,7 +1540,7 @@ main() {
        	    echo "checking OCSP stapling"
 	fi
 
-	exec_with_timeout "$TIMEOUT" "echo '${HTTP_REQUEST}' | openssl s_client -connect ${HOST}:${PORT} ${SERVERNAME} -status 2> /dev/null | grep -A 17 'OCSP response:' > $OCSP_RESPONSE_TMP"
+	exec_with_timeout "$TIMEOUT" "printf '${HTTP_REQUEST}' | openssl s_client -connect ${HOST}:${PORT} ${SERVERNAME} -status 2> /dev/null | grep -A 17 'OCSP response:' > $OCSP_RESPONSE_TMP"
 
 	if [ -n "${DEBUG}" ] ; then
 	    sed 's/^/[DBG]\ /' "${OCSP_RESPONSE_TMP}"
@@ -1891,7 +1977,7 @@ EOF
 
     ################################################################################
     # Check SSL Labs
-    if [ -n "${SSL_LAB_ASSESSMENT}" ] ; then
+    if [ -n "${SSL_LAB_CRIT_ASSESSMENT}" ] ; then
 
         if [ -n "${VERBOSE}" ] ; then
             echo "Checking SSL Labs assessment"
@@ -1902,9 +1988,14 @@ EOF
             if [ -n "${DEBUG}" ] ; then
                 echo "[DBG] executing ${CURL_BIN} --silent \"https://api.ssllabs.com/api/v2/analyze?host=${HOST}${IGNORE_SSL_LABS_CACHE}\""
             fi
-
-            JSON="$(${CURL_BIN} --silent "https://api.ssllabs.com/api/v2/analyze?host=${HOST}${IGNORE_SSL_LABS_CACHE}")"
-            CURL_RETURN_CODE=$?
+	    
+	    if [ -n "${SNI}" ] ; then
+		JSON="$(${CURL_BIN} --silent "https://api.ssllabs.com/api/v2/analyze?host=${SNI}${IGNORE_SSL_LABS_CACHE}")"
+                CURL_RETURN_CODE=$?
+            else
+                JSON="$(${CURL_BIN} --silent "https://api.ssllabs.com/api/v2/analyze?host=${HOST}${IGNORE_SSL_LABS_CACHE}")"
+                CURL_RETURN_CODE=$?
+            fi
 
             if [ ${CURL_RETURN_CODE} -ne 0 ] ; then
 
@@ -1963,11 +2054,15 @@ EOF
                         convert_ssl_lab_grade "${SSL_LABS_HOST_GRADE}"
                         SSL_LABS_HOST_GRADE_NUMERIC="${NUMERIC_SSL_LAB_GRADE}"
 
-                        add_performance_data "ssllabs=${SSL_LABS_HOST_GRADE_NUMERIC}%;;${SSL_LAB_ASSESSMENT_NUMERIC}"
+                        add_performance_data "ssllabs=${SSL_LABS_HOST_GRADE_NUMERIC}%;;${SSL_LAB_CRIT_ASSESSMENT_NUMERIC}"
 
                         # Check the grade
-                        if [ "${SSL_LABS_HOST_GRADE_NUMERIC}" -lt "${SSL_LAB_ASSESSMENT_NUMERIC}" ] ; then
-                            critical "SSL Labs grade is ${SSL_LABS_HOST_GRADE} (instead of ${SSL_LAB_ASSESSMENT})"
+                        if [ "${SSL_LABS_HOST_GRADE_NUMERIC}" -lt "${SSL_LAB_CRIT_ASSESSMENT_NUMERIC}" ] ; then
+                            critical "SSL Labs grade is ${SSL_LABS_HOST_GRADE} (instead of ${SSL_LAB_CRIT_ASSESSMENT})"
+                        elif [ -n "${SSL_LAB_WARN_ASSESTMENT_NUMERIC}" ]; then
+                            if [ "${SSL_LABS_HOST_GRADE_NUMERIC}" -lt "${SSL_LAB_WARN_ASSESTMENT_NUMERIC}" ] ; then
+                                warning "SSL Labs grade is ${SSL_LABS_HOST_GRADE} (instead of ${SSL_LAB_WARN_ASSESTMENT})"
+                            fi
                         fi
 
                         if [ -n "${DEBUG}" ] ; then

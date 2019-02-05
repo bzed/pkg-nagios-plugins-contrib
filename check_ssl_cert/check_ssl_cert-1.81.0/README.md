@@ -1,8 +1,7 @@
 
  (c) Matteo Corti, ETH Zurich, 2007-2012
 
- (c) Matteo Corti, 2007-2018
-
+ (c) Matteo Corti, 2007-2019
   see AUTHORS for the complete list of contributors
 
 # check_ssl_cert
@@ -71,9 +70,9 @@ Options:
       --openssl path          path of the openssl binary to be used
    -p,--port port             TCP port
    -P,--protocol protocol     use the specific protocol
-                              {http|smtp|pop3|imap|ftp|xmpp|irc|ldap}
+                              {http|smtp|pop3|pop3s|imap|imaps|ftp|xmpp|irc|ldap}
                               http:                    default
-                              smtp,pop3,imap,ftp,ldap: switch to TLS
+                              smtp,pop3,imap,imaps,ftp,ldap: switch to TLS
    -s,--selfsigned            allows self-signed certificates
       --serial serialnum      pattern to match the serial number
       --sni name              sets the TLS SNI (Server Name Indication) extension
@@ -85,6 +84,8 @@ Options:
                               extension
    -r,--rootcert path         root certificate or directory to be used for
                               certificate validation
+      --rootcert-dir path     root directory to be used for certificate validation
+      --rootcert-file path    root certificate to be used for certificate validation
       --rsa                   cipher selection: force RSA authentication
       --temp dir              directory where to store the temporary files
       --terse                 terse output
