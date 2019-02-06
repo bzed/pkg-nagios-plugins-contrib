@@ -109,7 +109,7 @@ Description: Plugins for nagios compatible monitoring systems
      This plugin excludes the system cache and buffer, because
      on some system with very stable memory usage it is perfectly
      normal for system cache to fill in all available memory.
-   * check_mongodb (3805751): Plugin script to monitor your MongoDB server(s)
+   * check_mongodb (b33e763): Plugin script to monitor your MongoDB server(s)
    * check_multipath (0.4.7): plugin to monitor the number of available and
      failed paths of multipath devices
    * check_mysql_health (2.2.2): plugin to check various parameters of a
@@ -169,7 +169,7 @@ Description: Plugins for nagios compatible monitoring systems
      HOST-RESOURCES-MIB::hrSystemDate.0 used here returns 8 or 11 byte octets.
      SNMP translation needs to be switched off and to be converted the
      received SNMP data into readable strings.
-   * check_ssl_cert (1.80.1): plugin to check the CA and validity of an
+   * check_ssl_cert (1.81.0): plugin to check the CA and validity of an
      X.509 certificate
    * check_uptime (0.521): check_uptime returns uptime of a system
      in text (readable) format as well as in minutes for performance graphing.
@@ -182,7 +182,7 @@ Description: Plugins for nagios compatible monitoring systems
      the wrapper return value, that is, result will be OK only if all checks
      returned OK.  Compatible with any plugin with standard command line options
      -6/-4.
-   * check_varnish (258c486): plugin to monitor varnish instances
+   * check_varnish (672523d): plugin to monitor varnish instances
    * check_webinject (1.80): plugin for testing web services
      It uses the WebInject Perl module for automated testing of
      web applications and web services. It can be used to check
