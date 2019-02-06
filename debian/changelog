@@ -1,3 +1,37 @@
+nagios-plugins-contrib (23.20190206) unstable; urgency=medium
+
+  * [314b5a6] Add patch check_uptime/missing_backslash, thanks Sven Wegener.
+    (Closes: #882982)
+  * [98f42fd] dsa/*: Update to latest upstream
+  * [00a3557] p/dsa/status_directory: Refresh against latest upstream
+  * [f96eeae] check_ssl_cert: Update to 1.80.1
+  * [b0b3391] d/control.in: Update Vcs headers
+  * [f4a960f] d/control.in: Bump Standards-Version to 4.3.0, no changes needed
+  * [cec13f3] Revert "Remove check_varnish for now."
+  * [5388c58] Adding d/p/check_varnish/fix_for_v56,
+    thanks Jean-Louis Dupond <jean-louis@dupond.be>
+  * [1abad16] d/copyright: Auto update
+  * [e30d668] d/tests/control: Auto update
+  * [37ee667] check_varnish/control: Adding automake-1.15 as build dep
+  * [2491dc7] d/control: Auto update
+  * [c3aa205] check_ipmi_sensor: Update to 3.13
+  * [67f7f48] Adding d/p/check_haproxy_stats/interpreter, fixing interpreter
+  * [0d80aa9] check_raid/control: Fixing invalid control statement
+  * [1dfe25a] check_raid: Update to 4.0.9
+  * [23a69f5] d/control: Auto update
+  * [bc48c7b] d/control.in: Using priority optional
+  * [5bb1937] d/control: Auto update
+  * [bc2cc30] check_mongo: Update to 46d27ab
+  * [8375691] dsa/*: Update to latest upstream
+  * [7bb2be2] dsa/checks/dsa-check-cert-expire-dir: Fix permissions
+  * [71b0bfc] check_mongodb: Updating to latest version b33e763
+  * [4fdfeb3] check_ssl_cert: Update to 1.81.0
+  * [cf52b63] check_varnish/control: Update to latest upstream commit,
+    no code changes
+  * [679d52b] d/control: Auto update
+
+ -- Jan Wagner <waja@cyconet.org>  Wed, 06 Feb 2019 13:45:06 +0100
+
 nagios-plugins-contrib (22.20181105+1) unstable; urgency=medium
 
   [ Bernd Zeimetz ]
