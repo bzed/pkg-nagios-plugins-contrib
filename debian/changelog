@@ -1,3 +1,9 @@
+nagios-plugins-contrib (23.20190207~1.gbp55b8b6) UNRELEASED; urgency=medium
+
+  * UNRELEASED
+
+ -- Jan Wagner <waja@cyconet.org>  Wed, 06 Feb 2019 14:57:31 +0100
+
 nagios-plugins-contrib (23.20190206) unstable; urgency=medium
 
   * [314b5a6] Add patch check_uptime/missing_backslash, thanks Sven Wegener.
