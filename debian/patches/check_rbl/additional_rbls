@@ -1,15 +1,11 @@
 --- a/check_rbl/src/check_rbl.ini
 +++ b/check_rbl/src/check_rbl.ini
-@@ -95,6 +95,46 @@
+@@ -95,6 +95,42 @@
  server=spam.dnsbl.anonmails.de
  server=spambot.bls.digibase.ca
  server=z.mailspike.net
 +server=dul.dnsbl.borderware.com
 +server=uribl.swinog.ch
-+server=black.uribl.com
-+server=grey.uribl.com
-+server=red.uribl.com
-+server=multi.uribl.com
 +server=dnsbl.inps.de
 +server=tor.dan.me.uk
 +server=torexit.dan.me.uk
