@@ -1,12 +1,12 @@
 {
    "abstract" : "unknown",
    "author" : [
-      "Matteo Corti <matteo@corti.li>"
+      "unknown"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Module::Install version 1.18, CPAN::Meta::Converter version 2.150010",
+   "generated_by" : "Module::Install version 1.19, CPAN::Meta::Converter version 2.150010",
    "license" : [
-      "open_source"
+      "unknown"
    ],
    "meta-spec" : {
       "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
@@ -46,11 +46,6 @@
       }
    },
    "release_status" : "stable",
-   "resources" : {
-      "license" : [
-         "http://opensource.org/licenses/gpl-license.php"
-      ]
-   },
-   "version" : "1.4.0",
+   "version" : "1.4.3",
    "x_serialization_backend" : "JSON::PP version 2.27400_02"
 }
