@@ -1,9 +1,9 @@
 --- a/check_rbl/src/check_rbl.ini
 +++ b/check_rbl/src/check_rbl.ini
-@@ -36,6 +36,46 @@
- server=hil.habeas.com
- server=rbl.schulte.org
- server=sbl-xbl.spamhaus.org
+@@ -95,6 +95,46 @@
+ server=spam.dnsbl.anonmails.de
+ server=spambot.bls.digibase.ca
+ server=z.mailspike.net
 +server=dul.dnsbl.borderware.com
 +server=uribl.swinog.ch
 +server=black.uribl.com
