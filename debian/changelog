@@ -1,3 +1,9 @@
+nagios-plugins-contrib (24.20190302~1.gbp8488a6) UNRELEASED; urgency=medium
+
+  * UNRELEASED
+
+ -- Jan Wagner <waja@cyconet.org>  Fri, 01 Mar 2019 16:49:59 +0100
+
 nagios-plugins-contrib (24.20190301) unstable; urgency=medium
 
   * [94e6962] check_rbl: Update to 1.4.4
