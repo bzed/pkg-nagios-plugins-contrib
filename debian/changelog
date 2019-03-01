@@ -1,8 +1,14 @@
-nagios-plugins-contrib (23.20190207~1.gbp55b8b6) UNRELEASED; urgency=medium
+nagios-plugins-contrib (24.20190301) unstable; urgency=medium
 
-  * UNRELEASED
+  * [94e6962] check_rbl: Update to 1.4.4
+  * [26788d0] d/patches/check_rbl/additional_rbls:
+    Refresh against latest ustream
+  * [1ca8c61] d/patches/check_rbl/additional_rbls:
+    Remove unreliable uribl.com lists
+  * [c3d64f4] check_ssl_cert: Update to 1.83.0
+  * [5d7462d] d/control: Auto update
 
- -- Jan Wagner <waja@cyconet.org>  Wed, 06 Feb 2019 14:57:31 +0100
+ -- Jan Wagner <waja@cyconet.org>  Fri, 01 Mar 2019 14:22:08 +0100
 
 nagios-plugins-contrib (23.20190206) unstable; urgency=medium
 
