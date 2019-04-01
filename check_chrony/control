@@ -1,0 +1,5 @@
+Uploaders: Bernd Zeimetz <bzed@debian.org>
+Description: chrony NTP server check
+ This plugin is able to check the stratum time difference of a local
+ chronyd instance.
+Version: 0.1
