@@ -1,6 +1,6 @@
 --- a/check_rbl/src/check_rbl.ini
 +++ b/check_rbl/src/check_rbl.ini
-@@ -95,6 +95,42 @@
+@@ -94,6 +94,41 @@
  server=spam.dnsbl.anonmails.de
  server=spambot.bls.digibase.ca
  server=z.mailspike.net
@@ -22,7 +22,6 @@
 +server=rbl.jp
 +server=virus.rbl.jp
 +server=dialup.blacklist.jippg.org
-+server=blackholes.intersil.net
 +server=assholes.madscience.nl
 +server=blackholes.sandes.dk
 +server=blocked.hilli.dk
