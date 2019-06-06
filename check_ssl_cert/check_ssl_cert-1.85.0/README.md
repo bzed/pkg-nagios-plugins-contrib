@@ -29,6 +29,7 @@ Options:
    -c,--critical days         	   minimum number of days a certificate has to be valid
                               	   to issue a critical status
       --curl-bin path         	   path of the curl binary to be used
+      --curl-user-agent string     user agent that curl shall use to obtain the issuer cert      
    -d,--debug                 	   produces debugging output
       --ecdsa                 	   cipher selection: force ECDSA authentication
    -e,--email address         	   pattern to match the email address contained in the
@@ -119,7 +120,7 @@ See: http://en.wikipedia.org/wiki/Expect
 
 ## Virtual servers
 
-check_ssl_client supports the servername TLS extension in ClientHello
+check_ssl_cert supports the servername TLS extension in ClientHello
 if the installed openssl version provides it. This is needed if you
 are checking a machine with virtual hosts.
 

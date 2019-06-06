@@ -19,7 +19,7 @@
 ################################################################################
 # Constants
 
-VERSION=1.82.0
+VERSION=1.85.0
 SHORTNAME="SSL_CERT"
 
 VALID_ATTRIBUTES=",startdate,enddate,subject,issuer,serial,modulus,serial,hash,email,ocsp_uri,fingerprint,"
@@ -60,6 +60,7 @@ usage() {
     echo "   -c,--critical days              minimum number of days a certificate has to be valid"
     echo "                                   to issue a critical status"
     echo "      --curl-bin path              path of the curl binary to be used"
+    echo "      --curl-user-agent string     user agent that curl shall use to obtain the issuer cert"
     echo "   -d,--debug                      produces debugging output"
     echo "      --ecdsa                      cipher selection: force ECDSA authentication"
     echo "   -e,--email address              pattern to match the email address contained in the"
@@ -211,6 +212,8 @@ critical() {
     if [ -n "${HOST}" ] ; then
 	if [ -n "${SNI}" ] ; then
 	    tmp=" ${SNI}"
+	elif [ -n "${FILE}" ] ; then
+            tmp=" ${FILE}"
 	else
             tmp=" ${HOST}"
 	fi
@@ -228,6 +231,8 @@ warning() {
     if [ -n "${HOST}" ] ; then
 	if [ -n "${SNI}" ] ; then
 	    tmp=" ${SNI}"
+	elif [ -n "${FILE}" ] ; then
+            tmp=" ${FILE}"
 	else
             tmp=" ${HOST}"
 	fi
@@ -245,6 +250,8 @@ unknown() {
     if [ -n "${HOST}" ] ; then
 	if [ -n "${SNI}" ] ; then
 	    tmp=" ${SNI}"
+	elif [ -n "${FILE}" ] ; then
+            tmp=" ${FILE}"
 	else
             tmp=" ${HOST}"
 	fi
@@ -542,6 +549,7 @@ main() {
     OPENSSL=""
     FILE_BIN=""
     CURL_BIN=""
+    CURL_USER_AGENT=""
     IGNORE_SSL_LABS_CACHE=""
     PORT="443"
     XMPPPORT="5222"
@@ -699,6 +707,14 @@ main() {
                     shift 2
                 else
                     unknown "--curl-bin requires an argument"
+                fi
+                ;;
+            --curl-user-agent)
+                if [ $# -gt 1 ]; then
+                    CURL_USER_AGENT="$2"
+                    shift 2
+                else
+                    unknown "--curl-user-agent requires an argument"
                 fi
                 ;;
             # Deprecated option: used to be as --warning
@@ -2157,7 +2173,11 @@ EOF
                 echo "[DBG] OCSP: fetching issuer certificate ${ISSUER_URI} to ${ISSUER_CERT_TMP}"
             fi
 
-            exec_with_timeout "$TIMEOUT" "${CURL_BIN} --silent --location ${ISSUER_URI} > ${ISSUER_CERT_TMP}"
+            if [ -n "${CURL_USER_AGENT}" ] ; then
+                exec_with_timeout "$TIMEOUT" "${CURL_BIN} --silent --user-agent '${CURL_USER_AGENT}' --location ${ISSUER_URI} > ${ISSUER_CERT_TMP}"
+            else
+                exec_with_timeout "$TIMEOUT" "${CURL_BIN} --silent --location ${ISSUER_URI} > ${ISSUER_CERT_TMP}"
+            fi
 
             if [ -n "${DEBUG}" ] ; then
 
@@ -2180,7 +2200,7 @@ EOF
 
                 else
 
-                    unknown "Unable to fetch a valid certificate issuer intermediate certificate."
+                    unknown "Unable to fetch a valid certificate issuer certificate."
 
                 fi
 
