@@ -9,7 +9,7 @@ Build-Depends: debhelper (>= 8.0.0),
                python-debian,
                quilt (>= 0.46-7),
                autotools-dev, flex, libmemcached-dev [!hurd-i386], pkg-config
-Standards-Version: 4.3.0
+Standards-Version: 4.4.1.0
 Vcs-Git: https://salsa.debian.org/nagios-team/pkg-nagios-plugins-contrib.git
 Vcs-Browser: https://salsa.debian.org/nagios-team/pkg-nagios-plugins-contrib
 
@@ -169,7 +169,7 @@ Description: Plugins for nagios compatible monitoring systems
      HOST-RESOURCES-MIB::hrSystemDate.0 used here returns 8 or 11 byte octets.
      SNMP translation needs to be switched off and to be converted the
      received SNMP data into readable strings.
-   * check_ssl_cert (1.85.0): plugin to check the CA and validity of an
+   * check_ssl_cert (1.96.0): plugin to check the CA and validity of an
      X.509 certificate
    * check_uptime (0.521): check_uptime returns uptime of a system
      in text (readable) format as well as in minutes for performance graphing.
