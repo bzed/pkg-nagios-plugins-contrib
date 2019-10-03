@@ -1,3 +1,0 @@
-Depends: varnish, systemd, dbus
-Restrictions: needs-root, isolation-container
-Tests: test_check_varnish
