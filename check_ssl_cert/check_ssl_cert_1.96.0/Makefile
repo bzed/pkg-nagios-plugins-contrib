@@ -37,6 +37,9 @@ distclean: clean
 test: dist
 	( export SHUNIT2="$$(pwd)/shunit2/shunit2" && cd test && ./unit_tests.sh )
 
+shellcheck:
+	if shellcheck --help 2>&1 | grep -q -- '-o\ ' ; then shellcheck -o all check_ssl_cert test/unit_tests.sh ; else shellcheck check_ssl_cert test/unit_tests.sh ; fi
+
 copyright_check:
 	grep -q "(c) Matteo Corti, 2007-$(YEAR)" README.md
 	grep -q "Copyright (c) 2007-$(YEAR) Matteo Corti" COPYRIGHT
