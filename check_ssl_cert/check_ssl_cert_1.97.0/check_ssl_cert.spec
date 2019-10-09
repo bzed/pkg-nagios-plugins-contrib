@@ -1,4 +1,4 @@
-%define version          1.96.0
+%define version          1.97.0
 %define release          0
 %define sourcename       check_ssl_cert
 %define packagename      nagios-plugins-check_ssl_cert
@@ -45,6 +45,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/%{sourcename}.1*
 
 %changelog
+* Wed Oct  9 2019 Matteo Corti <matteo@corti.li> - 1.97.0-0
+- Updated to 1.97.0
+
 * Wed Sep 25 2019 Matteo Corti <matteo@corti.li> - 1.96.0-0
 - Updated to 1.96.0
 
@@ -353,7 +356,7 @@ rm -rf $RPM_BUILD_ROOT
 - ipdated to 1.10.1 (--altnames option)
 
 * Thu Sep  1 2011 Matteo Corti <matteo.corti@id.ethz.ch> - 1.10.0-0
-- apllied patch from Sven Nierlein for client certificate authentication
+- applied patch from Sven Nierlein for client certificate authentication
 
 * Thu Mar 10 2011 Matteo Corti <matteo.corti@id.ethz.ch> - 1.9.1-0
 - updated to 1.9.1: allows http as protocol and fixes -N with wildcards

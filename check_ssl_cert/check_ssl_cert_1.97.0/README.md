@@ -73,14 +73,19 @@ Options:
       --no_tls1                    disable TLS version 1
       --no_tls1_1                  disable TLS version 1.1
       --no_tls1_2                  disable TLS version 1.2
+      --no_tls1_3                  disable TLS version 1.3
    -N,--host-cn                    match CN with the host name
+      --ocsp-critical hours        minimum number of hours an OCSP response has to be valid to
+                                   issue a critical status
+      --ocsp-warning hours         minimum number of hours an OCSP response has to be valid to
+                                   issue a warning status   
    -o,--org org                    pattern to match the organization of the certificate
       --openssl path               path of the openssl binary to be used
    -p,--port port                  TCP port
    -P,--protocol protocol          use the specific protocol
-                                   {ftp|ftps|http|imap|imaps|irc|ldap|ldaps|pop3|pop3s|smtp|smtps|xmpp}
+                                   {ftp|ftps|http|imap|imaps|irc|ircs|ldap|ldaps|pop3|pop3s|smtp|smtps|xmpp}
                                    http:                    default
-                                   ftp,imap,ldap,pop3,smtp: switch to TLS using StartTLS
+                                   ftp,imap,irc,ldap,pop3,smtp: switch to TLS using StartTLS
    -s,--selfsigned                 allows self-signed certificates
       --serial serialnum           pattern to match the serial number
       --sni name                   sets the TLS SNI (Server Name Indication) extension
@@ -94,7 +99,7 @@ Options:
                                    certificate validation
       --rootcert-dir path          root directory to be used for certificate validation
       --rootcert-file path         root certificate to be used for certificate validation
-      --rsa                        cipher selection: force RSA authentication
+      --rsa                        cipher selection: force RSA authentication (disables TLS 1.3)
       --temp dir                   directory where to store the temporary files
       --terse                      terse output
    -t,--timeout                    seconds timeout after the specified time
@@ -169,7 +174,7 @@ $ sudo security find-certificate -a \
 and then submitted to `check_ssl_cert` with the `-r,--rootcert path` option
 
 ```
- ./check_ssl_cert -H www.google.com -r ./cabundle.crt 
+ ./check_ssl_cert -H www.google.com -r ./cabundle.crt
 ```
 
 ## Bugs
