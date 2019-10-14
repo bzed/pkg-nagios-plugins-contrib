@@ -1,0 +1,20 @@
+--- a/check_haproxy_stats/check_haproxy_stats.pl
++++ b/check_haproxy_stats/check_haproxy_stats.pl
+@@ -57,7 +57,7 @@
+         in list.
+ 
+     -s, --sock, --socket
+-        Use named UNIX socket instead of default (/var/run/haproxy.sock)
++        Use named UNIX socket instead of default (/run/haproxy/admin.sock)
+ 
+     -w, --warning
+         Set warning threshold for sessions number to the specified percentage (see -c)
+@@ -114,7 +114,7 @@
+ # Defaults
+ my $swarn = 80.0;
+ my $scrit = 90.0;
+-my $sock  = "/var/run/haproxy.sock";
++my $sock  = "/run/haproxy/admin.sock";
+ my $dump;
+ my $proxy;
+ my $help;
