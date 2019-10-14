@@ -101,7 +101,7 @@ sub get_packages {
 			# apt-cache policy output is in the same order as its
 			# arguments.
 			#
-			# We needs thi, because the output block in apt-cache
+			# We need this, because the output block in apt-cache
 			# policy does not show the arch:
 			#
 			# | weasel@stanley:~$ apt-cache policy libedit2:amd64
