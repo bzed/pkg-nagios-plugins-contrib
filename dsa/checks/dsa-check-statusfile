@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # Relay the status of a check that was previously run and which stored
 # its result in a file to nagios.
@@ -49,7 +49,7 @@ statusfile = args[0]
 # find out what the max age is that we accept
 m = re.match('([0-9]+)([smhd])?$', options.age)
 if not m:
-    print >> sys.stderr, "Invalid age %s"%(options.age)
+    print("Invalid age %s" % options.age, file=sys.stderr)
     parser.print_help(file=sys.stderr)
     sys.exit(1)
 (count, unit) = m.groups()
@@ -58,29 +58,29 @@ max_age = int(count) * UNITS_TO_SECONDS[unit]
 
 # let's see if it exists
 if not os.path.exists(statusfile):
-    print "UNKNOWN: %s does not exist."%(statusfile)
+    print("UNKNOWN: %s does not exist." % statusfile)
     sys.exit(NAGIOS_STATUS['UNKNOWN'])
 
 
 mtime = os.path.getmtime(statusfile)
 if mtime + max_age < time.time():
-    print "WARNING: %s is old: %.1f hours."%(statusfile, (time.time() - mtime)/3600)
+    print("WARNING: %s is old: %.1f hours." % (statusfile, (time.time() - mtime)/3600))
     sys.exit(NAGIOS_STATUS['WARNING'])
 
 status = open(statusfile, "r")
 returnvalue = status.readline().strip()
 
-if not returnvalue in NAGIOS_STATUS:
-    print "UNKNOWN: %s has invalid return value: %s."%(statusfile, returnvalue)
+if returnvalue not in NAGIOS_STATUS:
+    print("UNKNOWN: %s has invalid return value: %s." % (statusfile, returnvalue))
     sys.exit(NAGIOS_STATUS['UNKNOWN'])
 
 linecnt = 0
 for line in status:
-    print line,
+    print(line, end='')
     linecnt += 1
 
 if linecnt == 0:
-    print "Found no output.  Something is probably wrong"
+    print("Found no output.  Something is probably wrong")
     sys.exit(NAGIOS_STATUS['UNKNOWN'])
 
 sys.exit(NAGIOS_STATUS[returnvalue])
