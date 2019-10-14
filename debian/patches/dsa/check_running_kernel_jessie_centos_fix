@@ -19,8 +19,8 @@
 -	"/boot/vmlinuz-`uname -r`"\
 -	"/boot/vmlinux-`uname -r`"\
 -	"/boot/kfreebsd-`uname -r`.gz"; do
-+	$([ -f "/boot/vmlinuz-$(uname -r)" ] && find /boot/ -name 'vmlinuz*' -and -name "vmlinuz-$(uname -r)" -or -name 'vmlinuz*' -and -newer "/boot/vmlinuz-$(uname -r)" | sort) \
-+	$([ -f "/boot/kfreebsd-$(uname -r).gz" ] && find /boot/ -name 'kfreebsd*' -and -name "kfreebsd-$(uname -r).gz" -or -name 'kfreebsd*' -and -newer "/boot/kfreebsd-$(uname -r).gz" | sort); do
++	$([ -f "/boot/vmlinuz-$(uname -r)" ] && find /boot/ -name 'vmlinuz*' -and -name "vmlinuz-$(uname -r)" -or -name 'vmlinuz*' -and -newer "/boot/vmlinuz-$(uname -r)" | sort -V) \
++	$([ -f "/boot/kfreebsd-$(uname -r).gz" ] && find /boot/ -name 'kfreebsd*' -and -name "kfreebsd-$(uname -r).gz" -or -name 'kfreebsd*' -and -newer "/boot/kfreebsd-$(uname -r).gz" | sort -V); do
  
  	if [ -e "$on_disk" ]; then
  		if [ -z "$STRINGS" ]; then
