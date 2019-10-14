@@ -1,8 +1,8 @@
-CONNECTED(00000006)
+CONNECTED(00000008)
 ---
 Certificate chain
- 0 s:/C=CH/ST=Zuerich/L=Zuerich/O=ETH Zuerich/CN=ethz.ch
-   i:/C=BM/O=QuoVadis Limited/CN=QuoVadis Global SSL ICA G2
+ 0 s:C = CH, ST = Zuerich, L = Zuerich, O = ETH Zuerich, CN = ethz.ch
+   i:C = BM, O = QuoVadis Limited, CN = QuoVadis Global SSL ICA G2
 -----BEGIN CERTIFICATE-----
 MIIGWjCCBUKgAwIBAgIUScVaiOm1leLwyRoFjyYylcUngk8wDQYJKoZIhvcNAQEL
 BQAwTTELMAkGA1UEBhMCQk0xGTAXBgNVBAoTEFF1b1ZhZGlzIExpbWl0ZWQxIzAh
@@ -39,8 +39,8 @@ coMXUesk1QADoszrgA/zGEiw+BtL53LbkJEQlodTHqgRkYN6oRWLs/WSf//Rhu2N
 PVAM0644CLDcRuuKwahZO7UblOILDcbawl5Kw1IaGYVgBgJGq1y/v7QVDhLRDJYJ
 JmfaATDJ+evCE4tN3kDBHTPqJ7V7eubOD5cKyzzn/0xYuC2aFFxRxoMH5YB4GQ==
 -----END CERTIFICATE-----
- 1 s:/C=BM/O=QuoVadis Limited/CN=QuoVadis Global SSL ICA G2
-   i:/C=BM/O=QuoVadis Limited/CN=QuoVadis Root CA 2
+ 1 s:C = BM, O = QuoVadis Limited, CN = QuoVadis Global SSL ICA G2
+   i:C = BM, O = QuoVadis Limited, CN = QuoVadis Root CA 2
 -----BEGIN CERTIFICATE-----
 MIIFTDCCAzSgAwIBAgIUSJgt4qkssznhyPkzNYJ10+T4glUwDQYJKoZIhvcNAQEL
 BQAwRTELMAkGA1UEBhMCQk0xGTAXBgNVBAoTEFF1b1ZhZGlzIExpbWl0ZWQxGzAZ
@@ -74,16 +74,20 @@ yzdfJ72n+1JfHGP+workciKNldgqYX6J4jPrCIEIBrtDta4QxP10Tyd9RFu13XmE
 -----END CERTIFICATE-----
 ---
 Server certificate
-subject=/C=CH/ST=Zuerich/L=Zuerich/O=ETH Zuerich/CN=ethz.ch
-issuer=/C=BM/O=QuoVadis Limited/CN=QuoVadis Global SSL ICA G2
+subject=C = CH, ST = Zuerich, L = Zuerich, O = ETH Zuerich, CN = ethz.ch
+
+issuer=C = BM, O = QuoVadis Limited, CN = QuoVadis Global SSL ICA G2
+
 ---
 No client certificate CA names sent
 Peer signing digest: SHA256
+Peer signature type: RSA
 Server Temp Key: ECDH, P-256, 256 bits
 ---
-SSL handshake has read 3472 bytes and written 454 bytes
+SSL handshake has read 3472 bytes and written 439 bytes
+Verification: OK
 ---
-New, TLSv1/SSLv3, Cipher is ECDHE-RSA-AES256-GCM-SHA384
+New, TLSv1.2, Cipher is ECDHE-RSA-AES256-GCM-SHA384
 Server public key is 2048 bit
 Secure Renegotiation IS supported
 Compression: NONE
@@ -94,23 +98,23 @@ SSL-Session:
     Cipher    : ECDHE-RSA-AES256-GCM-SHA384
     Session-ID: 
     Session-ID-ctx: 
-    Master-Key: 1BC1720B42FD5F9E96B948C9AD9ABE31695CDCF1613DB637C2C928BC98F5787B9B8E429E59C50BE6DB7EB662F56B0C7E
-    Key-Arg   : None
+    Master-Key: 38A4FD9C3077C8362647339C2065E68CF181CCC948E612745AC184F093127331AD3CEA331FC070B8712B7340983EA751
     PSK identity: None
     PSK identity hint: None
     SRP username: None
-    Start Time: 1568723459
-    Timeout   : 300 (sec)
+    Start Time: 1568448983
+    Timeout   : 7200 (sec)
     Verify return code: 0 (ok)
+    Extended master secret: no
 ---
 HTTP/1.1 301 Moved Permanently
-Date: Tue, 17 Sep 2019 11:48:06 GMT
+Date: Sat, 14 Sep 2019 07:32:01 GMT
 Location: https://ethz.ch/
 Content-Length: 224
 Content-Type: text/html; charset=iso-8859-1
 vary: cookie
-Age: 2572
-X-RateLimit-Remaining: 15
+Age: 2661
+X-RateLimit-Remaining: 16
 X-Powered-By: ETH Informatikdiensten
 X-Delievered-From: Zentrum
 Connection: close
