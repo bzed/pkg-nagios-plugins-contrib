@@ -1,8 +1,9 @@
-nagios-plugins-contrib (25.20191016~1) UNRELEASED; urgency=medium
+nagios-plugins-contrib (25.20191015+1) unstable; urgency=medium
 
-  * UNRELEASED
 
- -- Jan Wagner <waja@cyconet.org>  Tue, 15 Oct 2019 12:20:27 +0200
+  * [f16daf5] d/gbp.conf: Use new config file section syntax
+
+ -- Jan Wagner <waja@cyconet.org>  Tue, 15 Oct 2019 13:22:33 +0200
 
 nagios-plugins-contrib (25.20191015) unstable; urgency=medium
 
