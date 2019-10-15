@@ -1,3 +1,9 @@
+nagios-plugins-contrib (25.20191016~1) UNRELEASED; urgency=medium
+
+  * UNRELEASED
+
+ -- Jan Wagner <waja@cyconet.org>  Tue, 15 Oct 2019 12:20:27 +0200
+
 nagios-plugins-contrib (25.20191015) unstable; urgency=medium
 
   * [17f84ce] check_rbl: Update to 1.5.0 (Closes: 929869)
