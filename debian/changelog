@@ -1,8 +1,28 @@
-nagios-plugins-contrib (24.20190302~1.gbp8488a6) UNRELEASED; urgency=medium
+nagios-plugins-contrib (25.20191015) unstable; urgency=medium
 
-  * UNRELEASED
+  * [17f84ce] check_rbl: Update to 1.5.0 (Closes: 929869)
+  * [20d535f] check_ssl_cert: Update to 1.85.0
+  * [660cd8d] d/p/check_rbl/additional_rbls: Remove blackholes.intersil.net
+  * [43eac14] check_memcached: pkg-config is needed at buildtime
+  * [ff0d7e1] Remove check_varnish
+  * [104a97a] Update tests
+  * [6eea9df] Update copyright
+  * [ecc9a02] Update control
+  * [3c4fe8c] check_printer: Fixing command definition (Closes: 923808)
+  * [674775d] check_ssl_cert: Update to 1.96.0
+  * [c0cec30] d/control.in: Bump Standards-Version to 4.4.1.0, no changes needed
+  * [ad53eec] Update control
+  * [54902b8] check_ssl_cert: Update to 1.97.0
+  * [034e05c] dsa/checks/dsa-check-packages: Typo fix
+  * [90938b9] dsa/checks/dsa-check-soas: Fix error when not 1 record is returned
+  * [f8b56c7] dsa/checks/dsa-check-statusfile: Port to python3
+  * [c93caae] check-running-kernel: Fixing sorting issues (Closes: #884328)
+  * [d23f279] check_ssl_cert: Update to 1.98.0
+  * [06f8526] Adding d/p/check_haproxy_stats/socket (Closes: #888495)
+  * [c8e4991] check_ssl_cert: Update control file to version 1.98.0
+  * [1e3e13e] d/control: Update
 
- -- Jan Wagner <waja@cyconet.org>  Fri, 01 Mar 2019 16:49:59 +0100
+ -- Jan Wagner <waja@cyconet.org>  Tue, 15 Oct 2019 09:24:51 +0200
 
 nagios-plugins-contrib (24.20190301) unstable; urgency=medium
 
