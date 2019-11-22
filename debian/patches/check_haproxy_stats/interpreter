@@ -10,7 +10,7 @@ index 9698f78..f776bf6 100644
 +++ b/check_haproxy_stats/check_haproxy_stats.pl
 @@ -1,4 +1,4 @@
 -#!/usr/bin/env perl 
-+#/usr/bin/perl
++#!/usr/bin/perl
  # vim: se et ts=4:
  
  #
