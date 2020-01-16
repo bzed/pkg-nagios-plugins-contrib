@@ -1,3 +1,58 @@
+2020-01-07  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert (fetch_certificate): option to force HTTP/2
+
+2019-12-23  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert (fetch_certificate): better error message in case of connection refused
+
+2019-12-20  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: better error message in case of an invalid host
+
+2019-11-04  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert (fetch_certificate): fixed a bug in the SMTP connection (using s_client -name)
+	* check_ssl_cert (main): -name only used with OpenSSL versions which supports it
+
+2019-10-31  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert (exec_with_timeout): the return value of the command is no more ignored from expect
+
+2019-10-29  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Merged a patch fixing a copy and paste error with sieve
+
+2019-10-28  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert (exec_with_timeout): Better handling of timeout return codes
+
+2019-10-28  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert (main): Better error message for non matching DANE records
+	* check_ssl_cert (main): Default ports for other protocols
+
+2019-10-25  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert (check_required_prog): fixed a couple of small issues and introduced a feature to specify the dig binary
+
+2019-10-22  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert (main): Fixed a bug printing both a critical and a warning message when both condition match
+
+2019-10-18  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert (main): Fixed a bug ignoring --dane without parameters
+
+2019-10-16  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert (main): Integrated the DANE checks
+
+2019-10-14  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert (main): Remove RSA-PSS if not TLS 1.3 requested
+	* check_ssl_cert (check_attr): Write the OPSP issuer cert to the temporary directory
+
 2019-10-10  Matteo Corti  <corti@Matteo-Cortis-Mac-mini.local>
 
 	* check_ssl_cert (main): do not disable TLS 1.3 if --rsa is specified
@@ -491,7 +546,7 @@
 2011-10-22  Matteo Corti  <matteo.corti@id.ethz.ch>
 
 	* check_ssl_cert: added a --altnames option to match the CN to alternative
-                          names			  
+                          names
 
 2011-09-01  Matteo Corti  <matteo.corti@id.ethz.ch>
 
@@ -601,7 +656,7 @@
 
 2009-11-30  Matteo Corti  <matteo.corti@id.ethz.ch>
 
-	* check_ssl_cert: cleaned up error messages if the CN is not yet known	
+	* check_ssl_cert: cleaned up error messages if the CN is not yet known
 	* check_ssl_cert: added certificate chain verification
 	* check_ssl_cert: allow backslashes escaped in the error messages (e.g., for \n used by Nagios 3)
 	* check_ssl_cert: -r can be used to specify a root certificate to be used for the verification

@@ -1,3 +1,14 @@
+2020-01-07 Version 1.109.0: Option to force HTTP/2
+2019-12-23 Version 1.108.0: Better error message in case of connection refused
+2019-12-20 Version 1.107.0: Better error message in case of an invalid host
+2019-11-21 Version 1.106.0: Optional checks for protocols that should not be supported
+2019-11-04 Version 1.105.0: SMTP connections with -name only with OpenSSL versions supporting it
+2019-11-04 Version 1.104.0: Fixed a bug in the SMTP connection
+2019-10-31 Version 1.103.0: Fixed a bug with the interpretation of OpenSSL errors
+2019-10-25 Version 1.102.0: Option to specify the dig binary and fix in the command line validation checks
+2019-10-22 Version 1.101.0: Fixed a bug printing both a critical and a warning message when both condition match
+2019-10-18 Version 1.100.0: Fixed a bug ignoring --dane without parameters
+2019-10-16 Version 1.99.0: DNS-based Authentication of Named Entities (DANE) checks
 2019-10-10 Version 1.98.0: Bug fix release: A wildcard certificate does not match the 'main' domain, ciphers and TLS 1.3
 2019-10-09 Version 1.97.0: Validate OCSP stapling expiring date, option to disable TLS 1.3
 2019-09-25 Version 1.96.0: Bug fixes

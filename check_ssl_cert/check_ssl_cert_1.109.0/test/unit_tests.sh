@@ -23,12 +23,26 @@ if [ ! -r "${SCRIPT}" ] ; then
     echo "Error: the script to test (${SCRIPT}) is not a readable file"
 fi
 
-# constants
+oneTimeSetUp() {
+    # constants
 
-NAGIOS_OK=0
-NAGIOS_WARNING=1
-NAGIOS_CRITICAL=2
-NAGIOS_UNKNOWN=3
+    NAGIOS_OK=0
+    NAGIOS_WARNING=1
+    NAGIOS_CRITICAL=2
+    NAGIOS_UNKNOWN=3
+
+    # we trigger a test by Qualy's SSL so that when the last test is run the result will be cached
+    echo 'Starting SSL Lab test (to cache the result)'
+    curl --silent 'https://www.ssllabs.com/ssltest/analyze.html?d=ethz.ch&latest' > /dev/null
+
+    # check in OpenSSL supports dane checks
+    if openssl s_client -help 2>&1 | grep -q -- -dane_tlsa_rrdata || openssl s_client not_a_real_option 2>&1 | grep -q -- -dane_tlsa_rrdata; then
+
+	echo "dane checks supported"
+	DANE=1
+    fi
+
+}
 
 testHoursUntilNow() {
     # testing with perl
@@ -60,6 +74,18 @@ testDependencies() {
 
 testUsage() {
     ${SCRIPT} > /dev/null 2>&1
+    EXIT_CODE=$?
+    assertEquals "wrong exit code" "${NAGIOS_UNKNOWN}" "${EXIT_CODE}"
+}
+
+testMissingArgument() {
+    ${SCRIPT} -H www.google.com -c > /dev/null 2>&1
+    EXIT_CODE=$?
+    assertEquals "wrong exit code" "${NAGIOS_UNKNOWN}" "${EXIT_CODE}"
+}
+
+testMissingArgument2() {
+    ${SCRIPT} -H www.google.com -c -w 10 > /dev/null 2>&1
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_UNKNOWN}" "${EXIT_CODE}"
 }
@@ -251,17 +277,18 @@ testSMTPS() {
     assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
 }
 
-testFTP() {
-    ${SCRIPT} --rootcert cabundle.crt -H test.rebex.net --protocol ftp --port 21 --timeout 60
-    EXIT_CODE=$?
-    assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
-}
-
-testFTPS() {
-    ${SCRIPT} --rootcert cabundle.crt -H test.rebex.net --protocol ftps --port 990 --timeout 60
-    EXIT_CODE=$?
-    assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
-}
+# Disabled as test.rebex.net is currently not workin. Should find another public FTP server with TLS
+#testFTP() {
+#    ${SCRIPT} --rootcert cabundle.crt -H test.rebex.net --protocol ftp --port 21 --timeout 60
+#    EXIT_CODE=$?
+#    assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
+#}
+#
+#testFTPS() {
+#    ${SCRIPT} --rootcert cabundle.crt -H test.rebex.net --protocol ftps --port 990 --timeout 60
+#    EXIT_CODE=$?
+#    assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
+#}
 
 ################################################################################
 # From https://badssl.com
@@ -452,6 +479,106 @@ testMoreErrors2() {
     assertEquals "wrong number of errors" 4 "${OUTPUT}"
 }
 
+# dane
+
+testDANE() {
+    ${SCRIPT} --dane -H mail.aegee.org
+    EXIT_CODE=$?
+    if [ -n "${DANE}" ] ; then
+	assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
+    else
+	assertEquals "wrong exit code" "${NAGIOS_UNKNOWN}" "${EXIT_CODE}"
+    fi
+}
+
+testDANE211() {
+    ${SCRIPT} --dane 211  --port 25 -P smtp -H hummus.csx.cam.ac.uk
+    EXIT_CODE=$?
+    if [ -n "${DANE}" ] ; then
+	assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
+    else
+	assertEquals "wrong exit code" "${NAGIOS_UNKNOWN}" "${EXIT_CODE}"
+    fi
+}
+
+testDANE311SMTP() {
+    ${SCRIPT} --dane 311 --port 25 -P smtp -H mail.ietf.org
+    EXIT_CODE=$?
+    if [ -n "${DANE}" ] ; then
+	assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
+    else
+	assertEquals "wrong exit code" "${NAGIOS_UNKNOWN}" "${EXIT_CODE}"
+    fi
+}
+
+testDANE311() {
+    ${SCRIPT} --dane 311 -H www.ietf.org
+    EXIT_CODE=$?
+    if [ -n "${DANE}" ] ; then
+	assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
+    else
+	assertEquals "wrong exit code" "${NAGIOS_UNKNOWN}" "${EXIT_CODE}"
+    fi
+}
+
+testDANE301ECDSA() {
+    ${SCRIPT} --dane 301 --ecdsa -H mail.aegee.org
+    EXIT_CODE=$?
+    if [ -n "${DANE}" ] ; then
+	assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
+    else
+	assertEquals "wrong exit code" "${NAGIOS_UNKNOWN}" "${EXIT_CODE}"
+    fi
+}
+
+testDANE302ECDSA() {
+    ${SCRIPT} --dane 302 --ecdsa  -H mail.aegee.org
+    EXIT_CODE=$?
+    if [ -n "${DANE}" ] ; then
+	assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
+    else
+	assertEquals "wrong exit code" "${NAGIOS_UNKNOWN}" "${EXIT_CODE}"
+    fi
+}
+
+testRequiredProgramFile() {
+    ${SCRIPT} -H www.google.com --file-bin /doesnotexist
+    EXIT_CODE=$?
+    assertEquals "wrong exit code" "${NAGIOS_UNKNOWN}" "${EXIT_CODE}"
+}
+
+testRequiredProgramPermissions() {
+    ${SCRIPT} -H www.google.com --file-bin /etc/hosts
+    EXIT_CODE=$?
+    assertEquals "wrong exit code" "${NAGIOS_UNKNOWN}" "${EXIT_CODE}"
+}
+
+testSieveRSA() {
+    if [ -z "${TRAVIS+x}" ] ; then
+	${SCRIPT} -P sieve -p 4190 -H mail.aegee.org --rsa
+	EXIT_CODE=$?
+	assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
+    else
+	echo "Skipping sieve tests on Travis CI"
+    fi
+}
+
+testSieveECDSA() {
+    if [ -z "${TRAVIS+x}" ] ; then
+	${SCRIPT} -P sieve -p 4190 -H mail.aegee.org --ecdsa
+	EXIT_CODE=$?
+	assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
+    else
+	echo "Skipping sieve tests on Travis CI"
+    fi
+}
+
+testHTTP2() {
+    ${SCRIPT} -H rwserve.readwritetools.com
+    EXIT_CODE=$?
+    assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
+}
+
 # SSL Labs (last one as it usually takes a lot of time
 
 testETHZWithSSLLabs() {
@@ -460,10 +587,6 @@ testETHZWithSSLLabs() {
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
 }
-
-# we trigger a test by Qualy's SSL so that when the last test is run the result will be cached
-echo 'Starting SSL Lab test (to cache the result)'
-curl --silent 'https://www.ssllabs.com/ssltest/analyze.html?d=ethz.ch&latest' > /dev/null
 
 # the script will exit without executing main
 export SOURCE_ONLY='test'
@@ -485,8 +608,3 @@ unset SOURCE_ONLY
 # Do not follow
 # shellcheck disable=SC1090
 . "${SHUNIT2}"
-
-#if ! . "${SHUNIT2}" | tee /dev/tty | grep -q 'tests\ passed:\ *[0-9]*\ 100%' ; then
-#    # at least one of the tests failed
-#    exit 1
-#fi

@@ -1,4 +1,4 @@
-%define version          1.98.0
+%define version          1.109.0
 %define release          0
 %define sourcename       check_ssl_cert
 %define packagename      nagios-plugins-check_ssl_cert
@@ -45,6 +45,39 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/%{sourcename}.1*
 
 %changelog
+* Tue Jan  7 2020 Matteo Corti <matteo@corti.li> - 1.109.0-0
+- Updated to 1.109.0
+
+* Mon Dec 23 2019 Matteo Corti <matteo@corti.li> - 1.108.0-0
+- Updated to 1.108.0
+
+* Fri Dec 20 2019 Matteo Corti <matteo@corti.li> - 1.107.0-0
+- Updated to 1.107.0
+
+* Thu Nov 21 2019 Matteo Corti <matteo@corti.li> - 1.106.0-0
+- Updated to 1.106.0
+
+* Mon Nov  4 2019 Matteo Corti <matteo@corti.li> - 1.105.0-0
+- Updated to 1.105.0
+
+* Mon Nov  4 2019 Matteo Corti <matteo@corti.li> - 1.104.0-0
+- Updated to 1.104.0
+
+* Thu Oct 31 2019 Matteo Corti <matteo@corti.li> - 1.103.0-0
+- Updated to 1.103.0
+
+* Fri Oct 25 2019 Matteo Corti <matteo@corti.li> - 1.102.0-0
+- Updated to 1.102.0
+
+* Tue Oct 22 2019 Matteo Corti <matteo@corti.li> - 1.101.0-0
+- Updated to 1.101.0
+
+* Fri Oct 18 2019 Matteo Corti <matteo@corti.li> - 1.100.0-0
+- Updated to 1.100.0
+
+* Wed Oct 16 2019 Matteo Corti <matteo@corti.li> - 1.99.0-0
+- Updated to 1.99.0
+w
 * Thu Oct 10 2019 Matteo Corti <matteo@corti.li> - 1.98.0-0
 - Updated to 1.98.0
 

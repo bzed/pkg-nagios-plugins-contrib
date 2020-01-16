@@ -1,7 +1,7 @@
 
  (c) Matteo Corti, ETH Zurich, 2007-2012
 
- (c) Matteo Corti, 2007-2019
+ (c) Matteo Corti, 2007-2020
   see AUTHORS for the complete list of contributors
 
 # check_ssl_cert
@@ -14,7 +14,6 @@ A shell script (that can be used as a Nagios plugin) to check an X.509 certifica
 ## Usage
 
 ```
-
 Usage: check_ssl_cert -H host [OPTIONS]
 
 Arguments:
@@ -31,8 +30,14 @@ Options:
       --curl-bin path              path of the curl binary to be used
       --curl-user-agent string     user agent that curl shall use to obtain the
                                    issuer cert
+      --dane                       verify that valid DANE records exist (since OpenSSL 1.1.0)
+      --dane 211                   verify that a valid DANE-TA(2) SPKI(1) SHA2-256(1) TLSA record exists
+      --dane 301                   verify that a valid DANE-EE(3) Cert(0) SHA2-256(1) TLSA record exists
+      --dane 302                   verify that a valid DANE-EE(3) Cert(0) SHA2-512(2) TLSA record exists
+      --dane 311                   verify that a valid DANE-EE(3) SPKI(1) SHA2-256(1) TLSA record exists
    -d,--debug                      produces debugging output
-      --ecdsa                      cipher selection: force ECDSA authentication
+      --dig-bin path               path of the dig binary to be used
+      --ecdsa                      signature algorithm selection: force ECDSA certificate
    -e,--email address              pattern to match the email address contained
                                    in the certificate
    -f,--file file                  local file path (works with -H localhost only)
@@ -68,6 +73,7 @@ Options:
                                    'all' will include all the available attributes.
    -n,--cn name                    pattern to match the CN of the certificate (can be
                                    specified multiple times)
+      --nmap-bin path              path of the nmap binary to be used
       --no_ssl2                    disable SSL version 2
       --no_ssl3                    disable SSL version 3
       --no_tls1                    disable TLS version 1
@@ -78,14 +84,18 @@ Options:
       --ocsp-critical hours        minimum number of hours an OCSP response has to be valid to
                                    issue a critical status
       --ocsp-warning hours         minimum number of hours an OCSP response has to be valid to
-                                   issue a warning status   
+                                   issue a warning status
    -o,--org org                    pattern to match the organization of the certificate
       --openssl path               path of the openssl binary to be used
    -p,--port port                  TCP port
    -P,--protocol protocol          use the specific protocol
-                                   {ftp|ftps|http|imap|imaps|irc|ircs|ldap|ldaps|pop3|pop3s|smtp|smtps|xmpp}
+                                   {ftp|ftps|http|imap|imaps|irc|ircs|ldap|ldaps|pop3|pop3s|sieve|smtp|smtps|xmpp}
                                    http:                    default
-                                   ftp,imap,irc,ldap,pop3,smtp: switch to TLS using StartTLS
+                                   ftp,imap,irc,ldap,pop3,sieve,smtp: switch to TLS using StartTLS
+      --require-no-ssl2            critical if SSL version 2 is offered
+      --require-no-ssl3            critical if SSL version 3 is offered
+      --require-no-tls1            critical if TLS 1 is offered
+      --require-no-tls1_1          critical if TLS 1.1 is offered
    -s,--selfsigned                 allows self-signed certificates
       --serial serialnum           pattern to match the serial number
       --sni name                   sets the TLS SNI (Server Name Indication) extension
@@ -99,7 +109,7 @@ Options:
                                    certificate validation
       --rootcert-dir path          root directory to be used for certificate validation
       --rootcert-file path         root certificate to be used for certificate validation
-      --rsa                        cipher selection: force RSA authentication
+      --rsa                        signature algorithm selection: force RSA certificate
       --temp dir                   directory where to store the temporary files
       --terse                      terse output
    -t,--timeout                    seconds timeout after the specified time

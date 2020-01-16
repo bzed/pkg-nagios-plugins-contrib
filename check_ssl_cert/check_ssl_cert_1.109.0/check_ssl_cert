@@ -10,7 +10,7 @@
 # See  the INSTALL file for installation instructions
 #
 # Copyright (c) 2007-2012 ETH Zurich.
-# Copyright (c) 2007-2019 Matteo Corti <matteo@corti.li>
+# Copyright (c) 2007-2020 Matteo Corti <matteo@corti.li>
 #
 # This module is free software; you can redistribute it and/or modify it
 # under the terms of GNU general public license (gpl) version 3.
@@ -19,7 +19,7 @@
 ################################################################################
 # Constants
 
-VERSION=1.98.0
+VERSION=1.109.0
 SHORTNAME="SSL_CERT"
 
 VALID_ATTRIBUTES=",startdate,enddate,subject,issuer,serial,modulus,serial,hash,email,ocsp_uri,fingerprint,"
@@ -68,8 +68,14 @@ usage() {
     echo "      --curl-bin path              path of the curl binary to be used"
     echo "      --curl-user-agent string     user agent that curl shall use to obtain the"
     echo "                                   issuer cert"
+    echo "      --dane                       verify that valid DANE records exist (since OpenSSL 1.1.0)"
+    echo "      --dane 211                   verify that a valid DANE-TA(2) SPKI(1) SHA2-256(1) TLSA record exists"
+    echo "      --dane 301                   verify that a valid DANE-EE(3) Cert(0) SHA2-256(1) TLSA record exists"
+    echo "      --dane 302                   verify that a valid DANE-EE(3) Cert(0) SHA2-512(2) TLSA record exists"
+    echo "      --dane 311                   verify that a valid DANE-EE(3) SPKI(1) SHA2-256(1) TLSA record exists"
     echo "   -d,--debug                      produces debugging output"
-    echo "      --ecdsa                      cipher selection: force ECDSA authentication"
+    echo "      --dig-bin path               path of the dig binary to be used"
+    echo "      --ecdsa                      signature algorithm selection: force ECDSA certificate"
     echo "   -e,--email address              pattern to match the email address contained"
     echo "                                   in the certificate"
     echo "   -f,--file file                  local file path (works with -H localhost only)"
@@ -105,6 +111,7 @@ usage() {
     echo "                                   'all' will include all the available attributes."
     echo "   -n,--cn name                    pattern to match the CN of the certificate (can be"
     echo "                                   specified multiple times)"
+    echo "      --nmap-bin path              path of the nmap binary to be used"
     echo "      --no_ssl2                    disable SSL version 2"
     echo "      --no_ssl3                    disable SSL version 3"
     echo "      --no_tls1                    disable TLS version 1"
@@ -120,9 +127,13 @@ usage() {
     echo "      --openssl path               path of the openssl binary to be used"
     echo "   -p,--port port                  TCP port"
     echo "   -P,--protocol protocol          use the specific protocol"
-    echo "                                   {ftp|ftps|http|imap|imaps|irc|ircs|ldap|ldaps|pop3|pop3s|smtp|smtps|xmpp}"
+    echo "                                   {ftp|ftps|http|h2|imap|imaps|irc|ircs|ldap|ldaps|pop3|pop3s|sieve|smtp|smtps|xmpp}"
     echo "                                   http:                    default"
-    echo "                                   ftp,imap,irc,ldap,pop3,smtp: switch to TLS using StartTLS"
+    echo "                                   ftp,imap,irc,ldap,pop3,sieve,smtp: switch to TLS using StartTLS"
+    echo "      --require-no-ssl2            critical if SSL version 2 is offered"
+    echo "      --require-no-ssl3            critical if SSL version 3 is offered"
+    echo "      --require-no-tls1            critical if TLS 1 is offered"
+    echo "      --require-no-tls1_1          critical if TLS 1.1 is offered"
     echo "   -s,--selfsigned                 allows self-signed certificates"
     echo "      --serial serialnum           pattern to match the serial number"
     echo "      --sni name                   sets the TLS SNI (Server Name Indication) extension"
@@ -136,7 +147,7 @@ usage() {
     echo "                                   certificate validation"
     echo "      --rootcert-dir path          root directory to be used for certificate validation"
     echo "      --rootcert-file path         root certificate to be used for certificate validation"
-    echo "      --rsa                        cipher selection: force RSA authentication"
+    echo "      --rsa                        signature algorithm selection: force RSA certificate"
     echo "      --temp dir                   directory where to store the temporary files"
     echo "      --terse                      terse output"
     echo "   -t,--timeout                    seconds timeout after the specified time"
@@ -230,7 +241,7 @@ create_temporary_file() {
 hours_until() {
 
     DATE=$1
-    
+
     OLDLANG="${LANG}"
     LANG=en_US
 
@@ -243,7 +254,7 @@ hours_until() {
         "BSD")
             HOURS_UNTIL=$(( ( $(${DATEBIN} -jf "%b %d %T %Y %Z" "${DATE}" +%s) - $(${DATEBIN} +%s) ) / 3600 ))
             ;;
-	
+
         "GNU")
             HOURS_UNTIL=$(( ( $(${DATEBIN} -d "${DATE}" +%s) - $(${DATEBIN} +%s) ) / 3600 ))
             ;;
@@ -271,7 +282,7 @@ EOF
 
     if [ -n "${DEBUG}" ] ; then
 	echo "[DBG] Hours until ${DATE}: ${HOURS_UNTIL}"
-    fi    
+    fi
 
 }
 
@@ -360,12 +371,15 @@ critical() {
 append_warning_message() {
 
     if [ -n "${DEBUG}" ] ; then
-        echo "[DBG] append_warning_message: HOST       = ${HOST}"
-        echo "[DBG] append_warning_message: CN         = ${CN}"
-        echo "[DBG] append_warning_message: SNI       = ${SNI}"
-        echo "[DBG] append_warning_message: FILE      = ${FILE}"
-        echo "[DBG] append_warning_message: SHORTNAME = ${SHORTNAME}"
-        echo "[DBG] append_warning_message: $1        = $1"
+        echo "[DBG] WARNING >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+        echo "[DBG] append_warning_message: HOST         = ${HOST}"
+        echo "[DBG] append_warning_message: CN           = ${CN}"
+        echo "[DBG] append_warning_message: SNI          = ${SNI}"
+        echo "[DBG] append_warning_message: FILE         = ${FILE}"
+        echo "[DBG] append_warning_message: SHORTNAME    = ${SHORTNAME}"
+        echo "[DBG] prepend_warning_message: MSG         = ${MSG}"
+        echo "[DBG] prepend_warning_message: WARNING_MSG = ${WARNING_MSG}"
+        echo "[DBG] prepend_warning_message: ALL_MSG 1   = ${ALL_MSG}"
     fi
 
     if [ -n "${CN}" ] ; then
@@ -383,10 +397,22 @@ append_warning_message() {
     fi
 
     MSG="${SHORTNAME} WARN${tmp}: ${1}${PERFORMANCE_DATA}${LONG_OUTPUT}"
+    
     if [ "${WARNING_MSG}" = "" ]; then
         WARNING_MSG="${MSG}"
     fi
+    
     ALL_MSG="${ALL_MSG}\n    ${MSG}"
+
+
+    if [ -n "${DEBUG}" ] ; then
+        echo "[DBG] prepend_warning_message: MSG 2          = ${MSG}"
+        echo "[DBG] prepend_warning_message: WARNING_MSG 2 = ${WARNING_MSG}"
+        echo "[DBG] prepend_warning_message: ALL_MSG 2      = ${ALL_MSG}"
+        echo "[DBG] WARNING <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+    fi
+
+    
 }
 
 
@@ -429,6 +455,17 @@ unknown() {
 }
 
 ################################################################################
+# To set a variable with an HEREDOC in a POSIX compliant way
+# see: https://unix.stackexchange.com/questions/340718/how-do-i-bring-heredoc-text-into-a-shell-script-variable
+# Usage:
+#   set_variable variablename<<'HEREDOC'
+#   ...
+#  HEREDOC
+set_variable() {
+    eval "$1"'=$(cat)'
+}
+
+################################################################################
 # Executes command with a timeout
 # Params:
 #   $1 timeout in seconds
@@ -453,33 +490,77 @@ exec_with_timeout() {
         fi
 
         eval "${TIMEOUT_BIN} ${time} ${command}" > /dev/null 2>&1
+	RET=$?
 
-        if [ $? -eq 137 ] ; then
+	# return codes
+	# https://www.gnu.org/software/coreutils/manual/coreutils.html#timeout-invocation
+	if [ "${RET}" -eq 137 ] ; then
+	    prepend_critical_message "SIGKILL received"
+	elif [ "${RET}" -eq 124 ] ; then
             prepend_critical_message "Timeout after ${time} seconds"
+	elif [ "${RET}" -eq 125 ] ; then
+            prepend_critical_message "execution of ${command} failed"
+	elif [ "${RET}" -eq 126 ] ; then
+            prepend_critical_message "${command} is found but cannot be invoked"
+	elif [ "${RET}" -eq 127 ] ; then
+            prepend_critical_message "${command} cannot be found"
         fi
+
+	return "${RET}"
 
     elif [ -n "${EXPECT}" ] ; then
 
+	# just to tell shellcheck that the variable is assigned
+	# (in fact the value is assigned with the function set_value)
+	EXPECT_SCRIPT=''
+	TIMEOUT_ERROR_CODE=42
+	
+	set_variable EXPECT_SCRIPT << EOT
+
+set echo \"-noecho\"
+set timeout ${time}
+
+# spawn the process
+spawn -noecho sh -c { ${command} }
+
+expect { 
+  timeout { exit ${TIMEOUT_ERROR_CODE} }
+  eof
+}
+
+# Get the return value
+# https://stackoverflow.com/questions/23614039/how-to-get-the-exit-code-of-spawned-process-in-expect-shell-script
+
+foreach { pid spawnid os_error_flag value } [wait] break
+
+# return the command return value
+exit \$value
+
+EOT
+
         if [ -n "${DEBUG}" ] ; then
-            printf '[DBG]   expect -c \"set echo \\\"-noecho\\\"; set timeout %s; spawn -noecho %s; expect timeout { exit 1 } eof { exit 0 }\"\n' "${time}" "${command}"
+	    echo '[DBG] Executing expect script'
+	    printf '%s' "${EXPECT_SCRIPT}" | sed 's/^/[DBG]\ \ \ \ \ /'
         fi
 
-        expect -c "set echo \"-noecho\"; set timeout ${time}; spawn -noecho ${command}; expect timeout { exit 1 } eof { exit 0 }"
-
+	echo "${EXPECT_SCRIPT}" | expect
         RET=$?
 
         if [ -n "${DEBUG}" ] ; then
             echo "[DBG]   expect returned ${RET}"
         fi
 
-        if [ "${RET}" -eq 1 ] ; then
+        if [ "${RET}" -eq "${TIMEOUT_ERROR_CODE}" ] ; then
             prepend_critical_message "Timeout after ${time} seconds"
             critical "${SHORTNAME} CRITICAL: Timeout after ${time} seconds"
         fi
 
+	return "${RET}"
+
     else
 
         eval "${command}"
+	return $?
 
     fi
 
@@ -495,13 +576,11 @@ check_required_prog() {
     PROG=$(command -v "$1" 2> /dev/null)
 
     if [ -z "${PROG}" ] ; then
-        prepend_critical_message "cannot find program: $1"
-        unkown "${SHORTNAME} CRITICAL: cannot find program: $1"
+        unknown "cannot find program: $1"
     fi
 
     if [ ! -x "${PROG}" ] ; then
-        prepend_critical_message "${PROG} is not executable"
-        unkown "${SHORTNAME} CRITICAL: ${PROG} is not executable"
+        unknown "${PROG} is not executable"
     fi
 
 }
@@ -576,7 +655,8 @@ convert_ssl_lab_grade() {
 fetch_certificate() {
 
     RET=0
-
+    ALPN=''
+    
     # IPv6 addresses need brackets in a URI
     if [ "${HOST}" != "${HOST#*[0-9].[0-9]}" ]; then
         if [ -n "${DEBUG}" ] ; then
@@ -611,35 +691,47 @@ fetch_certificate() {
     fi
 
     # Check if a protocol was specified (if not HTTP switch to TLS)
-    if [ -n "${PROTOCOL}" ] && [ "${PROTOCOL}" != "http" ] && [ "${PROTOCOL}" != "https" ] ; then
+    if [ -n "${PROTOCOL}" ] && [ "${PROTOCOL}" != 'http' ] && [ "${PROTOCOL}" != 'https' ] && [ "${PROTOCOL}" != 'h2' ] ; then
 
         case "${PROTOCOL}" in
-            smtp|pop3|ftp)
-                exec_with_timeout "${TIMEOUT}" "printf 'QUIT\\n' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -crlf ${IGN_EOF} -starttls ${PROTOCOL} -connect ${HOST}:${PORT} ${SERVERNAME} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} 2> ${ERROR} 1> ${CERT}"
+            pop3|ftp)
+                exec_with_timeout "${TIMEOUT}" "printf 'QUIT\\n' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -crlf ${IGN_EOF} -starttls ${PROTOCOL} -connect ${HOST}:${PORT} ${SERVERNAME} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
                 RET=$?
                 ;;
-            smtps|pop3s|ftps)
-                exec_with_timeout "${TIMEOUT}" "printf 'QUIT\\n' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -crlf ${IGN_EOF} -connect ${HOST}:${PORT} ${SERVERNAME} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} 2> ${ERROR} 1> ${CERT}"
+            pop3s|ftps)
+                exec_with_timeout "${TIMEOUT}" "printf 'QUIT\\n' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -crlf ${IGN_EOF} -connect ${HOST}:${PORT} ${SERVERNAME} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
+                RET=$?
+                ;;
+            smtp)
+                exec_with_timeout "${TIMEOUT}" "printf 'QUIT\\n' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -crlf ${IGN_EOF} -starttls ${PROTOCOL} -connect ${HOST}:${PORT} ${SERVERNAME} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} ${S_CLIENT_NAME} 2> ${ERROR} 1> ${CERT}"
+                RET=$?
+                ;;
+            smtps)
+                exec_with_timeout "${TIMEOUT}" "printf 'QUIT\\n' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -crlf ${IGN_EOF} -connect ${HOST}:${PORT} ${SERVERNAME} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE}  ${S_CLIENT_NAME} 2> ${ERROR} 1> ${CERT}"
                 RET=$?
                 ;;
             irc|ldap)
-                exec_with_timeout "${TIMEOUT}" "echo | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -starttls ${PROTOCOL} -connect ${HOST}:${PORT} ${SERVERNAME} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} 2> ${ERROR} 1> ${CERT}"
+                exec_with_timeout "${TIMEOUT}" "echo | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -starttls ${PROTOCOL} -connect ${HOST}:${PORT} ${SERVERNAME} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
                 RET=$?
                 ;;
             ircs|ldaps)
-                exec_with_timeout "${TIMEOUT}" "echo | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -connect ${HOST}:${PORT} ${SERVERNAME} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} 2> ${ERROR} 1> ${CERT}"
+                exec_with_timeout "${TIMEOUT}" "echo | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -connect ${HOST}:${PORT} ${SERVERNAME} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
                 RET=$?
                 ;;
             imap)
-                exec_with_timeout "${TIMEOUT}" "printf 'A01 LOGOUT\\n' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -crlf ${IGN_EOF} -starttls ${PROTOCOL} -connect ${HOST}:${PORT} ${SERVERNAME} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} 2> ${ERROR} 1> ${CERT}"
+                exec_with_timeout "${TIMEOUT}" "printf 'A01 LOGOUT\\n' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -crlf ${IGN_EOF} -starttls ${PROTOCOL} -connect ${HOST}:${PORT} ${SERVERNAME} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
                 RET=$?
                 ;;
             imaps)
-                exec_with_timeout "${TIMEOUT}" "printf 'A01 LOGOUT\\n' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -crlf ${IGN_EOF} -connect ${HOST}:${PORT} ${SERVERNAME} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} 2> ${ERROR} 1> ${CERT}"
+                exec_with_timeout "${TIMEOUT}" "printf 'A01 LOGOUT\\n' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -crlf ${IGN_EOF} -connect ${HOST}:${PORT} ${SERVERNAME} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
+                RET=$?
+                ;;
+            sieve)
+                exec_with_timeout "${TIMEOUT}" "echo 'LOGOUT' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -starttls ${PROTOCOL} -connect ${HOST}:${PORT} ${SERVERNAME} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
                 RET=$?
                 ;;
             xmpp)
-                exec_with_timeout "${TIMEOUT}" "echo 'Q' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -starttls ${PROTOCOL} -connect ${HOST}:${XMPPPORT} ${XMPPHOST} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} 2> ${ERROR} 1> ${CERT}"
+                exec_with_timeout "${TIMEOUT}" "echo 'Q' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -starttls ${PROTOCOL} -connect ${HOST}:${XMPPPORT} ${XMPPHOST} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
                 RET=$?
                 ;;
             *)
@@ -658,12 +750,19 @@ fetch_certificate() {
 
     else
 
-        exec_with_timeout "${TIMEOUT}" "printf '${HTTP_REQUEST}' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -crlf ${IGN_EOF} -connect ${HOST}:${PORT} ${SERVERNAME} -showcerts -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} 2> ${ERROR} 1> ${CERT}"
+	if [ "${PROTOCOL}" = 'h2' ] ; then
+	    ALPN='-alpn h2'
+	fi
+	
+        exec_with_timeout "${TIMEOUT}" "printf '${HTTP_REQUEST}' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -crlf ${IGN_EOF} ${ALPN} -connect ${HOST}:${PORT} ${SERVERNAME} -showcerts -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
         RET=$?
 
     fi
 
     if [ -n "${DEBUG}" ] ; then
+
+	echo "[DBG] Return value of the command = ${RET}"
+	
         echo "[DBG] storing a copy of the retrieved certificate in ${TMPDIR}/${HOST}-${PORT}.crt"
         cp "${CERT}" "${TMPDIR}/${HOST}-${PORT}.crt"
 
@@ -685,6 +784,19 @@ fetch_certificate() {
                 echo "The server requires a client certificate"
             fi
 
+	elif ascii_grep 'nodename\ nor\ servname\ provided,\ or\ not\ known' "${ERROR}" ; then
+
+	    ERROR="${HOST} is invalid"
+	    prepend_critical_message "${ERROR}"
+            critical "${SHORTNAME} CRITICAL: ${ERROR}"
+
+
+	elif ascii_grep 'Connection\ refused' "${ERROR}" ; then
+
+	    ERROR='Connection refused'
+	    prepend_critical_message "${ERROR}"
+            critical "${SHORTNAME} CRITICAL: ${ERROR}"
+	    
         else
 
             # Try to clean up the error message
@@ -745,6 +857,19 @@ ascii_grep() {
     tr -d '\000' < "$2" | grep -q "$1"
 }
 
+################################################################################
+# Checks if there is an option argument (should not begin with -)
+#
+# Params
+#  $1 name of the option (e.g., '-w,--waring') to be used in the error message
+#  $2 next command line parameter
+check_option_argument() {
+
+    if [ -z "$2" ] || [ "${2%${2#?}}"x = '-x' ] ; then
+	unknown "'${1}' requires an argument"
+    fi
+
+}
 
 ################################################################################
 # Main
@@ -757,8 +882,10 @@ main() {
     FILE_BIN=""
     CURL_BIN=""
     CURL_USER_AGENT=""
+    DIG_BIN=""
+    NMAP_BIN=""
     IGNORE_SSL_LABS_CACHE=""
-    PORT="443"
+    PORT=""
     XMPPPORT="5222"
     XMPPHOST=""
     SNI=""
@@ -770,6 +897,10 @@ main() {
     OCSP="1" # enabled by default
     FORMAT=""
     HTTP_METHOD="HEAD"
+    RSA=""
+    ECDSA=""
+    DANE=""
+    DISALLOWED_PROTOCOLS=""
 
     # Set the default temp dir if not set
     if [ -z "${TMPDIR}" ] ; then
@@ -779,11 +910,13 @@ main() {
     ################################################################################
     # Process command line options
     #
-    # We do no use getopts since it is unable to process long options
+    # We do not use getopts since it is unable to process long options and it is
+    # Bash specific.
 
     while true; do
 
         case "$1" in
+
             ########################################
             # Options without arguments
             -A|--noauth)
@@ -856,13 +989,35 @@ main() {
                 shift
                 ;;
             --rsa)
-		# see https://github.com/matteocorti/check_ssl_cert/issues/164#issuecomment-540623344
-                SSL_AU="-sigalgs 'RSA-PSS+SHA512:RSA-PSS+SHA384:RSA-PSS+SHA256:RSA+SHA512:RSA+SHA256:RSA+SHA384:RSA+SHA224:RSA+SHA1'"		
+		RSA=1
+                shift
+                ;;
+	    --require-no-ssl2)
+		DISALLOWED_PROTOCOLS="${DISALLOWED_PROTOCOLS} SSLv2"
+		shift
+		;;
+	    --require-no-ssl3)
+		DISALLOWED_PROTOCOLS="${DISALLOWED_PROTOCOLS} SSLv3"
+		shift
+		;;
+	    --require-no-tls1)
+		DISALLOWED_PROTOCOLS="${DISALLOWED_PROTOCOLS} TLSv1.0"
+		shift
+		;;
+	    --require-no-tls1_1)
+		DISALLOWED_PROTOCOLS="${DISALLOWED_PROTOCOLS} TLSv1.1"
+		shift
+		;;
+            --require-ocsp-stapling)
+                REQUIRE_OCSP_STAPLING=1
+                shift
+                ;;
+            --require-san)
+                REQUIRE_SAN=1
                 shift
                 ;;
             --ecdsa)
-		# see https://github.com/matteocorti/check_ssl_cert/issues/164#issuecomment-540623344
-                SSL_AU="-sigalgs 'ECDSA+SHA1:ECDSA+SHA224:ECDSA+SHA384:ECDSA+SHA256:ECDSA+SHA512'"
+		ECDSA=1
                 shift
                 ;;
             --ssl2)
@@ -920,310 +1075,231 @@ main() {
 
 
             ########################################
-            # Options with arguments
+            # Options with one argument
+
             -c|--critical)
-                if [ $# -gt 1 ]; then
-                    CRITICAL="$2"
-                    shift 2
-                else
-                    unknown "-c,--critical requires an argument"
-                fi
+		check_option_argument '-c,--critical' "$2"
+                CRITICAL="$2"
+                shift 2
                 ;;
             --curl-bin)
-                if [ $# -gt 1 ]; then
-                    CURL_BIN="$2"
-                    shift 2
-                else
-                    unknown "--curl-bin requires an argument"
-                fi
+		check_option_argument '--curl-bin' "$2"
+                CURL_BIN="$2"
+                shift 2
                 ;;
             --curl-user-agent)
-                if [ $# -gt 1 ]; then
-                    CURL_USER_AGENT="$2"
-                    shift 2
-                else
-                    unknown "--curl-user-agent requires an argument"
-                fi
+		check_option_argument '--curl-user-agent' "$2"
+                CURL_USER_AGENT="$2"
+                shift 2
                 ;;
             # Deprecated option: used to be as --warning
             --days)
-                if [ $# -gt 1 ]; then
-                    WARNING="$2"
-                    shift 2
-                else
-                    unknown "-d,--days requires an argument"
-                fi
+		check_option_argument '--days' "$2"
+                WARNING="$2"
+                shift 2
                 ;;
+            --dig-bin)
+		check_option_argument '--dig-bin' "$2"
+                DIG_BIN="$2"
+                shift 2
+                ;;
+	    --nmap-bin)
+		check_option_argument '--nmap-bin' "$2"
+		NMAP_BIN="$2"
+		;;
             -e|--email)
-                if [ $# -gt 1 ]; then
-                    ADDR="$2"
-                    shift 2
-                else
-                    unknown "-e,--email requires an argument"
-                fi
+		check_option_argument 'e|--email' "$2"
+                ADDR="$2"
+                shift 2
                 ;;
             -f|--file)
-                if [ $# -gt 1 ]; then
-                    FILE="$2"
-                    shift 2
-                else
-                    unknown "-f,--file requires an argument"
-                fi
+		check_option_argument ' -f|--file' "$2"
+                FILE="$2"
+                shift 2
                 ;;
             --file-bin)
-                if [ $# -gt 1 ]; then
-                    FILE_BIN="$2"
-                    shift 2
-                else
-                    unknown "--file-bin requires an argument"
-                fi
+                check_option_argument '--file-bin' "$2"
+                FILE_BIN="$2"
+                shift 2
                 ;;
              --format)
-                if [ $# -gt 1 ]; then
-                    FORMAT="$2"
-                    shift 2
-                else
-                    unknown "-format requires an argument"
-                fi
+                check_option_argument '--format' "$2"
+                FORMAT="$2"
+                shift 2
                 ;;
             -H|--host)
-                if [ $# -gt 1 ]; then
-                    HOST="$2"
-                    shift 2
-                else
-                    unknown "-H,--host requires an argument"
-                fi
+                check_option_argument '-H|--host' "$2"
+                HOST="$2"
+                shift 2
                 ;;
             -i|--issuer)
-                if [ $# -gt 1 ]; then
-                    ISSUER="$2"
-                    shift 2
-                else
-                    unknown "-i,--issuer requires an argument"s
-                fi
+                check_option_argument '-i|--issuer' "$2"
+                ISSUER="$2"
+                shift 2
                 ;;
             --issuer-cert-cache)
-                if [ $# -gt 1 ]; then
-                    ISSUER_CERT_CACHE="$2"
-                    shift 2
-                else
-                    unknown "--issuer-cert-cache requires an argument"
-                fi
+                check_option_argument '--issuer-cert-cache' "$2"
+                ISSUER_CERT_CACHE="$2"
+                shift 2
                 ;;
             -L|--check-ssl-labs)
-                if [ $# -gt 1 ]; then
-                    SSL_LAB_CRIT_ASSESSMENT="$2"
-                    shift 2
-                else
-                    unknown "-L|--check-ssl-labs requires an argument"
-                fi
+                check_option_argument '-L|--check-ssl-labs' "$2"
+                SSL_LAB_CRIT_ASSESSMENT="$2"
+                shift 2
                 ;;
             --check-ssl-labs-warn-grade)
-                if [ $# -gt 1 ]; then
-                    SSL_LAB_WARN_ASSESTMENT="$2"
-                    shift 2
-                else
-                    unknown "--check-ssl-labs-warn-grade requires an argument"
-                fi
+                check_option_argument '--check-ssl-labs-warn-grade' "$2"
+                SSL_LAB_WARN_ASSESTMENT="$2"
+                shift 2
                 ;;
             --serial)
-                if [ $# -gt 1 ]; then
-                    SERIAL_LOCK="$2"
-                    shift 2
-                else
-                    unknown "--serial requires an argument"
-                fi
+                check_option_argument '--serial' "$2"
+                SERIAL_LOCK="$2"
+                shift 2
                 ;;
             --fingerprint)
-                if [ $# -gt 1 ]; then
-                    FINGERPRINT_LOCK="$2"
-                    shift 2
-                else
-                    unknown "--fingerprint requires an argument - SHA1 Fingerprint"
-                fi
+                check_option_argument '--fingerprint' "$2"
+                FINGERPRINT_LOCK="$2"
+                shift 2
                 ;;
             --long-output)
-                if [ $# -gt 1 ]; then
-                    LONG_OUTPUT_ATTR="$2"
-                    shift 2
-               else
-                    unknown "--long-output requires an argument"
-               fi
-               ;;
+                check_option_argument '--long-output' "$2"
+                LONG_OUTPUT_ATTR="$2"
+                shift 2
+		;;
             -n|--cn)
-                if [ $# -gt 1 ]; then
-                    if [ -n "${COMMON_NAME}" ]; then
-                        COMMON_NAME="${COMMON_NAME} ${2}"
-                    else
-                        COMMON_NAME="${2}"
-                    fi
-                    shift 2
+                check_option_argument ' -n|--cn' "$2"
+                if [ -n "${COMMON_NAME}" ]; then
+                    COMMON_NAME="${COMMON_NAME} ${2}"
                 else
-                    unknown "-n,--cn requires an argument"
+                    COMMON_NAME="${2}"
                 fi
+                shift 2
                 ;;
             --ocsp-critical)
-                if [ $# -gt 1 ]; then
-                    OCSP_CRITICAL="$2"
-                    shift 2
-                else
-                    unknown "--ocsp-critical requires an argument"
-                fi
+                check_option_argument '--ocsp-critical' "$2"
+                OCSP_CRITICAL="$2"
+                shift 2
                 ;;
             --ocsp-warning)
-                if [ $# -gt 1 ]; then
-                    OCSP_WARNING="$2"
-                    shift 2
-                else
-                    unknown "--ocsp-warning requires an argument"
-                fi
+                check_option_argument '--ocsp-warning' "$2"
+                OCSP_WARNING="$2"
+                shift 2
                 ;;
             -o|--org)
-                if [ $# -gt 1 ]; then
-                    ORGANIZATION="$2"
-                    shift 2
-                else
-                    unknown "-o,--org requires an argument"
-                fi
+                check_option_argument '-o|--org' "$2"
+                ORGANIZATION="$2"
+                shift 2
                 ;;
             --openssl)
-                if [ $# -gt 1 ]; then
-                    OPENSSL="$2"
-                    shift 2
-                else
-                    unknown "--openssl requires an argument"
-                fi
+                check_option_argument '--openssl' "$2"
+                OPENSSL="$2"
+                shift 2
                 ;;
             -p|--port)
-                if [ $# -gt 1 ]; then
-                    PORT="$2"
-                    XMPPPORT="$2"
-                    shift 2
-                else
-                    unknown "-p,--port requires an argument"
-                fi
+                check_option_argument '-p|--port' "$2"
+                PORT="$2"
+                XMPPPORT="$2"
+                shift 2
                 ;;
             -P|--protocol)
-                if [ $# -gt 1 ]; then
-                    PROTOCOL="$2"
-                    shift 2
-                else
-                    unknown "-P,--protocol requires an argument"
-                fi
+                check_option_argument '-P|--protocol' "$2"
+                PROTOCOL="$2"
+                shift 2
                 ;;
             -r|--rootcert)
-                if [ $# -gt 1 ]; then
-                    ROOT_CA="$2"
-                    shift 2
-                else
-                    unknown "-r,--rootcert requires an argument"
-                fi
+                check_option_argument '-r|--rootcert' "$2"
+                ROOT_CA="$2"
+                shift 2
                 ;;
             --rootcert-dir)
-                if [ $# -gt 1 ]; then
-                    ROOT_CA_DIR="$2"
-                    shift 2
-                else
-                    unknown "--rootcert-dir requires an argument"
-                fi
+                check_option_argument '--rootcert-dir' "$2"
+                ROOT_CA_DIR="$2"
+                shift 2
                 ;;
             --rootcert-file)
-                if [ $# -gt 1 ]; then
-                    ROOT_CA_FILE="$2"
-                    shift 2
-                else
-                    unknown "--rootcert-file requires an argument"
-                fi
+                check_option_argument '--rootcert-file' "$2"
+                ROOT_CA_FILE="$2"
+                shift 2
                 ;;
             -C|--clientcert)
-                if [ $# -gt 1 ]; then
-                    CLIENT_CERT="$2"
-                    shift 2
-                else
-                    unknown "-c,--clientcert requires an argument"
-                fi
+                check_option_argument '-C|--clientcert' "$2"
+                CLIENT_CERT="$2"
+                shift 2
                 ;;
             -K|--clientkey)
-                if [ $# -gt 1 ]; then
-                    CLIENT_KEY="$2"
-                    shift 2
-                else
-                    unknown "-K,--clientkey requires an argument"
-                fi
+                check_option_argument '-K|--clientkey' "$2"
+                CLIENT_KEY="$2"
+                shift 2
                 ;;
             --clientpass)
-                if [ $# -gt 1 ]; then
-                    CLIENT_PASS="$2"
-                    shift 2
-                else
-                    unknown "--clientpass requires an argument"
-                fi
-                ;;
-            --require-ocsp-stapling)
-                REQUIRE_OCSP_STAPLING=1
-                shift
-                ;;
-            --require-san)
-                REQUIRE_SAN=1
-                shift
+                check_option_argument '--clientpass' "$2"
+                CLIENT_PASS="$2"
+                shift 2
                 ;;
             --sni)
-                if [ $# -gt 1 ]; then
-                    SNI="$2"
-                    shift 2
-                else
-                    unknown "--sni requires an argument"
-                fi
+                check_option_argument '--sni' "$2"
+                SNI="$2"
+                shift 2
                 ;;
             -S|--ssl)
-                if [ $# -gt 1 ]; then
-
-                    if [ "$2" = "2" ] || [ "$2" = "3" ] ; then
-                        SSL_VERSION="-ssl${2}"
-                        shift 2
-                    else
-                        unknown "invalid argument for --ssl"
-                    fi
-
+                check_option_argument '' "$2"
+                if [ "$2" = "2" ] || [ "$2" = "3" ] ; then
+                    SSL_VERSION="-ssl${2}"
+                    shift 2
                 else
-
-                    unknown "--ssl requires an argument"
-
+                    unknown "invalid argument for --ssl"
                 fi
                 ;;
             -t|--timeout)
-                if [ $# -gt 1 ]; then
-                    TIMEOUT="$2"
-                    shift 2
-                else
-                    unknown "-t,--timeout requires an argument"
-                fi
+                check_option_argument '-t|--timeout' "$2"
+                TIMEOUT="$2"
+                shift 2
                 ;;
             --temp)
-                if [ $# -gt 1 ] ; then
-                    # Override TMPDIR
-                    TMPDIR="$2"
-                    shift 2
-                else
-                    unknown "--temp requires an argument"
-                fi
+		check_option_argument '--temp' "$2"
+                TMPDIR="$2"
+                shift 2
                 ;;
             -w|--warning)
-                if [ $# -gt 1 ]; then
-                    WARNING="$2"
-                    shift 2
-                else
-                    unknown "-w,--warning requires an argument"
-                fi
+                check_option_argument '-w|--warning' "$2"
+                WARNING="$2"
+                shift 2
                 ;;
             --xmpphost)
-                if [ $# -gt 1 ]; then
-                    XMPPHOST="$2"
-                    shift 2
-                else
-                    unknown "--xmpphost requires an argument"
-                fi
+                check_option_argument '--xmpphost' "$2"
+                XMPPHOST="$2"
+                shift 2
                 ;;
+
+	    ##############################
+	    # Variable number of arguments
+	    --dane)
+
+                if [ -n "${DANE}" ]; then
+                    unknown "--dane can be specified only once"
+                fi
+
+		# check the second parameter if it exist
+		if [ $# -gt 1 ] ; then
+
+		    if [ "${2%${2#?}}"x = '-x' ] ; then
+			DANE=1
+			shift
+		    else
+			DANE=$2
+			shift 2
+		    fi
+
+		else
+
+		    DANE=1
+                    shift
+
+		fi
+
+                ;;
+
             ########################################
             # Special
             --)
@@ -1243,6 +1319,66 @@ main() {
 
     done
 
+    ################################################################################
+    # Default ports
+    if [ -z "${PORT}" ] ; then
+
+	if [ -z "${PROTOCOL}" ] ; then
+       
+	    # default is HTTPS
+	    PORT='443'
+
+	else
+	
+            case "${PROTOCOL}" in
+		smtp)
+		    PORT=25
+		    ;;
+		smtps)
+		    PORT=465
+		    ;;
+		pop3)
+		    PORT=110
+		    ;;
+		ftp|ftps)
+		    PORT=21
+		    ;;
+		pop3s)
+		    PORT=995
+		    ;;
+		irc|ircs)
+		    PORT=6667
+		    ;;
+		ldap)
+		    PORT=389
+		    ;;
+		ldaps)
+		    PORT=636
+		    ;;
+		imap)
+		    PORT=143
+		    ;;
+		imaps)
+		    PORT=993
+		    ;;
+		sieve)
+		    PORT=4190
+                    ;;
+		http)
+		    PORT=80
+		    ;;
+		https|h2)
+		    PORT=443
+		    ;;
+		*)
+                    unknown "Error: unsupported protocol ${PROTOCOL}"
+                    ;;
+            esac
+
+	fi
+	
+    fi
+    
     ################################################################################
     # Set COMMON_NAME to hostname if -N was given as argument.
     # COMMON_NAME may be a space separated list of hostnames.
@@ -1368,10 +1504,6 @@ main() {
             unknown "${OPENSSL} is not an executable"
         fi
 
-        #if ! "${OPENSSL}" list-standard-commands | grep -q s_client ; then
-        #    unknown "${OPENSSL} is not an openssl executable"
-        #fi
-
     fi
 
     if [ -n "${SSL_LAB_CRIT_ASSESSMENT}" ] ; then
@@ -1383,7 +1515,7 @@ main() {
         convert_ssl_lab_grade "${SSL_LAB_WARN_ASSESTMENT}"
         SSL_LAB_WARN_ASSESTMENT_NUMERIC="${NUMERIC_SSL_LAB_GRADE}"
         if [ "${SSL_LAB_WARN_ASSESTMENT_NUMERIC}" -lt "${SSL_LAB_CRIT_ASSESSMENT_NUMERIC}" ]; then
-            unknown  "--check-ssl-labs-warn-grade must be greater than -L|--check-ssl-labs"
+            unknown  '--check-ssl-labs-warn-grade must be greater than -L|--check-ssl-labs'
         fi
     fi
 
@@ -1391,22 +1523,46 @@ main() {
         echo "[DBG] ROOT_CA = ${ROOT_CA}"
     fi
 
+    # Signature algorithms
+    if [ -n "${RSA}" ] && [ -n "${ECDSA}" ] ; then
+	unknown 'both --rsa and --ecdsa specified: cannot force both ciphers at the same time'
+    fi
+    if [ -n "${ECDSA}" ] ; then
+	# see https://github.com/matteocorti/check_ssl_cert/issues/164#issuecomment-540623344
+        SSL_AU="-sigalgs 'ECDSA+SHA1:ECDSA+SHA224:ECDSA+SHA384:ECDSA+SHA256:ECDSA+SHA512'"
+    fi
+    if [ -n "${RSA}" ] ; then
+	if echo "${SSL_VERSION_DISABLED}" | grep -q -- '-no_tls1_3' ||
+		[ "${SSL_VERSION}" = '-tls1' ] ||
+		[ "${SSL_VERSION}" = '-tls1_1' ] ||
+		[ "${SSL_VERSION}" = '-tls1_2' ] ; then
+	    # see https://github.com/matteocorti/check_ssl_cert/issues/164#issuecomment-540623344
+	    # see https://github.com/matteocorti/check_ssl_cert/issues/167
+            SSL_AU="-sigalgs 'RSA+SHA512:RSA+SHA256:RSA+SHA384:RSA+SHA224:RSA+SHA1'"
+	else
+	    # see https://github.com/matteocorti/check_ssl_cert/issues/164#issuecomment-540623344
+	    SSL_AU="-sigalgs 'RSA-PSS+SHA512:RSA-PSS+SHA384:RSA-PSS+SHA256:RSA+SHA512:RSA+SHA256:RSA+SHA384:RSA+SHA224:RSA+SHA1'"
+	fi
+    fi
+
     #######################
     # Check needed programs
 
     # OpenSSL
     if [ -z "${OPENSSL}" ] ; then
-        check_required_prog openssl
-        OPENSSL=${PROG}
+	OPENSSL='openssl'
     fi
+    check_required_prog "${OPENSSL}"
+    OPENSSL=${PROG}
 
     # file
     if [ -z "${FILE_BIN}" ] ; then
-        check_required_prog file
-        FILE_BIN=${PROG}
+	FILE_BIN='file'
     fi
+    check_required_prog "${FILE_BIN}"
+    FILE_BIN=${PROG}
 
-    # curl
+    # cURL
     if [ -z "${CURL_BIN}" ] ; then
         if [ -n "${SSL_LAB_CRIT_ASSESSMENT}" ] || [ -n "${OCSP}" ] ; then
             if [ -n "${DEBUG}" ] ; then
@@ -1425,8 +1581,35 @@ main() {
                 echo "[DBG] cURL binary not needed. SSL Labs = ${SSL_LAB_CRIT_ASSESSMENT}, OCSP = ${OCSP}"
             fi
         fi
+    else
+	# we check if the provided binary actually works
+	check_required_prog "${CURL_BIN}"
     fi
 
+    # nmap
+    if [ -z "${NMAP_BIN}" ] ; then
+        if [ -n "${DISALLOWED_PROTOCOLS}" ] ; then
+            if [ -n "${DEBUG}" ] ; then
+                echo "[DBG] nmap binary needed. DISALLOWED_PROTOCOLS = ${DISALLOWED_PROTOCOLS}"
+                echo "[DBG] nmap binary not specified"
+            fi
+
+            check_required_prog nmap
+            NMAP_BIN=${PROG}
+
+            if [ -n "${DEBUG}" ] ; then
+                echo "[DBG] nmap available: ${NMAP_BIN}"
+            fi
+        else
+            if [ -n "${DEBUG}" ] ; then
+                echo "[DBG] nmap binary not needed. No disallowed protocols"
+            fi
+        fi
+    else
+	# we check if the provided binary actually works
+	check_required_prog "${NMAP_BIN}"
+    fi    
+    
     # Expect (optional)
     EXPECT="$(command -v expect 2> /dev/null)"
     test -x "${EXPECT}" || EXPECT=""
@@ -1564,6 +1747,27 @@ main() {
     fi
 
     ################################################################################
+    # Check if openssl s_client supports the -name option
+    #
+    S_CLIENT_NAME=
+    if ${OPENSSL} s_client -help 2>&1 | grep -q -- -name || ${OPENSSL} s_client not_a_real_option 2>&1 | grep -q -- -name; then
+
+	HOSTNAME=$( hostname )
+        S_CLIENT_NAME="-name ${HOSTNAME}"
+
+        if [ -n "${DEBUG}" ] ; then
+            echo "[DBG] '${OPENSSL} s_client' supports '-name': using ${HOSTNAME}"
+        fi
+
+    else
+
+        if [ -n "${VERBOSE}" ] ; then
+            echo "'${OPENSSL} s_client' does not support '-name'"
+        fi
+
+    fi
+
+    ################################################################################
     # Check if openssl s_client supports the -xmpphost option
     #
     if ${OPENSSL} s_client -help 2>&1 | grep -q -- -xmpphost ; then
@@ -1636,6 +1840,103 @@ main() {
     fi
 
     HTTP_REQUEST="${HTTP_METHOD} / HTTP/1.1\\nHost: ${HOST_HEADER}\\nUser-Agent: check_ssl_cert/${VERSION}\\nConnection: close\\n\\n"
+
+    ##############################################################################
+    # Check for disallowed protocols
+    if [ -n "${DISALLOWED_PROTOCOLS}" ] ; then
+
+	OFFERED_PROTOCOLS=$( ${NMAP_BIN} -Pn -p "${PORT}" --script ssl-enum-ciphers "${HOST}" | grep '^|' )
+
+	if [ -n "${DEBUG}" ] ; then
+	    echo "[DBG] offered cyphers and protocols:"
+	    echo "${OFFERED_PROTOCOLS}" | sed 's/^|/[DBG] /'
+	fi
+	
+	for protocol in ${DISALLOWED_PROTOCOLS} ; do
+	    if [ -n "${DEBUG}" ] ; then
+		echo "[DBG] Checking if '${protocol}' is offered"
+	    fi
+	    if echo "${OFFERED_PROTOCOLS}" | grep -q "${protocol}" ; then
+		if [ -n "${DEBUG}" ] ; then
+		    echo "[DBG]   '${protocol}' is offered"
+		fi
+		prepend_critical_message "${protocol} is offered"
+	    fi
+
+	done
+
+    fi
+    
+    ##############################################################################
+    # DANE
+
+    if [ -n "${DANE}" ] ; then
+
+	if [ -n "${DEBUG}" ] ; then
+	    echo '[DBG] checking DANE'
+	fi
+
+	# dig can be replaced with delv, on the next eight lines, if it is working on the system, in order to verify DNSSEC
+	if [ -z "${DIG_BIN}" ] ; then
+	    DIG_BIN='dig'
+	fi
+	check_required_prog "${DIG_BIN}"
+	DIG_BIN=${PROG}
+
+	# check if OpenSSL supports -dane_tlsa_rrdata
+	if ${OPENSSL} s_client -help 2>&1 | grep -q -- -dane_tlsa_rrdata || ${OPENSSL} s_client not_a_real_option 2>&1 | grep -q -- -dane_tlsa_rrdata; then
+
+	    DIG_RESULT=$( "${DIG_BIN}" +short TLSA "_${PORT}._tcp.${HOST}" |while read -r L; do echo " -dane_tlsa_rrdata '${L}' "; done )
+
+	    if [ -n "${DEBUG}" ] ; then
+		echo "[DBG] Checking DANE (${DANE})"
+   		printf '%s\n' "[DBG] ${DIG_BIN} +short TLSA _${PORT}._tcp.${HOST} ="
+		echo "${DIG_RESULT}" | sed 's/^/\[DBG\]\     /'
+	    fi
+
+	    case ${DANE} in
+		1)
+		    DANE=$( echo "${DIG_RESULT}" | tr -d '\n')
+		    ;;
+		211)
+		    DANE=$( echo "${DIG_RESULT}" | grep '2 1 1' | tr -d '\n')
+		    ;;
+		301)
+		    DANE=$( echo "${DIG_RESULT}" | grep '3 0 1' | tr -d '\n')
+		    ;;
+		311)
+		    DANE=$( echo "${DIG_RESULT}" | grep '3 1 1' | tr -d '\n')
+		    ;;
+		302)
+		    DANE=$( echo "${DIG_RESULT}" | grep '3 0 2' | tr -d '\n')
+		    ;;
+		*)
+		    unknown "Internal error: unknown DANE check type ${DANE}"
+            esac
+
+	    if [ -n "${DEBUG}" ] ; then
+		echo "[DBG] ${#DANE} DANE ="
+		echo "${DANE}" | sed 's/^/\[DBG\]\     /'
+	    fi
+
+	    if [ ${#DANE} -lt 5 ]; then
+		prepend_critical_message "No matching TLSA records found at _${PORT}._tcp.${HOST}"
+		critical "${SHORTNAME} CRITICAL: No matching TLSA records found at _${PORT}._tcp.${HOST}"
+	    fi
+
+	    DANE="${DANE} -dane_tlsa_domain ${HOST} "
+
+	    if [ -n "${DEBUG}" ] ; then
+		echo "[DBG] DANE = ${DANE}"
+	    fi
+
+	else
+
+	    unknown 'OpenSSL s_client does not support DNS-based Authentication of Named Entities'
+
+	fi
+
+    fi
 
     ################################################################################
     # Fetch the X.509 certificate
@@ -1710,9 +2011,7 @@ main() {
     else
         # look if we are dealing with a regular certificate file (x509)
         if ! ascii_grep "CERTIFICATE" "${CERT}" ; then
-
             if [ -n "${FILE}" ] ; then
-
                 if [ -r "${FILE}" ] ; then
 
                     if "${OPENSSL}" crl -in "${CERT}" -inform DER | grep -q "BEGIN X509 CRL" ; then
@@ -1847,6 +2146,16 @@ main() {
         OCSP=""
     fi
 
+    # Check DANE validation
+    if [ -n "${DANE}" ] ; then
+	if [ -n "${VERBOSE}" ] ; then
+	    echo "checking DANE"
+	fi
+	if ascii_grep 'No matching DANE TLSA records' "${CERT}"; then
+	    critical 'No matching DANE TLSA records'
+	fi
+    fi
+
     # Check OCSP stapling
     if [ -n "${REQUIRE_OCSP_STAPLING}" ] ; then
 
@@ -1869,7 +2178,7 @@ main() {
             NEXT_UPDATE=$(grep -o 'Next Update: .*$' "${OCSP_RESPONSE_TMP}" | cut -b14-)
 
 	    hours_until "${NEXT_UPDATE}"
-	    
+
             OCSP_EXPIRES_IN_HOURS="${HOURS_UNTIL}"
             if [ -n "${VERBOSE}" ] ; then
                 echo "  OCSP stapling expires in ${OCSP_EXPIRES_IN_HOURS} hours"
@@ -1970,7 +2279,7 @@ main() {
 
 	hours_until "${CERT_END_DATE}"
 	DAYS_VALID=$(( HOURS_UNTIL / 24 ))
-	
+
         if [ -n "${VERBOSE}" ] ; then
 
             if [ "${DAYS_VALID}" -ge 0 ] ; then
@@ -2207,6 +2516,7 @@ main() {
         fi
 
         if [ "${OPENSSL_COMMAND}" = "x509" ]; then
+	    
             # x509 certificates (default)
 
             # We always check expired certificates
@@ -2222,12 +2532,13 @@ main() {
                 fi
 
                 if ! ${OPENSSL} x509 -in "${CERT}" -noout -checkend $(( CRITICAL * 86400 )) > /dev/null ; then
+		    EXPIRES=1
                     prepend_critical_message "${OPENSSL_COMMAND} certificate will expire in ${DAYS_VALID} day(s) on ${DATE}"
                 fi
 
             fi
 
-            if [ -n "${WARNING}" ] ; then
+            if [ -n "${WARNING}" ] && [ -z "${EXPIRES}" ] ; then
 
                 if [ -n "${DEBUG}" ] ; then
                     echo "[DBG] executing: ${OPENSSL} x509 -in ${CERT} -noout -checkend $(( WARNING * 86400 ))"
@@ -2238,7 +2549,9 @@ main() {
                 fi
 
             fi
+	    
         elif [ "${OPENSSL_COMMAND}" = "crl" ]; then
+	    
             # CRL certificates
 
             # We always check expired certificates
@@ -2248,12 +2561,13 @@ main() {
 
             if [ -n "${CRITICAL}" ] ; then
                 if [ "${DAYS_VALID}" -lt "${CRITICAL}" ] ; then
+		    EXPIRES=1
                     prepend_critical_message "${OPENSSL_COMMAND} certificate will expire in ${DAYS_VALID} day(s) on ${DATE}"
                 fi
 
             fi
 
-            if [ -n "${WARNING}" ] ; then
+            if [ -n "${WARNING}" ]  && [ -z "${EXPIRES}" ] ; then
                 if [ "${DAYS_VALID}" -lt "${WARNING}" ] ; then
                     append_warning_message "${OPENSSL_COMMAND} certificate will expire in ${DAYS_VALID} day(s) on ${DATE}"
                 fi
@@ -2474,7 +2788,7 @@ main() {
                 FILE_NAME=${ISSUER_URI%/}
 
                 # remove everything up to the last slash
-                FILE_NAME=${FILE_NAME##*/}
+                FILE_NAME="${TMPDIR}/${FILE_NAME##*/}"
 
                 echo "[DBG] OCSP: storing a copy of the retrieved issuer certificate to ${FILE_NAME}"
 
@@ -2515,19 +2829,19 @@ main() {
             if "${OPENSSL}" version | grep -q '^LibreSSL' || [ "$( ${OPENSSL} version | sed -e 's/OpenSSL \([0-9]\).*/\1/g' )" -gt 0 ] ; then
 
                 if [ -n "${DEBUG}" ] ; then
-                    echo "[DBG] openssl ocsp supports the -header option"
+                    echo "[DBG] ${OPENSSL} ocsp supports the -header option"
                 fi
 
                 # the -header option was first accepting key and value separated by space. The newer versions are using key=value
                 KEYVALUE=""
-                if openssl ocsp -help 2>&1 | grep header | grep -q 'key=value' ; then
+                if ${OPENSSL} ocsp -help 2>&1 | grep header | grep -q 'key=value' ; then
                     if [ -n "${DEBUG}" ] ; then
-                        echo "[DBG] openssl ocsp -header requires 'key=value'"
+                        echo "[DBG] ${OPENSSL} ocsp -header requires 'key=value'"
                     fi
                     KEYVALUE=1
                 else
                     if [ -n "${DEBUG}" ] ; then
-                        echo "[DBG] openssl ocsp -header requires 'key value'"
+                        echo "[DBG] ${OPENSSL} ocsp -header requires 'key value'"
                     fi
                 fi
 
