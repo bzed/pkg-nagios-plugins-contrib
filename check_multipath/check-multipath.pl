@@ -74,6 +74,7 @@
 #               Added ability to check counts of scsi-hosts and scsi-ids per LUN              3. Aug. 2016
 #      0.4.6    Bugfix (output)
 #      0.4.7    Compatibility with CentOS/RHEL 5-7: no "switch", check second directory for multipath binary   (thanks to Christian Zettel) 25. Aug. 2016
+#      0.4.8    More characters allowed in LUN Name               (thanks to Ivan Zikyamov)  06. JAN 2020
 #
 
 
@@ -98,7 +99,7 @@ use vars qw( $NAME $VERSION $AUTHOR $CONTACT $E_OK $E_WARNING $E_CRITICAL
 
 # === Version and similar info ===
 $NAME    = 'check-multipath.pl';
-$VERSION = '0.4.7   25. AUG 2016';
+$VERSION = '0.4.8   06. JAN 2020';
 $AUTHOR  = 'Hinnerk Rümenapf';
 $CONTACT = 'hinnerk [DOT] ruemenapf [AT] uni-hamburg [DOT] de   (hinnerk [DOT] ruemenapf [AT] gmx [DOT] de)';
 
@@ -499,7 +500,25 @@ $SIG{__WARN__} = sub { push @perl_warnings, [@_]; };
 ."|-+- policy='service-time 0' prio=50 status=active\n"
 ."| `- 11:0:0:1 sdh 8:112 active ready running\n"
 ."`-+- policy='service-time 0' prio=10 status=enabled\n"
-."  `- 7:0:0:1  sdc 8:32  active ready running\n"
+."  `- 7:0:0:1  sdc 8:32  active ready running\n",
+
+#33. thanks to Ivan Zikyamov
+"u00.2 (360002ac000000000000000400000adfc) dm-6 3PARdata,VV\n"
+."size=34G features='1 queue_if_no_path' hwhandler='1 alua' wp=rw\n"
+."`-+- policy='round-robin 0' prio=50 status=active\n"
+."  |- 2:0:6:10 sdep 129:16  active ready running\n"
+."  |- 1:0:6:10 sddo 71:96   active ready running\n"
+."  |- 2:0:9:10 sdgr 132:112 active ready running\n"
+."  `- 1:0:9:10 sdfq 130:192 active ready running\n",
+
+#34. Lun name character test
+"TEST+-_.{~}_TEST (360002ac000000000000000400000adfc) dm-6 3PARdata,VV\n"
+."size=34G features='1 queue_if_no_path' hwhandler='1 alua' wp=rw\n"
+."`-+- policy='round-robin 0' prio=50 status=active\n"
+."  |- 2:0:6:10 sdep 129:16  active ready running\n"
+."  |- 1:0:6:10 sddo 71:96   active ready running\n"
+."  |- 2:0:9:10 sdgr 132:112 active ready running\n"
+."  `- 1:0:9:10 sdfq 130:192 active ready running\n",
     );
 
 
@@ -1111,8 +1130,11 @@ sub checkLunLine {
     # MYVOLUME (36005076801810523100000000000006f)
     # tex-lun4 (3600000e00d0000000002161200120000) dm-7 FUJITSU ,ETERNUS_DXL
     # fc-p6-vicepb (1Proware_FF010000333001EC) dm-1 Proware,R_laila            thanks to Michal Svamberg
+    # u00.2 (360002ac000000000000000400000adfc) dm-6 3PARdata,VV               thanks to Ivan Zikyamov
+    # TEST+-_.{~}_TEST (360002ac000000000000000400000adfc) dm-6 3PARdata,VV    generic test
     #if ($textLine =~ m/^([\w\-]+) \s+ \([\w\-]+\)/x) {
-    if ($textLine =~ m/^([\w\-]+) \s+ \(([\w\-]+)\) (?: \s+ ([\w\-]+))?/x) {
+    #if ($textLine =~ m/^([\w\-]+) \s+ \(([\w\-]+)\) (?: \s+ ([\w\-]+))?/x) {
+    if ($textLine =~ m/^([\w\-\.\{\}\+~]+) \s+ \(([\w\-]+)\) (?: \s+ ([\w\-]+))?/x) {
 	$$rCurrentLun = $1;
 	$idGeneric    = $1;
 	$idName       = $1;
