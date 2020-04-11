@@ -6,7 +6,7 @@ Uploaders: Bernd Zeimetz <bzed@debian.org>, Jan Wagner <waja@cyconet.org>, Stefa
 Build-Depends: debhelper (>= 8.0.0),
                dh-autoreconf,
                python,
-               python-debian,
+               python3, python3-debian,
                quilt (>= 0.46-7),
                autotools-dev, flex, libmemcached-dev [!hurd-i386], pkg-config
 Standards-Version: 4.4.1.0
