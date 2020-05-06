@@ -5,10 +5,7 @@
 export DH_VERBOSE=1
 
 PKGNAME = nagios-plugins-contrib
-PLUGINS := $(shell find $(CURDIR) -mindepth 1 -maxdepth 1 -name .git -prune -o -name .pc -prune -o -name debian -prune -o -type d -printf '%f\n' | sort)
-
-%:
-	dh $@ --with quilt,python2
+PLUGINS := $(shell find $(CURDIR) -mindepth 1 -maxdepth 1 -name .git -prune -o -name redhat -prune -o -name .pc -prune -o -name debian -prune -o -type d -printf '%f\n' | sort)
 
 override_dh_auto_build:
 	dh_auto_build
@@ -35,6 +32,10 @@ debian/control: debian/control.in debian/packaging-helper.py $(CONTROL_FILES)
 debian/tests/control: debian/packaging-helper.py $(TESTS_FILES)
 	$(PACKAGING_HELPER) --tests
 	-if [ -d .git ]; then git add $@; git commit -m 'Auto update of $@' $@; fi
+
+
+%:
+	dh $@ --with quilt,python2
 
 
 watch:

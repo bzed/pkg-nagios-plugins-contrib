@@ -24,7 +24,7 @@ ALLOWED_TESTS_FIELDS = ('Depends',
 # find all plugins
 __basedir__ = os.path.realpath(os.path.dirname(sys.argv[0]) + os.path.sep + '..')
 __plugins__ = [p for p in os.listdir(__basedir__) 
-                   if (os.path.isdir(__basedir__ + os.path.sep + p) and p!='debian' and p!='.git' and p!='.pc')]
+                   if (os.path.isdir(__basedir__ + os.path.sep + p) and p!='debian' and p!='.git' and p!='.pc' and p!='redhat')]
 __plugins__.sort()
 
 
