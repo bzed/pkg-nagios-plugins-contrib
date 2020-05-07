@@ -16,11 +16,11 @@ Vcs-Browser: https://salsa.debian.org/nagios-team/pkg-nagios-plugins-contrib
 Package: nagios-plugins-contrib
 Architecture: any
 Depends: ${misc:Depends}
-Recommends: libsocket-perl, libmonitoring-plugin-perl | libnagios-plugin-perl, libnet-snmp-perl, whois, nagios-plugins-basic, libnet-dns-perl, libdate-manip-perl, libmonitoring-plugin-perl | libnagios-plugin-perl (>= 0.31), libnet-cups-perl, debsecan, libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-smtp-ssl-perl, libnet-ssleay-perl, libnet-smtpauth-perl, bind9-host | knot-host, python, liblocale-gettext-perl, liblwp-useragent-determined-perl, snmp, freeipmi-tools, libipc-run-perl, lsof, libyaml-syck-perl, libxml-simple-perl, python-pymongo, libdbd-mysql-perl, libreadonly-perl, libdata-validate-domain-perl, libdata-validate-ip-perl, libredis-perl, libnet-snmp-perl (>= 5), libtimedate-perl, curl, file, openssl, libwebinject-perl, libnet-dns-sec-perl, ruby | ruby-interpreter, binutils,
+Recommends: libsocket-perl, libmonitoring-plugin-perl | libnagios-plugin-perl, libnet-snmp-perl, whois, nagios-plugins-basic, libnet-dns-perl, libdate-manip-perl, libmonitoring-plugin-perl | libnagios-plugin-perl (>= 0.31), libnet-cups-perl, debsecan, libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-smtp-ssl-perl, libnet-ssleay-perl, libnet-smtpauth-perl, bind9-host | knot-host, python3, liblocale-gettext-perl, liblwp-useragent-determined-perl, snmp, freeipmi-tools, libipc-run-perl, lsof, libyaml-syck-perl, libxml-simple-perl, python3-pymongo, libdbd-mysql-perl, libreadonly-perl, libdata-validate-domain-perl, libdata-validate-ip-perl, libredis-perl, libnet-snmp-perl (>= 5), libtimedate-perl, curl, file, openssl, libwebinject-perl, libnet-dns-sec-perl, ruby | ruby-interpreter, binutils,
             ${perl:Depends},
             ${python:Depends},
             ${shlibs:Depends}
-Suggests: backuppc, perl-doc, libsys-virt-perl, cciss-vol-status (>= 1.10), mpt-status, smstools (>= 3~), expect, nagios-plugin-check-multi, moreutils, percona-toolkit, python2.7, python-pymongo
+Suggests: backuppc, perl-doc, libsys-virt-perl, cciss-vol-status (>= 1.10), mpt-status, smstools (>= 3~), expect, nagios-plugin-check-multi, moreutils, percona-toolkit, python3, python3-pymongo, python3-boto
 Enhances: nagios-plugins, nagios-plugins-basic, nagios-plugins-standard
 Description: Plugins for nagios compatible monitoring systems
  This package provides various plugins for Nagios compatible monitoring
@@ -36,6 +36,9 @@ Description: Plugins for nagios compatible monitoring systems
    * check_checksums (20130611): plugin to verify file checksums
      against (local, not 100% secure) lists.
      Supports md5 sha1 sha224 sha256 sha384 sha512 checksums.
+   * check_chrony (0.1): chrony NTP server check
+     This plugin is able to check the stratum time difference of a local
+     chronyd instance.
    * check_clamav (1.2): plugin to check for clamav signature freshness
      This script is used to compare the version and signature
      level of the currently running clamd daemon with the latest
