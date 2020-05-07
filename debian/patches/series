@@ -54,3 +54,4 @@ check_raid/no_epn
 percona-nagios-plugins/fix_bashism
 check_graphite/python2to3
 check_mongodb/python2to3
+percona-nagios-plugins/python2to3

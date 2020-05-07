@@ -1,0 +1,206 @@
+Index: pkg-nagios-plugins-contrib/percona-nagios-plugins/nagios/bin/pmp-check-aws-rds.py
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/percona-nagios-plugins/nagios/bin/pmp-check-aws-rds.py
++++ pkg-nagios-plugins-contrib/percona-nagios-plugins/nagios/bin/pmp-check-aws-rds.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python3
+ """Nagios plugin for Amazon RDS monitoring.
+ 
+ This program is part of $PROJECT_NAME$
+@@ -98,7 +98,7 @@ def debug(val):
+     """Debugging output"""
+     global options
+     if options.debug:
+-        print 'DEBUG: %s' % val
++        print('DEBUG: %s' % val)
+ 
+ 
+ def main():
+@@ -166,7 +166,7 @@ def main():
+     parser.add_option('-i', '--ident', help='DB instance identifier')
+     parser.add_option('-p', '--print', help='print status and other details for a given DB instance',
+                       action='store_true', default=False, dest='printinfo')
+-    parser.add_option('-m', '--metric', help='metric to check: [%s]' % ', '.join(metrics.keys()))
++    parser.add_option('-m', '--metric', help='metric to check: [%s]' % ', '.join(list(metrics.keys())))
+     parser.add_option('-w', '--warn', help='warning threshold')
+     parser.add_option('-c', '--crit', help='critical threshold')
+     parser.add_option('-u', '--unit', help='unit of thresholds for "storage" and "memory" metrics: [%s].'
+@@ -193,7 +193,7 @@ def main():
+         sys.exit()
+     elif options.db_list:
+         info = rds.get_list()
+-        print 'List of all DB instances in %s region(s):' % (options.region,)
++        print('List of all DB instances in %s region(s):' % (options.region,))
+         pprint.pprint(info)
+         sys.exit()
+     elif not options.ident:
+@@ -204,10 +204,10 @@ def main():
+         if info:
+             pprint.pprint(vars(info))
+         else:
+-            print 'No DB instance "%s" found on your AWS account and %s region(s).' % (options.ident, options.region)
++            print('No DB instance "%s" found on your AWS account and %s region(s).' % (options.ident, options.region))
+ 
+         sys.exit()
+-    elif not options.metric or options.metric not in metrics.keys():
++    elif not options.metric or options.metric not in list(metrics.keys()):
+         parser.print_help()
+         parser.error('Metric is not set or not valid.')
+     elif not options.warn and options.metric != 'status':
+@@ -327,7 +327,7 @@ def main():
+                 try:
+                     storage = db_classes[info.instance_class]
+                 except:
+-                    print 'Unknown DB instance class "%s"' % info.instance_class
++                    print('Unknown DB instance class "%s"' % info.instance_class)
+                     sys.exit(CRITICAL)
+ 
+             free = '%.2f' % (free / 1024 ** 3)
+@@ -353,12 +353,12 @@ def main():
+ 
+     # Final output
+     if status != UNKNOWN and perf_data:
+-        print '%s %s | %s' % (short_status[status], note, perf_data)
++        print('%s %s | %s' % (short_status[status], note, perf_data))
+     elif status == UNKNOWN and not options.forceunknown:
+-        print '%s %s | null' % ('OK', note)
++        print('%s %s | null' % ('OK', note))
+         sys.exit(0)
+     else:
+-        print '%s %s' % (short_status[status], note)
++        print('%s %s' % (short_status[status], note))
+ 
+     sys.exit(status)
+ 
+Index: pkg-nagios-plugins-contrib/percona-nagios-plugins/nagios/bin/pmp-check-mongo.py
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/percona-nagios-plugins/nagios/bin/pmp-check-mongo.py
++++ pkg-nagios-plugins-contrib/percona-nagios-plugins/nagios/bin/pmp-check-mongo.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python2.7
++#!/usr/bin/env python3
+ """MongoDB Nagios check script
+ 
+ This program is part of $PROJECT_NAME$
+@@ -23,8 +23,8 @@ from types import FunctionType
+ 
+ try:
+     import pymongo
+-except ImportError, e:
+-    print e
++except ImportError as e:
++    print(e)
+     sys.exit(2)
+ 
+ # As of pymongo v 1.9 the SON API is part of the BSON package, therefore attempt
+@@ -51,7 +51,7 @@ def unicode_truncate(s, length, encoding
+ 
+ def parse_options(args):
+     funcList = []
+-    for item_name, item_type in NagiosMongoChecks.__dict__.items():
++    for item_name, item_type in list(NagiosMongoChecks.__dict__.items()):
+         if type(item_type) is FunctionType and item_name.startswith("check_") and item_name is not 'check_levels':
+             funcList.append(item_name)
+     p = ModifiedOptionParser()
+@@ -76,7 +76,7 @@ def parse_options(args):
+     # Add options for output stat file
+     try:
+         result = p.parse_args()
+-    except OptionParsingError, e:
++    except OptionParsingError as e:
+         if 'no such option' in e.msg:
+             sys.exit("UNKNOWN - No such options of %s" % e.msg.split(":")[1])
+         if 'invalid choice' in e.msg:
+@@ -87,16 +87,16 @@ def parse_options(args):
+ 
+ def return_result(result_type, message):
+     if result_type == "ok":
+-        print "OK - " + message
++        print("OK - " + message)
+         sys.exit(0)
+     elif result_type == "critical":
+-        print "CRITICAL - " + message
++        print("CRITICAL - " + message)
+         sys.exit(2)
+     elif result_type == "warning":
+-        print "WARNING - " + message
++        print("WARNING - " + message)
+         sys.exit(1)
+     else:
+-        print "UNKNOWN - " + message
++        print("UNKNOWN - " + message)
+         sys.exit(2)
+ 
+ 
+@@ -110,9 +110,9 @@ def check(args, check_name):
+         checksObj = globals()['NagiosMongoChecks'](args)
+         run_check = getattr(checksObj, check_name)
+         result_type, message = run_check(args, args.warning, args.critical)
+-    except Exception, e:
++    except Exception as e:
+         raise
+-        print(traceback.extract_tb(sys.exc_info()[-1], 1))
++        print((traceback.extract_tb(sys.exc_info()[-1], 1)))
+         return_result("critical", str(e))
+     return_result(result_type, message)
+ 
+@@ -193,7 +193,7 @@ class NagiosMongoChecks:
+         except:
+             try:
+ 		data = self.connection['admin'].command(son.SON([('serverStatus', 1)]))
+-	    except Exception, e:
++	    except Exception as e:
+ 		if type(e).__name__ == "OperationFailure":
+ 		    sys.exit("UNKNOWN - Not authorized!")
+ 		else:
+@@ -222,7 +222,7 @@ class NagiosMongoChecks:
+     def save_file(self, filename, contents):
+             try:
+                 pickle.dump(contents, open(filename, "wb"))
+-            except Exception, e:
++            except Exception as e:
+                 sys.exit("UNKNOWN - Error saving stat file %s: %s" % (filename, e.message))
+ 
+     # TODO - Fill in all check defaults
+@@ -280,19 +280,19 @@ class NagiosMongoChecks:
+                 con = pymongo.MongoClient(self.host, self.port, ssl=self.ssl, replicaSet=self.replicaset, serverSelectionTimeoutMS=2500)
+             if (self.user and self.passwd) and not con['admin'].authenticate(self.user, self.passwd):
+                 sys.exit("CRITICAL - Username and password incorrect")
+-        except Exception, e:
++        except Exception as e:
+             raise
+             if isinstance(e, pymongo.errors.AutoReconnect) and str(e).find(" is an arbiter") != -1:
+                 # We got a pymongo AutoReconnect exception that tells us we connected to an Arbiter Server
+                 # This means: Arbiter is reachable and can answer requests/votes - this is all we need to know from an arbiter
+-                print "OK - State: 7 (Arbiter)"
++                print("OK - State: 7 (Arbiter)")
+                 sys.exit(0)
+             con = None
+             self.pyMongoError = str(e)
+         if con is not None:
+ 	    try:
+                 con['admin'].command(pymongo.son_manipulator.SON([('ping', 1)]))
+-            except Exception, e:
++            except Exception as e:
+                 sys.exit("UNKNOWN - Unable to run commands, possible auth issue: %s" % e.message)
+             self.connection_time = round(time.time() - start_time, 2)
+             version = con.server_info()['version'].split('.')
+@@ -478,7 +478,7 @@ class NagiosMongoChecks:
+             time_range = (time.time() - start).total_seconds
+             message = "Collection %s.%s  query took: %d s" % (self.database, self.collection, time_range)
+             return self.check_levels(time_range, warning_level, critical_level, message)
+-        except Exception, e:
++        except Exception as e:
+             message = "Collection %s.%s  query FAILED: %s" % (self.database, self.collection, e)
+             return "critical", message
+ 
+@@ -491,7 +491,7 @@ class NagiosMongoChecks:
+         # get a  fresh status for the replset
+         try:
+             replset_status = self.connection['admin'].command("replSetGetStatus")
+-        except Exception, e:
++        except Exception as e:
+             return "critical", "Are your running with --replset? -  %s" % (e)
+ 
+         for member in replset_status['members']:
