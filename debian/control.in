@@ -5,7 +5,6 @@ Maintainer: Debian Nagios Maintainer Group <pkg-nagios-devel@lists.alioth.debian
 Uploaders: #AUTO_UPDATE_Uploaders#
 Build-Depends: debhelper (>= 8.0.0),
                dh-autoreconf,
-               python,
                python3, python3-debian,
                quilt (>= 0.46-7),
                #AUTO_UPDATE_Build-Depends#
