@@ -62,7 +62,6 @@ sub error_with_dns {
 # Check if there is a DNS server running on the given IP address
 sub test_dns_server {
     local ($ip) = @_;
-    local ($name) = "";
 
     print "Checking $1\n" if $debug;
 
