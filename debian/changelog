@@ -20,6 +20,16 @@ nagios-plugins-contrib (26.20200508) unstable; urgency=medium
   * [0a22adf] Auto update of debian/copyright
   * [a8421e2] run with python3
   * [9019466] Build-depend on dh-python
+  * [382a3a1] Remove postbuild hook from gbp config.
+    This breaks the salsa pipeline
+  * [16373d9] Change python:Depends to python3:Depends
+  * [75808c7] Auto update of debian/control
+  * [7ece787] Remove some other traces of the old packagename
+  * [bbad322] Really depend on dh-python
+  * [0023e4a] Fix lintian overrides
+  * [3c21ff1] Auto update of debian/control
+  * [390c9b0] Add install file for monitoring-plugins-contrib
+  * [ee6b331] fix install file
   * [ba85a02] Remove .travis.yml, add .gitlab-ci.yml
 
  -- Bernd Zeimetz <bzed@debian.org>  Fri, 08 May 2020 14:52:55 +0200
