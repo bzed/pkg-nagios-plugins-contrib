@@ -15,7 +15,7 @@ PACKAGING_HELPER = /usr/bin/python3 $(CURDIR)/debian/packaging-helper.py
 
 
 clean: debian/copyright debian/control debian/tests/control
-	dh $@ --with quilt,python2
+	dh $@ --with quilt,python3
 	rm -f debian/README.Debian.plugins
 
 CONTROL_FILES := $(shell for p in $(PLUGINS); do echo $$p/control; done)
@@ -35,7 +35,7 @@ debian/tests/control: debian/packaging-helper.py $(TESTS_FILES)
 
 
 %:
-	dh $@ --with quilt,python2
+	dh $@ --with quilt,python3
 
 
 watch:
