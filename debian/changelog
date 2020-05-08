@@ -31,8 +31,17 @@ nagios-plugins-contrib (26.20200508) unstable; urgency=medium
   * [390c9b0] Add install file for monitoring-plugins-contrib
   * [ee6b331] fix install file
   * [ba85a02] Remove .travis.yml, add .gitlab-ci.yml
+  * [affeee0] check_etc_resolv: no PTR for recursors required
+  * [ce5af2c] check_libs_ng: user python3
+  * [410817f] Fix autotest commands/dependencies
+  * [060b5b1] check_etc_resolv; fix the last change
+  * [6c9d917] check_chrony: migrate to python3
+  * [6b10aa5] dsa/check_enctropy: convert to python3
+  * [f070803] autotest: add check_entropy
+  * [00fe45e] Auto update of debian/copyright
+  * [0723dbf] Auto update of debian/tests/control
 
- -- Bernd Zeimetz <bzed@debian.org>  Fri, 08 May 2020 14:52:55 +0200
+ -- Bernd Zeimetz <bzed@debian.org>  Fri, 08 May 2020 23:52:03 +0200
 
 nagios-plugins-contrib (25.20191015+2) unstable; urgency=medium
 
