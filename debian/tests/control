@@ -6,7 +6,7 @@ Test-Command: /usr/lib/nagios/plugins/check_cups -H localhost
 Restrictions: needs-root, isolation-container
 
 Depends: debsecan, @
-Test-Command: /usr/lib/nagios/plugins/check_debsecan -f 9998 -F 9999 -o 9998 -O 9999 -l 9998 -L 9999 -m 9998 -M 9999 -u 9998 -U 9999 -r -s sid
+Test-Command: /usr/lib/nagios/plugins/check_debsecan -f 9998 -F 9999 -o 9998 -O 9999 -l 9998 -L 9999 -m 9998 -M 9999 -u 9998 -U 9999 -r
 
 Depends: libnet-dns-perl, @
 Test-Command: echo "127.0.0.1 localhost" > /etc/hosts && /usr/lib/nagios/plugins/check_etc_hosts
@@ -25,12 +25,9 @@ Test-Command: /usr/lib/nagios/plugins/check_libs
 Restrictions: needs-root
 Test-Command: /usr/lib/nagios/plugins/check_libs_ng
 
-Depends: ca-certificates, openssl, curl, file, @
+Depends: openssl, curl, file, @
 Test-Command: /usr/lib/nagios/plugins/check_ssl_cert -H www.debian.org
 
 Depends: libmonitoring-plugin-perl | libnagios-plugin-perl, @
 Test-Command: /usr/lib/nagios/plugins/check_uptime -f
-
-Depends: @
-Test-Command: /usr/lib/nagios/plugins/check_entropy -w 1
 
