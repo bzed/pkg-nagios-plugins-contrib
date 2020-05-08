@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # Monitor chronyd
 #
@@ -83,10 +83,10 @@ chronyc = Popen(
 output, error = chronyc.communicate()
 
 if chronyc.returncode > 0:
-    print("chronyc failed: {}".format(output))
+    print(("chronyc failed: {}".format(output)))
     sys.exit(NAGIOS_STATUS['CRITICAL'])
 
-output = output.split('\n')
+output = output.decode().split('\n')
 parsed_output = {}
 
 for line in output:
@@ -109,21 +109,21 @@ if '00000000' in parsed_output['reference_id']:
     sys.exit(NAGIOS_STATUS['CRITICAL'])
 
 if int(parsed_output['stratum']) > options.stratum_critical:
-    print(
+    print((
         "chrony stratum too high: {} > {}".format(
             parsed_output['stratum'],
             options.stratum_critical
         )
-    )
+    ))
     sys.exit(NAGIOS_STATUS['CRITICAL'])
 
 if int(parsed_output['stratum']) > options.stratum_warning:
-    print(
+    print((
         "chrony stratum too high: {} > {}".format(
             parsed_output['stratum'],
             options.stratum_warning
         )
-    )
+    ))
     sys.exit(NAGIOS_STATUS['WARNING'])
 
 system_time = parsed_output['system_time'].split(' ')
@@ -131,33 +131,33 @@ system_time_diff_ms = float(system_time[0]) * 1000
 system_time_desc = ' '.join(system_time[1:])
 
 if (system_time_diff_ms > options.critical):
-    print(
+    print((
         "chrony system time {}ms {}. ({}ms > {}ms)".format(
             system_time_diff_ms,
             system_time_desc,
             system_time_diff_ms,
             options.critical
         )
-    )
+    ))
     sys.exit(NAGIOS_STATUS['CRITICAL'])
 
 if (system_time_diff_ms > options.warning):
-    print(
+    print((
         "chrony system time {}ms {}. ({}ms > {}ms)".format(
             system_time_diff_ms,
             system_time_desc,
             system_time_diff_ms,
             options.warning
         )
-    )
+    ))
     sys.exit(NAGIOS_STATUS['WARNING'])
 
 
-print(
+print((
     "chrony OK: System Time {}, Stratum {}".format(
         parsed_output['system_time'],
         parsed_output['stratum'],
     )
-)
+))
 sys.exit(NAGIOS_STATUS['OK'])
 
