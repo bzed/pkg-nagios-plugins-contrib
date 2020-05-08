@@ -31,3 +31,6 @@ Test-Command: /usr/lib/nagios/plugins/check_ssl_cert -H www.debian.org
 Depends: libmonitoring-plugin-perl | libnagios-plugin-perl, @
 Test-Command: /usr/lib/nagios/plugins/check_uptime -f
 
+Depends: @
+Test-Command: /usr/lib/nagios/plugins/check_entropy -w 1
+
