@@ -1,3 +1,27 @@
+nagios-plugins-contrib (26.20200508) unstable; urgency=medium
+
+  * Major changes:
+    - Getting rid of python2 (Closes: #937103)
+    - Renaming the package to monitoring-plugins-contrib
+
+  * [360f98c] Add check_chrony
+  * [2191f5e] Package check_chrony
+  * [d2a2f4b] Migrating check_graphite to python3
+  * [43c2d9a] Migrating check_mongodb to python3
+  * [76b2a87] Migrating percona-nagios-plugins to python3
+  * [c4f0215] Ignore the redhat folder
+  * [b832621] Auto update of debian/control
+  * [1d1a668] Depend on python3
+  * [b84f5ad] Auto update of debian/control
+  * [4aa823b] check_email_delivery/check_smtp_send: support hello option
+  * [10a786e] Finally rename package to monitoring-plugins-contrib.
+  * [17545b1] Auto update of debian/control
+  * [7d9ebed] Add copyright for check_chrony
+  * [0a22adf] Auto update of debian/copyright
+  * [a8421e2] run with python3
+
+ -- Bernd Zeimetz <bzed@debian.org>  Fri, 08 May 2020 14:52:55 +0200
+
 nagios-plugins-contrib (25.20191015+2) unstable; urgency=medium
 
   [ Bas Couwenberg ]
