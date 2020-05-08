@@ -12,15 +12,18 @@ Standards-Version: 4.4.1.0
 Vcs-Git: https://salsa.debian.org/nagios-team/pkg-nagios-plugins-contrib.git
 Vcs-Browser: https://salsa.debian.org/nagios-team/pkg-nagios-plugins-contrib
 
-Package: nagios-plugins-contrib
+Package: monitoring-plugins-contrib
 Architecture: any
 Depends: ${misc:Depends}
 Recommends: libsocket-perl, libmonitoring-plugin-perl | libnagios-plugin-perl, libnet-snmp-perl, whois, nagios-plugins-basic, libnet-dns-perl, libdate-manip-perl, libmonitoring-plugin-perl | libnagios-plugin-perl (>= 0.31), libnet-cups-perl, debsecan, libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-smtp-ssl-perl, libnet-ssleay-perl, libnet-smtpauth-perl, bind9-host | knot-host, python3, liblocale-gettext-perl, liblwp-useragent-determined-perl, snmp, freeipmi-tools, libipc-run-perl, lsof, libyaml-syck-perl, libxml-simple-perl, python3-pymongo, libdbd-mysql-perl, libreadonly-perl, libdata-validate-domain-perl, libdata-validate-ip-perl, libredis-perl, libnet-snmp-perl (>= 5), libtimedate-perl, curl, file, openssl, libwebinject-perl, libnet-dns-sec-perl, ruby | ruby-interpreter, binutils,
             ${perl:Depends},
             ${python:Depends},
             ${shlibs:Depends}
+Provides: nagios-plugins-contrib
+Replaces: nagios-plugins-contrib (<< 26)
+Breaks: nagios-plugins-contrib (<< 26)
 Suggests: backuppc, perl-doc, libsys-virt-perl, cciss-vol-status (>= 1.10), mpt-status, smstools (>= 3~), expect, nagios-plugin-check-multi, moreutils, percona-toolkit, python3, python3-pymongo, python3-boto
-Enhances: nagios-plugins, nagios-plugins-basic, nagios-plugins-standard
+Enhances: monitoring-plugins, monitoring-plugins-basic, monitoring-plugins-standard
 Description: Plugins for nagios compatible monitoring systems
  This package provides various plugins for Nagios compatible monitoring
  systems like Nagios and Icinga.
@@ -222,3 +225,11 @@ Description: Plugins for nagios compatible monitoring systems
  .
  Some scripts and binaries need more packages installed to work, which is
  implemented as recommends.
+
+Package: nagios-plugins-contrib
+Architecture: any
+Depends: monitoring-plugins-contrib
+Description: Transitional package for monitoring-plugins-contrib
+ nagios-plugins-contrib was renamed to monitoring-plugins-contrib.
+ .
+ This is a transitional package. It can safely be removed.
