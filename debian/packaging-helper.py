@@ -165,6 +165,7 @@ def update_control():
 
 def update_tests():
     with open(__basedir__ + os.path.sep + 'debian' + os.path.sep + 'tests' + os.path.sep + 'control', 'w') as f:
+        f.write("# DO NOT HAND HACK - MANAGED BY debian/packaging-helper.py\n#\n#\n")
         for plugin, _control in __get_tests_data__():
             if 'Depends' in _control and '@' not in _control['Depends']:
                 _control['Depends'] += ', @'
