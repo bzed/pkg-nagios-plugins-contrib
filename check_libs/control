@@ -1,7 +1,0 @@
-Homepage: https://gitweb.noreply.org/tools/monitoring.git/
-Watch: https://gitweb.noreply.org/tools/monitoring.git/plain/nagios-checks/nagios-check-libs VERSION = '([0-9.]+)';
-Uploaders: Bernd Zeimetz <bzed@debian.org>
-Description: plugin to report the usage of no longer existing
- libraries by running processes
-Recommends: lsof, libyaml-syck-perl
-Version: 0.2015012901 

@@ -16,9 +16,6 @@ check_haproxy_stats/socket
 check_httpd_status/epn
 check_httpd_status/monitoring-plugin
 check_imap_quota/syntax_error_fix
-check_libs/lsof-speedup
-check_libs/config_path
-check_libs/space_before_deleted
 check_libvirt/monitoring-plugin
 check_libvirt/fix_uom
 check_lm_sensors/manpage_whatis_fix
