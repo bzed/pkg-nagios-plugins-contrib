@@ -1,3 +1,11 @@
+nagios-plugins-contrib (27.20200511) unstable; urgency=medium
+
+  * [1831f8b] Auto update of debian/control
+  * [5612aac] Auto update of debian/copyright
+  * [45d41ae] check_libs is now a symlink to check_libs_ng
+
+ -- Bernd Zeimetz <bzed@debian.org>  Mon, 11 May 2020 16:23:42 +0200
+
 nagios-plugins-contrib (26.20200508) unstable; urgency=medium
 
   * Major changes:
