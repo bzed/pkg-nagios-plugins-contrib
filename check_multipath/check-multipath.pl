@@ -21,7 +21,7 @@
 #-------------------------------------------------------------
 #
 #
-# Copyright (C) 2011-2016
+# Copyright (C) 2011-2020
 # Hinnerk Rümenapf, Trond H. Amundsen, Gunther Schlegel, Matija Nalis, 
 # Bernd Zeimetz, Sven Anders, Ben Evans
 #
@@ -75,6 +75,7 @@
 #      0.4.6    Bugfix (output)
 #      0.4.7    Compatibility with CentOS/RHEL 5-7: no "switch", check second directory for multipath binary   (thanks to Christian Zettel) 25. Aug. 2016
 #      0.4.8    More characters allowed in LUN Name               (thanks to Ivan Zikyamov)  06. JAN 2020
+#      0.4.9    Bugfix in  --extraconfig  handling                (thanks to Jeffrey Honig <jeffrey.honig@xandr.com>)  24. MAR 2020
 #
 
 
@@ -99,7 +100,7 @@ use vars qw( $NAME $VERSION $AUTHOR $CONTACT $E_OK $E_WARNING $E_CRITICAL
 
 # === Version and similar info ===
 $NAME    = 'check-multipath.pl';
-$VERSION = '0.4.8   06. JAN 2020';
+$VERSION = '0.4.9   34. MAR 2020';
 $AUTHOR  = 'Hinnerk Rümenapf';
 $CONTACT = 'hinnerk [DOT] ruemenapf [AT] uni-hamburg [DOT] de   (hinnerk [DOT] ruemenapf [AT] gmx [DOT] de)';
 
@@ -919,7 +920,8 @@ if  ($opt{'print'} !~ m!^[GWND]+$!) {
 my @extraconfig = ();
 
 if ($opt{extraconfig} ne '') {
-    if ( $opt{extraconfig} !~ m/^([GWDN]!)?([\w\-]+,\d+,\d+(?:,(?:ok|warning|critical)(?:,\w+,\d+,\d+)*)?:)+$/ ) {
+   #if ( $opt{extraconfig} !~ m/^([GWDN]!)?([\w\-]+,\d+,\d+(?:,(?:ok|warning|critical)(?:,\w+,\d+,\d+)*)?:)+$/ ) {    # BUG fixed 2020-03-24 thanks to Jeffrey Honig <jeffrey.honig@xandr.com>
+    if ( $opt{extraconfig} !~ m/^(([GWDN]!)?[\w\-]+,\d+,\d+(?:,(?:ok|warning|critical)(?:,\w+,\d+,\d+)*)?:)+$/ ) {
 	unknown_error("Wrong usage of '--extraconfig' option: '"
 		      . $opt{extraconfig}
 		      . "' syntax error. See help information.");
