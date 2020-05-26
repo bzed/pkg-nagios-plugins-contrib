@@ -4,21 +4,18 @@
 # Uncomment this to turn on verbose mode.
 export DH_VERBOSE=1
 
-PKGNAME = nagios-plugins-contrib
-PLUGINS := $(shell find $(CURDIR) -mindepth 1 -maxdepth 1 -name .git -prune -o -name .pc -prune -o -name debian -prune -o -type d -printf '%f\n' | sort)
-
-%:
-	dh $@ --with quilt,python2
+PKGNAME = monitoring-plugins-contrib
+PLUGINS := $(shell find $(CURDIR) -mindepth 1 -maxdepth 1 -name .git -prune -o -name redhat -prune -o -name .pc -prune -o -name debian -prune -o -type d -printf '%f\n' | sort)
 
 override_dh_auto_build:
 	dh_auto_build
 	$(PACKAGING_HELPER) --generate-readme
 
-PACKAGING_HELPER = /usr/bin/python $(CURDIR)/debian/packaging-helper.py
+PACKAGING_HELPER = /usr/bin/python3 $(CURDIR)/debian/packaging-helper.py
 
 
 clean: debian/copyright debian/control debian/tests/control
-	dh $@ --with quilt,python2
+	dh $@ --with quilt,python3
 	rm -f debian/README.Debian.plugins
 
 CONTROL_FILES := $(shell for p in $(PLUGINS); do echo $$p/control; done)
@@ -35,6 +32,10 @@ debian/control: debian/control.in debian/packaging-helper.py $(CONTROL_FILES)
 debian/tests/control: debian/packaging-helper.py $(TESTS_FILES)
 	$(PACKAGING_HELPER) --tests
 	-if [ -d .git ]; then git add $@; git commit -m 'Auto update of $@' $@; fi
+
+
+%:
+	dh $@ --with quilt,python3
 
 
 watch:

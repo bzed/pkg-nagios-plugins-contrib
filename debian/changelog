@@ -1,8 +1,76 @@
-nagios-plugins-contrib (25.20191015+2) UNRELEASED; urgency=medium
+nagios-plugins-contrib (27.20200511+1) unstable; urgency=medium
 
-  * UNRELEASED
+  * [b6d2915] Fixing tests (again)
+  * [9f18634] Auto update of debian/tests/control
+  * [28221f3] Auto update of debian/tests/control
+  * [da177f3] Remove test from check_libs_ng.
+    You never know the state of the system we are running on.
 
- -- Jan Wagner <waja@cyconet.org>  Tue, 15 Oct 2019 13:50:31 +0200
+ -- Bernd Zeimetz <bzed@debian.org>  Mon, 11 May 2020 17:08:39 +0200
+
+nagios-plugins-contrib (27.20200511) unstable; urgency=medium
+
+  * [1831f8b] Auto update of debian/control
+  * [5612aac] Auto update of debian/copyright
+  * [45d41ae] check_libs is now a symlink to check_libs_ng
+
+ -- Bernd Zeimetz <bzed@debian.org>  Mon, 11 May 2020 17:08:25 +0200
+
+nagios-plugins-contrib (26.20200508) unstable; urgency=medium
+
+  * Major changes:
+    - Getting rid of python2 (Closes: #937103)
+    - Renaming the package to monitoring-plugins-contrib
+
+  * [360f98c] Add check_chrony
+  * [2191f5e] Package check_chrony
+  * [d2a2f4b] Migrating check_graphite to python3
+  * [43c2d9a] Migrating check_mongodb to python3
+  * [76b2a87] Migrating percona-nagios-plugins to python3
+  * [c4f0215] Ignore the redhat folder
+  * [b832621] Auto update of debian/control
+  * [1d1a668] Depend on python3
+  * [b84f5ad] Auto update of debian/control
+  * [4aa823b] check_email_delivery/check_smtp_send: support hello option
+  * [10a786e] Finally rename package to monitoring-plugins-contrib.
+  * [17545b1] Auto update of debian/control
+  * [7d9ebed] Add copyright for check_chrony
+  * [0a22adf] Auto update of debian/copyright
+  * [a8421e2] run with python3
+  * [9019466] Build-depend on dh-python
+  * [382a3a1] Remove postbuild hook from gbp config.
+    This breaks the salsa pipeline
+  * [16373d9] Change python:Depends to python3:Depends
+  * [75808c7] Auto update of debian/control
+  * [7ece787] Remove some other traces of the old packagename
+  * [bbad322] Really depend on dh-python
+  * [0023e4a] Fix lintian overrides
+  * [3c21ff1] Auto update of debian/control
+  * [390c9b0] Add install file for monitoring-plugins-contrib
+  * [ee6b331] fix install file
+  * [ba85a02] Remove .travis.yml, add .gitlab-ci.yml
+  * [affeee0] check_etc_resolv: no PTR for recursors required
+  * [ce5af2c] check_libs_ng: user python3
+  * [410817f] Fix autotest commands/dependencies
+  * [060b5b1] check_etc_resolv; fix the last change
+  * [6c9d917] check_chrony: migrate to python3
+  * [6b10aa5] dsa/check_enctropy: convert to python3
+  * [f070803] autotest: add check_entropy
+  * [00fe45e] Auto update of debian/copyright
+  * [0723dbf] Auto update of debian/tests/control
+
+ -- Bernd Zeimetz <bzed@debian.org>  Fri, 08 May 2020 23:52:03 +0200
+
+nagios-plugins-contrib (25.20191015+2) unstable; urgency=medium
+
+  [ Bas Couwenberg ]
+  * [87cc630] Fix check_haproxy_stats/interpreter patch. (closes: #945272)
+
+  [ Sandro Tosi ]
+  * [86796fb] port debian/packaging-helper.py to python3; partially addresses
+              #937103
+
+ -- Sandro Tosi <morph@debian.org>  Fri, 10 Apr 2020 22:13:52 -0400
 
 nagios-plugins-contrib (25.20191015+1) unstable; urgency=medium
 

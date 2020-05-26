@@ -1,0 +1,2 @@
+Depends: @
+Test-Command: /usr/lib/nagios/plugins/check_entropy -w 1

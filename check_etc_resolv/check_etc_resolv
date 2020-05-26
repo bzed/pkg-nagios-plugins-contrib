@@ -1,7 +1,11 @@
 #!/usr/bin/perl -w
 #
-# Author: Petter Reinholdtsen <pere@hungry.com>
+# Authors:
+# Petter Reinholdtsen <pere@hungry.com>
 # Date: 2001-11-09
+#
+# Bernd Zeimetz <bzed@debian.org>
+# Date: 2020-05-08
 #
 # Check /etc/resolv.conf, and make sure the name servers listed are
 # working.  It will ignore entries with '# NAGIOSIGNORE' at the end.
@@ -58,22 +62,9 @@ sub error_with_dns {
 # Check if there is a DNS server running on the given IP address
 sub test_dns_server {
     local ($ip) = @_;
-    local ($name) = "";
 
     print "Checking $1\n" if $debug;
 
-    # there are other module functions that do this more gracefully
-    # (such as inet_pton), but we can't guarantee that they are available
-    # in every system, so we use the built-in gethostbyaddr.
-    if ($ip =~ /^[\d\.]*$/) {
-	$PackedAddr = pack('C4', split /\./,$ip);
-	$name = gethostbyaddr($PackedAddr,AF_INET());
-    } elsif ($ip =~ /^[0-9a-zA-Z:]*/) {
-	$PackedAddr = pack('n8', canonical_ipv6_address($ip));
-	$name = gethostbyaddr($PackedAddr, AF_INET6());
-    }
-
-    return "missing in DNS" if ( ! defined $name );
 
     my $try = $trycount;
     my $delay = 1; # Exponensial backoff

@@ -1,0 +1,77 @@
+Index: pkg-nagios-plugins-contrib/check_email_delivery/src/check_smtp_send
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_email_delivery/src/check_smtp_send
++++ pkg-nagios-plugins-contrib/check_email_delivery/src/check_smtp_send
+@@ -46,6 +46,9 @@ my $password = "";
+ my $time_hires = "";
+ my $mx_lookup = 0;
+ my $ok;
++my $helo_hostname = `hostname -f`;
++chomp($helo_hostname);
++
+ $ok = Getopt::Long::GetOptions(
+ 	"V|version"=>\$show_version,
+ 	"v|verbose+"=>\$verbose,"h|help"=>\$help,"usage"=>\$help_usage,
+@@ -62,6 +65,8 @@ $ok = Getopt::Long::GetOptions(
+ 	"E|expect-response=s"=>\$expect_response,
+ 	# Time
+ 	"hires"=>\$time_hires,
++	# Hostname used for the HELO/EHLO command
++	"helo_hostname=s"=>\$helo_hostname,
+ 	);
+ 
+ if( $show_version ) {
+@@ -103,7 +108,7 @@ if( $help_usage ||
+ 	($smtp_server eq "" && !$mx_lookup) || scalar(@mailto)==0 || $mailfrom eq ""
+ 	) 
+   ) {
+-	print "Usage: $0 [-H host [-p port]] --mailto recipient\@your.net [--mailto recipient2\@your.net ...] --mailfrom sender\@your.net --body 'some text' [-w <seconds>] [-c <seconds>]\n";
++	print "Usage: $0 [-H host [-p port]] --mailto recipient\@your.net [--mailto recipient2\@your.net ...] --mailfrom sender\@your.net --body 'some text' [-w <seconds>] [-c <seconds>] [--helo_hostname 'Hostname for HELO/EHLO']\n";
+ 	exit $status{UNKNOWN};
+ }
+ 
+@@ -148,7 +153,7 @@ my $smtp;
+ eval {
+ 	if( $tls and $auth_method ) {
+ 		$smtp_port = $default_smtp_tls_port unless $smtp_port;
+-		$smtp = TLS_auth->new($smtp_server, Timeout=>$timeout, Port=>$smtp_port, User=>$username, Password=>$password, Auth_Method=>$auth_method);
++		$smtp = TLS_auth->new($smtp_server, Timeout=>$timeout, Port=>$smtp_port, User=>$username, Password=>$password, Auth_Method=>$auth_method, Hello=>$helo_hostname);
+ 		if( $smtp ) {
+ 			my $message = oneline($smtp->message());
+ 			die "cannot connect with TLS/$auth_method: $message" if $smtp->code() =~ m/53\d/;
+@@ -156,7 +161,7 @@ eval {
+ 	}
+ 	elsif( $tls ) {
+ 		$smtp_port = $default_smtp_tls_port unless $smtp_port;
+-		$smtp = Net::SMTP::TLS->new($smtp_server, Timeout=>$timeout, Port=>$smtp_port, User=>$username, Password=>$password);
++		$smtp = Net::SMTP::TLS->new($smtp_server, Timeout=>$timeout, Port=>$smtp_port, User=>$username, Password=>$password, Hello=>$helo_hostname);
+ 		if( $smtp ) {
+ 			my $message = oneline($smtp->message());
+ 			die "cannot connect with TLS: $message" if $smtp->code() =~ m/53\d/;
+@@ -164,7 +169,7 @@ eval {
+ 	}
+ 	elsif( $ssl ) {
+ 		$smtp_port = $default_smtp_ssl_port unless $smtp_port;
+-		$smtp = Net::SMTP::SSL->new($smtp_server, Port => $smtp_port, Timeout=>$timeout,Debug=>$smtp_debug);
++		$smtp = Net::SMTP::SSL->new($smtp_server, Port => $smtp_port, Timeout=>$timeout,Debug=>$smtp_debug, Hello=>$helo_hostname);
+ 		if( $smtp && $username )  {
+ 			$smtp->auth($username, $password);
+ 			my $message = oneline($smtp->message());
+@@ -173,7 +178,7 @@ eval {
+ 	}
+ 	elsif( $auth_method ) {
+ 		$smtp_port = $default_smtp_port unless $smtp_port;
+-		$smtp = Net::SMTP_auth->new($smtp_server, Port=>$smtp_port, Timeout=>$timeout,Debug=>$smtp_debug);	
++		$smtp = Net::SMTP_auth->new($smtp_server, Port=>$smtp_port, Timeout=>$timeout,Debug=>$smtp_debug, Hello=>$helo_hostname);	
+ 		if( $smtp ) {
+ 			$smtp->auth($auth_method, $username, $password);
+ 			my $message = oneline($smtp->message());
+@@ -182,7 +187,7 @@ eval {
+ 	}
+ 	else {
+ 		$smtp_port = $default_smtp_port unless $smtp_port;
+-		$smtp = Net::SMTP->new($smtp_server, Port=>$smtp_port, Timeout=>$timeout,Debug=>$smtp_debug);	
++		$smtp = Net::SMTP->new($smtp_server, Port=>$smtp_port, Timeout=>$timeout,Debug=>$smtp_debug,, Hello=>$helo_hostname);	
+ 		if( $smtp && $username ) {
+ 			$smtp->auth($username, $password);
+ 			my $message = oneline($smtp->message());

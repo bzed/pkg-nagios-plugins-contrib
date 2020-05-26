@@ -5,23 +5,26 @@ Maintainer: Debian Nagios Maintainer Group <pkg-nagios-devel@lists.alioth.debian
 Uploaders: #AUTO_UPDATE_Uploaders#
 Build-Depends: debhelper (>= 8.0.0),
                dh-autoreconf,
-               python,
-               python-debian,
+               dh-python,
+               python3, python3-debian,
                quilt (>= 0.46-7),
                #AUTO_UPDATE_Build-Depends#
 Standards-Version: 4.4.1.0
 Vcs-Git: https://salsa.debian.org/nagios-team/pkg-nagios-plugins-contrib.git
 Vcs-Browser: https://salsa.debian.org/nagios-team/pkg-nagios-plugins-contrib
 
-Package: nagios-plugins-contrib
+Package: monitoring-plugins-contrib
 Architecture: any
 Depends: ${misc:Depends}
 Recommends: #AUTO_UPDATE_Recommends#,
             ${perl:Depends},
-            ${python:Depends},
+            ${python3:Depends},
             ${shlibs:Depends}
+Provides: nagios-plugins-contrib
+Replaces: nagios-plugins-contrib (<< 26)
+Breaks: nagios-plugins-contrib (<< 26)
 Suggests: #AUTO_UPDATE_Suggests#
-Enhances: nagios-plugins, nagios-plugins-basic, nagios-plugins-standard
+Enhances: monitoring-plugins, monitoring-plugins-basic, monitoring-plugins-standard
 Description: Plugins for nagios compatible monitoring systems
  This package provides various plugins for Nagios compatible monitoring
  systems like Nagios and Icinga.
@@ -31,3 +34,11 @@ Description: Plugins for nagios compatible monitoring systems
  .
  Some scripts and binaries need more packages installed to work, which is
  implemented as recommends.
+
+Package: nagios-plugins-contrib
+Architecture: any
+Depends: monitoring-plugins-contrib
+Description: Transitional package for monitoring-plugins-contrib
+ nagios-plugins-contrib was renamed to monitoring-plugins-contrib.
+ .
+ This is a transitional package. It can safely be removed.

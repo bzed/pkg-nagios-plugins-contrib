@@ -1,2 +1,0 @@
-Restrictions: needs-root
-Test-Command: /usr/lib/nagios/plugins/check_libs_ng

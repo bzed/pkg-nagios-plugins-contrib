@@ -1,0 +1,14 @@
+include:
+ - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
+ - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/pipeline-jobs.yml
+
+variables:
+ RELEASE: 'unstable'
+ SALSA_CI_DISABLE_APTLY: 0
+ SALSA_CI_DISABLE_AUTOPKGTEST: 0
+ SALSA_CI_DISABLE_BLHC: 0
+ SALSA_CI_DISABLE_LINTIAN: 0
+ SALSA_CI_DISABLE_PIUPARTS: 0
+ SALSA_CI_DISABLE_REPROTEST: 0
+ SALSA_CI_DISABLE_BUILD_PACKAGE_ALL: 0
+ SALSA_CI_DISABLE_BUILD_PACKAGE_ANY: 0

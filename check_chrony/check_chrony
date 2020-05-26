@@ -1,0 +1,163 @@
+#!/usr/bin/python3
+
+# Monitor chronyd
+#
+# Copyright 2019 Bernd Zeimetz <bernd@bzed.de>
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+from subprocess import Popen, PIPE
+import optparse
+import sys
+
+broken_example = """Reference ID    : 00000000 ()
+Stratum         : 0
+Ref time (UTC)  : Thu Jan 01 00:00:00 1970
+System time     : 0.000000000 seconds fast of NTP time
+Last offset     : +0.000000000 seconds
+RMS offset      : 0.000000000 seconds
+Frequency       : 8.769 ppm fast
+Residual freq   : +0.000 ppm
+Skew            : 0.000 ppm
+Root delay      : 1.000000000 seconds
+Root dispersion : 1.000000000 seconds
+Update interval : 0.0 seconds
+Leap status     : Not synchronised
+"""
+
+NAGIOS_STATUS = {
+    "OK": 0,
+    "WARNING": 1,
+    "CRITICAL": 2,
+    "UNKNOWN": 3
+}
+
+parser = optparse.OptionParser()
+parser.set_usage("%prog [options]")
+parser.add_option(
+    "-w", "--warning", dest="warning", metavar="WARNING",
+    type="int", default="1000",
+    help="time differences in ms (warning)"
+)
+parser.add_option(
+    "-c", "--critical", dest="critical", metavar="CRITICAL",
+    type="int", default="3000",
+    help="time differences in ms (critical)"
+)
+parser.add_option(
+    "-W", "--stratum-warning", dest="stratum_warning",
+    metavar="STRATUM_WARNING",
+    type="int", default="3",
+    help="maximum stratum level (warning)"
+)
+parser.add_option(
+    "-C", "--stratum-critical", dest="stratum_critical",
+    metavar="STRATUM_CRITICAL",
+    type="int", default="5",
+    help="maximum stratum level (critical)"
+)
+(options, args) = parser.parse_args()
+
+chronyc = Popen(
+    ['chronyc', 'tracking'],
+    stdin=PIPE, stdout=PIPE, stderr=PIPE,
+    bufsize=-1
+)
+output, error = chronyc.communicate()
+
+if chronyc.returncode > 0:
+    print(("chronyc failed: {}".format(output)))
+    sys.exit(NAGIOS_STATUS['CRITICAL'])
+
+output = output.decode().split('\n')
+parsed_output = {}
+
+for line in output:
+    if ':' not in line:
+        continue
+    line = line.split(':')
+    key = line[0]
+    value = ':'.join(line[1:])
+    key = key.strip()
+    value = value.strip()
+    key = key.replace('(', '')
+    key = key.replace(')', '')
+    key = key.replace(' ', '_')
+    key = key.lower()
+
+    parsed_output[key] = value
+
+if '00000000' in parsed_output['reference_id']:
+    print("chrony failed to connect to NTP server.")
+    sys.exit(NAGIOS_STATUS['CRITICAL'])
+
+if int(parsed_output['stratum']) > options.stratum_critical:
+    print((
+        "chrony stratum too high: {} > {}".format(
+            parsed_output['stratum'],
+            options.stratum_critical
+        )
+    ))
+    sys.exit(NAGIOS_STATUS['CRITICAL'])
+
+if int(parsed_output['stratum']) > options.stratum_warning:
+    print((
+        "chrony stratum too high: {} > {}".format(
+            parsed_output['stratum'],
+            options.stratum_warning
+        )
+    ))
+    sys.exit(NAGIOS_STATUS['WARNING'])
+
+system_time = parsed_output['system_time'].split(' ')
+system_time_diff_ms = float(system_time[0]) * 1000
+system_time_desc = ' '.join(system_time[1:])
+
+if (system_time_diff_ms > options.critical):
+    print((
+        "chrony system time {}ms {}. ({}ms > {}ms)".format(
+            system_time_diff_ms,
+            system_time_desc,
+            system_time_diff_ms,
+            options.critical
+        )
+    ))
+    sys.exit(NAGIOS_STATUS['CRITICAL'])
+
+if (system_time_diff_ms > options.warning):
+    print((
+        "chrony system time {}ms {}. ({}ms > {}ms)".format(
+            system_time_diff_ms,
+            system_time_desc,
+            system_time_diff_ms,
+            options.warning
+        )
+    ))
+    sys.exit(NAGIOS_STATUS['WARNING'])
+
+
+print((
+    "chrony OK: System Time {}, Stratum {}".format(
+        parsed_output['system_time'],
+        parsed_output['stratum'],
+    )
+))
+sys.exit(NAGIOS_STATUS['OK'])
+
