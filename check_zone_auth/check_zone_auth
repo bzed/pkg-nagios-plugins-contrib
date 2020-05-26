@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $Id: check_zone_auth,v 1.13 2010/07/23 15:54:08 wessels Exp $
+# $Id: check_zone_auth,v 1.14 2020/02/11 05:24:06 wessels Exp $
 #
 # check_zone_auth
 #
@@ -113,10 +113,10 @@ sub do_recursion {
 		print STDERR "\nRECURSE\n" if $opts{d};
 		my $pkt;
 		foreach my $ns (shuffle @refs) {
-			print STDERR "sending query for $zone SOA to $ns\n" if $opts{d};
+			print STDERR "sending query for $zone NS to $ns\n" if $opts{d};
 			$res->nameserver($ns);
 			$res->udp_timeout(5);
-			$pkt = $res->send($zone, 'SOA');
+			$pkt = $res->send($zone, 'NS');
 			last if $pkt;
 		}
 		critical("No response to seed query") unless $pkt;
@@ -124,12 +124,15 @@ sub do_recursion {
 			unless ($pkt->header->rcode eq 'NOERROR');
 		add_nslist_to_data($pkt);
 		@refs = ();
+		foreach my $rr ($pkt->answer) {
+			next unless ($rr->type eq 'NS');
+			next unless names_equal($rr->name, $zone);
+			$done = 1;
+		}
 		foreach my $rr ($pkt->authority) {
 			next unless ($rr->type eq 'NS');
 			print STDERR $rr->string, "\n" if $opts{d};
 			push (@refs, $rr->nsdname);
-			next unless names_equal($rr->name, $zone);
-			$done = 1;
 		}
 	} while (! $done);
 }
@@ -245,7 +248,7 @@ sub soa_serial {
 	my $pkt = shift;
 	foreach my $rr ($pkt->answer) {
 		next unless ($rr->type eq 'SOA');
-		next unless ($rr->name eq $zone);
+		next unless names_equal($rr->name, $zone);
 		return $rr->serial;
 	}
 	return 0;
