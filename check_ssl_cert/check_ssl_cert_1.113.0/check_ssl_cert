@@ -19,7 +19,7 @@
 ################################################################################
 # Constants
 
-VERSION=1.109.0
+VERSION=1.113.0
 SHORTNAME="SSL_CERT"
 
 VALID_ATTRIBUTES=",startdate,enddate,subject,issuer,serial,modulus,serial,hash,email,ocsp_uri,fingerprint,"
@@ -93,6 +93,7 @@ usage() {
     echo "                                   related checks"
     echo "      --ignore-exp                 ignore expiration date"
     echo "      --ignore-ocsp                do not check revocation with OCSP"
+    echo "      --ignore-ocsp-timeout        ignore OCSP result when timeout occurs while checking"
     echo "      --ignore-sig-alg             do not check if the certificate was signed with SHA1"
     echo "                                   or MD5"
     echo "      --ignore-ssl-labs-cache      Forces a new check by SSL Labs (see -L)"
@@ -102,7 +103,7 @@ usage() {
     echo "   -K,--clientkey path             use client certificate key to authenticate"
     echo "   -L,--check-ssl-labs grade       SSL Labs assessment"
     echo "                                   (please check https://www.ssllabs.com/about/terms.html)"
-    echo "      --check-ssl-labs-warn-grade  SSL-Labs grade on which to warn"
+    echo "      --check-ssl-labs-warn grade  SSL-Labs grade on which to warn"
     echo "      --long-output list           append the specified comma separated (no spaces) list"
     echo "                                   of attributes to the plugin output on additional lines"
     echo "                                   Valid attributes are:"
@@ -118,6 +119,7 @@ usage() {
     echo "      --no_tls1_1                  disable TLS version 1.1"
     echo "      --no_tls1_2                  disable TLS version 1.2"
     echo "      --no_tls1_3                  disable TLS version 1.3"
+    echo "      --not-valid-longer-than days critical if the certificate validity is longer than the specified period"
     echo "   -N,--host-cn                    match CN with the host name"
     echo "      --ocsp-critical hours        minimum number of hours an OCSP response has to be valid to"
     echo "                                   issue a critical status"
@@ -127,9 +129,10 @@ usage() {
     echo "      --openssl path               path of the openssl binary to be used"
     echo "   -p,--port port                  TCP port"
     echo "   -P,--protocol protocol          use the specific protocol"
-    echo "                                   {ftp|ftps|http|h2|imap|imaps|irc|ircs|ldap|ldaps|pop3|pop3s|sieve|smtp|smtps|xmpp}"
-    echo "                                   http:                    default"
-    echo "                                   ftp,imap,irc,ldap,pop3,sieve,smtp: switch to TLS using StartTLS"
+    echo "                                   {ftp|ftps|http|https|h2|imap|imaps|irc|ircs|ldap|ldaps|pop3|pop3s|postgres|sieve|smtp|smtps|xmpp|xmpp-server}"
+    echo "                                   https:                             default"
+    echo "                                   h2:                                forces HTTP/2"
+    echo "                                   ftp,imap,irc,ldap,pop3,postgres,sieve,smtp: switch to TLS using StartTLS"
     echo "      --require-no-ssl2            critical if SSL version 2 is offered"
     echo "      --require-no-ssl3            critical if SSL version 3 is offered"
     echo "      --require-no-tls1            critical if TLS 1 is offered"
@@ -397,11 +400,11 @@ append_warning_message() {
     fi
 
     MSG="${SHORTNAME} WARN${tmp}: ${1}${PERFORMANCE_DATA}${LONG_OUTPUT}"
-    
+
     if [ "${WARNING_MSG}" = "" ]; then
         WARNING_MSG="${MSG}"
     fi
-    
+
     ALL_MSG="${ALL_MSG}\n    ${MSG}"
 
 
@@ -412,7 +415,6 @@ append_warning_message() {
         echo "[DBG] WARNING <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
     fi
 
-    
 }
 
 
@@ -462,6 +464,7 @@ unknown() {
 #   ...
 #  HEREDOC
 set_variable() {
+    # shellcheck disable=SC2016
     eval "$1"'=$(cat)'
 }
 
@@ -514,7 +517,7 @@ exec_with_timeout() {
 	# (in fact the value is assigned with the function set_value)
 	EXPECT_SCRIPT=''
 	TIMEOUT_ERROR_CODE=42
-	
+
 	set_variable EXPECT_SCRIPT << EOT
 
 set echo \"-noecho\"
@@ -523,7 +526,7 @@ set timeout ${time}
 # spawn the process
 spawn -noecho sh -c { ${command} }
 
-expect { 
+expect {
   timeout { exit ${TIMEOUT_ERROR_CODE} }
   eof
 }
@@ -656,7 +659,7 @@ fetch_certificate() {
 
     RET=0
     ALPN=''
-    
+
     # IPv6 addresses need brackets in a URI
     if [ "${HOST}" != "${HOST#*[0-9].[0-9]}" ]; then
         if [ -n "${DEBUG}" ] ; then
@@ -726,11 +729,15 @@ fetch_certificate() {
                 exec_with_timeout "${TIMEOUT}" "printf 'A01 LOGOUT\\n' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -crlf ${IGN_EOF} -connect ${HOST}:${PORT} ${SERVERNAME} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
                 RET=$?
                 ;;
+            postgres)
+                exec_with_timeout "${TIMEOUT}" "printf 'X\0\0\0\4' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -starttls ${PROTOCOL} -connect ${HOST}:${PORT} ${SERVERNAME} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
+                RET=$?
+                ;;
             sieve)
                 exec_with_timeout "${TIMEOUT}" "echo 'LOGOUT' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -starttls ${PROTOCOL} -connect ${HOST}:${PORT} ${SERVERNAME} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
                 RET=$?
                 ;;
-            xmpp)
+            xmpp|xmpp-server)
                 exec_with_timeout "${TIMEOUT}" "echo 'Q' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -starttls ${PROTOCOL} -connect ${HOST}:${XMPPPORT} ${XMPPHOST} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
                 RET=$?
                 ;;
@@ -753,7 +760,7 @@ fetch_certificate() {
 	if [ "${PROTOCOL}" = 'h2' ] ; then
 	    ALPN='-alpn h2'
 	fi
-	
+
         exec_with_timeout "${TIMEOUT}" "printf '${HTTP_REQUEST}' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -crlf ${IGN_EOF} ${ALPN} -connect ${HOST}:${PORT} ${SERVERNAME} -showcerts -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
         RET=$?
 
@@ -762,7 +769,7 @@ fetch_certificate() {
     if [ -n "${DEBUG}" ] ; then
 
 	echo "[DBG] Return value of the command = ${RET}"
-	
+
         echo "[DBG] storing a copy of the retrieved certificate in ${TMPDIR}/${HOST}-${PORT}.crt"
         cp "${CERT}" "${TMPDIR}/${HOST}-${PORT}.crt"
 
@@ -796,7 +803,7 @@ fetch_certificate() {
 	    ERROR='Connection refused'
 	    prepend_critical_message "${ERROR}"
             critical "${SHORTNAME} CRITICAL: ${ERROR}"
-	    
+
         else
 
             # Try to clean up the error message
@@ -895,12 +902,17 @@ main() {
     REQUIRE_SAN=""
     REQUIRE_OCSP_STAPLING=""
     OCSP="1" # enabled by default
+    OCSP_IGNORE_TIMEOUT=""
     FORMAT=""
     HTTP_METHOD="HEAD"
     RSA=""
     ECDSA=""
     DANE=""
     DISALLOWED_PROTOCOLS=""
+
+    # after 2020-09-01 we could set the default to 398 days because of Apple
+    # https://support.apple.com/en-us/HT211025
+    NOT_VALID_LONGER_THAN=""
 
     # Set the default temp dir if not set
     if [ -z "${TMPDIR}" ] ; then
@@ -912,6 +924,8 @@ main() {
     #
     # We do not use getopts since it is unable to process long options and it is
     # Bash specific.
+
+    COMMAND_LINE_ARGUMENTS=$*
 
     while true; do
 
@@ -1052,6 +1066,10 @@ main() {
                 OCSP=""
                 shift
                 ;;
+            --ignore-ocsp-timeout)
+                OCSP_IGNORE_TIMEOUT=1
+                shift
+                ;;
             --terse)
                 TERSE=1
                 shift
@@ -1147,8 +1165,8 @@ main() {
                 SSL_LAB_CRIT_ASSESSMENT="$2"
                 shift 2
                 ;;
-            --check-ssl-labs-warn-grade)
-                check_option_argument '--check-ssl-labs-warn-grade' "$2"
+            --check-ssl-labs-warn)
+                check_option_argument '--check-ssl-labs-warn' "$2"
                 SSL_LAB_WARN_ASSESTMENT="$2"
                 shift 2
                 ;;
@@ -1176,6 +1194,11 @@ main() {
                 fi
                 shift 2
                 ;;
+	    --not-valid-longer-than)
+		check_option_argument '--not-valid-longer-than' "$2"
+		NOT_VALID_LONGER_THAN=$2
+		shift 2
+		;;
             --ocsp-critical)
                 check_option_argument '--ocsp-critical' "$2"
                 OCSP_CRITICAL="$2"
@@ -1324,12 +1347,12 @@ main() {
     if [ -z "${PORT}" ] ; then
 
 	if [ -z "${PROTOCOL}" ] ; then
-       
+
 	    # default is HTTPS
 	    PORT='443'
 
 	else
-	
+
             case "${PROTOCOL}" in
 		smtp)
 		    PORT=25
@@ -1361,6 +1384,9 @@ main() {
 		imaps)
 		    PORT=993
 		    ;;
+		postgres)
+		    PORT=5432
+		    ;;
 		sieve)
 		    PORT=4190
                     ;;
@@ -1376,9 +1402,13 @@ main() {
             esac
 
 	fi
-	
+
     fi
-    
+
+    if [ -n "${DEBUG}" ] ; then
+	echo "[DBG] Command line arguments: ${COMMAND_LINE_ARGUMENTS}"
+    fi
+
     ################################################################################
     # Set COMMON_NAME to hostname if -N was given as argument.
     # COMMON_NAME may be a space separated list of hostnames.
@@ -1486,6 +1516,18 @@ main() {
 
     fi
 
+    if [ -n "${NOT_VALID_LONGER_THAN}" ] ; then
+
+	if [ -n "${DEBUG}" ] ; then
+            echo "[DBG] --not-valid-longer-than specified: ${NOT_VALID_LONGER_THAN}"
+        fi
+
+        if ! echo "${NOT_VALID_LONGER_THAN}" | grep -q '^[0-9][0-9]*$' ; then
+            unknown "invalid number of days ${NOT_VALID_LONGER_THAN}"
+        fi
+
+    fi
+
     if [ -n "${TMPDIR}" ] ; then
 
         if [ ! -d "${TMPDIR}" ] ; then
@@ -1515,7 +1557,7 @@ main() {
         convert_ssl_lab_grade "${SSL_LAB_WARN_ASSESTMENT}"
         SSL_LAB_WARN_ASSESTMENT_NUMERIC="${NUMERIC_SSL_LAB_GRADE}"
         if [ "${SSL_LAB_WARN_ASSESTMENT_NUMERIC}" -lt "${SSL_LAB_CRIT_ASSESSMENT_NUMERIC}" ]; then
-            unknown  '--check-ssl-labs-warn-grade must be greater than -L|--check-ssl-labs'
+            unknown  '--check-ssl-labs-warn must be greater than -L|--check-ssl-labs'
         fi
     fi
 
@@ -1608,8 +1650,8 @@ main() {
     else
 	# we check if the provided binary actually works
 	check_required_prog "${NMAP_BIN}"
-    fi    
-    
+    fi
+
     # Expect (optional)
     EXPECT="$(command -v expect 2> /dev/null)"
     test -x "${EXPECT}" || EXPECT=""
@@ -1752,11 +1794,11 @@ main() {
     S_CLIENT_NAME=
     if ${OPENSSL} s_client -help 2>&1 | grep -q -- -name || ${OPENSSL} s_client not_a_real_option 2>&1 | grep -q -- -name; then
 
-	HOSTNAME=$( hostname )
-        S_CLIENT_NAME="-name ${HOSTNAME}"
+	CURRENT_HOSTNAME=$( hostname )
+        S_CLIENT_NAME="-name ${CURRENT_HOSTNAME}"
 
         if [ -n "${DEBUG}" ] ; then
-            echo "[DBG] '${OPENSSL} s_client' supports '-name': using ${HOSTNAME}"
+            echo "[DBG] '${OPENSSL} s_client' supports '-name': using ${CURRENT_HOSTNAME}"
         fi
 
     else
@@ -1829,6 +1871,13 @@ main() {
             unknown "cannot connect using IPv6 as no local interface has  IPv6 configured"
         fi
 
+	# nmap does not have a -4 switch
+	NMAP_INETPROTO=''
+	if [ -n "${INETPROTO}" ] && [ "${INETPROTO}" = '-6' ] ; then
+	    NMAP_INETPROTO='-6'
+	fi
+
+
     fi
 
     ################################################################################
@@ -1840,18 +1889,30 @@ main() {
     fi
 
     HTTP_REQUEST="${HTTP_METHOD} / HTTP/1.1\\nHost: ${HOST_HEADER}\\nUser-Agent: check_ssl_cert/${VERSION}\\nConnection: close\\n\\n"
-
+    
     ##############################################################################
     # Check for disallowed protocols
     if [ -n "${DISALLOWED_PROTOCOLS}" ] ; then
 
-	OFFERED_PROTOCOLS=$( ${NMAP_BIN} -Pn -p "${PORT}" --script ssl-enum-ciphers "${HOST}" | grep '^|' )
+	# check if the host has an IPv6 address only (as nmap is not able to resolve without the -6 switch
+	if ${NMAP_BIN} "${HOST}" 2>&1 | grep -q 'Failed to resolve' ; then
+	    if [ -n "${DEBUG}" ] ; then
+		echo '[DBG] nmap is not able to resolve the host name. Trying with -6 to force IPv6 for an IPv6-only host'
+	    fi
+	    NMAP_INETPROTO='-6'
+	fi
+	
+	if [ -n "${DEBUG}" ] ; then
+	    echo "[DBG] Executing ${NMAP_BIN} -Pn -p \"${PORT}\" \"${NMAP_INETPROTO}\" --script ssl-enum-ciphers \"${HOST}\" | grep '^|'"
+	fi
+	
+	OFFERED_PROTOCOLS=$( ${NMAP_BIN} -Pn -p "${PORT}" "${NMAP_INETPROTO}" --script ssl-enum-ciphers "${HOST}" | grep '^|' )
 
 	if [ -n "${DEBUG}" ] ; then
 	    echo "[DBG] offered cyphers and protocols:"
 	    echo "${OFFERED_PROTOCOLS}" | sed 's/^|/[DBG] /'
 	fi
-	
+
 	for protocol in ${DISALLOWED_PROTOCOLS} ; do
 	    if [ -n "${DEBUG}" ] ; then
 		echo "[DBG] Checking if '${protocol}' is offered"
@@ -1866,7 +1927,7 @@ main() {
 	done
 
     fi
-    
+
     ##############################################################################
     # DANE
 
@@ -1876,7 +1937,6 @@ main() {
 	    echo '[DBG] checking DANE'
 	fi
 
-	# dig can be replaced with delv, on the next eight lines, if it is working on the system, in order to verify DNSSEC
 	if [ -z "${DIG_BIN}" ] ; then
 	    DIG_BIN='dig'
 	fi
@@ -2516,7 +2576,7 @@ main() {
         fi
 
         if [ "${OPENSSL_COMMAND}" = "x509" ]; then
-	    
+
             # x509 certificates (default)
 
             # We always check expired certificates
@@ -2549,9 +2609,27 @@ main() {
                 fi
 
             fi
-	    
+
+	    if [ -n "${NOT_VALID_LONGER_THAN}" ] ; then
+
+                if [ -n "${DEBUG}" ] ; then
+                    echo "[DBG] checking if the certificate is valid longer than ${NOT_VALID_LONGER_THAN} days"
+		    echo "[DBG]   valid for ${DAYS_VALID} days"
+                fi
+
+		if [ "${DAYS_VALID}" -gt "${NOT_VALID_LONGER_THAN}" ] ; then
+
+		    if [ -n "${DEBUG}" ] ; then
+			echo "[DBG] Certificate expires in ${DAYS_VALID} days which is more than ${NOT_VALID_LONGER_THAN} days"
+                    fi
+
+		    prepend_critical_message "Certificate expires in ${DAYS_VALID} days which is more than ${NOT_VALID_LONGER_THAN} days"
+		fi
+
+	    fi
+
         elif [ "${OPENSSL_COMMAND}" = "crl" ]; then
-	    
+
             # CRL certificates
 
             # We always check expired certificates
@@ -2855,28 +2933,28 @@ main() {
 
                     if [ -n "${KEYVALUE}" ] ; then
                         if [ -n "${DEBUG}" ] ; then
-                            echo "[DBG] executing ${OPENSSL} ocsp -no_nonce -issuer ${ISSUER_CERT} -cert ${CERT} -host ${HTTP_PROXY#*://} -path ${OCSP_URI} -header HOST=${OCSP_HOST}"
+                            echo "[DBG] executing ${OPENSSL} ocsp -timeout \"${TIMEOUT}\" -no_nonce -issuer ${ISSUER_CERT} -cert ${CERT} -host ${HTTP_PROXY#*://} -path ${OCSP_URI} -header HOST=${OCSP_HOST}"
                         fi
-                        OCSP_RESP="$(${OPENSSL} ocsp -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT}" -host "${HTTP_PROXY#*://}" -path "${OCSP_URI}" -header HOST="${OCSP_HOST}" 2>&1 )"
+                        OCSP_RESP="$(${OPENSSL} ocsp -timeout "${TIMEOUT}" -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT}" -host "${HTTP_PROXY#*://}" -path "${OCSP_URI}" -header HOST="${OCSP_HOST}" 2>&1 )"
                     else
                         if [ -n "${DEBUG}" ] ; then
-                            echo "[DBG] executing ${OPENSSL} ocsp -no_nonce -issuer ${ISSUER_CERT} -cert ${CERT} -host ${HTTP_PROXY#*://} -path ${OCSP_URI} -header HOST ${OCSP_HOST}"
+                            echo "[DBG] executing ${OPENSSL} ocsp -timeout \"${TIMEOUT}\" -no_nonce -issuer ${ISSUER_CERT} -cert ${CERT} -host ${HTTP_PROXY#*://} -path ${OCSP_URI} -header HOST ${OCSP_HOST}"
                         fi
-                        OCSP_RESP="$(${OPENSSL} ocsp -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT}" -host "${HTTP_PROXY#*://}" -path "${OCSP_URI}" -header HOST "${OCSP_HOST}" 2>&1 )"
+                        OCSP_RESP="$(${OPENSSL} ocsp -timeout "${TIMEOUT}" -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT}" -host "${HTTP_PROXY#*://}" -path "${OCSP_URI}" -header HOST "${OCSP_HOST}" 2>&1 )"
                     fi
 
                 else
 
                     if [ -n "${KEYVALUE}" ] ; then
                         if [ -n "${DEBUG}" ] ; then
-                            echo "[DBG] executing ${OPENSSL} ocsp -no_nonce -issuer ${ISSUER_CERT} -cert ${CERT}  -url ${OCSP_URI} ${OCSP_HEADER} -header HOST=${OCSP_HOST}"
+                            echo "[DBG] executing ${OPENSSL} ocsp -timeout \"${TIMEOUT}\" -no_nonce -issuer ${ISSUER_CERT} -cert ${CERT}  -url ${OCSP_URI} ${OCSP_HEADER} -header HOST=${OCSP_HOST}"
                         fi
-                        OCSP_RESP="$(${OPENSSL} ocsp -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT}" -url "${OCSP_URI}" -header "HOST=${OCSP_HOST}" 2>&1 )"
+                        OCSP_RESP="$(${OPENSSL} ocsp -timeout "${TIMEOUT}" -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT}" -url "${OCSP_URI}" -header "HOST=${OCSP_HOST}" 2>&1 )"
                     else
                         if [ -n "${DEBUG}" ] ; then
-                            echo "[DBG] executing ${OPENSSL} ocsp -no_nonce -issuer ${ISSUER_CERT} -cert ${CERT}  -url ${OCSP_URI} ${OCSP_HEADER} -header HOST ${OCSP_HOST}"
+                            echo "[DBG] executing ${OPENSSL} ocsp -timeout \"${TIMEOUT}\" -no_nonce -issuer ${ISSUER_CERT} -cert ${CERT}  -url ${OCSP_URI} ${OCSP_HEADER} -header HOST ${OCSP_HOST}"
                         fi
-                        OCSP_RESP="$(${OPENSSL} ocsp -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT}" -url "${OCSP_URI}" -header HOST "${OCSP_HOST}" 2>&1 )"
+                        OCSP_RESP="$(${OPENSSL} ocsp -timeout "${TIMEOUT}" -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT}" -url "${OCSP_URI}" -header HOST "${OCSP_HOST}" 2>&1 )"
                     fi
 
                 fi
@@ -2885,7 +2963,13 @@ main() {
                     echo "${OCSP_RESP}" | sed 's/^/[DBG] OCSP: response = /'
                 fi
 
-                if echo "${OCSP_RESP}" | grep -qi "revoked" ; then
+                if [ -n "${OCSP_IGNORE_TIMEOUT}" ] && echo "${OCSP_RESP}" | grep -qi "timeout on connect" ; then
+
+                   if [ -n "${DEBUG}" ] ; then
+                        echo '[DBG] OCSP: Timeout on connect'
+                   fi
+
+                elif echo "${OCSP_RESP}" | grep -qi "revoked" ; then
 
                     if [ -n "${DEBUG}" ] ; then
                         echo '[DBG] OCSP: revoked'
@@ -2902,25 +2986,25 @@ main() {
                     if [ -n "${HTTP_PROXY:-}" ] ; then
 
                         if [ -n "${DEBUG}" ] ; then
-                            echo "[DBG] executing ${OPENSSL} ocsp -no_nonce -issuer \"${ISSUER_CERT}\" -cert \"${CERT}]\" -host \"${HTTP_PROXY#*://}\" -path \"${OCSP_URI}\" \"${OCSP_HEADER}\" 2>&1"
+                            echo "[DBG] executing ${OPENSSL} ocsp -timeout \"${TIMEOUT}\" -no_nonce -issuer \"${ISSUER_CERT}\" -cert \"${CERT}]\" -host \"${HTTP_PROXY#*://}\" -path \"${OCSP_URI}\" \"${OCSP_HEADER}\" 2>&1"
                         fi
 
                         if [ -n "${OCSP_HEADER}" ] ; then
-                            OCSP_RESP="$(${OPENSSL} ocsp -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT}" -host "${HTTP_PROXY#*://}" -path "${OCSP_URI}" "${OCSP_HEADER}" 2>&1 )"
+                            OCSP_RESP="$(${OPENSSL} ocsp -timeout "${TIMEOUT}" -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT}" -host "${HTTP_PROXY#*://}" -path "${OCSP_URI}" "${OCSP_HEADER}" 2>&1 )"
                         else
-                            OCSP_RESP="$(${OPENSSL} ocsp -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT}" -host "${HTTP_PROXY#*://}" -path "${OCSP_URI}" 2>&1 )"
+                            OCSP_RESP="$(${OPENSSL} ocsp -timeout "${TIMEOUT}" -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT}" -host "${HTTP_PROXY#*://}" -path "${OCSP_URI}" 2>&1 )"
                         fi
 
                     else
 
                         if [ -n "${DEBUG}" ] ; then
-                            echo "[DBG] executing ${OPENSSL} ocsp -no_nonce -issuer \"${ISSUER_CERT}\" -cert \"${CERT}\" -url \"${OCSP_URI}\" \"${OCSP_HEADER}\" 2>&1"
+                            echo "[DBG] executing ${OPENSSL} ocsp -timeout \"${TIMEOUT}\" -no_nonce -issuer \"${ISSUER_CERT}\" -cert \"${CERT}\" -url \"${OCSP_URI}\" \"${OCSP_HEADER}\" 2>&1"
                         fi
 
                         if [ -n "${OCSP_HEADER}" ] ; then
-                            OCSP_RESP="$(${OPENSSL} ocsp -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT}" -url "${OCSP_URI}" "${OCSP_HEADER}" 2>&1 )"
+                            OCSP_RESP="$(${OPENSSL} ocsp -timeout "${TIMEOUT}" -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT}" -url "${OCSP_URI}" "${OCSP_HEADER}" 2>&1 )"
                         else
-                            OCSP_RESP="$(${OPENSSL} ocsp -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT}" -url "${OCSP_URI}" 2>&1 )"
+                            OCSP_RESP="$(${OPENSSL} ocsp -timeout "${TIMEOUT}" -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT}" -url "${OCSP_URI}" 2>&1 )"
                         fi
 
                     fi
