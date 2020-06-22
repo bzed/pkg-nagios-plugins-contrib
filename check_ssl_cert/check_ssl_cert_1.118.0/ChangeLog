@@ -1,3 +1,21 @@
+2020-06-12  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert (main): Fixed a problem on BSD in the processing of the issuers
+	* check_ssl_cert (debuglog): [DBG] prefix for all the lines
+
+2020-06-09  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: fixed a bug in the output (expiration date of chain elements)
+
+2020-06-05  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert (fetch_certificate): support for s_client -proxy option
+
+2020-06-04  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Processes all the certificates in the chain
+	* check_ssl_cert: New option to check that the issuer does not match a given pattern
+
 2020-05-18  Matteo Corti  <matteo@corti.li>
 
 	* check_ssl_cert: Propagates the -6 switch to nmap
