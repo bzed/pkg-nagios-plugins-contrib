@@ -19,7 +19,7 @@
 ################################################################################
 # Constants
 
-VERSION=1.120.0
+VERSION=1.122.0
 SHORTNAME="SSL_CERT"
 
 VALID_ATTRIBUTES=",startdate,enddate,subject,issuer,serial,modulus,serial,hash,email,ocsp_uri,fingerprint,"
@@ -73,6 +73,8 @@ usage() {
     echo "      --curl-bin path              path of the curl binary to be used"
     echo "      --curl-user-agent string     user agent that curl shall use to obtain the"
     echo "                                   issuer cert"
+    echo "      --custom-http-header string  custom HTTP header sent when getting the cert"
+    echo "                                   example: 'X-Check-Ssl-Cert: Foobar=1'"
     echo "      --dane                       verify that valid DANE records exist (since OpenSSL 1.1.0)"
     echo "      --dane 211                   verify that a valid DANE-TA(2) SPKI(1) SHA2-256(1) TLSA record exists"
     echo "      --dane 301                   verify that a valid DANE-EE(3) Cert(0) SHA2-256(1) TLSA record exists"
@@ -151,6 +153,7 @@ usage() {
     echo "      --require-no-tls1_1          critical if TLS 1.1 is offered"
     echo "   -s,--selfsigned                 allows self-signed certificates"
     echo "      --serial serialnum           pattern to match the serial number"
+    echo "      --skip-element number        skip checks on N cert element from the begining of the chain"
     echo "      --sni name                   sets the TLS SNI (Server Name Indication) extension"
     echo "                                   in the ClientHello message to 'name'"
     echo "      --ssl2                       forces SSL version 2"
@@ -970,6 +973,7 @@ main() {
     FILE_BIN=""
     CURL_BIN=""
     CURL_USER_AGENT=""
+    CUSTOM_HTTP_HEADER=""
     DIG_BIN=""
     NMAP_BIN=""
     IGNORE_SSL_LABS_CACHE=""
@@ -992,6 +996,7 @@ main() {
     DISALLOWED_PROTOCOLS=""
     WARNING_DAYS=20
     CRITICAL_DAYS=15
+    SKIP_ELEMENT=0
 
     # after 2020-09-01 we could set the default to 398 days because of Apple
     # https://support.apple.com/en-us/HT211025
@@ -1196,6 +1201,11 @@ main() {
                 CURL_USER_AGENT="$2"
                 shift 2
                 ;;
+            --custom-http-header)
+                check_option_argument '--custom-http-header' "$2"
+                CUSTOM_HTTP_HEADER="$2"
+                shift 2
+                ;;
             # Deprecated option: used to be as --warning
             --days)
                 check_option_argument '--days' "$2"
@@ -1259,6 +1269,11 @@ main() {
             --serial)
                 check_option_argument '--serial' "$2"
                 SERIAL_LOCK="$2"
+                shift 2
+                ;;
+            --skip-element)
+                check_option_argument '--skip-element' "$2"
+                SKIP_ELEMENT="$2"
                 shift 2
                 ;;
             --fingerprint)
@@ -1697,7 +1712,7 @@ main() {
     check_required_prog "${FILE_BIN}"
     FILE_BIN=${PROG}
 
-    debuglog "file version: $( "${FILE_BIN}" --version )"
+    debuglog "file version: $( "${FILE_BIN}" --version 2>&1 )"
 
     # cURL
     if [ -z "${CURL_BIN}" ] ; then
@@ -1966,7 +1981,12 @@ main() {
         HOST_HEADER="${HOST}"
     fi
 
-    HTTP_REQUEST="${HTTP_METHOD} / HTTP/1.1\\nHost: ${HOST_HEADER}\\nUser-Agent: check_ssl_cert/${VERSION}\\nConnection: close\\n\\n"
+    # add newline if custom HTTP header is defined
+    if [ -n "${CUSTOM_HTTP_HEADER}" ]; then
+        CUSTOM_HTTP_HEADER="${CUSTOM_HTTP_HEADER}\\n"
+    fi
+
+    HTTP_REQUEST="${HTTP_METHOD} / HTTP/1.1\\nHost: ${HOST_HEADER}\\nUser-Agent: check_ssl_cert/${VERSION}\\n${CUSTOM_HTTP_HEADER}Connection: close\\n\\n"
 
     ##############################################################################
     # Check for disallowed protocols
@@ -2195,7 +2215,8 @@ main() {
         NUM_CERTIFICATES=$(grep -c -- "-BEGIN CERTIFICATE-" "${CERT}")
 
         # start with first certificate
-        CERT_IN_CHAIN=1
+        debuglog "Skipping ${SKIP_ELEMENT} element of the chain"
+        CERT_IN_CHAIN=$(( SKIP_ELEMENT + 1 ))
         # shellcheck disable=SC2086
         while [ "${CERT_IN_CHAIN}" -le "${NUM_CERTIFICATES}" ]; do
             if [ -n "${ISSUERS}" ]; then
@@ -2509,6 +2530,7 @@ main() {
             prepend_critical_message "invalid CA ('$(echo "${NOT_ISSUED_BY}" | sed "s/|/ PIPE /g")' matches '$(echo "${ISSUERS}" | sed -E -e "s/^(O|CN) ?= ?//" | tr '\n' '|' | sed "s/|\$//g" | sed "s/|/\\' or \\'/g")')"
         else
             ok="true"
+	    CA_ISSUER_MATCHED="$(echo "${ISSUERS}" | grep -E "^CN ?= ?" | sed -E -e "s/^CN ?= ?//" | head -n1)"
         fi
 
     else
@@ -2559,7 +2581,8 @@ main() {
             # count the certificates in the chain
             NUM_CERTIFICATES=$(grep -c -- "-BEGIN CERTIFICATE-" "${CERT}")
             debuglog "Nb certificates in CA chain: $((NUM_CERTIFICATES))"
-            CERT_IN_CHAIN=1
+            debuglog "Skipping ${SKIP_ELEMENT} element of the chain"
+            CERT_IN_CHAIN=$(( SKIP_ELEMENT + 1 ))
             while [ "${CERT_IN_CHAIN}" -le "${NUM_CERTIFICATES}" ]; do
                 elem_number=$((CERT_IN_CHAIN))
                 chain_element=$(sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' "${CERT}" | \
