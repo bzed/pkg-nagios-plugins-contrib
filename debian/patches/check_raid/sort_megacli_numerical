@@ -1,0 +1,12 @@
+Incorporate changes from https://github.com/glensc/nagios-plugin-check_raid/commit/2a05ecb2b219a5f102acb81d9bd6aeabb664d434
+--- a/check_raid/check_raid
++++ b/check_raid/check_raid
+@@ -4057,7 +4057,7 @@
+   	}
+   
+   	my %dstatus;
+-  	foreach my $dev (@{$c->{physical}}) {
++	foreach my $dev (sort {$a->{dev} <=> $b->{dev}} @{$c->{physical}}) {
+   		if ($dev->{state} eq 'Online' || $dev->{state} eq 'Hotspare' || $dev->{state} eq 'Unconfigured(good)' || $dev->{state} eq 'JBOD') {
+   			push(@{$dstatus{$dev->{state}}}, sprintf "%02d", $dev->{dev});
+   
