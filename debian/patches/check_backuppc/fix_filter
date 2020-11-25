@@ -1,0 +1,22 @@
+--- a/check_backuppc/src/check_backuppc
++++ b/check_backuppc/src/check_backuppc
+@@ -171,7 +171,7 @@
+ 
+ foreach my $host (@hostsDesired, @hostsExcluded)
+ {
+-	if (not grep {/$host/} keys(%Status))
++	if (not grep {$_ eq $host} keys(%Status))
+ 	{
+ 		print("BACKUPPC UNKNOWN - Unknown host ($host)\n");
+ 		exit $ERRORS{'UNKNOWN'};
+@@ -182,8 +182,8 @@
+ foreach my $host (sort(keys(%Status)))
+ {
+ 	next if $host =~ /^ /;
+-	next if (@hostsDesired and not grep {/$host/} @hostsDesired);
+-	next if (@hostsExcluded and grep {/$host/} @hostsExcluded);
++	next if (@hostsDesired and not grep {$_ eq $host} @hostsDesired);
++	next if (@hostsExcluded and grep {$_ eq $host} @hostsExcluded);
+ 	next if ($backupOnly and $Status{$host}{'type'} eq 'archive');
+ 	next if ($archiveOnly and $Status{$host}{'type'} ne 'archive');
+ 	$hostCount++;
