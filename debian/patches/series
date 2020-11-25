@@ -53,7 +53,6 @@ check_graphite/python2to3
 check_mongodb/python2to3
 percona-nagios-plugins/python2to3
 check_email_delivery/check_smtp_send-hello
-dsa/python2to3
 check_raid/sort_megacli_numerical
 check_raid/hpacucli_cache_fail
 check_raid/fix_unparsed_error_cciss
