@@ -3,5 +3,5 @@ Watch: http://cvs.orion.education.fr/viewvc/viewvc.cgi/nagios-plugins-perl/trunk
 Recommends: liblocale-gettext-perl, libmonitoring-plugin-perl | libnagios-plugin-perl, liblwp-useragent-determined-perl
 Version: rev204
 Uploaders: Jan Wagner <waja@cyconet.org>
-Description: plugin checking Apache or Lighthttpd
+Description: plugin checking Apache or lighttpd
  server-status page (using mod_status)
