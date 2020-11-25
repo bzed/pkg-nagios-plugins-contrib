@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # Copyright 2011 Peter Palfrader
 # Copyright 2014 Hendrik Koehler
@@ -21,6 +21,8 @@
 # LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+from __future__ import print_function
 
 import sys
 import os
@@ -46,35 +48,35 @@ if len(args) != 0:
     sys.exit(4)
 
 if not os.path.exists(AVAIL):
-    print "File %s does not exist."%(AVAIL)
+    print("File %s does not exist." % AVAIL)
     sys.exit(4)
 
 tries = 0
 values = []
 while tries <= options.retries:
-    f = open('/proc/sys/kernel/random/entropy_avail')
+    f = open(AVAIL)
     avail = f.readline().rstrip()
     if len(avail) == 0:
-        print "Could not read anything from %s"%(AVAIL)
+        print("Could not read anything from %s" % AVAIL)
         sys.exit(4)
     try:
         avail = int(avail)
     except ValueError:
-        print "Did not read a number from %s, got '%s' instead"%(AVAIL, avail)
+        print("Did not read a number from %s, got '%s' instead" % (AVAIL, avail))
         sys.exit(4)
 
     if avail >= options.watermark:
         if tries > 0:
-            print "OK: %d bytes in the pool after %d attempts.|entropy=%d bytes"%(avail, tries, avail)
+            print("OK: %d bytes in the pool after %d attempts.|entropy=%d bytes" % (avail, tries, avail))
         else:
-            print "OK: %d bytes in the pool.|entropy=%d bytes"%(avail, avail)
+            print("OK: %d bytes in the pool.|entropy=%d bytes" % (avail, avail))
         sys.exit(0)
 
     values.append(avail)
     time.sleep(1.0 * options.sleep / 1000)
     tries += 1
 
-print "WARNING: Too little entropy in the pool (min: %d, max: %d in %d reads)|entropy=%d bytes"%(min(values), max(values), tries-1, avail)
+print("WARNING: Too little entropy in the pool (min: %d, max: %d in %d reads)|entropy=%d bytes" % (min(values), max(values), tries-1, avail))
 sys.exit(1)
 
 # vim:set et:
