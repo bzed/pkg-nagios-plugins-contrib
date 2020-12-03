@@ -1,0 +1,47 @@
+--- a/check_email_delivery/src/check_smtp_send
++++ b/check_email_delivery/src/check_smtp_send
+@@ -149,26 +149,16 @@
+ 	if( $tls and $auth_method ) {
+ 		$smtp_port = $default_smtp_tls_port unless $smtp_port;
+ 		$smtp = TLS_auth->new($smtp_server, Timeout=>$timeout, Port=>$smtp_port, User=>$username, Password=>$password, Auth_Method=>$auth_method);
+-		if( $smtp ) {
+-			my $message = oneline($smtp->message());
+-			die "cannot connect with TLS/$auth_method: $message" if $smtp->code() =~ m/53\d/;
+-		}
+ 	}
+ 	elsif( $tls ) {
+ 		$smtp_port = $default_smtp_tls_port unless $smtp_port;
+ 		$smtp = Net::SMTP::TLS->new($smtp_server, Timeout=>$timeout, Port=>$smtp_port, User=>$username, Password=>$password);
+-		if( $smtp ) {
+-			my $message = oneline($smtp->message());
+-			die "cannot connect with TLS: $message" if $smtp->code() =~ m/53\d/;
+-		}
+ 	}
+ 	elsif( $ssl ) {
+ 		$smtp_port = $default_smtp_ssl_port unless $smtp_port;
+ 		$smtp = Net::SMTP::SSL->new($smtp_server, Port => $smtp_port, Timeout=>$timeout,Debug=>$smtp_debug);
+ 		if( $smtp && $username )  {
+ 			$smtp->auth($username, $password);
+-			my $message = oneline($smtp->message());
+-			die "cannot connect with SSL/password: $message" if $smtp->code() =~ m/53\d/;
+ 		}	
+ 	}
+ 	elsif( $auth_method ) {
+@@ -176,8 +166,6 @@
+ 		$smtp = Net::SMTP_auth->new($smtp_server, Port=>$smtp_port, Timeout=>$timeout,Debug=>$smtp_debug);	
+ 		if( $smtp ) {
+ 			$smtp->auth($auth_method, $username, $password);
+-			my $message = oneline($smtp->message());
+-			die "cannot connect with SSL/$auth_method: $message" if $smtp->code() =~ m/53\d/;
+ 		}			
+ 	}
+ 	else {
+@@ -185,8 +173,6 @@
+ 		$smtp = Net::SMTP->new($smtp_server, Port=>$smtp_port, Timeout=>$timeout,Debug=>$smtp_debug);	
+ 		if( $smtp && $username ) {
+ 			$smtp->auth($username, $password);
+-			my $message = oneline($smtp->message());
+-			die "cannot connect with password: $message" if $smtp->code() =~ m/53\d/;
+ 		}	
+ 	}
+ };
