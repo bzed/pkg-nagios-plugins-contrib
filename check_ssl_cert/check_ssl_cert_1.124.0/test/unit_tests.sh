@@ -466,16 +466,16 @@ testMoreErrors() {
     OUTPUT=$( ${SCRIPT} -H www.ethz.ch --email doesnotexist --critical 1000 --warning 1001 --rootcert cabundle.crt --verbose | wc -l | sed 's/\ //g' )
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
-    # we should get three lines: the plugin output and two errors
-    assertEquals "wrong number of errors" 4 "${OUTPUT}"
+    # we should get three lines: the plugin output and three errors
+    assertEquals "wrong number of errors" 5 "${OUTPUT}"
 }
 
 testMoreErrors2() {
     OUTPUT=$( ${SCRIPT} -H www.ethz.ch --email doesnotexist --warning 1000 --warning 1001 --rootcert cabundle.crt --verbose | wc -l | sed 's/\ //g' )
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
-    # we should get three lines: the plugin output and two errors
-    assertEquals "wrong number of errors" 4 "${OUTPUT}"
+    # we should get three lines: the plugin output and three errors
+    assertEquals "wrong number of errors" 5 "${OUTPUT}"
 }
 
 # dane
@@ -554,7 +554,7 @@ testSieveECDSA() {
 }
 
 testHTTP2() {
-    ${SCRIPT} -H rwserve.readwritetools.com
+    ${SCRIPT} -H rwserve.readwritetools.com --critical 1 --warning 2
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
 }

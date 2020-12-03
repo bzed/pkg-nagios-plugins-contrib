@@ -19,7 +19,7 @@
 ################################################################################
 # Constants
 
-VERSION=1.122.0
+VERSION=1.124.0
 SHORTNAME="SSL_CERT"
 
 VALID_ATTRIBUTES=",startdate,enddate,subject,issuer,serial,modulus,serial,hash,email,ocsp_uri,fingerprint,"
@@ -83,6 +83,7 @@ usage() {
     echo "   -d,--debug                      produces debugging output"
     echo "      --dig-bin path               path of the dig binary to be used"
     echo "      --ecdsa                      signature algorithm selection: force ECDSA certificate"
+    echo "      --element number             checks N cert element from the begining of the chain"
     echo "   -e,--email address              pattern to match the email address contained"
     echo "                                   in the certificate"
     echo "   -f,--file file                  local file path (works with -H localhost only)"
@@ -251,8 +252,8 @@ cleanup() {
 
 create_temporary_file() {
 
-    # create a temporary file
-    TEMPFILE="$( mktemp -t "${0##*/}XXXXXX" 2> /dev/null )"
+    # create a temporary file    
+    TEMPFILE="$( mktemp "${TMPDIR}/XXXXXX" 2> /dev/null )"
     if [ -z "${TEMPFILE}" ] || [ ! -w "${TEMPFILE}" ] ; then
         unknown 'temporary file creation failure.'
     fi
@@ -602,20 +603,20 @@ check_cert_end_date() {
 
     debuglog "Checking expiration date of element ${el_number}"
 
+    # shellcheck disable=SC2086
+    ELEM_END_DATE=$(echo "${1}" | "${OPENSSL}" "${OPENSSL_COMMAND}" ${OPENSSL_PARAMS} -noout "${OPENSSL_ENDDATE_OPTION}" | sed -e "s/.*=//")
+    debuglog "Validity date on cert element ${el_number} is ${ELEM_END_DATE}"
+
+    HOURS_UNTIL=$(hours_until "${ELEM_END_DATE}")
+    ELEM_DAYS_VALID=$(( HOURS_UNTIL / 24 ))
+    if [ -z "${DAYS_VALID}" ] || [ "${ELEM_DAYS_VALID}" -lt "${DAYS_VALID}" ]; then
+        DAYS_VALID="${ELEM_DAYS_VALID}"
+    fi
+
+    add_performance_data "days_chain_elem${el_number}=${ELEM_DAYS_VALID};${WARNING_DAYS};${CRITICAL_DAYS};;"
+
     if [ "${OPENSSL_COMMAND}" = "x509" ]; then
         # x509 certificates (default)
-	# shellcheck disable=SC2086
-        ELEM_END_DATE=$(echo "${1}" | "${OPENSSL}" "${OPENSSL_COMMAND}" ${OPENSSL_PARAMS} -noout "${OPENSSL_ENDDATE_OPTION}" | sed -e "s/.*=//")
-        debuglog "Validity date on cert element ${el_number} is ${ELEM_END_DATE}"
-
-        HOURS_UNTIL=$(hours_until "${ELEM_END_DATE}")
-        ELEM_DAYS_VALID=$(( HOURS_UNTIL / 24 ))
-        if [ -z "${DAYS_VALID}" ] || [ "${ELEM_DAYS_VALID}" -lt "${DAYS_VALID}" ]; then
-            DAYS_VALID="${ELEM_DAYS_VALID}"
-        fi
-
-        add_performance_data "days_chain_elem${el_number}=${ELEM_DAYS_VALID};${WARNING_DAYS};${CRITICAL_DAYS};;"
-
         # We always check expired certificates
         if ! echo "${1}" | ${OPENSSL} x509 -noout -checkend 0 > /dev/null ; then
             debuglog "executing: ${OPENSSL} x509 -noout -checkend 0 on cert element ${el_number}"
@@ -780,43 +781,43 @@ fetch_certificate() {
 
         case "${PROTOCOL}" in
             pop3|ftp)
-                exec_with_timeout "${TIMEOUT}" "printf 'QUIT\\n' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -crlf ${IGN_EOF} -starttls ${PROTOCOL} -connect ${HOST}:${PORT} ${SERVERNAME} ${PROXY} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
+                exec_with_timeout "${TIMEOUT}" "printf 'QUIT\\n' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -crlf ${IGN_EOF} -starttls ${PROTOCOL} -connect ${HOST}:${PORT} ${SERVERNAME} ${SCLIENT_PROXY} ${SCLIENT_PROXY_ARGUMENT} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
                 RET=$?
                 ;;
             pop3s|ftps)
-                exec_with_timeout "${TIMEOUT}" "printf 'QUIT\\n' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -crlf ${IGN_EOF} -connect ${HOST}:${PORT} ${SERVERNAME} ${PROXY} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
+                exec_with_timeout "${TIMEOUT}" "printf 'QUIT\\n' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -crlf ${IGN_EOF} -connect ${HOST}:${PORT} ${SERVERNAME} ${SCLIENT_PROXY} ${SCLIENT_PROXY_ARGUMENT} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
                 RET=$?
                 ;;
             smtp)
-                exec_with_timeout "${TIMEOUT}" "printf 'QUIT\\n' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -crlf ${IGN_EOF} -starttls ${PROTOCOL} -connect ${HOST}:${PORT} ${SERVERNAME} ${PROXY} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} ${S_CLIENT_NAME} 2> ${ERROR} 1> ${CERT}"
+                exec_with_timeout "${TIMEOUT}" "printf 'QUIT\\n' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -crlf ${IGN_EOF} -starttls ${PROTOCOL} -connect ${HOST}:${PORT} ${SERVERNAME} ${SCLIENT_PROXY} ${SCLIENT_PROXY_ARGUMENT} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} ${S_CLIENT_NAME} 2> ${ERROR} 1> ${CERT}"
                 RET=$?
                 ;;
             smtps)
-                exec_with_timeout "${TIMEOUT}" "printf 'QUIT\\n' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -crlf ${IGN_EOF} -connect ${HOST}:${PORT} ${SERVERNAME} ${PROXY} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE}  ${S_CLIENT_NAME} 2> ${ERROR} 1> ${CERT}"
+                exec_with_timeout "${TIMEOUT}" "printf 'QUIT\\n' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -crlf ${IGN_EOF} -connect ${HOST}:${PORT} ${SERVERNAME} ${SCLIENT_PROXY} ${SCLIENT_PROXY_ARGUMENT} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE}  ${S_CLIENT_NAME} 2> ${ERROR} 1> ${CERT}"
                 RET=$?
                 ;;
             irc|ldap)
-                exec_with_timeout "${TIMEOUT}" "echo | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -starttls ${PROTOCOL} -connect ${HOST}:${PORT} ${SERVERNAME} ${PROXY} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
+                exec_with_timeout "${TIMEOUT}" "echo | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -starttls ${PROTOCOL} -connect ${HOST}:${PORT} ${SERVERNAME} ${SCLIENT_PROXY} ${SCLIENT_PROXY_ARGUMENT} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
                 RET=$?
                 ;;
             ircs|ldaps)
-                exec_with_timeout "${TIMEOUT}" "echo | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -connect ${HOST}:${PORT} ${SERVERNAME} ${PROXY} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
+                exec_with_timeout "${TIMEOUT}" "echo | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -connect ${HOST}:${PORT} ${SERVERNAME} ${SCLIENT_PROXY} ${SCLIENT_PROXY_ARGUMENT} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
                 RET=$?
                 ;;
             imap)
-                exec_with_timeout "${TIMEOUT}" "printf 'A01 LOGOUT\\n' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -crlf ${IGN_EOF} -starttls ${PROTOCOL} -connect ${HOST}:${PORT} ${SERVERNAME} ${PROXY} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
+                exec_with_timeout "${TIMEOUT}" "printf 'A01 LOGOUT\\n' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -crlf ${IGN_EOF} -starttls ${PROTOCOL} -connect ${HOST}:${PORT} ${SERVERNAME} ${SCLIENT_PROXY} ${SCLIENT_PROXY_ARGUMENT} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
                 RET=$?
                 ;;
             imaps)
-                exec_with_timeout "${TIMEOUT}" "printf 'A01 LOGOUT\\n' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -crlf ${IGN_EOF} -connect ${HOST}:${PORT} ${SERVERNAME} ${PROXY} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
+                exec_with_timeout "${TIMEOUT}" "printf 'A01 LOGOUT\\n' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -crlf ${IGN_EOF} -connect ${HOST}:${PORT} ${SERVERNAME} ${SCLIENT_PROXY} ${SCLIENT_PROXY_ARGUMENT} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
                 RET=$?
                 ;;
             postgres)
-                exec_with_timeout "${TIMEOUT}" "printf 'X\0\0\0\4' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -starttls ${PROTOCOL} -connect ${HOST}:${PORT} ${SERVERNAME} ${PROXY} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
+                exec_with_timeout "${TIMEOUT}" "printf 'X\0\0\0\4' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -starttls ${PROTOCOL} -connect ${HOST}:${PORT} ${SERVERNAME} ${SCLIENT_PROXY} ${SCLIENT_PROXY_ARGUMENT} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
                 RET=$?
                 ;;
             sieve)
-                exec_with_timeout "${TIMEOUT}" "echo 'LOGOUT' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -starttls ${PROTOCOL} -connect ${HOST}:${PORT} ${SERVERNAME} ${PROXY} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
+                exec_with_timeout "${TIMEOUT}" "echo 'LOGOUT' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -starttls ${PROTOCOL} -connect ${HOST}:${PORT} ${SERVERNAME} ${SCLIENT_PROXY} ${SCLIENT_PROXY_ARGUMENT} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
                 RET=$?
                 ;;
             xmpp|xmpp-server)
@@ -824,7 +825,7 @@ fetch_certificate() {
                 RET=$?
                 ;;
 	    mysql)
-                exec_with_timeout "${TIMEOUT}" "echo | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -starttls ${PROTOCOL} -connect ${HOST}:${PORT} ${SERVERNAME} ${PROXY} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
+                exec_with_timeout "${TIMEOUT}" "echo | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -starttls ${PROTOCOL} -connect ${HOST}:${PORT} ${SERVERNAME} ${SCLIENT_PROXY} ${SCLIENT_PROXY_ARGUMENT} -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
                 RET=$?
                 ;;
             *)
@@ -847,7 +848,7 @@ fetch_certificate() {
               ALPN='-alpn h2'
           fi
 
-        exec_with_timeout "${TIMEOUT}" "printf '${HTTP_REQUEST}' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -crlf ${IGN_EOF} ${ALPN} -connect ${HOST}:${PORT} ${SERVERNAME} ${PROXY} -showcerts -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
+        exec_with_timeout "${TIMEOUT}" "printf '${HTTP_REQUEST}' | ${OPENSSL} s_client ${INETPROTO} ${CLIENT} ${CLIENTPASS} -crlf ${IGN_EOF} ${ALPN} -connect ${HOST}:${PORT} ${SERVERNAME} ${SCLIENT_PROXY} ${SCLIENT_PROXY_ARGUMENT} -showcerts -verify 6 ${ROOT_CA} ${SSL_VERSION} ${SSL_VERSION_DISABLED} ${SSL_AU} ${STATUS} ${DANE} 2> ${ERROR} 1> ${CERT}"
         RET=$?
 
     fi
@@ -972,6 +973,7 @@ main() {
     OPENSSL=""
     FILE_BIN=""
     CURL_BIN=""
+    CURL_PROXY=""
     CURL_USER_AGENT=""
     CUSTOM_HTTP_HEADER=""
     DIG_BIN=""
@@ -996,6 +998,7 @@ main() {
     DISALLOWED_PROTOCOLS=""
     WARNING_DAYS=20
     CRITICAL_DAYS=15
+    ELEMENT=0
     SKIP_ELEMENT=0
 
     # after 2020-09-01 we could set the default to 398 days because of Apple
@@ -1269,6 +1272,11 @@ main() {
             --serial)
                 check_option_argument '--serial' "$2"
                 SERIAL_LOCK="$2"
+                shift 2
+                ;;
+            --element)
+                check_option_argument '--element' "$2"
+                ELEMENT="$2"
                 shift 2
                 ;;
             --skip-element)
@@ -1726,6 +1734,8 @@ main() {
             CURL_BIN=${PROG}
 
             debuglog "cURL available: ${CURL_BIN}"
+	    debuglog "$( ${CURL_BIN} --version )"
+
         else
             debuglog "cURL binary not needed. SSL Labs = ${SSL_LAB_CRIT_ASSESSMENT}, OCSP = ${OCSP}"
         fi
@@ -1872,27 +1882,41 @@ main() {
 
     fi
 
-    # UUUU
     ################################################################################
     # Check if openssl s_client supports the -proxy option
     #
-    PROXY=
+    SCLIENT_PROXY=
     if [ -n "${http_proxy}" ] || [ -n "${HTTP_PROXY}" ] ; then
 	if [ -n "${http_proxy}" ] ; then
             HTTP_PROXY="${http_proxy}"
         fi
 
+	if [ -z "${https_proxy}" ] ; then
+	    # try to set https_proxy
+	    https_proxy="${http_proxy}"
+	fi
+
+	if [ -z "${HTTPS_PROXY}" ] ; then
+	    # try to set HTTPS_proxy
+	    HTTPS_PROXY="${HTTP_PROXY}"
+	fi
+
+	if ${CURL_BIN} --manual | grep -q -- --proxy ; then
+	    debuglog "Adding --proxy ${HTTP_PROXY} to the cURL options"
+	    CURL_PROXY="--proxy"
+	    CURL_PROXY_ARGUMENT="${HTTP_PROXY}"
+	fi
+	
 	if ${OPENSSL} s_client -help 2>&1 | grep -q -- -proxy || ${OPENSSL} s_client not_a_real_option 2>&1 | grep -q -- -proxy; then
 	    debuglog "Adding -proxy ${HTTP_PROXY} to the s_client options"
-	    PROXY="-proxy ${HTTP_PROXY}"
+	    SCLIENT_PROXY="-proxy"
+	    SCLIENT_PROXY_ARGUMENT="${HTTP_PROXY}"
 	else
 	    
-            verboselog "'${OPENSSL} s_client' does not support '-proxy': HTTP_PROXY could be ignored"
+            verboselog "'${OPENSSL} s_client' does not support '-proxy': HTTP_PROXY could be ignored"	    
 
 	fi
-    fi
-    # UUUU
-    
+    fi    
     
     ################################################################################
     # Check if openssl s_client supports the -name option
@@ -2228,6 +2252,9 @@ main() {
                                ${OPENSSL} "${OPENSSL_COMMAND}" ${OPENSSL_PARAMS} -issuer -noout)"
 
             CERT_IN_CHAIN=$(( CERT_IN_CHAIN + 1 ))
+            if ! [ "${ELEMENT}" -eq 0 ] && [ $(( CERT_IN_CHAIN - ELEMENT )) -lt 0 ]; then
+                break
+            fi
         done
     fi
 
@@ -2575,7 +2602,7 @@ main() {
     if [ -z "${NOEXP}" ] ; then
 
         debuglog "Checking expiration date"
-        if [ -n "${FIRST_ELEMENT_ONLY}" ]; then
+        if [ -n "${FIRST_ELEMENT_ONLY}" ] || [ "${OPENSSL_COMMAND}" = "crl" ]; then
             check_cert_end_date "$(cat "${CERT}")"
         else
             # count the certificates in the chain
@@ -2590,6 +2617,9 @@ main() {
 
                 check_cert_end_date "${chain_element}" "${elem_number}"
                 CERT_IN_CHAIN=$(( CERT_IN_CHAIN + 1 ))
+                if ! [ "${ELEMENT}" -eq 0 ] && [ $(( CERT_IN_CHAIN - ELEMENT )) -lt 0 ]; then
+                    break
+                fi
             done
         fi
 
@@ -2603,19 +2633,21 @@ main() {
 
         while true; do
 
-            debuglog "executing ${CURL_BIN} --silent \"https://api.ssllabs.com/api/v2/analyze?host=${HOST}${IGNORE_SSL_LABS_CACHE}\""
+	    debuglog "http_proxy  = ${http_proxy}"
+	    debuglog "HTTPS_PROXY = ${HTTPS_PROXY}"
+            debuglog "executing ${CURL_BIN} ${CURL_PROXY} ${CURL_PROXY_ARGUMENT} ${INETPROTO} --silent \"https://api.ssllabs.com/api/v2/analyze?host=${HOST}${IGNORE_SSL_LABS_CACHE}\""
 
             if [ -n "${SNI}" ] ; then
-                JSON="$(${CURL_BIN} --silent "https://api.ssllabs.com/api/v2/analyze?host=${SNI}${IGNORE_SSL_LABS_CACHE}")"
+                JSON="$(${CURL_BIN} "${CURL_PROXY}" "${CURL_PROXY_ARGUMENT}" "${INETPROTO}" --silent "https://api.ssllabs.com/api/v2/analyze?host=${SNI}${IGNORE_SSL_LABS_CACHE}")"
                 CURL_RETURN_CODE=$?
             else
-                JSON="$(${CURL_BIN} --silent "https://api.ssllabs.com/api/v2/analyze?host=${HOST}${IGNORE_SSL_LABS_CACHE}")"
+                JSON="$(${CURL_BIN} "${CURL_PROXY}" "${CURL_PROXY_ARGUMENT}" "${INETPROTO}" --silent "https://api.ssllabs.com/api/v2/analyze?host=${HOST}${IGNORE_SSL_LABS_CACHE}")"
                 CURL_RETURN_CODE=$?
             fi
 
             if [ "${CURL_RETURN_CODE}" -ne 0 ] ; then
 
-                debuglog "curl returned ${CURL_RETURN_CODE}: ${CURL_BIN} --silent \"https://api.ssllabs.com/api/v2/analyze?host=${HOST}${IGNORE_SSL_LABS_CACHE}\""
+                debuglog "curl returned ${CURL_RETURN_CODE}: ${CURL_BIN} ${CURL_PROXY} ${CURL_PROXY_ARGUMENT} ${INETPROTO} --silent \"https://api.ssllabs.com/api/v2/analyze?host=${HOST}${IGNORE_SSL_LABS_CACHE}\""
 
                 unknown "Error checking SSL Labs: curl returned ${CURL_RETURN_CODE}, see 'man curl' for details"
 
@@ -2623,7 +2655,7 @@ main() {
 
             JSON="$(printf '%s' "${JSON}" | tr '\n' ' ' )"
 
-            debuglog "Checking SSL Labs: ${CURL_BIN} --silent \"https://api.ssllabs.com/api/v2/analyze?host=${HOST}\""
+            debuglog "Checking SSL Labs: ${CURL_BIN} ${CURL_PROXY} ${CURL_PROXY_ARGUMENT} ${INETPROTO} --silent \"https://api.ssllabs.com/api/v2/analyze?host=${HOST}\""
             debuglog "SSL Labs JSON: ${JSON}"
 
             # We clear the cache only on the first run
@@ -2740,9 +2772,9 @@ main() {
             debuglog "OCSP: fetching issuer certificate ${ISSUER_URI} to ${ISSUER_CERT_TMP}"
 
             if [ -n "${CURL_USER_AGENT}" ] ; then
-                exec_with_timeout "${TIMEOUT}" "${CURL_BIN} --silent --user-agent '${CURL_USER_AGENT}' --location ${ISSUER_URI} > ${ISSUER_CERT_TMP}"
+                exec_with_timeout "${TIMEOUT}" "${CURL_BIN} ${CURL_PROXY} ${CURL_PROXY_ARGUMENT} ${INETPROTO} --silent --user-agent '${CURL_USER_AGENT}' --location ${ISSUER_URI} > ${ISSUER_CERT_TMP}"
             else
-                exec_with_timeout "${TIMEOUT}" "${CURL_BIN} --silent --location ${ISSUER_URI} > ${ISSUER_CERT_TMP}"
+                exec_with_timeout "${TIMEOUT}" "${CURL_BIN} ${CURL_PROXY} ${CURL_PROXY_ARGUMENT} ${INETPROTO} --silent --location ${ISSUER_URI} > ${ISSUER_CERT_TMP}"
             fi
 
             debuglog "OCSP: issuer certificate type: $(${FILE_BIN} "${ISSUER_CERT_TMP}" | sed 's/.*://' )"

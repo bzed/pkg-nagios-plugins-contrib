@@ -1,3 +1,13 @@
+2020-12-01  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert: Correct handling of -proxy by s_client and --proxy by cURL
+
+2020-11-30  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert (create_temporary_file): bug fix: temp directory not used
+	* check_ssl_cert: patch for the --element option
+	* check_ssl_cert: bug fix: force -4 or -6 with cURL when specified
+
 2020-08-07  Matteo Corti  <matteo@corti.li>
 
 	* check_ssl_cert: Fixed a bug with the output of --version
