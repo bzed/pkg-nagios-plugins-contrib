@@ -20,6 +20,7 @@ check_httpd_status/monitoring-plugin
 check_imap_quota/syntax_error_fix
 check_libvirt/monitoring-plugin
 check_libvirt/fix_uom
+check_libvirt/fix_cache_path
 check_lm_sensors/manpage_whatis_fix
 check_lm_sensors/spelling_errors
 check_lm_sensors/interpreter

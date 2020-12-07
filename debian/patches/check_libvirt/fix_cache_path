@@ -1,0 +1,11 @@
+--- a/check_libvirt/check_libvirt
++++ b/check_libvirt/check_libvirt
+@@ -56,7 +56,7 @@
+ 
+ $PROGNAME = basename($0);
+ $VERSION = '0.1.0';
+-my $spooldir="/opt/monitor/var/check_libvirt";
++my $spooldir="/var/lib/nagios/.cache/check_libvirt";
+ 
+ if (!-d $spooldir)
+ {
