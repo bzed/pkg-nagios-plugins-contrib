@@ -1,3 +1,54 @@
+nagios-plugins-contrib (28.20201207) unstable; urgency=high
+
+  [ Jan Wagner ]
+  * [d42a7cb] Update check_multipath to 0.4.8
+  * [f4bc15c] Update check_rbl to 1.5.3
+  * [e9aaf9b] Update check_ssl_cert to 1.109.0
+  * [4a7c176] Removing dnsbl.inps.de from d/patches/check_rbl/additional_rbls
+  * [8c8a770] Update check_ssl_cert to 1.113.0
+  * [713e713] Update check_zone_auth to 1.14
+  * [3a81549] Update check-multipath to 0.4.9
+  * [f268738] Update check_rbl to 1.5.4
+  * [1b75778] Update check_ssl_cert to 1.118.0
+  * [7474d54] Update check_ssl_cert to 1.120.0 (Closes: #976218)
+  * [e391368] Adding d/p/check_raid/sort_megacli_numerical
+  * [9c92bb0] Adding d/p/check_raid/hpacucli_cache_fail
+  * [1e9f7cc] Adding d/p/check_raid/fix_unparsed_error_cciss
+  * [2569d5b] check_ssl_cert: Update to 1.122.0
+
+  [ Bas Couwenberg ]
+  * [da04a15] Update gbp.conf to use --source-only-changes by default.
+
+  [ Jan Wagner ]
+  * [ddaed0a] Update check-cert-expire, check-entropy and check-running-kernel
+    from upstream
+  * [ad756f4] Remove obsolete patch d/p/dsa/python2to3
+  * [5965683] Adding '-maxdepth 1' to
+    d/p/dsa/check_running_kernel_jessie_centos_fix. (Closes: #878233, #855416),
+    Thanks Felix Geyer
+  * [a28a09b] d/control.in: Annotate python* build-depends with :native.
+    Thanks Helmut Grohne
+  * [c7bbb4b] check_memcached/Makefile: Make pkg-config substitutable.
+    Thanks Helmut Grohne
+  * [3b85926] check_httpd_status/control: Fixing Description (Closes: #955378)
+  * [5f4ba99] Adding d/p/check_backuppc/fix_filter to fix filtering.
+    (Closes: #865021) Thanks Peter Palfrader
+
+  [ Bas Couwenberg ]
+  * [934e279] Bump Standards-Version to 4.5.1, no changes.
+
+  [ Jan Wagner ]
+  * [6827b67] check_ssl_cert: Update to 1.124.0
+  * [3831382] check_rbl: Update to 1.5.6
+  * [f386eb8] Adding d/p/check_email_delivery/fix_tls
+    (Closes: #821207, #861814)
+  * [73e2ece] Refreshing d/p/check_email_delivery/check_smtp_send-hello
+  * [7317610] Adding d/p/check_libvirt/fix_cache_path to create the cache dir
+    inside nagios homedir (Closes: #960923)
+  * [b2ae7e7] Auto update of debian/control
+
+ -- Jan Wagner <waja@cyconet.org>  Mon, 07 Dec 2020 17:40:28 +0100
+
 nagios-plugins-contrib (27.20200511+1) unstable; urgency=medium
 
   * [b6d2915] Fixing tests (again)
