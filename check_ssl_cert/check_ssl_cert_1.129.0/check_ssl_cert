@@ -19,7 +19,7 @@
 ################################################################################
 # Constants
 
-VERSION=1.124.0
+VERSION=1.129.0
 SHORTNAME="SSL_CERT"
 
 VALID_ATTRIBUTES=",startdate,enddate,subject,issuer,serial,modulus,serial,hash,email,ocsp_uri,fingerprint,"
@@ -122,12 +122,13 @@ usage() {
     echo "   -n,--cn name                    pattern to match the CN of the certificate (can be"
     echo "                                   specified multiple times)"
     echo "      --nmap-bin path              path of the nmap binary to be used"
-    echo "      --no_ssl2                    disable SSL version 2"
-    echo "      --no_ssl3                    disable SSL version 3"
-    echo "      --no_tls1                    disable TLS version 1"
-    echo "      --no_tls1_1                  disable TLS version 1.1"
-    echo "      --no_tls1_2                  disable TLS version 1.2"
-    echo "      --no_tls1_3                  disable TLS version 1.3"
+    echo "      --no-proxy                   ignores the http_proxy and https_proxy environment variables"
+    echo "      --no-ssl2                    disable SSL version 2"
+    echo "      --no-ssl3                    disable SSL version 3"
+    echo "      --no-tls1                    disable TLS version 1"
+    echo "      --no-tls1_1                  disable TLS version 1.1"
+    echo "      --no-tls1_2                  disable TLS version 1.2"
+    echo "      --no-tls1_3                  disable TLS version 1.3"
     echo "      --not-issued-by issuer       check that the issuer of the certificate does not match"
     echo "                                   the given pattern"
     echo "      --not-valid-longer-than days critical if the certificate validity is longer than"
@@ -170,7 +171,7 @@ usage() {
     echo "      --temp dir                   directory where to store the temporary files"
     echo "      --terse                      terse output"
     echo "   -t,--timeout                    seconds timeout after the specified time"
-    echo "                                   (defaults to 15 seconds)"
+    echo "                                   (defaults to ${TIMEOUT} seconds)"
     echo "      --tls1                       force TLS version 1"
     echo "      --tls1_1                     force TLS version 1.1"
     echo "      --tls1_2                     force TLS version 1.2"
@@ -463,6 +464,20 @@ unknown() {
     remove_temporary_files
     printf '%s UNKNOWN%s: %s\n' "${SHORTNAME}" "${tmp}" "$1"
     exit "${STATUS_UNKNOWN}"
+}
+
+
+################################################################################
+# Exits with unknown if s_client does not support the given option
+#
+# Usage:
+#   require_s_client_option '-no_ssl2'
+#
+require_s_client_option() {
+    debuglog "Checking if s_client supports the $1 option"
+    if ! "${OPENSSL}" s_client -help 2>&1 | grep -q -- "$1" ; then
+	unknown "s_client does not support the $1 option"
+    fi
 }
 
 ################################################################################
@@ -1000,6 +1015,8 @@ main() {
     CRITICAL_DAYS=15
     ELEMENT=0
     SKIP_ELEMENT=0
+    NO_PROXY=""
+    PROXY=""
 
     # after 2020-09-01 we could set the default to 398 days because of Apple
     # https://support.apple.com/en-us/HT211025
@@ -1064,27 +1081,31 @@ main() {
                 IGNORE_SSL_LABS_CACHE="&startNew=on"
                 shift
                 ;;
-            --no_ssl2)
+	    --no-proxy)
+		NO_PROXY=1
+		shift
+		;;
+            --no-ssl2|--no_ssl2) # we keep the old variant for compatibility
                 SSL_VERSION_DISABLED="${SSL_VERSION_DISABLED} -no_ssl2"
                 shift
                 ;;
-            --no_ssl3)
+            --no-ssl3|--no_ssl3) # we keep the old variant for compatibility
                 SSL_VERSION_DISABLED="${SSL_VERSION_DISABLED} -no_ssl3"
                 shift
                 ;;
-            --no_tls1)
+            --no-tls1|--no_tls1) # we keep the old variant for compatibility
                 SSL_VERSION_DISABLED="${SSL_VERSION_DISABLED} -no_tls1"
                 shift
                 ;;
-            --no_tls1_1)
+            --no-tls1_1|--no_tls1_1) # we keep the old variant for compatibility
                 SSL_VERSION_DISABLED="${SSL_VERSION_DISABLED} -no_tls1_1"
                 shift
                 ;;
-            --no_tls1_2)
+            --no-tls1_2|--no_tls1_2) # we keep the old variant for compatibility
                 SSL_VERSION_DISABLED="${SSL_VERSION_DISABLED} -no_tls1_2"
                 shift
                 ;;
-            --no_tls1_3)
+            --no-tls1_3|--no_tls1_3) # we keep the old variant for compatibility
                 SSL_VERSION_DISABLED="${SSL_VERSION_DISABLED} -no_tls1_3"
                 shift
                 ;;
@@ -1346,6 +1367,7 @@ main() {
                 ;;
             --proxy)
                 check_option_argument '--proxy' "$2"
+		PROXY="$2"
                 export http_proxy="$2"
                 shift 2
                 ;;
@@ -1610,6 +1632,12 @@ main() {
 
     fi
 
+    if [ -n "${FILE}" ] ; then
+	if [ ! -r "${FILE}" ] ; then
+	    unknown "Cannot read file ${FILE}"
+	fi
+    fi
+    
     if [ -n "${CRITICAL_DAYS}" ] ; then
 
         debuglog "-c specified: ${CRITICAL_DAYS}"
@@ -1882,11 +1910,35 @@ main() {
 
     fi
 
+    if [ -n "${PROXY}" ] && [ -n "${NO_PROXY}" ] ; then
+	unknown "Only one of --proxy or --no_proxy can be specfied"
+    fi
+
+    ################################################################################
+    # If --no-proxy was specified unset the http_proxy variables
+    if [ -n "${NO_PROXY}" ] ; then
+	debuglog "Disabling the proxy"
+	unset http_proxy
+	unset https_proxy
+	unset HTTP_PROXY
+	unset HTTPS_PROXY
+    fi
+    
     ################################################################################
     # Check if openssl s_client supports the -proxy option
     #
     SCLIENT_PROXY=
+    SCLIENT_PROXY_ARGUMENT=
+    CURL_PROXY=
+    CURL_PROXY_ARGUMENT=
     if [ -n "${http_proxy}" ] || [ -n "${HTTP_PROXY}" ] ; then
+
+	debuglog "Proxy settings (before):"
+	debuglog "  http_proxy  = ${http_proxy}"
+	debuglog "  https_proxy = ${https_proxy}"
+	debuglog "  HTTP_PROXY  = ${HTTP_PROXY}"
+	debuglog "  HTTPS_PROXY = ${HTTPS_PROXY}"
+
 	if [ -n "${http_proxy}" ] ; then
             HTTP_PROXY="${http_proxy}"
         fi
@@ -1908,14 +1960,25 @@ main() {
 	fi
 	
 	if ${OPENSSL} s_client -help 2>&1 | grep -q -- -proxy || ${OPENSSL} s_client not_a_real_option 2>&1 | grep -q -- -proxy; then
-	    debuglog "Adding -proxy ${HTTP_PROXY} to the s_client options"
 	    SCLIENT_PROXY="-proxy"
-	    SCLIENT_PROXY_ARGUMENT="${HTTP_PROXY}"
+	    SCLIENT_PROXY_ARGUMENT="$( echo "${HTTP_PROXY}" | sed 's/.*:\/\///' | sed 's/\/$//' )"
+
+	    debuglog "Adding -proxy ${SCLIENT_PROXY_ARGUMENT} to the s_client options"
+
 	else
 	    
             verboselog "'${OPENSSL} s_client' does not support '-proxy': HTTP_PROXY could be ignored"	    
 
 	fi
+
+	debuglog "Proxy settings (after):"
+	debuglog "  http_proxy  = ${http_proxy}"
+	debuglog "  https_proxy = ${https_proxy}"
+	debuglog "  HTTP_PROXY  = ${HTTP_PROXY}"
+	debuglog "  HTTPS_PROXY = ${HTTPS_PROXY}"
+	debuglog "  s_client    = ${SCLIENT_PROXY} ${SCLIENT_PROXY_ARGUMENT}"
+	debuglog "  cURL        = ${CURL_PROXY} ${CURL_PROXY_ARGUMENT}"
+
     fi    
     
     ################################################################################
@@ -1936,8 +1999,6 @@ main() {
     fi
 
     ################################################################################
-    # Check if openssl s_client supports the -xmpphost option
-    #
     # Check if openssl s_client supports the -xmpphost option
     #
     if ${OPENSSL} s_client -help 2>&1 | grep -q -- -xmpphost ; then
@@ -1998,6 +2059,12 @@ main() {
     fi
 
     ################################################################################
+    # Check if s_client supports the no_ssl options
+    for S_CLIENT_OPTION in ${SSL_VERSION_DISABLED} ; do
+	require_s_client_option "${S_CLIENT_OPTION}"
+    done
+
+    ################################################################################
     # define the HTTP request string
     if [ -n "${SNI}" ]; then
         HOST_HEADER="${SNI}"
@@ -2023,16 +2090,16 @@ main() {
             NMAP_INETPROTO='-6'
         fi
 
-        debuglog "Executing ${NMAP_BIN} -Pn -p \"${PORT}\" \"${NMAP_INETPROTO}\" --script ssl-enum-ciphers \"${HOST}\" | grep '^|'"
+        debuglog "Executing ${NMAP_BIN} -Pn -p \"${PORT}\" \"${NMAP_INETPROTO}\" --script ssl-enum-ciphers \"${HOST}\" 2>&1 | grep '^|'"
 
-        OFFERED_PROTOCOLS=$( ${NMAP_BIN} -Pn -p "${PORT}" "${NMAP_INETPROTO}" --script ssl-enum-ciphers "${HOST}" | grep '^|' )
+        OFFERED_PROTOCOLS=$( ${NMAP_BIN} -Pn -p "${PORT}" "${NMAP_INETPROTO}" --script ssl-enum-ciphers "${HOST}" 2>&1 | grep '^|' )
 
         debuglog "offered cyphers and protocols:"
         debuglog "${OFFERED_PROTOCOLS}" | sed 's/^|/[DBG] /'
 
         for protocol in ${DISALLOWED_PROTOCOLS} ; do
             debuglog "Checking if '${protocol}' is offered"
-            if echo "${OFFERED_PROTOCOLS}" | grep -q "${protocol}" ; then
+            if echo "${OFFERED_PROTOCOLS}" | grep -v 'No supported ciphers found' | grep -q "${protocol}" ; then
                 debuglog "'${protocol}' is offered"
                 prepend_critical_message "${protocol} is offered"
             fi
@@ -2221,8 +2288,16 @@ main() {
     else
         # we need to remove everything before 'CN = ', to remove an eventual email supplied with / and additional elements (after ', ')
         # shellcheck disable=SC2086
-        CN="$(${OPENSSL} x509 -in "${CERT}" -subject -noout ${OPENSSL_PARAMS} |
+	if ${OPENSSL} x509 -in "${CERT}" -subject -noout ${OPENSSL_PARAMS} | grep -q 'CN' ; then	   
+            CN="$(${OPENSSL} x509 -in "${CERT}" -subject -noout ${OPENSSL_PARAMS} |
             sed -e "s/^.*[[:space:]]*CN[[:space:]]=[[:space:]]//"  -e "s/\\/[[:alpha:]][[:alpha:]]*=.*\$//" -e "s/,.*//" )"
+	else
+	    CN='CN unavailable'
+	    if [ -z "${ALTNAMES}" ] ; then
+		verboselog "Certificate without common name (CN), enabling altername names"
+		ALTNAMES=1		
+	    fi
+	fi
 
         # shellcheck disable=SC2086
         SUBJECT="$(${OPENSSL} x509 -in "${CERT}" -subject -noout ${OPENSSL_PARAMS})"
@@ -2270,10 +2345,11 @@ main() {
     debuglog 'ISSUERS = '
     debuglog "${ISSUERS}"
 
-    # we just consider the first URI
+    # we just consider the first HTTP(S) URI
     # TODO check SC2016
     # shellcheck disable=SC2086,SC2016
-    ISSUER_URI="$(${OPENSSL} "${OPENSSL_COMMAND}" ${OPENSSL_PARAMS} -in "${CERT}" -text -noout | grep "CA Issuers" | head -n 1 | sed -e "s/^.*CA Issuers - URI://" | tr -d '"!|;$(){}<>`&')"
+
+    ISSUER_URI="$(${OPENSSL} "${OPENSSL_COMMAND}" ${OPENSSL_PARAMS} -in "${CERT}" -text -noout | grep "CA Issuers" | grep -i "http" | head -n 1 | sed -e "s/^.*CA Issuers - URI://" | tr -d '"!|;$(){}<>`&')"
 
     # TODO: should be checked
     # shellcheck disable=SC2021
@@ -2772,9 +2848,9 @@ main() {
             debuglog "OCSP: fetching issuer certificate ${ISSUER_URI} to ${ISSUER_CERT_TMP}"
 
             if [ -n "${CURL_USER_AGENT}" ] ; then
-                exec_with_timeout "${TIMEOUT}" "${CURL_BIN} ${CURL_PROXY} ${CURL_PROXY_ARGUMENT} ${INETPROTO} --silent --user-agent '${CURL_USER_AGENT}' --location ${ISSUER_URI} > ${ISSUER_CERT_TMP}"
+                exec_with_timeout "${TIMEOUT}" "${CURL_BIN} ${CURL_PROXY} ${CURL_PROXY_ARGUMENT} ${INETPROTO} --silent --user-agent '${CURL_USER_AGENT}' --location \\\"${ISSUER_URI}\\\" > ${ISSUER_CERT_TMP}"
             else
-                exec_with_timeout "${TIMEOUT}" "${CURL_BIN} ${CURL_PROXY} ${CURL_PROXY_ARGUMENT} ${INETPROTO} --silent --location ${ISSUER_URI} > ${ISSUER_CERT_TMP}"
+                exec_with_timeout "${TIMEOUT}" "${CURL_BIN} ${CURL_PROXY} ${CURL_PROXY_ARGUMENT} ${INETPROTO} --silent --location \\\"${ISSUER_URI}\\\" > ${ISSUER_CERT_TMP}"
             fi
 
             debuglog "OCSP: issuer certificate type: $(${FILE_BIN} "${ISSUER_CERT_TMP}" | sed 's/.*://' )"
@@ -2860,13 +2936,14 @@ main() {
                 fi
 
                 if [ -n "${HTTP_PROXY:-}" ] ; then
+                    OCSP_PROXY_ARGUMENT="$( echo "${HTTP_PROXY}" | sed 's/.*:\/\///' | sed 's/\/$//' )"
 
                     if [ -n "${KEYVALUE}" ] ; then
-                        debuglog "executing ${OPENSSL} ocsp -timeout \"${TIMEOUT}\" -no_nonce -issuer ${ISSUER_CERT} -cert ${CERT} -host ${HTTP_PROXY#*://} -path ${OCSP_URI} -header HOST=${OCSP_HOST}"
-                        OCSP_RESP="$(${OPENSSL} ocsp -timeout "${TIMEOUT}" -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT}" -host "${HTTP_PROXY#*://}" -path "${OCSP_URI}" -header HOST="${OCSP_HOST}" 2>&1 )"
+                        debuglog "executing ${OPENSSL} ocsp -timeout \"${TIMEOUT}\" -no_nonce -issuer ${ISSUER_CERT} -cert ${CERT} -host \"${OCSP_PROXY_ARGUMENT}\" -path ${OCSP_URI} -header HOST=${OCSP_HOST}"
+                        OCSP_RESP="$(${OPENSSL} ocsp -timeout "${TIMEOUT}" -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT}" -host "${OCSP_PROXY_ARGUMENT}" -path "${OCSP_URI}" -header HOST="${OCSP_HOST}" 2>&1 )"
                     else
-                        debuglog "executing ${OPENSSL} ocsp -timeout \"${TIMEOUT}\" -no_nonce -issuer ${ISSUER_CERT} -cert ${CERT} -host ${HTTP_PROXY#*://} -path ${OCSP_URI} -header HOST ${OCSP_HOST}"
-                        OCSP_RESP="$(${OPENSSL} ocsp -timeout "${TIMEOUT}" -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT}" -host "${HTTP_PROXY#*://}" -path "${OCSP_URI}" -header HOST "${OCSP_HOST}" 2>&1 )"
+                        debuglog "executing ${OPENSSL} ocsp -timeout \"${TIMEOUT}\" -no_nonce -issuer ${ISSUER_CERT} -cert ${CERT} -host \"${OCSP_PROXY_ARGUMENT}\" -path ${OCSP_URI} -header HOST ${OCSP_HOST}"
+                        OCSP_RESP="$(${OPENSSL} ocsp -timeout "${TIMEOUT}" -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT}" -host "${OCSP_PROXY_ARGUMENT}" -path "${OCSP_URI}" -header HOST "${OCSP_HOST}" 2>&1 )"
                     fi
 
                 else
