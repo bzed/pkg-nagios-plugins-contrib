@@ -127,7 +127,7 @@ Options:
       --temp dir                   directory where to store the temporary files
       --terse                      terse output
    -t,--timeout                    seconds timeout after the specified time
-                                   (defaults to 15 seconds)
+                                   (defaults to 120 seconds)
       --tls1                       force TLS version 1
       --tls1_1                     force TLS version 1.1
       --tls1_2                     force TLS version 1.2
@@ -151,12 +151,13 @@ Report bugs to https://github.com/matteocorti/check_ssl_cert/issues
 
 ```
 
-## Expect
+## Expect & timeout
 
-check_ssl_cert requires 'expect' to enable timeouts. If expect is not
+check_ssl_cert requires 'expect' or 'timeout' to enable timeouts. If 'expect' or 'timeout' is not
 present on your system timeouts will be disabled.
 
-See: http://en.wikipedia.org/wiki/Expect
+See: http://en.wikipedia.org/wiki/Expect and https://man7.org/linux/man-pages/man1/timeout.1.html
+
 
 ## Virtual servers
 
