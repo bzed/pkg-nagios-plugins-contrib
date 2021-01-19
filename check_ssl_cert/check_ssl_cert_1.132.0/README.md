@@ -1,7 +1,7 @@
 
  (c) Matteo Corti, ETH Zurich, 2007-2012
 
- (c) Matteo Corti, 2007-2020
+ (c) Matteo Corti, 2007-2021
   see AUTHORS for the complete list of contributors
 
 # check_ssl_cert
@@ -28,6 +28,7 @@ Options:
       --clientpass phrase          set passphrase for client certificate.
    -c,--critical days              minimum number of days a certificate has to
                                    be valid to issue a critical status. Default: 15
+      --crl                        checks revokation via CRL (requires --rootcert-file)				   
       --curl-bin path              path of the curl binary to be used
       --curl-user-agent string     user agent that curl shall use to obtain the
                                    issuer cert
