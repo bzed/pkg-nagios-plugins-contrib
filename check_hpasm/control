@@ -15,4 +15,4 @@ Description: plugin to check the hardware health of
  outside its normal parameters.
 Build-Depends: autotools-dev
 Recommends: snmp
-Version: 4.8
+Version: 4.8.0.2

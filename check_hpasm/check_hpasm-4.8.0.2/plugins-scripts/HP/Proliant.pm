@@ -741,7 +741,12 @@ sub set_serial {
       /(\d{2}\/\d{2}\/\d{4}).*?Family.*?([A-Z]{1})(\d+).*/) {
     $self->{romversion} = sprintf("%s%02d %s", $2, $3, $1);
   } elsif ($self->{romversion} && $self->{romversion} =~
+    # "P73 07/01/2013"
       /([ADP]{1}\d{2})\-(\d{2}\/\d{2}\/\d{4})/) {
+    $self->{romversion} = sprintf("%s %s", $1, $2);
+  } elsif ($self->{romversion} && $self->{romversion} =~
+    # U30 v2.36 (07/16/2020)    ... bei Gen10
+      /([A-Z]{1}\d{2}) (v[\d\.]+) \((\d{2}\/\d{2}\/\d{4})\)/) {
     $self->{romversion} = sprintf("%s %s", $1, $2);
   } else {
     # fallback if romversion is broken, redundantromversion not
