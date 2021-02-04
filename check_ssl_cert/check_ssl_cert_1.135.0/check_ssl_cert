@@ -19,7 +19,7 @@
 ################################################################################
 # Constants
 
-VERSION=1.132.0
+VERSION=1.135.0
 SHORTNAME="SSL_CERT"
 
 VALID_ATTRIBUTES=",startdate,enddate,subject,issuer,modulus,serial,hash,email,ocsp_uri,fingerprint,"
@@ -81,6 +81,7 @@ usage() {
     echo "      --dane 301                   verify that a valid DANE-EE(3) Cert(0) SHA2-256(1) TLSA record exists"
     echo "      --dane 302                   verify that a valid DANE-EE(3) Cert(0) SHA2-512(2) TLSA record exists"
     echo "      --dane 311                   verify that a valid DANE-EE(3) SPKI(1) SHA2-256(1) TLSA record exists"
+    echo "      --date path                  path of the datebinary to be used"
     echo "   -d,--debug                      produces debugging output"
     echo "      --dig-bin path               path of the dig binary to be used"
     echo "      --ecdsa                      signature algorithm selection: force ECDSA certificate"
@@ -106,6 +107,7 @@ usage() {
     echo "      --ignore-ocsp-timeout        ignore OCSP result when timeout occurs while checking"
     echo "      --ignore-sig-alg             do not check if the certificate was signed with SHA1"
     echo "                                   or MD5"
+    echo "      --ignore-stc                 do not check for signed certificate timestamps"
     echo "      --ignore-ssl-labs-cache      Forces a new check by SSL Labs (see -L)"
     echo "      --inetproto protocol         Force IP version 4 or 6"
     echo "   -i,--issuer issuer              pattern to match the issuer of the certificate"
@@ -278,16 +280,21 @@ hours_until() {
 
     debuglog "Date computations: ${DATETYPE}"
     debuglog "Computing number of hours until '${DATE}'"
-
+    
     case "${DATETYPE}" in
         "BSD")
             HOURS_UNTIL=$(( ( $(${DATEBIN} -jf "%b %d %T %Y %Z" "${DATE}" +%s) - $(${DATEBIN} +%s) ) / 3600 ))
             ;;
+	'BUSYBOX')
 
+	    BUSYBOX_DATE=$( echo "${DATE}" | sed 's/[ ][^ ]*$//' )
+	    debuglog "Computing number of hours until '${BUSYBOX_DATE}' (BusyBox compatible format)"
+	    verboselog "Warning: BusyBox date does not support time zones. Using ${BUSYBOX_DATE} in the current zone instead of ${DATE}"
+            HOURS_UNTIL=$(( ( $(${DATEBIN} -d "${BUSYBOX_DATE}" +%s) - $(${DATEBIN} +%s) ) / 3600 ))
+	    ;;
         "GNU")
             HOURS_UNTIL=$(( ( $(${DATEBIN} -d "${DATE}" +%s) - $(${DATEBIN} +%s) ) / 3600 ))
             ;;
-
         "PERL")
             # Warning: some shell script formatting tools will indent the EOF! (should be at position 0)
             if ! HOURS_UNTIL=$(perl - "${DATE}" <<-"EOF"
@@ -517,14 +524,14 @@ exec_with_timeout() {
 	# https://unix.stackexchange.com/questions/57667/why-cant-i-kill-a-timeout-called-from-a-bash-script-with-a-keystroke/57692#57692	
         eval "${TIMEOUT_BIN} ${time} ${command} &" > /dev/null 2>&1
 	TIMEOUT_PID=$!
-	wait "${TIMEOUT_PID}"
+	wait "${TIMEOUT_PID}" > /dev/null 2>&1
         RET=$?
 
         # return codes
         # https://www.gnu.org/software/coreutils/manual/coreutils.html#timeout-invocation
-        if [ "${RET}" -eq 137 ] ; then
-            prepend_critical_message "SIGKILL received"
-        elif [ "${RET}" -eq 124 ] ; then
+
+	# because of the execution in the backgroud we get a 137 for a timeout
+        if [ "${RET}" -eq 137 ] || [ "${RET}" -eq 124 ] ; then
             prepend_critical_message "Timeout after ${time} seconds"
         elif [ "${RET}" -eq 125 ] ; then
             prepend_critical_message "execution of ${command} failed"
@@ -1240,9 +1247,10 @@ fetch_certificate() {
 
             verboselog "The server requires a client certificate"
 
-        elif ascii_grep 'nodename\ nor\ servname\ provided,\ or\ not\ known' "${ERROR}" ; then
+        elif ascii_grep 'nodename\ nor\ servname\ provided,\ or\ not\ known' "${ERROR}" ||
+	     ascii_grep 'connect\ argument\ or\ target\ parameter\ malformed\ or\ ambiguous' "${ERROR}" ; then
 
-            ERROR="${HOST} is invalid"
+            ERROR="${HOST} is not a valid hostname"
             prepend_critical_message "${ERROR}"
             critical "${SHORTNAME} CRITICAL: ${ERROR}"
 
@@ -1375,6 +1383,7 @@ main() {
     NO_PROXY=""
     PROXY=""
     CRL=""
+    STC="1" # enabled by default
 
     # after 2020-09-01 we could set the default to 398 days because of Apple
     # https://support.apple.com/en-us/HT211025
@@ -1439,6 +1448,10 @@ main() {
                 NOSIGALG=1
                 shift
                 ;;
+	    --ignore-stc)
+		STC=
+		shift
+		;;
             --ignore-ssl-labs-cache)
                 IGNORE_SSL_LABS_CACHE="&startNew=on"
                 shift
@@ -1592,6 +1605,11 @@ main() {
                 CUSTOM_HTTP_HEADER="$2"
                 shift 2
                 ;;
+            --date)
+                check_option_argument '--date' "$2"
+                DATEBIN="$2"
+                shift 2
+                ;;
             # Deprecated option: used to be as --warning
             --days)
                 check_option_argument '--days' "$2"
@@ -1610,7 +1628,7 @@ main() {
             -e|--email)
                 check_option_argument 'e|--email' "$2"
                 ADDR="$2"
-                shift 2
+		shift 2
                 ;;
             -f|--file)
                 check_option_argument ' -f|--file' "$2"
@@ -2119,6 +2137,12 @@ main() {
     check_required_prog "${FILE_BIN}"
     FILE_BIN=${PROG}
 
+    # date
+    if [ -z "${DATEBIN}" ] ; then
+	check_required_prog 'date'
+	DATEBIN=${PROG}
+    fi
+    
     debuglog "file version: $( "${FILE_BIN}" --version 2>&1 )"
 
     # cURL
@@ -2189,8 +2213,6 @@ main() {
         debuglog "perl available: ${PERL}"
     fi
 
-    DATEBIN="$(command -v date 2> /dev/null)"
-
     if [ -n "${DATEBIN}" ] ; then
         debuglog "date available: ${DATEBIN}"
     fi
@@ -2198,6 +2220,8 @@ main() {
     DATETYPE=""
 
     if ! "${DATEBIN}" +%s >/dev/null 2>&1  ;  then
+
+	debuglog "no date binary available"
 
         # Perl with Date::Parse (optional)
         test -x "${PERL}" || PERL=""
@@ -2221,13 +2245,17 @@ main() {
 
     else
 
-        if "${DATEBIN}" --version >/dev/null 2>&1 ; then
-            DATETYPE="GNU"
-        else
-            DATETYPE="BSD"
+	debuglog 'checking date version'
+
+        if "${DATEBIN}" --version 2>&1 | grep -q GNU ; then
+            DATETYPE='GNU'
+	elif "${DATEBIN}" --version 2>&1 | grep -q BusyBox ; then
+	    DATETYPE='BUSYBOX'
+       else
+            DATETYPE='BSD'
         fi
 
-        verboselog "found ${DATETYPE} date with timestamp support: enabling date computations"
+        verboselog "found ${DATETYPE} date with timestamp support: enabling date computations"	    
 
     fi
 
@@ -2832,9 +2860,11 @@ main() {
     ################################################################################
     # Check the presence of a subjectAlternativeName (required for Chrome)
 
+    # Do not use grep --after-context=NUM but -A NUM so that it works on BusyBox
+
     # shellcheck disable=SC2086
     SUBJECT_ALTERNATIVE_NAME=$(${OPENSSL} "${OPENSSL_COMMAND}" ${OPENSSL_PARAMS} -in "${CERT}" -text |
-           grep --after-context=1 "509v3 Subject Alternative Name:" |
+           grep -A 1 "509v3 Subject Alternative Name:" |
            tail -n 1 |
            sed -e "s/DNS://g" |
            sed -e "s/,//g" |
@@ -3059,8 +3089,8 @@ main() {
                 check_cert_end_date "${chain_element}" "${elem_number}"
 
 		debuglog '------------------------------------------------------------------------------'
-		check_ocsp "${chain_element}" "${elem_number}"
-
+		check_ocsp "${chain_element}" "${elem_number}"		
+		
 		if [ -n "${CRL}" ] ; then
 		    debuglog '------------------------------------------------------------------------------'
 		    check_crl "${chain_element}" "${elem_number}"
@@ -3260,6 +3290,12 @@ main() {
 
     fi
 
+    ##############################################################################
+    # Check for Signed Certificate Timestamps (STC)
+    if [ -n "${STC}" ] && ! "${OPENSSL}" x509 -in "${CERT}" -text | grep -q 'SCTs' ; then
+	prepend_critical_message "Cannot find Signed Certificate Timestamps"
+    fi
+ 
     # if errors exist at this point return
     if [ "${CRITICAL_MSG}" != "" ] ; then
         critical "${CRITICAL_MSG}"
