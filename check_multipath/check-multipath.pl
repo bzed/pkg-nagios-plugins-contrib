@@ -21,7 +21,7 @@
 #-------------------------------------------------------------
 #
 #
-# Copyright (C) 2011-2020
+# Copyright (C) 2011-2021
 # Hinnerk Rümenapf, Trond H. Amundsen, Gunther Schlegel, Matija Nalis, 
 # Bernd Zeimetz, Sven Anders, Ben Evans
 #
@@ -76,6 +76,8 @@
 #      0.4.7    Compatibility with CentOS/RHEL 5-7: no "switch", check second directory for multipath binary   (thanks to Christian Zettel) 25. Aug. 2016
 #      0.4.8    More characters allowed in LUN Name               (thanks to Ivan Zikyamov)  06. JAN 2020
 #      0.4.9    Bugfix in  --extraconfig  handling                (thanks to Jeffrey Honig <jeffrey.honig@xandr.com>)  24. MAR 2020
+#      0.4.10   minor code cleanup after bugfix; handle local NVMe drive (thanks to Jeffrey Honig <jeffrey.honig@xandr.com>)  26. JAN 2021
+#      0.4.11   New nvme examples, paser edited                   (thanks to  Paul Garn <paul.garn@hpe.com>)  28. JAN 2021
 #
 
 
@@ -100,9 +102,9 @@ use vars qw( $NAME $VERSION $AUTHOR $CONTACT $E_OK $E_WARNING $E_CRITICAL
 
 # === Version and similar info ===
 $NAME    = 'check-multipath.pl';
-$VERSION = '0.4.9   34. MAR 2020';
+$VERSION = '0.4.11  28. JAN 2021';
 $AUTHOR  = 'Hinnerk Rümenapf';
-$CONTACT = 'hinnerk [DOT] ruemenapf [AT] uni-hamburg [DOT] de   (hinnerk [DOT] ruemenapf [AT] gmx [DOT] de)';
+$CONTACT = 'hinnerk [DOT] ruemenapf [AT] uni-hamburg [DOT] de   (or  hinnerk [AT] ruemenapf [DOT] de)';
 
 
 
@@ -520,6 +522,30 @@ $SIG{__WARN__} = sub { push @perl_warnings, [@_]; };
 ."  |- 1:0:6:10 sddo 71:96   active ready running\n"
 ."  |- 2:0:9:10 sdgr 132:112 active ready running\n"
 ."  `- 1:0:9:10 sdfq 130:192 active ready running\n",
+
+
+#35. Local NVMe drive (multipath configuration error)   thanks to: Jeffrey Honig <jeffrey.honig@xandr.com>
+"eui.354358304e6107500025384100000004 [nvme]:nvme0n1 NVMe,Dell Express Flash PM1725b 3.2TB SFF,1.2.1   \n"
+."size=6251233968 features='n/a' hwhandler='n/a' wp=rw\n"
+."`-+- policy='n/a' prio=n/a status=n/a\n"
+."  `- 0:33:1   nvme0c33n1 0:0   n/a   n/a   live   \n",
+
+#36. NVMe drive  thanks to: Paul Garn <paul.garn@hpe.com>
+"mpathq (eui.62326136306365612d636434382d3430) dm-32 NVME,PVL-MX18S0P2L2C1-F100TP0TY1\n"          
+."size=43T features='3 queue_if_no_path pg_init_retries 50' hwhandler='0' wp=rw\n"
+."|-+- policy='service-time 0' prio=50 status=active\n"
+."| `- 22:8209:1:1   nvme22n1  259:33  active ready running\n"
+."`-+- policy='service-time 0' prio=1 status=enabled\n"
+."  `- 23:12293:1:1  nvme23n1  259:35  active ready running\n",
+
+#37. NVMe drive  thanks to: Paul Garn <paul.garn@hpe.com>
+"mpathdz (eui.62303566643065632d336666332d3434) dm-297 NVME,PVL-MX18S0P2L2C1-F100TP0TY1  \n"           
+."size=43T features='3 queue_if_no_path pg_init_retries 50' hwhandler='0' wp=rw\n"
+."|-+- policy='service-time 0' prio=50 status=active\n"
+."| `- 289:19:1:1    nvme289n1 259:433 active ready running\n"
+."`-+- policy='service-time 0' prio=1 status=enabled\n"
+."  `- 288:4115:1:1  nvme288n1 259:432 active ready running\n",
+
     );
 
 
@@ -671,10 +697,13 @@ OPTIONS:
   -h, --help          Display this message
 
 
-NOTE: 'sudo' must be configured to allow the nagios-user to call 
-      multipath -l and/or multipath -ll if you use the -ll option
-      (and also multipath -r, if you intend to use the --reload option)
-      *without* password.
+NOTE: 
+- 'sudo' MUST be configured to allow the nagios-user to call multipath -l and/or multipath -ll if you use the -ll option
+  (and also multipath -r, if you intend to use the --reload option) *without* password.
+- Local drives SHOULD NOT be handled by the multipth driver. They SHOULD be excluded in the multipath configuration!
+  RTFM; (e.g. add wwid to blacklist in /etc/multipath.conf and reboot)
+- Error messages from multipath call will lead to error messages from the plugin. 
+  In case of 'line not recognised' errors, always check  multipath -l  and  multipath -ll
 
 END_HELP
 
@@ -683,7 +712,7 @@ $LICENSE = <<"END_LICENSE";
 
 $NAME   $VERSION
 
-Copyright (C) 2011-2016 $AUTHOR
+Copyright (C) 2011-2021 $AUTHOR
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
 This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.
@@ -920,24 +949,25 @@ if  ($opt{'print'} !~ m!^[GWND]+$!) {
 my @extraconfig = ();
 
 if ($opt{extraconfig} ne '') {
-   #if ( $opt{extraconfig} !~ m/^([GWDN]!)?([\w\-]+,\d+,\d+(?:,(?:ok|warning|critical)(?:,\w+,\d+,\d+)*)?:)+$/ ) {    # BUG fixed 2020-03-24 thanks to Jeffrey Honig <jeffrey.honig@xandr.com>
-    if ( $opt{extraconfig} !~ m/^(([GWDN]!)?[\w\-]+,\d+,\d+(?:,(?:ok|warning|critical)(?:,\w+,\d+,\d+)*)?:)+$/ ) {
-	unknown_error("Wrong usage of '--extraconfig' option: '"
-		      . $opt{extraconfig}
-		      . "' syntax error. See help information.");
+    # regular expression that defines ONE entry in option string
+    my $rx = '(?:([GWDN])!)?([\w\-]+),(\d+),(\d+)(?:,(ok|warning|critical)(?:,([\w\d,]+))?)?:+';
+
+   if ( $opt{extraconfig} !~ m/^($rx)+$/ ) {                       # use defined regex to check; improved bugfix (thanks to Jeffrey Honig <jeffrey.honig@xandr.com>)
+	unknown_error("Wrong usage of '--extraconfig' option: '". $opt{extraconfig} ."' syntax error. See help information.");
     } # if
 
     #print "EXTRA-Param '$opt{extraconfig}'\n";
-    while ( $opt{extraconfig} =~ m/(?:([GWDN])!)?([\w\-]+),(\d+),(\d+)(?:,(ok|warning|critical)(?:,([\w\d,]+))?)?:+/g ) {
+    #while ( $opt{extraconfig} =~ m/(?:([GWDN])!)?([\w\-]+),(\d+),(\d+)(?:,(ok|warning|critical)(?:,([\w\d,]+))?)?:+/g ) {
+    while ( $opt{extraconfig} =~ m/$rx/g ) {                       # use defined regex for consistancy(!)
         my $attribute   = $1;
 	my $attribValue = $2;
 	my $crit        = $3;
 	my $warn        = $4;
 	my $ret         = $5;
 	my $addchecks   = $6;
-        my $missingRet  = $E_WARNING;                          # set default
+        my $missingRet  = $E_WARNING;                               # set default
 	
-	if ( defined($ret) ) {                                 # if retcode is given: convert and store
+	if ( defined($ret) ) {                                      # if retcode is given: convert and store
 	    $missingRet=$text2exit{$ret};
 	} else {
 	    $ret = '#UNDEF#';
@@ -946,7 +976,7 @@ if ($opt{extraconfig} ne '') {
 	    $addchecks = '';
 	} # if
 	if ( !defined($attribute) ) {
-	    $attribute = 'G';                                  # DEFAULT: generic Name
+	    $attribute = 'G';                                       # DEFAULT: generic Name
 	} # if
 
 	#print "EXTRA: attrib='$attribute', val='$attribValue', c=$crit, w=$warn, m=$missingRet, '$ret', addchecks='$addchecks'\n";
@@ -1134,9 +1164,11 @@ sub checkLunLine {
     # fc-p6-vicepb (1Proware_FF010000333001EC) dm-1 Proware,R_laila            thanks to Michal Svamberg
     # u00.2 (360002ac000000000000000400000adfc) dm-6 3PARdata,VV               thanks to Ivan Zikyamov
     # TEST+-_.{~}_TEST (360002ac000000000000000400000adfc) dm-6 3PARdata,VV    generic test
+    # mpathq (eui.62326136306365612d636434382d3430) dm-32 NVME,PVL-MX18S0P2L2C1-F100TP0TY1
     #if ($textLine =~ m/^([\w\-]+) \s+ \([\w\-]+\)/x) {
     #if ($textLine =~ m/^([\w\-]+) \s+ \(([\w\-]+)\) (?: \s+ ([\w\-]+))?/x) {
-    if ($textLine =~ m/^([\w\-\.\{\}\+~]+) \s+ \(([\w\-]+)\) (?: \s+ ([\w\-]+))?/x) {
+    #if ($textLine =~ m/^([\w\-\.\{\}\+~]+) \s+ \(([\w\-]+)\) (?: \s+ ([\w\-]+))?/x) {
+    if ($textLine =~ m/^([\w\-\.\{\}\+~]+) \s+ \((?: [a-zA-Z]+ [\.:;,])?([\w\-]+)\) (?: \s+ ([\w\-]+))?/x) {
 	$$rCurrentLun = $1;
 	$idGeneric    = $1;
 	$idName       = $1;
@@ -1151,17 +1183,21 @@ sub checkLunLine {
     # 36006016019e02a00d009495ddbf3e011 dm-2 DGC,VRAID
     # 360a98000503361754b5a58724f6f7a59 dm-2 NETAPP  ,LUN
     # 360a98000503361754b5a58724f6f7a59 dm-2 NETAPP  ,LUN C-Mode
+    # eui.354358304e6107500025384100000004 [nvme]:nvme0n1 NVMe,Dell Express Flash PM1725b 3.2TB SFF,1.2.1    thanks to Jeffrey Honig <jeffrey.honig@xandr.com>
+    # eui.354358304e6107500025384100000004  nvme :nvme0n1 NVMe,Dell Express Flash PM1725b 3.2TB SFF,1.2.1    above, after input processing!
     #elsif ($textLine =~ m/^[0-9a-fA-F]+ \s+ ([\w\-\_]+)/x) {
-    elsif ($textLine =~ m/^([0-9a-fA-F]+) \s+ ([\w\-\_]+)/x) {
+    #elsif ($textLine =~ m/^([0-9a-fA-F]+) \s+ ([\w\-\_]+)/x) {
+    elsif ($textLine =~ m/^(?:[a-zA-Z]+[\.:;,])?([0-9a-fA-F]+) \s+ (?: [a-zA-Z]+ [\.:;,])?([\w\-\_]+)/x) {  
 	$$rCurrentLun = $2;
 	$idGeneric    = $2;
 	$idWWID       = $1;
 	$idDm         = $2;
-	#report("simple (1) LUN $$rCurrentLun found, G='$idGeneric', W='$idWWID', D='$idDm', N='$idName'", $E_OK);
+	#report("simple (1) LUN $$rCurrentLun found, G='$idGeneric', W='$idWWID', D='$idDm', N='$idName'", $E_OK); # <<<<<<<
     } 
     # 360a98000503361754b5a58724f6f7a59dm-2 NETAPP  ,LUN
     #elsif ($textLine =~ m/^[0-9a-fA-F]{3,33} \s* ([\w\-\_]+) \s+/x) {    
-    elsif ($textLine =~ m/^([0-9a-fA-F]{33}) ([\w\-]+) \s+ ([\w\-\_]+)/x) {
+    #elsif ($textLine =~ m/^([0-9a-fA-F]{33}) ([\w\-]+) \s+ ([\w\-\_]+)/x) {   # add wwid-prefix part for nvme drives
+    elsif ($textLine =~ m/^(?: [a-zA-Z]+ [\.:;,])?([0-9a-fA-F]{33}) ([\w\-]+) \s+ ([\w\-\_]+)/x) {
 	$$rCurrentLun = $2;
 	$idGeneric    = $2;
 	$idWWID       = $1;
@@ -1203,14 +1239,20 @@ sub checkPolicyLine {
 
     # `-+- policy='round-robin 0' prio=-1 status=active
     # |-+- policy='round-robin 0' prio=0 status=active
+    # `-+- policy='n/a' prio=n/a status=n/a              thanks to Jeffrey Honig <jeffrey.honig@xandr.com>
     ##\_ round-robin 0 [prio=-4][active]
     ## _ round-robin 0  prio=-4  active 
     #\_ round-robin 0 [active]
     # _ round-robin 0  active 
+    # 
     #if ( $textLine =~ m/^[|\`\-\+_\s]+ \s+ (?:policy=\')?[\w\.\-\_]+ \s \d(?:\')? \s+ prio=/x ) {
+    #if ( $textLine =~ m/^[|\`\-\+_\s]+ \s+ (?:policy=\')?[\w\.\-\_]+ \s \d(?:\')? \s+ \w+/x ) {
     if ( $textLine =~ m/^[|\`\-\+_\s]+ \s+ (?:policy=\')?[\w\.\-\_]+ \s \d(?:\')? \s+ \w+/x ) {
 	${$$rLunData{$currentLun}}{'policies'}++;
-      #print "checkPolicyLine: found policy no. ".${$$rLunData{$currentLun}}{'policies'}."\n";
+	#print "checkPolicyLine: found policy no. ".${$$rLunData{$currentLun}}{'policies'}."\n";
+	return 1;
+    } elsif ( $textLine =~ m/^[|\`\-\+_\s]+ \s+ (?:policy='n\/a')? \s+ \w+/x ) {
+	report("LUN ".getLunPrintName($$rLunData{$currentLun}).": policy is 'n/a'. Local drive?", $E_WARNING);
 	return 1;
     } else {
 	return 0;
@@ -1248,8 +1290,12 @@ sub checkMultipathText {
 		#  (thanks to Ben Evans)
                 #  `- #:#:#:# - #:#  active undef running
 
+                #  (thanks to Jeffrey Honig <jeffrey.honig@xandr.com>)
+                #  `- 0:33:1   nvme0c33n1 0:0   n/a   n/a   live
+
                #if ( $textLine =~ m/^[\s_\|\-\`\\\+]+ [#\d\:]+ \s+ ([\w\-]+) \s+ [#\d\:]+ \s+ \w+/xi ) { 
-                if ( $textLine =~ m/^[\s_\|\-\`\\\+]+ ([#\d]+):[#\d]+:([#\d]+):[#\d]+ \s+ ([\w\-]+) \s+ [#\d\:]+ \s+ \w+/xi ) { 
+               #if ( $textLine =~ m/^[\s_\|\-\`\\\+]+ ([#\d]+):[#\d]+:([#\d]+):[#\d]+ \s+ ([\w\-]+) \s+ [#\d\:]+ \s+ \w+/xi ) { 
+                if ( $textLine =~ m/^[\s_\|\-\`\\\+]+ ([#\d]+):[#\d]+:([#\d]+)(?::[#\d]+)? \s+ ([\w\-]+) \s+ [#\d\:]+ \s+ [\/\w+]/xi ) {
 		    my $sh         = $1;
 		    my $si         = $2;
 		    my $pathName   = $3;
@@ -1264,7 +1310,7 @@ sub checkMultipathText {
 			#print "ERROR: $textLine\n";
 			report("LUN ".getLunPrintName ($rLunData).", path $pathName: ERROR.", $E_WARNING);
 		    } 
-		    elsif ($textLine !~ m/\sactive\s/) {         # path is active?
+		    elsif ($textLine !~ m/\s(active|live)\s/) {         # path is active or live?
 			#print "NOT active: $textLine\n";
 			report("LUN ".getLunPrintName ($rLunData).", path $pathName: NOT active.", $E_WARNING);
 		    }
