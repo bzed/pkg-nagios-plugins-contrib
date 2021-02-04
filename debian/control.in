@@ -42,3 +42,4 @@ Description: Transitional package for monitoring-plugins-contrib
  nagios-plugins-contrib was renamed to monitoring-plugins-contrib.
  .
  This is a transitional package. It can safely be removed.
+Section: oldlibs
