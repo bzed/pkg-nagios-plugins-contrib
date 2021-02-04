@@ -282,7 +282,7 @@ nagios-plugins-contrib (22.20181105) unstable; urgency=medium
   * [e83a665] check_rbl: Update to 1.4.1
   * [1ec29f1] check_rbl: Drop patch check_rbl/spelling_errors
   * [3c3a375] check_rbl: Drop patch check_rbl/disable_dul.ru
-  * [0883752] check_rbl: Drop patch 
+  * [0883752] check_rbl: Drop patch
     check_raid/fix_mdadm_hotspare_failure_detection
   * [dcdb4b3] travis-ci: Allow unstable to fail, since varnish has FTBFS
     (again)
