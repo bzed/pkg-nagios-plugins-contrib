@@ -1,6 +1,8 @@
-nagios-plugins-contrib (29.20210205~1) UNRELEASED; urgency=medium
+nagios-plugins-contrib (30.20210223) unstable; urgency=medium
 
-  * UNRELEASED
+  * [e8ad4d9] Move transitional package nagios-plugins-contrib to
+    oldlibs/optional per policy 4.0.1.
+  * [1d2c802] check_ssl_cert: Update to 1.137.0
 
  -- Jan Wagner <waja@cyconet.org>  Thu, 04 Feb 2021 10:14:40 +0100
 
