@@ -1,3 +1,11 @@
+nagios-plugins-contrib (31.20210225~1.gbp491241) UNRELEASED; urgency=medium
+
+  ** SNAPSHOT build @491241933e1079e581d980b7dca3a034326e54f6 **
+
+  * NOT RELEASED YET
+
+ -- Jan Wagner <waja@cyconet.org>  Thu, 25 Feb 2021 21:02:03 +0100
+
 nagios-plugins-contrib (31.20210225) unstable; urgency=medium
 
   * [d90c9ca] check_ssl_cert: Update to 1.140.0
