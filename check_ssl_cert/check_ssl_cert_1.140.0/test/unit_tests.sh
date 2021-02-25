@@ -177,7 +177,8 @@ testWildcardAltNames2() {
         --cn somehost.spapps.ethz.ch \
         --cn otherhost.sPaPPs.ethz.ch \
         --cn spapps.ethz.ch \
-        --rootcert cabundle.crt --altnames
+        --rootcert cabundle.crt --altnames \
+       
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
 }
@@ -206,7 +207,7 @@ testXMPPHost() {
     # $TRAVIS is set an environment variable
     # shellcheck disable=SC2154
     if [ -z "${TRAVIS+x}" ] ; then
-        out=$(${SCRIPT} -H prosody.xmpp.is --port 5222 --protocol xmpp --xmpphost xmpp.is)
+        out=$(${SCRIPT} -H prosody.xmpp.is --port 5222 --protocol xmpp --xmpphost xmpp.is )
         EXIT_CODE=$?
         if echo "${out}" | grep -q "s_client' does not support '-xmpphost'" ; then
             assertEquals "wrong exit code" "${NAGIOS_UNKNOWN}" "${EXIT_CODE}"
