@@ -1,3 +1,10 @@
+nagios-plugins-contrib (31.20210225) unstable; urgency=medium
+
+  * [d90c9ca] check_ssl_cert: Update to 1.140.0
+  * [2e3f652] Auto update of debian/control
+
+ -- Jan Wagner <waja@cyconet.org>  Thu, 25 Feb 2021 19:45:55 +0100
+
 nagios-plugins-contrib (30.20210223) unstable; urgency=medium
 
   * [e8ad4d9] Move transitional package nagios-plugins-contrib to
