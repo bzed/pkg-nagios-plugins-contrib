@@ -25,6 +25,7 @@ check_libvirt/fix_cache_path
 check_lm_sensors/manpage_whatis_fix
 check_lm_sensors/spelling_errors
 check_lm_sensors/interpreter
+check_memory/force_locale
 check_memory/new_free
 check_memory/monitoring-plugin
 check_nfsmounts/perl_module

@@ -1,0 +1,13 @@
+diff --git a/check_memory/check_memory b/check_memory/check_memory
+index bf46711..fa2c47c 100644
+--- a/check_memory/check_memory
++++ b/check_memory/check_memory
+@@ -27,7 +27,7 @@ use Nagios::Plugin;
+
+ $PROGNAME = "check_memory";
+ $VERSION = '1.0.1';
+-$FREECMD = '/usr/bin/free';
++$FREECMD = 'LANG=C /usr/bin/free';
+ $UNIT = 'M';
+
+ my $np = Nagios::Plugin->new(

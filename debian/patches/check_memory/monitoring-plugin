@@ -33,7 +33,7 @@ index bf46711..4f272d1 100644
  
  $PROGNAME = "check_memory";
  $VERSION = '1.0.1';
- $FREECMD = '/usr/bin/free';
+ $FREECMD = 'LANG=C /usr/bin/free';
  $UNIT = 'M';
  
 -my $np = Nagios::Plugin->new(
