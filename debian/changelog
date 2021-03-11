@@ -1,8 +1,7 @@
-nagios-plugins-contrib (31.20210225~1.gbp491241) UNRELEASED; urgency=medium
+nagios-plugins-contrib (32.20210311) unstable; urgency=medium
 
-  ** SNAPSHOT build @491241933e1079e581d980b7dca3a034326e54f6 **
-
-  * NOT RELEASED YET
+  * [41971bc] check_ssl_cert: Update to 1.142.0
+  * [059ebda] Auto update of debian/control
 
  -- Jan Wagner <waja@cyconet.org>  Thu, 25 Feb 2021 21:02:03 +0100
 
