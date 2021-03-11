@@ -132,6 +132,11 @@ cat_vmlinux() {
 	filter="$3"
 	hdroff="$4"
 
+        if ! which ${filter%% *} >/dev/null; then
+                echo "UNKNOWN: filter command '$filter' missing." >&2
+                exit $UNKNOWN
+        fi
+
 	get_offset "$image" $header | head -n 5 | while read off; do
 		(if [ "$off" != 0 ]; then
 		   dd ibs="$((off+hdroff))" skip=1 count=0
@@ -153,6 +158,10 @@ get_image_linux() {
 	cat_vmlinux "$image" "\x00\x00\x00\x04\xff"  "xzcat" -1
 	# xz compressed image
 	cat_vmlinux "$image" "\xfd\x37\x7a\x58\x5a " "xzcat"  0
+        # lz4 compressed image
+        cat_vmlinux "$image" "\x02\x21\x4c\x18"  "lz4 -dc"  0
+        # lzo compressed image
+        cat_vmlinux "$image" "\x89\x4c\x5a\x4f\x00\x0d\x0a\x1a"  "lzop -dc"  0
 
 	echo "ERROR: Unable to extract kernel image." 2>&1
 	exit 1
