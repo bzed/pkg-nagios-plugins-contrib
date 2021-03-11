@@ -68,7 +68,7 @@ Options:
       --ignore-sct                 do not check for signed certificate timestamps (SCT)
       --ignore-ssl-labs-cache      Forces a new check by SSL Labs (see -L)
       --ignore-tls-renegotiation   Ignores the TLS renegotiation check
-      --Inetproto protocol         Force IP version 4 or 6
+      --inetproto protocol         Force IP version 4 or 6
    -i,--issuer issuer              pattern to match the issuer of the certificate
       --issuer-cert-cache dir      directory where to store issuer certificates cache
    -K,--clientkey path             use client certificate key to authenticate
@@ -101,6 +101,8 @@ Options:
                                    issue a warning status
    -o,--org org                    pattern to match the organization of the certificate
       --openssl path               path of the openssl binary to be used
+      --password source            password source for a local certificate, see the PASS PHRASE ARGUMENTS section
+                                   openssl(1)      
    -p,--port port                  TCP port
    -P,--protocol protocol          use the specific protocol
                                    {ftp|ftps|http|https|h2|imap|imaps|irc|ircs|ldap|ldaps|pop3|pop3s|
