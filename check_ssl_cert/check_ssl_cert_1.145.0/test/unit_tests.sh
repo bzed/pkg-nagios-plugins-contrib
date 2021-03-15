@@ -65,11 +65,77 @@ testHoursUntil42Hours() {
     assertEquals "error computing the missing hours until now" 42 "${HOURS_UNTIL}"
 }
 
+testOpenSSLVersion1() {
+    export OPENSSL_VERSION='OpenSSL 1.1.1j  16 Feb 2021'
+    export REQUIRED_VERSION='1.2.0a'
+    OPENSSL=$( command -v openssl ) # needed by openssl_version
+    openssl_version "${REQUIRED_VERSION}"
+    RET=$?
+    assertEquals "error comparing required version ${REQUIRED_VERSION} to current version ${OPENSSL_VERSION}" 1 "${RET}"
+    export OPENSSL_VERSION=
+}
+
+testOpenSSLVersion2() {
+    export OPENSSL_VERSION='OpenSSL 1.1.1j  16 Feb 2021'
+    export REQUIRED_VERSION='1.1.1j'
+    OPENSSL=$( command -v openssl ) # needed by openssl_version
+    openssl_version "${REQUIRED_VERSION}"
+    RET=$?
+    assertEquals "error comparing required version ${REQUIRED_VERSION} to current version ${OPENSSL_VERSION}" 0 "${RET}"
+    export OPENSSL_VERSION=
+}
+
+testOpenSSLVersion3() {
+    export OPENSSL_VERSION='OpenSSL 1.1.1j  16 Feb 2021'
+    export REQUIRED_VERSION='1.0.0b'
+    OPENSSL=$( command -v openssl ) # needed by openssl_version
+    openssl_version "${REQUIRED_VERSION}"
+    RET=$?
+    assertEquals "error comparing required version ${REQUIRED_VERSION} to current version ${OPENSSL_VERSION}" 0 "${RET}"
+    export OPENSSL_VERSION=
+}
+
+testOpenSSLVersion4() {
+    export OPENSSL_VERSION='OpenSSL 1.0.2k-fips 26 Jan 2017'
+    export REQUIRED_VERSION='1.0.0b'
+    OPENSSL=$( command -v openssl ) # needed by openssl_version
+    openssl_version "${REQUIRED_VERSION}"
+    RET=$?
+    assertEquals "error comparing required version ${REQUIRED_VERSION} to current version ${OPENSSL_VERSION}" 0 "${RET}"
+    export OPENSSL_VERSION=
+}
+
+testOpenSSLVersion5() {
+    export OPENSSL_VERSION='OpenSSL 1.1.1h-freebsd 22 Sep 2020'
+    export REQUIRED_VERSION='1.0.0b'
+    OPENSSL=$( command -v openssl ) # needed by openssl_version
+    openssl_version "${REQUIRED_VERSION}"
+    RET=$?
+    assertEquals "error comparing required version ${REQUIRED_VERSION} to current version ${OPENSSL_VERSION}" 0 "${RET}"
+    export OPENSSL_VERSION=
+}
+
 testDependencies() {
     check_required_prog openssl
     # $PROG is defined in the script
     # shellcheck disable=SC2154
     assertNotNull 'openssl not found' "${PROG}"
+}
+
+testSCT() {
+    OPENSSL=$( command -v openssl ) # needed by openssl_version
+    ${OPENSSL} version
+    if openssl_version '1.1.0' ; then
+	echo "OpenSSL >= 1.1.0: SCTs supported"
+        ${SCRIPT} --rootcert-file cabundle.crt -H no-sct.badssl.com
+        EXIT_CODE=$?
+        assertEquals "wrong exit code" "${NAGIOS_CRITICAL}" "${EXIT_CODE}"
+    else
+	echo "OpenSSL < 1.1.0: SCTs not supported"
+        ${SCRIPT} --rootcert-file cabundle.crt -H no-sct.badssl.com
+        EXIT_CODE=$?
+        assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
+    fi
 }
 
 testUsage() {
@@ -669,18 +735,6 @@ testCertificsteWithEmptySubject() {
     ${SCRIPT} --rootcert-file cabundle.crt -H localhost -n www.uue.org -f ./cert_with_empty_subject.crt --force-perl-date --ignore-sig-alg --ignore-sct
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
-}
-
-testSCT() {
-    if man verify | grep -F -q SCT ; then
-        ${SCRIPT} --rootcert-file cabundle.crt -H no-sct.badssl.com
-        EXIT_CODE=$?
-        assertEquals "wrong exit code" "${NAGIOS_CRITICAL}" "${EXIT_CODE}"
-    else
-        ${SCRIPT} --rootcert-file cabundle.crt -H no-sct.badssl.com
-        EXIT_CODE=$?
-        assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
-    fi
 }
 
 testCiphersOK() {
