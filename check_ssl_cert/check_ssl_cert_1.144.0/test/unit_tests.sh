@@ -178,7 +178,7 @@ testWildcardAltNames2() {
         --cn otherhost.sPaPPs.ethz.ch \
         --cn spapps.ethz.ch \
         --altnames \
-       
+
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
 }
@@ -502,7 +502,7 @@ testIPv6() {
         if ifconfig -a | grep -q inet6 ; then
 
             if ping -6 www.google.com > /dev/null 2>&1  ; then
-            
+
                 ${SCRIPT} --rootcert-file cabundle.crt -H www.google.com -6
                 EXIT_CODE=$?
                 assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
@@ -682,17 +682,25 @@ testSCT() {
         assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
     fi
 }
-    
+
 testCiphersOK() {
-    ${SCRIPT} --rootcert-file cabundle.crt -H corti.li --check-ciphers A --check-ciphers-warnings
-    EXIT_CODE=$?
-    assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
+    if [ -z "${TRAVIS+x}" ] ; then
+        ${SCRIPT} --rootcert-file cabundle.crt -H www.wikipedia.org --check-ciphers A --check-ciphers-warnings
+        EXIT_CODE=$?
+        assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
+    else
+        echo "Skipping nmap cipher warnings tests as nmap is too old"
+    fi
 }
 
 testCiphersError() {
-    ${SCRIPT} --rootcert-file cabundle.crt -H www.google.com --check-ciphers A --check-ciphers-warnings
-    EXIT_CODE=$?
-    assertEquals "wrong exit code" "${NAGIOS_CRITICAL}" "${EXIT_CODE}"
+    if [ -z "${TRAVIS+x}" ] ; then
+        ${SCRIPT} --rootcert-file cabundle.crt -H ethz.ch --check-ciphers A --check-ciphers-warnings
+        EXIT_CODE=$?
+        assertEquals "wrong exit code" "${NAGIOS_CRITICAL}" "${EXIT_CODE}"
+    else
+        echo "Skipping nmap cipher warnings tests as nmap is too old"
+    fi
 }
 
 # SSL Labs (last one as it usually takes a lot of time
