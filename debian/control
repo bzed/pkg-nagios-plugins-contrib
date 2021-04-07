@@ -16,7 +16,7 @@ Vcs-Browser: https://salsa.debian.org/nagios-team/pkg-nagios-plugins-contrib
 Package: monitoring-plugins-contrib
 Architecture: any
 Depends: ${misc:Depends}
-Recommends: libsocket-perl, libmonitoring-plugin-perl | libnagios-plugin-perl, libnet-snmp-perl, whois, nagios-plugins-basic, libnet-dns-perl, libdate-manip-perl, libmonitoring-plugin-perl | libnagios-plugin-perl (>= 0.31), libnet-cups-perl, debsecan, libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-smtp-ssl-perl, libnet-ssleay-perl, libnet-smtpauth-perl, bind9-host | knot-host, python3, liblocale-gettext-perl, liblwp-useragent-determined-perl, snmp, freeipmi-tools, libipc-run-perl, libxml-simple-perl, python3-pymongo, libdbd-mysql-perl, libreadonly-perl, libdata-validate-domain-perl, libdata-validate-ip-perl, libredis-perl, libnet-snmp-perl (>= 5), libtimedate-perl, curl, file, openssl, libwebinject-perl, libnet-dns-sec-perl, ruby | ruby-interpreter, binutils,
+Recommends: libsocket-perl, libmonitoring-plugin-perl | libnagios-plugin-perl, libnet-snmp-perl, whois, nagios-plugins-basic, libnet-dns-perl, libdate-manip-perl, libmonitoring-plugin-perl | libnagios-plugin-perl (>= 0.31), libnet-cups-perl, debsecan, libio-socket-ssl-perl, libmail-imapclient-perl, libnet-smtp-tls-perl, libnet-smtp-ssl-perl, libnet-ssleay-perl, libnet-smtpauth-perl, bind9-host | knot-host, python3, liblocale-gettext-perl, liblwp-useragent-determined-perl, snmp, freeipmi-tools, libipc-run-perl, libxml-simple-perl, python3-pymongo, libdbd-mysql-perl, libreadonly-perl, libdata-validate-domain-perl, libdata-validate-ip-perl, libredis-perl, libnet-snmp-perl (>= 5), libtimedate-perl, curl, file, openssl, libwebinject-perl, libnet-dns-sec-perl, ruby | ruby-interpreter, binutils, lz4, lzop,
             ${perl:Depends},
             ${python3:Depends},
             ${shlibs:Depends}
@@ -173,7 +173,7 @@ Description: Plugins for nagios compatible monitoring systems
      HOST-RESOURCES-MIB::hrSystemDate.0 used here returns 8 or 11 byte octets.
      SNMP translation needs to be switched off and to be converted the
      received SNMP data into readable strings.
-   * check_ssl_cert (1.145.0): plugin to check the CA and validity of an
+   * check_ssl_cert (2.0.0): plugin to check the CA and validity of an
      X.509 certificate
    * check_uptime (0.521): check_uptime returns uptime of a system
      in text (readable) format as well as in minutes for performance graphing.
