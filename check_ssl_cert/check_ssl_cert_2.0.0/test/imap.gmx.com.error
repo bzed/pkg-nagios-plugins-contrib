@@ -1,8 +1,0 @@
-verify depth is 6
-depth=2 C = US, O = DigiCert Inc, OU = www.digicert.com, CN = DigiCert Global Root CA
-verify return:1
-depth=1 C = US, O = DigiCert Inc, OU = www.digicert.com, CN = GeoTrust RSA CA 2018
-verify return:1
-depth=0 C = DE, ST = Rheinland-Pfalz, L = Montabaur, O = 1&1 Mail & Media GmbH, CN = mout.gmx.com
-verify return:1
-. OK CAPABILITY completed

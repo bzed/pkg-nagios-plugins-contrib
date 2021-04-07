@@ -1,8 +1,0 @@
-verify depth is 6
-depth=2 C = IE, O = Baltimore, OU = CyberTrust, CN = Baltimore CyberTrust Root
-verify return:1
-depth=1 C = US, O = "Cloudflare, Inc.", CN = Cloudflare Inc ECC CA-3
-verify return:1
-depth=0 C = US, ST = California, L = San Francisco, O = "Cloudflare, Inc.", CN = cloudflare.com
-verify return:1
-read:errno=0

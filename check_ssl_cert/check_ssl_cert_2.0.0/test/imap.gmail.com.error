@@ -1,8 +1,0 @@
-verify depth is 6
-depth=2 OU = GlobalSign Root CA - R2, O = GlobalSign, CN = GlobalSign
-verify return:1
-depth=1 C = US, O = Google Trust Services, CN = GTS CA 1O1
-verify return:1
-depth=0 C = US, ST = California, L = Mountain View, O = Google LLC, CN = imap.gmail.com
-verify return:1
-read:errno=0

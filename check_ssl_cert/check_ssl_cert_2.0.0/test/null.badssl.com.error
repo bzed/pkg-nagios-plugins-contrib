@@ -1,2 +1,0 @@
-verify depth is 6
-4589903360:error:14094410:SSL routines:ssl3_read_bytes:sslv3 alert handshake failure:ssl/record/rec_layer_s3.c:1544:SSL alert number 40
