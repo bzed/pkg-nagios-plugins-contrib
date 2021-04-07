@@ -1,6 +1,8 @@
-nagios-plugins-contrib (33.20210316) UNRELEASED; urgency=medium
+nagios-plugins-contrib (34.20210407) unstable; urgency=medium
 
-  * NOT RELEASED YET
+  * [0b2ec08] dsa/control: Adding lz4 and lzop as recommends
+  * [7225f0a] check_ssl_cert: Update to 2.0.0
+  * [df85cc7] Auto update of debian/control
 
  -- Jan Wagner <waja@cyconet.org>  Mon, 15 Mar 2021 20:11:40 +0100
 
