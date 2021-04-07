@@ -1,6 +1,7 @@
-nagios-plugins-contrib (34.20210408) UNRELEASED; urgency=medium
+nagios-plugins-contrib (34.20210407+1) unstable; urgency=medium
 
-  * NOT RELEASED YET
+  * [1e227ca] check_ssl_cert: Update to 2.0.1
+  * [bb3840a] Auto update of debian/control
 
  -- Jan Wagner <waja@cyconet.org>  Wed, 07 Apr 2021 14:06:43 +0200
 
