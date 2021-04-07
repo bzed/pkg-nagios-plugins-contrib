@@ -1,0 +1,133 @@
+CONNECTED(00000005)
+---
+Certificate chain
+ 0 s:C = US, ST = Arizona, L = Scottsdale, O = GoDaddy INC., CN = *.godaddy.com
+   i:C = US, ST = Arizona, L = Scottsdale, O = "GoDaddy.com, Inc.", OU = http://certs.godaddy.com/repository/, CN = Go Daddy Secure Certificate Authority - G2
+-----BEGIN CERTIFICATE-----
+MIIGaDCCBVCgAwIBAgIJAMHvimoc05ngMA0GCSqGSIb3DQEBCwUAMIG0MQswCQYD
+VQQGEwJVUzEQMA4GA1UECBMHQXJpem9uYTETMBEGA1UEBxMKU2NvdHRzZGFsZTEa
+MBgGA1UEChMRR29EYWRkeS5jb20sIEluYy4xLTArBgNVBAsTJGh0dHA6Ly9jZXJ0
+cy5nb2RhZGR5LmNvbS9yZXBvc2l0b3J5LzEzMDEGA1UEAxMqR28gRGFkZHkgU2Vj
+dXJlIENlcnRpZmljYXRlIEF1dGhvcml0eSAtIEcyMB4XDTIxMDExNTE5MDcxNVoX
+DTIyMDIxNjE5MDcxNVowYzELMAkGA1UEBhMCVVMxEDAOBgNVBAgTB0FyaXpvbmEx
+EzARBgNVBAcTClNjb3R0c2RhbGUxFTATBgNVBAoTDEdvRGFkZHkgSU5DLjEWMBQG
+A1UEAwwNKi5nb2RhZGR5LmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoC
+ggEBAKqoAuyaMtU3zD/lXJIodj4Le0E3UdwvQxtNBB1wIgRZwnnvbbioJDBj7gaA
+NFqiqm4KaT1eQc+XVv92mJwIzjcC20fFKwK476iUPRBI4x+V83nJHLpU/M6SIUwy
+DAmOCNkZzThZswXicyOCUJdt49WlKO7yQveF+5VyR9pkdMYa8SDhdpFtPV4hJzML
+wIrBQm5zPaipnoqUlhM0x/jZ6hqQf9Paep46GyVdmM8RXchCNrigU+x5u4zW+h+K
+xOMe8uKwCXef7S8kiqeEObzaNWeRtRMZAPswDY5YPGrGfuOjTGkF6f1NDFF/M6Eg
+obLsZHX9v9Ca3oIxIsuf0SEItO0CAwEAAaOCAsswggLHMAwGA1UdEwEB/wQCMAAw
+KQYDVR0lBCIwIAYIKwYBBQUHAwEGCCsGAQUFBwMCBgpghkgBhvhNAQIDMA4GA1Ud
+DwEB/wQEAwIFoDA2BgNVHR8ELzAtMCugKaAnhiVodHRwOi8vY3JsLmdvZGFkZHku
+Y29tL2dkaWcyczItMjAuY3JsMF0GA1UdIARWMFQwSAYLYIZIAYb9bQEHFwIwOTA3
+BggrBgEFBQcCARYraHR0cDovL2NlcnRpZmljYXRlcy5nb2RhZGR5LmNvbS9yZXBv
+c2l0b3J5LzAIBgZngQwBAgIwdgYIKwYBBQUHAQEEajBoMCQGCCsGAQUFBzABhhho
+dHRwOi8vb2NzcC5nb2RhZGR5LmNvbS8wQAYIKwYBBQUHMAKGNGh0dHA6Ly9jZXJ0
+aWZpY2F0ZXMuZ29kYWRkeS5jb20vcmVwb3NpdG9yeS9nZGlnMi5jcnQwHwYDVR0j
+BBgwFoAUQMK9J47MNIMwojPX+2yz8LQsgM4wJQYDVR0RBB4wHIINKi5nb2RhZGR5
+LmNvbYILZ29kYWRkeS5jb20wHQYDVR0OBBYEFMCzW+PeHbEDM72vc1Ns7hwfjrqP
+MIIBBAYKKwYBBAHWeQIEAgSB9QSB8gDwAHYAKXm+8J45OSHwVnOfY6V35b5XfZxg
+Cvj5TV0mXCVdx4QAAAF3B3QDagAABAMARzBFAiAOaIJMbEJ1ERKBBeMgyHdK0MAT
+Q8Q0iMlidxvm0yP0bwIhALrcsZIrTb8IKR1WhxHrcQivb3g0iIRNdLO4T1cf939J
+AHYAIkVFB1lVJFaWP6Ev8fdthuAjJmOtwEt/XcaDXG7iDwIAAAF3B3QEowAABAMA
+RzBFAiEA3lPsjV9Qcc2BaitWs8NwdxGh/NIfBw6wZ+WnuXhtRYYCIDkeVHC9widD
+GDSxHIUpi5xn+5TQ1ADNd561ew0tPTdiMA0GCSqGSIb3DQEBCwUAA4IBAQCYTEAK
+Kg+fjnf1nX0lGm9582gyUpns3iJb6NmkVyTrZSRdnaSN0exIEcTOmuNzmP2Zb0SD
+SdjZEGLQNouCKNeBtG5JwooPKNrBH0Z2YJngm4wtrCKJ5dbp7l+VLHlm0AnSbiME
+UlgpCscYX3SD07IlO3ndsEJcnZTx9QpYU6IoMs6fsjq8OFxdDu/QP4BmcpD6PoPT
+KS2amXfx05YuGgLbeCbwMdE8GIImNA6lm9dPOMoCzt/5VTQqcl95csCD52whb8Mi
+r6oTQQev/vhjUmqsZWMPUMsZwKYNXxmmuMGHbGEKxY5k/3W3mkh4JK568E8uL7Io
+uBani00Y32ztA9H9
+-----END CERTIFICATE-----
+ 1 s:C = US, ST = Arizona, L = Scottsdale, O = "GoDaddy.com, Inc.", OU = http://certs.godaddy.com/repository/, CN = Go Daddy Secure Certificate Authority - G2
+   i:C = US, ST = Arizona, L = Scottsdale, O = "GoDaddy.com, Inc.", CN = Go Daddy Root Certificate Authority - G2
+-----BEGIN CERTIFICATE-----
+MIIE0DCCA7igAwIBAgIBBzANBgkqhkiG9w0BAQsFADCBgzELMAkGA1UEBhMCVVMx
+EDAOBgNVBAgTB0FyaXpvbmExEzARBgNVBAcTClNjb3R0c2RhbGUxGjAYBgNVBAoT
+EUdvRGFkZHkuY29tLCBJbmMuMTEwLwYDVQQDEyhHbyBEYWRkeSBSb290IENlcnRp
+ZmljYXRlIEF1dGhvcml0eSAtIEcyMB4XDTExMDUwMzA3MDAwMFoXDTMxMDUwMzA3
+MDAwMFowgbQxCzAJBgNVBAYTAlVTMRAwDgYDVQQIEwdBcml6b25hMRMwEQYDVQQH
+EwpTY290dHNkYWxlMRowGAYDVQQKExFHb0RhZGR5LmNvbSwgSW5jLjEtMCsGA1UE
+CxMkaHR0cDovL2NlcnRzLmdvZGFkZHkuY29tL3JlcG9zaXRvcnkvMTMwMQYDVQQD
+EypHbyBEYWRkeSBTZWN1cmUgQ2VydGlmaWNhdGUgQXV0aG9yaXR5IC0gRzIwggEi
+MA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC54MsQ1K92vdSTYuswZLiBCGzD
+BNliF44v/z5lz4/OYuY8UhzaFkVLVat4a2ODYpDOD2lsmcgaFItMzEUz6ojcnqOv
+K/6AYZ15V8TPLvQ/MDxdR/yaFrzDN5ZBUY4RS1T4KL7QjL7wMDge87Am+GZHY23e
+cSZHjzhHU9FGHbTj3ADqRay9vHHZqm8A29vNMDp5T19MR/gd71vCxJ1gO7GyQ5HY
+pDNO6rPWJ0+tJYqlxvTV0KaudAVkV4i1RFXULSo6Pvi4vekyCgKUZMQWOlDxSq7n
+eTOvDCAHf+jfBDnCaQJsY1L6d8EbyHSHyLmTGFBUNUtpTrw700kuH9zB0lL7AgMB
+AAGjggEaMIIBFjAPBgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQEAwIBBjAdBgNV
+HQ4EFgQUQMK9J47MNIMwojPX+2yz8LQsgM4wHwYDVR0jBBgwFoAUOpqFBxBnKLbv
+9r0FQW4gwZTaD94wNAYIKwYBBQUHAQEEKDAmMCQGCCsGAQUFBzABhhhodHRwOi8v
+b2NzcC5nb2RhZGR5LmNvbS8wNQYDVR0fBC4wLDAqoCigJoYkaHR0cDovL2NybC5n
+b2RhZGR5LmNvbS9nZHJvb3QtZzIuY3JsMEYGA1UdIAQ/MD0wOwYEVR0gADAzMDEG
+CCsGAQUFBwIBFiVodHRwczovL2NlcnRzLmdvZGFkZHkuY29tL3JlcG9zaXRvcnkv
+MA0GCSqGSIb3DQEBCwUAA4IBAQAIfmyTEMg4uJapkEv/oV9PBO9sPpyIBslQj6Zz
+91cxG7685C/b+LrTW+C05+Z5Yg4MotdqY3MxtfWoSKQ7CC2iXZDXtHwlTxFWMMS2
+RJ17LJ3lXubvDGGqv+QqG+6EnriDfcFDzkSnE3ANkR/0yBOtg2DZ2HKocyQetawi
+DsoXiWJYRBuriSUBAA/NxBti21G00w9RKpv0vHP8ds42pM3Z2Czqrpv1KrKQ0U11
+GIo/ikGQI31bS/6kA1ibRrLDYGCD+H1QQc7CoZDDu+8CL9IVVO5EFdkKrqeKM+2x
+LXY2JtwE65/3YR8V3Idv7kaWKK2hJn0KCacuBKONvPi8BDAB
+-----END CERTIFICATE-----
+---
+Server certificate
+subject=C = US, ST = Arizona, L = Scottsdale, O = GoDaddy INC., CN = *.godaddy.com
+
+issuer=C = US, ST = Arizona, L = Scottsdale, O = "GoDaddy.com, Inc.", OU = http://certs.godaddy.com/repository/, CN = Go Daddy Secure Certificate Authority - G2
+
+---
+No client certificate CA names sent
+Peer signing digest: SHA256
+Peer signature type: RSA-PSS
+Server Temp Key: ECDH, P-256, 256 bits
+---
+SSL handshake has read 3557 bytes and written 443 bytes
+Verification: OK
+---
+New, TLSv1.2, Cipher is ECDHE-RSA-AES256-GCM-SHA384
+Server public key is 2048 bit
+Secure Renegotiation IS supported
+Compression: NONE
+Expansion: NONE
+No ALPN negotiated
+SSL-Session:
+    Protocol  : TLSv1.2
+    Cipher    : ECDHE-RSA-AES256-GCM-SHA384
+    Session-ID: EF445883E0A1192D4F240D20E544709D2BD25874114EA7819EDF714FA3FBC8C8
+    Session-ID-ctx: 
+    Master-Key: BDDB63B15D1C188BF5809C1DB8847D78472216F090264E84F3A4035695BED8B11733BED0DE8B64C9C3FD1CE8740BB599
+    PSK identity: None
+    PSK identity hint: None
+    SRP username: None
+    TLS session ticket lifetime hint: 83100 (seconds)
+    TLS session ticket:
+    0000 - 00 00 17 71 1a 5a 36 71-3d b5 64 a9 e3 ab 60 63   ...q.Z6q=.d...`c
+    0010 - f1 a4 09 78 75 4c f7 ac-6d 35 d0 79 ef 63 e9 20   ...xuL..m5.y.c. 
+    0020 - ea e9 97 4f 53 3a be 4d-73 e9 c4 03 e0 84 04 80   ...OS:.Ms.......
+    0030 - 3a ad b3 7e 95 4a 29 6d-d8 7e 1b 0c 21 80 46 1c   :..~.J)m.~..!.F.
+    0040 - 29 c9 08 b6 13 ab 61 b1-f7 da 06 a6 7f 26 f4 0d   ).....a......&..
+    0050 - 04 29 0c e0 81 69 50 c1-5d a1 f4 d3 4c 54 7f 59   .)...iP.]...LT.Y
+    0060 - 9c db e9 7f 18 8b 3c d9-a1 6a 91 4f 53 8d ec 72   ......<..j.OS..r
+    0070 - 24 c8 c4 cb 42 b1 b1 b1-cd 8a 0c f1 85 82 bc ec   $...B...........
+    0080 - bc 82 be e2 8a 52 6b 7d-ac 33 56 f1 6b d5 ec b2   .....Rk}.3V.k...
+    0090 - 99 a5 85 0a 89 21 c9 6f-14 f8 20 18 26 c2 d1 82   .....!.o.. .&...
+    00a0 - 3d 3a 72 7b 39 b8 87 ae-60 b8 1c 60 78 92 c6 89   =:r{9...`..`x...
+
+    Start Time: 1617028072
+    Timeout   : 7200 (sec)
+    Verify return code: 0 (ok)
+    Extended master secret: no
+---
+HTTP/1.1 302 Moved Temporarily
+Server: AkamaiGHost
+Content-Length: 0
+Location: https://ch.godaddy.com/
+Date: Mon, 29 Mar 2021 14:27:53 GMT
+Connection: close
+Set-Cookie: market=de-CH; expires=Tue, 29-Mar-2022 14:27:53 GMT; path=/; domain=.godaddy.com
+X-Frame-Options: DENY
+X-ARC: 2
+X-ARC: 6
+
+closed

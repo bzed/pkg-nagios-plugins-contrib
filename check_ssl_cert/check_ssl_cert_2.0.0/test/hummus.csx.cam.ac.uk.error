@@ -1,0 +1,4 @@
+verify depth is 6
+depth=0 CN = mx.exim.org
+verify return:1
+250 HELP

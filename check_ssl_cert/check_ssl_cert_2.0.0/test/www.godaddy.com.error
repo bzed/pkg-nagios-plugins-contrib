@@ -1,0 +1,7 @@
+verify depth is 6
+depth=2 C = US, ST = Arizona, L = Scottsdale, O = "GoDaddy.com, Inc.", CN = Go Daddy Root Certificate Authority - G2
+verify return:1
+depth=1 C = US, ST = Arizona, L = Scottsdale, O = "GoDaddy.com, Inc.", OU = http://certs.godaddy.com/repository/, CN = Go Daddy Secure Certificate Authority - G2
+verify return:1
+depth=0 C = US, ST = Arizona, L = Scottsdale, O = GoDaddy INC., CN = *.godaddy.com
+verify return:1

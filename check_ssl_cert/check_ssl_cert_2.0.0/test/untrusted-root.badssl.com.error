@@ -1,0 +1,8 @@
+verify depth is 6
+depth=1 C = US, ST = California, L = San Francisco, O = BadSSL, CN = BadSSL Untrusted Root Certificate Authority
+verify error:num=19:self signed certificate in certificate chain
+verify return:1
+depth=1 C = US, ST = California, L = San Francisco, O = BadSSL, CN = BadSSL Untrusted Root Certificate Authority
+verify return:1
+depth=0 C = US, ST = California, L = San Francisco, O = BadSSL, CN = *.badssl.com
+verify return:1

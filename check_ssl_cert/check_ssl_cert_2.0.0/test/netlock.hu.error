@@ -1,0 +1,7 @@
+verify depth is 6
+depth=2 C = HU, L = Budapest, O = NetLock Kft., OU = Tan\C3\BAs\C3\ADtv\C3\A1nykiad\C3\B3k (Certification Services), CN = NetLock Arany (Class Gold) F\C5\91tan\C3\BAs\C3\ADtv\C3\A1ny
+verify return:1
+depth=1 C = HU, L = Budapest, O = NetLock Kft., OU = Tan\C3\BAs\C3\ADtv\C3\A1nykiad\C3\B3k (Certification Services), CN = NetLock \C3\9Czleti (Class B) Tan\C3\BAs\C3\ADtv\C3\A1nykiad\C3\B3
+verify return:1
+depth=0 C = HU, L = Budapest, O = NETLOCK Kft., CN = www.netlock.hu
+verify return:1

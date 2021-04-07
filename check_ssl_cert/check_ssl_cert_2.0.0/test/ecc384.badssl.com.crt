@@ -1,0 +1,122 @@
+CONNECTED(00000005)
+---
+Certificate chain
+ 0 s:C = US, ST = California, L = Walnut Creek, O = Lucas Garron Torres, CN = *.badssl.com
+   i:C = US, O = DigiCert Inc, CN = DigiCert ECC Secure Server CA
+-----BEGIN CERTIFICATE-----
+MIIFVTCCBNqgAwIBAgIQC2NbIkP4nPhhgVEQUbatsDAKBggqhkjOPQQDAzBMMQsw
+CQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMSYwJAYDVQQDEx1EaWdp
+Q2VydCBFQ0MgU2VjdXJlIFNlcnZlciBDQTAeFw0yMDAyMDUwMDAwMDBaFw0yMjAy
+MTAxMjAwMDBaMG4xCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpDYWxpZm9ybmlhMRUw
+EwYDVQQHEwxXYWxudXQgQ3JlZWsxHDAaBgNVBAoTE0x1Y2FzIEdhcnJvbiBUb3Jy
+ZXMxFTATBgNVBAMMDCouYmFkc3NsLmNvbTB2MBAGByqGSM49AgEGBSuBBAAiA2IA
+BA06tprL9Pw7M5wIpr6EDe0GAE1gW0lxhkddNXy9rIYbindaBQ7JMnvwlYGoyLpL
+vmt1m7pXryAI4WgchL/zj7RGRhNrBTs0mWw7yjap0WL/Q+63ZiEN2ZR1FAMzfjhs
+TqOCA10wggNZMB8GA1UdIwQYMBaAFKOd5h/52jlPwG7okcuVpdox4gqfMB0GA1Ud
+DgQWBBTiA8TSTdOVYQixrkYOmi8S2QI52TAjBgNVHREEHDAaggwqLmJhZHNzbC5j
+b22CCmJhZHNzbC5jb20wDgYDVR0PAQH/BAQDAgeAMB0GA1UdJQQWMBQGCCsGAQUF
+BwMBBggrBgEFBQcDAjBpBgNVHR8EYjBgMC6gLKAqhihodHRwOi8vY3JsMy5kaWdp
+Y2VydC5jb20vc3NjYS1lY2MtZzEuY3JsMC6gLKAqhihodHRwOi8vY3JsNC5kaWdp
+Y2VydC5jb20vc3NjYS1lY2MtZzEuY3JsMEwGA1UdIARFMEMwNwYJYIZIAYb9bAEB
+MCowKAYIKwYBBQUHAgEWHGh0dHBzOi8vd3d3LmRpZ2ljZXJ0LmNvbS9DUFMwCAYG
+Z4EMAQIDMHsGCCsGAQUFBwEBBG8wbTAkBggrBgEFBQcwAYYYaHR0cDovL29jc3Au
+ZGlnaWNlcnQuY29tMEUGCCsGAQUFBzAChjlodHRwOi8vY2FjZXJ0cy5kaWdpY2Vy
+dC5jb20vRGlnaUNlcnRFQ0NTZWN1cmVTZXJ2ZXJDQS5jcnQwDAYDVR0TAQH/BAIw
+ADCCAX0GCisGAQQB1nkCBAIEggFtBIIBaQFnAHYAu9nfvB+KcbWTlCOXqpJ7RzhX
+lQqrUugakJZkNo4e0YUAAAFwEsKWQQAABAMARzBFAiEAyUB6UJksQ65T9kSFFwCA
+H5j0wBRgPzzU1P9zOgwo3KQCIEKhVWsg4TQbwSOMf0FQfsDcApnMRKN2YF9R7bPP
+0qF5AHYAUaOw9f0BeZxWbbg3eI8MpHrMGyfL956IQpoN/tSLBeUAAAFwEsKWuQAA
+BAMARzBFAiEAq9nTqr565Eeqw8HZsFtTtxLoy/zmLc7QhxuWh6JDg0kCIHMZuO5c
+ZCC7UymWyvGFt/U3kVpTXuOxevEsEIgGi6dLAHUAQcjKsd8iRkoQxqE6CUKHXk4x
+ixsD6+tLx2jwkGKWBvYAAAFwEsKWBgAABAMARjBEAiBWyAfR3Zxw2d2c8PGgsZCu
+RZNUPI9GZswdIRXdz9s2XwIgFc2upZb/FNXkzx2CqsqXx2wsij+eY2k6DYi7f1Rv
+ffkwCgYIKoZIzj0EAwMDaQAwZgIxAKPm0CI7yPCTG6KaJBEZttYMQNcVN+ytuPcN
+C/m2FZek7bDiqZn1HSbuq2XumHywXAIxANJP8b3EfN08c5mRHvhgYRhZIAZH3/wX
+4bt3UnlbLhjyUZZ6huZzpp38WX/5fuRs3g==
+-----END CERTIFICATE-----
+ 1 s:C = US, O = DigiCert Inc, CN = DigiCert ECC Secure Server CA
+   i:C = US, O = DigiCert Inc, OU = www.digicert.com, CN = DigiCert Global Root CA
+-----BEGIN CERTIFICATE-----
+MIIDrDCCApSgAwIBAgIQCssoukZe5TkIdnRw883GEjANBgkqhkiG9w0BAQwFADBh
+MQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3
+d3cuZGlnaWNlcnQuY29tMSAwHgYDVQQDExdEaWdpQ2VydCBHbG9iYWwgUm9vdCBD
+QTAeFw0xMzAzMDgxMjAwMDBaFw0yMzAzMDgxMjAwMDBaMEwxCzAJBgNVBAYTAlVT
+MRUwEwYDVQQKEwxEaWdpQ2VydCBJbmMxJjAkBgNVBAMTHURpZ2lDZXJ0IEVDQyBT
+ZWN1cmUgU2VydmVyIENBMHYwEAYHKoZIzj0CAQYFK4EEACIDYgAE4ghC6nfYJN6g
+LGSkE85AnCNyqQIKDjc/ITa4jVMU9tWRlUvzlgKNcR7E2Munn17voOZ/WpIRllNv
+68DLP679Wz9HJOeaBy6Wvqgvu1cYr3GkvXg6HuhbPGtkESvMNCuMo4IBITCCAR0w
+EgYDVR0TAQH/BAgwBgEB/wIBADAOBgNVHQ8BAf8EBAMCAYYwNAYIKwYBBQUHAQEE
+KDAmMCQGCCsGAQUFBzABhhhodHRwOi8vb2NzcC5kaWdpY2VydC5jb20wQgYDVR0f
+BDswOTA3oDWgM4YxaHR0cDovL2NybDMuZGlnaWNlcnQuY29tL0RpZ2lDZXJ0R2xv
+YmFsUm9vdENBLmNybDA9BgNVHSAENjA0MDIGBFUdIAAwKjAoBggrBgEFBQcCARYc
+aHR0cHM6Ly93d3cuZGlnaWNlcnQuY29tL0NQUzAdBgNVHQ4EFgQUo53mH/naOU/A
+buiRy5Wl2jHiCp8wHwYDVR0jBBgwFoAUA95QNVbRTLtm8KPiGxvDl7I90VUwDQYJ
+KoZIhvcNAQEMBQADggEBAMeKoENL7HTJxavVHzA1Nm6YVntIrAVjrnuaVyRXzG/6
+3qttnMe2uuzO58pzZNvfBDcKAEmzP58mrZGMIOgfiA4q+2Y3yDDo0sIkp0VILeoB
+UEoxlBPfjV/aKrtJPGHzecicZpIalir0ezZYoyxBEHQa0+1IttK7igZFcTMQMHp6
+mCHdJLnsnLWSB62DxsRq+HfmNb4TDydkskO/g+l3VtsIh5RHFPVfKK+jaEyDj2D3
+loB5hWp2Jp2VDCADjT7ueihlZGak2YPqmXTNbk19HOuNssWvFhtOyPNV6og4ETQd
+Ea8/B6hPatJ0ES8q/HO3X8IVQwVs1n3aAr0im0/T+Xc=
+-----END CERTIFICATE-----
+---
+Server certificate
+subject=C = US, ST = California, L = Walnut Creek, O = Lucas Garron Torres, CN = *.badssl.com
+
+issuer=C = US, O = DigiCert Inc, CN = DigiCert ECC Secure Server CA
+
+---
+No client certificate CA names sent
+Peer signing digest: SHA512
+Peer signature type: ECDSA
+Server Temp Key: ECDH, P-256, 256 bits
+---
+SSL handshake has read 2854 bytes and written 445 bytes
+Verification: OK
+---
+New, TLSv1.2, Cipher is ECDHE-ECDSA-AES128-GCM-SHA256
+Server public key is 384 bit
+Secure Renegotiation IS supported
+Compression: NONE
+Expansion: NONE
+No ALPN negotiated
+SSL-Session:
+    Protocol  : TLSv1.2
+    Cipher    : ECDHE-ECDSA-AES128-GCM-SHA256
+    Session-ID: BC37DEAC837EC6238C9CF200E7AFB0238642448718E1B9B1800F185C19B72705
+    Session-ID-ctx: 
+    Master-Key: EC2030C716717D55F9651C0E9027825BF1F5133B02F43DD88FF115FC386C62788ED7B6AF0ADBF0C5ECF5AB0C7EB02C4C
+    PSK identity: None
+    PSK identity hint: None
+    SRP username: None
+    TLS session ticket lifetime hint: 300 (seconds)
+    TLS session ticket:
+    0000 - 5b d5 ed df 6b dc 79 68-af a2 3e 33 a2 72 4a fe   [...k.yh..>3.rJ.
+    0010 - 90 e3 a6 a5 c0 a2 0d 59-59 de 77 8d 41 30 0e 1a   .......YY.w.A0..
+    0020 - e7 0b e5 64 04 ea 7c 31-37 ce f1 ea f5 60 77 82   ...d..|17....`w.
+    0030 - d8 f2 46 b9 af 1e 57 36-a1 d6 9e b5 53 fd d5 b8   ..F...W6....S...
+    0040 - 41 39 f7 ad cf 89 58 da-3e fa 1f 32 5a 9c 96 af   A9....X.>..2Z...
+    0050 - 07 80 92 cc 02 84 41 86-07 cc 43 2c dd 5c b4 ee   ......A...C,.\..
+    0060 - 26 a1 95 55 b4 f9 ba 63-1f 07 83 ca ab b4 39 9e   &..U...c......9.
+    0070 - d7 9a 0d 22 43 8d 02 87-50 a7 7f 8d da 04 ea 61   ..."C...P......a
+    0080 - 59 44 6a 85 f3 0b f0 66-dc 6e 8d ea 86 99 50 a5   YDj....f.n....P.
+    0090 - 6f 96 9f 8d 9b 71 22 86-1e fb c8 2f 33 21 e4 3e   o....q"..../3!.>
+    00a0 - 0b 85 d2 8e c2 ac 69 6f-57 f8 e4 38 82 3c dd f0   ......ioW..8.<..
+    00b0 - 7a 7b 8a 40 ed ce 2b aa-40 c0 cd 74 34 34 f7 2a   z{.@..+.@..t44.*
+
+    Start Time: 1617028136
+    Timeout   : 7200 (sec)
+    Verify return code: 0 (ok)
+    Extended master secret: no
+---
+HTTP/1.1 200 OK
+Server: nginx/1.10.3 (Ubuntu)
+Date: Mon, 29 Mar 2021 14:28:56 GMT
+Content-Type: text/html
+Content-Length: 684
+Last-Modified: Tue, 23 Feb 2021 21:28:41 GMT
+Connection: close
+ETag: "60357389-2ac"
+Cache-Control: no-store
+Accept-Ranges: bytes
+
+closed

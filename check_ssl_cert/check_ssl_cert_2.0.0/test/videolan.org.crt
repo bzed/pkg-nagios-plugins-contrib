@@ -1,0 +1,209 @@
+CONNECTED(00000005)
+OCSP response: 
+======================================
+OCSP Response Data:
+    OCSP Response Status: successful (0x0)
+    Response Type: Basic OCSP Response
+    Version: 1 (0x0)
+    Responder Id: C = US, O = Let's Encrypt, CN = R3
+    Produced At: Mar 29 03:34:00 2021 GMT
+    Responses:
+    Certificate ID:
+      Hash Algorithm: sha1
+      Issuer Name Hash: 48DAC9A0FB2BD32D4FF0DE68D2F567B735F9B3C4
+      Issuer Key Hash: 142EB317B75856CBAE500940E61FAF9D8B14C2C6
+      Serial Number: 046DCF68A71DC73C0B8EA2EBB90BDD8627BD
+    Cert Status: good
+    This Update: Mar 29 03:00:00 2021 GMT
+    Next Update: Apr  5 03:00:00 2021 GMT
+
+    Signature Algorithm: sha256WithRSAEncryption
+         2d:ed:90:20:69:1f:58:96:6c:f2:1a:09:d9:86:09:38:bf:65:
+         8e:5d:e1:92:14:d3:ed:46:bb:6f:ed:5e:37:02:10:1c:25:e9:
+         b2:d5:9e:d0:1a:4b:7d:fe:97:c5:da:2a:15:4c:d0:bd:c5:bf:
+         6f:fa:26:1c:f5:ca:1b:a0:ad:57:c0:9e:5a:df:83:40:3e:78:
+         20:7c:49:11:52:43:bf:58:34:de:09:6d:d7:4a:0f:d6:4e:de:
+         c9:ac:ca:1c:5d:0c:39:19:5a:86:0b:5d:0a:b3:2f:8d:d0:ee:
+         01:7f:ee:04:23:54:e1:64:6e:9b:d3:9f:4e:01:53:f4:48:6f:
+         18:44:68:11:8c:b6:8d:a3:2b:59:ae:01:09:f5:e1:b3:31:ec:
+         0d:b3:38:47:2a:55:a9:fc:b1:98:f2:73:8b:f5:e7:01:04:ff:
+         cd:ed:56:b8:60:44:65:1e:95:27:f4:e3:2d:c9:28:7f:dd:7d:
+         ef:3b:b1:7a:80:ed:2e:18:72:28:2c:b9:1a:22:7c:19:15:e5:
+         16:42:95:d0:d1:fa:10:85:25:65:49:95:21:9f:0f:fe:ca:d8:
+         06:c2:bb:70:5b:fa:bc:f5:20:57:62:5e:58:07:c6:28:ac:ef:
+         d1:04:00:1a:32:c4:2e:25:f5:c2:5e:c6:a9:58:ba:66:9d:f9:
+         77:28:3f:93
+======================================
+---
+Certificate chain
+ 0 s:CN = www.videolan.org
+   i:C = US, O = Let's Encrypt, CN = R3
+-----BEGIN CERTIFICATE-----
+MIIGGDCCBQCgAwIBAgISBG3PaKcdxzwLjqLruQvdhie9MA0GCSqGSIb3DQEBCwUA
+MDIxCzAJBgNVBAYTAlVTMRYwFAYDVQQKEw1MZXQncyBFbmNyeXB0MQswCQYDVQQD
+EwJSMzAeFw0yMTAyMjcwMjM0MzlaFw0yMTA1MjgwMjM0MzlaMBsxGTAXBgNVBAMT
+EHd3dy52aWRlb2xhbi5vcmcwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAQc64fV
+9yt7ZUlyCYuwC9rk4mXo/G0ZHMVBLhIto8lqK4biif40TGhdJrTYF+h0KV8r0Hj2
+6p3Y8GH5VExc323Fo4IECDCCBAQwDgYDVR0PAQH/BAQDAgeAMB0GA1UdJQQWMBQG
+CCsGAQUFBwMBBggrBgEFBQcDAjAMBgNVHRMBAf8EAjAAMB0GA1UdDgQWBBRy9FEN
+zRYg52qv5nzmEZff83dGYjAfBgNVHSMEGDAWgBQULrMXt1hWy65QCUDmH6+dixTC
+xjBVBggrBgEFBQcBAQRJMEcwIQYIKwYBBQUHMAGGFWh0dHA6Ly9yMy5vLmxlbmNy
+Lm9yZzAiBggrBgEFBQcwAoYWaHR0cDovL3IzLmkubGVuY3Iub3JnLzCCAdYGA1Ud
+EQSCAc0wggHJghdhcGktYWRkb25zLnZpZGVvbGFuLm9yZ4IXYXBpLmFkZG9ucy52
+aWRlb2xhbi5vcmeCFGNyYXNoZXMudmlkZW9sYW4ub3JnghVkb3dubG9hZC52aWRl
+b2xhbi5vcmeCFmRvd25sb2Fkcy52aWRlb2xhbi5vcmeCGGZpbmdlcnByaW50LnZp
+ZGVvbGFuLm9yZ4ISZm9ydW0udmlkZW9sYW4ub3JnghNpbWFnZXMudmlkZW9sYW4u
+b3JnghhtYWMuY3Jhc2hlcy52aWRlb2xhbi5vcmeCD21iLnZpZGVvbGFuLm9yZ4IU
+cGF0Y2hlcy52aWRlb2xhbi5vcmeCE3BsYW5ldC52aWRlb2xhbi5vcmeCEXRyYWMu
+dmlkZW9sYW4ub3JnghZ0cmFuc2xhdGUudmlkZW9sYW4ub3Jnghh1cGRhdGUtdGVz
+dC52aWRlb2xhbi5vcmeCE3VwZGF0ZS52aWRlb2xhbi5vcmeCEHZkZC52aWRlb2xh
+bi5vcmeCDHZpZGVvbGFuLm9yZ4IRd2lraS52aWRlb2xhbi5vcmeCGHdpbi5jcmFz
+aGVzLnZpZGVvbGFuLm9yZ4IQd3d3LnZpZGVvbGFuLm9yZzBMBgNVHSAERTBDMAgG
+BmeBDAECATA3BgsrBgEEAYLfEwEBATAoMCYGCCsGAQUFBwIBFhpodHRwOi8vY3Bz
+LmxldHNlbmNyeXB0Lm9yZzCCAQQGCisGAQQB1nkCBAIEgfUEgfIA8AB2AESUZS6w
+7s6vxEAH2Kj+KMDa5oK+2MsxtT/TM5a1toGoAAABd+GNdL8AAAQDAEcwRQIgcmHL
+KM1i4yGKB6ZsbE5ag8k0Zt4sPb//i3RseMzc88sCIQDrluGuzhjrEszCAdG/n64B
+e3kgfTFVgMZrl53DDsSC/QB2AH0+8viP/4hVaCTCwMqeUol5K8UOeAl/LmqXaJl+
+IvDXAAABd+GNdNgAAAQDAEcwRQIhAMM6M03cQkHfNo/ijhiUJ5hdZYQeDLIm/ZWy
+rWRGT4iRAiBiTY5Ebtzx9QUdJTBz3WrK7G1KF31+W6JnNZRRJXY1BDANBgkqhkiG
+9w0BAQsFAAOCAQEAeSlZkL9ppdwsHUFUt8AqeD5EKkMviI5Ja88v5Ii+e/uoJJX+
+ir8xIOvbaUliZ5/XQfUwYE7Dl9/Fkq/c74k0FVVxw2dApVHDeBLkpZM83NOprY8I
+gZ95E09m51ffD2sZNI8KDmJnErtvy1RNF1wbrXOMsFfVS67sj1fwQFk+y4q8iaCD
+RCQg4P3sculHnfxxjQ6hGf7lsnQ27Dh0f7XfSMPdYViznBe3lxM6hq+uPkuoTUPj
+nEu4Vja8fVasxGKBV6eGsL5U1PgOjg9cS7yNuCG7ULyY4jBzqLmonhtDjtVCwDey
+W6Mw2tfB54vv2foBtHV5ODBDT7KcdXQS7wH0mA==
+-----END CERTIFICATE-----
+ 1 s:C = US, O = Let's Encrypt, CN = R3
+   i:O = Digital Signature Trust Co., CN = DST Root CA X3
+-----BEGIN CERTIFICATE-----
+MIIEZTCCA02gAwIBAgIQQAF1BIMUpMghjISpDBbN3zANBgkqhkiG9w0BAQsFADA/
+MSQwIgYDVQQKExtEaWdpdGFsIFNpZ25hdHVyZSBUcnVzdCBDby4xFzAVBgNVBAMT
+DkRTVCBSb290IENBIFgzMB4XDTIwMTAwNzE5MjE0MFoXDTIxMDkyOTE5MjE0MFow
+MjELMAkGA1UEBhMCVVMxFjAUBgNVBAoTDUxldCdzIEVuY3J5cHQxCzAJBgNVBAMT
+AlIzMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuwIVKMz2oJTTDxLs
+jVWSw/iC8ZmmekKIp10mqrUrucVMsa+Oa/l1yKPXD0eUFFU1V4yeqKI5GfWCPEKp
+Tm71O8Mu243AsFzzWTjn7c9p8FoLG77AlCQlh/o3cbMT5xys4Zvv2+Q7RVJFlqnB
+U840yFLuta7tj95gcOKlVKu2bQ6XpUA0ayvTvGbrZjR8+muLj1cpmfgwF126cm/7
+gcWt0oZYPRfH5wm78Sv3htzB2nFd1EbjzK0lwYi8YGd1ZrPxGPeiXOZT/zqItkel
+/xMY6pgJdz+dU/nPAeX1pnAXFK9jpP+Zs5Od3FOnBv5IhR2haa4ldbsTzFID9e1R
+oYvbFQIDAQABo4IBaDCCAWQwEgYDVR0TAQH/BAgwBgEB/wIBADAOBgNVHQ8BAf8E
+BAMCAYYwSwYIKwYBBQUHAQEEPzA9MDsGCCsGAQUFBzAChi9odHRwOi8vYXBwcy5p
+ZGVudHJ1c3QuY29tL3Jvb3RzL2RzdHJvb3RjYXgzLnA3YzAfBgNVHSMEGDAWgBTE
+p7Gkeyxx+tvhS5B1/8QVYIWJEDBUBgNVHSAETTBLMAgGBmeBDAECATA/BgsrBgEE
+AYLfEwEBATAwMC4GCCsGAQUFBwIBFiJodHRwOi8vY3BzLnJvb3QteDEubGV0c2Vu
+Y3J5cHQub3JnMDwGA1UdHwQ1MDMwMaAvoC2GK2h0dHA6Ly9jcmwuaWRlbnRydXN0
+LmNvbS9EU1RST09UQ0FYM0NSTC5jcmwwHQYDVR0OBBYEFBQusxe3WFbLrlAJQOYf
+r52LFMLGMB0GA1UdJQQWMBQGCCsGAQUFBwMBBggrBgEFBQcDAjANBgkqhkiG9w0B
+AQsFAAOCAQEA2UzgyfWEiDcx27sT4rP8i2tiEmxYt0l+PAK3qB8oYevO4C5z70kH
+ejWEHx2taPDY/laBL21/WKZuNTYQHHPD5b1tXgHXbnL7KqC401dk5VvCadTQsvd8
+S8MXjohyc9z9/G2948kLjmE6Flh9dDYrVYA9x2O+hEPGOaEOa1eePynBgPayvUfL
+qjBstzLhWVQLGAkXXmNs+5ZnPBxzDJOLxhF2JIbeQAcH5H0tZrUlo5ZYyOqA7s9p
+O5b85o3AM/OJ+CktFBQtfvBhcJVd9wvlwPsk+uyOy2HI7mNxKKgsBTt375teA2Tw
+UdHkhVNcsAKX1H7GNNLOEADksd86wuoXvg==
+-----END CERTIFICATE-----
+---
+Server certificate
+subject=CN = www.videolan.org
+
+issuer=C = US, O = Let's Encrypt, CN = R3
+
+---
+No client certificate CA names sent
+Peer signing digest: SHA256
+Peer signature type: ECDSA
+Server Temp Key: X25519, 253 bits
+---
+SSL handshake has read 3583 bytes and written 403 bytes
+Verification: OK
+---
+New, TLSv1.3, Cipher is TLS_AES_256_GCM_SHA384
+Server public key is 256 bit
+Secure Renegotiation IS NOT supported
+Compression: NONE
+Expansion: NONE
+No ALPN negotiated
+Early data was not sent
+Verify return code: 0 (ok)
+---
+HTTP/1.1 301 Moved Permanently
+Server: nginx/1.19.8
+Date: Mon, 29 Mar 2021 14:29:11 GMT
+Content-Type: text/html
+Content-Length: 169
+Connection: close
+Location: https://www.videolan.org/
+X-Clacks-Overhead: GNU Terry Pratchett
+
+---
+Post-Handshake New Session Ticket arrived:
+SSL-Session:
+    Protocol  : TLSv1.3
+    Cipher    : TLS_AES_256_GCM_SHA384
+    Session-ID: E7425D5A5702B488F7F69E351BC2F52A6F0484B3B32AF6301F458F115D9F11DD
+    Session-ID-ctx: 
+    Resumption PSK: A8F5A93A6EF8D686F46A6A6678FDEC36ED3E5518D94008533BE82B632987604E9D55DFF99D0E88E8E669C7E6DC7E8905
+    PSK identity: None
+    PSK identity hint: None
+    SRP username: None
+    TLS session ticket lifetime hint: 300 (seconds)
+    TLS session ticket:
+    0000 - cd 12 6b bd 08 a9 0e ff-fa b3 38 0d 9f c1 e0 8c   ..k.......8.....
+    0010 - 97 dd 16 5d 61 ad e7 bb-a0 97 f8 ca b5 97 12 ca   ...]a...........
+    0020 - 9c 49 04 e9 f6 4d 06 ff-4d cc 4b bb de f5 13 1e   .I...M..M.K.....
+    0030 - 59 48 2b ce 2c 82 6c 14-71 e7 fc 07 6d 33 8e 0c   YH+.,.l.q...m3..
+    0040 - b4 5e dc 86 89 0d c3 d4-84 05 bd f6 d8 ee e3 35   .^.............5
+    0050 - 93 a4 0c 2e 9a 0f a3 c7-20 18 35 79 e4 05 19 28   ........ .5y...(
+    0060 - c6 ea c3 98 81 e8 47 49-3c 13 46 51 05 06 88 13   ......GI<.FQ....
+    0070 - 7b 79 f5 c1 a7 d4 1b 4b-d1 f6 0f 47 8b 9e 34 04   {y.....K...G..4.
+    0080 - e2 9b 61 4c 2f d4 9a 06-31 8a 13 5c 00 2c 4d b9   ..aL/...1..\.,M.
+    0090 - e4 ad c4 5c ce 19 8b 25-1b b2 22 a5 43 79 0e 1c   ...\...%..".Cy..
+    00a0 - c3 86 5e 96 20 f9 9f e8-ee c4 ea 43 0b cd b4 71   ..^. ......C...q
+    00b0 - 95 db 11 e2 a5 b4 2a 19-43 4e be d9 35 a8 0d e3   ......*.CN..5...
+    00c0 - 97 8d e0 9f 11 6b 22 c4-1e 9f 24 ee c3 8b 02 c9   .....k"...$.....
+    00d0 - 90 81 d3 39 a4 9a 04 50-70 fc 79 39 7e 2e 69 b1   ...9...Pp.y9~.i.
+    00e0 - 0a 9a 16 62 ff 2a 76 ec-58 20 87 63 88 18 71 55   ...b.*v.X .c..qU
+
+    Start Time: 1617028151
+    Timeout   : 7200 (sec)
+    Verify return code: 0 (ok)
+    Extended master secret: no
+    Max Early Data: 0
+---
+read R BLOCK
+---
+Post-Handshake New Session Ticket arrived:
+SSL-Session:
+    Protocol  : TLSv1.3
+    Cipher    : TLS_AES_256_GCM_SHA384
+    Session-ID: 63AB09991A54F3FEF32991DC07C563CF7C42C85DFC79602C2704CF135AE3068A
+    Session-ID-ctx: 
+    Resumption PSK: D71F172E27854D27BBACB9A145CC1F51F0384143647AD9DB445B74AB2B3A015482352DA1CE4E3965AFC1FCAC2E65E48B
+    PSK identity: None
+    PSK identity hint: None
+    SRP username: None
+    TLS session ticket lifetime hint: 300 (seconds)
+    TLS session ticket:
+    0000 - cd 12 6b bd 08 a9 0e ff-fa b3 38 0d 9f c1 e0 8c   ..k.......8.....
+    0010 - 8b 9f 27 1c 6a b6 0a 4c-09 0b 27 6d 2c ab 9d 4c   ..'.j..L..'m,..L
+    0020 - 84 31 cb 10 32 81 b8 1a-dd 72 9c 81 85 e1 77 cd   .1..2....r....w.
+    0030 - 47 9b 1e 01 b6 cf 6f 61-06 c9 77 ad 2a 96 46 d2   G.....oa..w.*.F.
+    0040 - ed 22 db 53 f5 d3 71 9f-ae 87 fa e3 aa f1 05 60   .".S..q........`
+    0050 - 44 90 9e 45 8b ca 39 49-81 2d f0 d7 a7 04 14 4c   D..E..9I.-.....L
+    0060 - 5e c1 df c7 62 48 d4 6a-ef bb df d5 96 54 99 40   ^...bH.j.....T.@
+    0070 - a0 32 a1 77 57 cc ce ea-73 01 08 f6 12 89 62 6f   .2.wW...s.....bo
+    0080 - 49 15 c9 f2 69 d0 f1 5b-46 d6 49 d9 25 f4 1a 7e   I...i..[F.I.%..~
+    0090 - f7 22 92 79 a1 84 9c fb-b4 9b 73 37 93 bf 8c 0e   .".y......s7....
+    00a0 - 77 ab 27 a0 6a fb a8 6e-2e 71 e2 63 16 35 a7 70   w.'.j..n.q.c.5.p
+    00b0 - 39 12 c6 fa 1a 44 b7 04-a3 0b fb 80 4e 67 24 a1   9....D......Ng$.
+    00c0 - b3 ab 2b cb 70 ca a3 3b-cd 2b e6 b4 22 0a 6a 15   ..+.p..;.+..".j.
+    00d0 - 33 8c 8d 90 31 a6 7b 80-a7 59 41 de ff 19 dc b8   3...1.{..YA.....
+    00e0 - be 28 03 f3 80 1c 33 f3-ce 25 ce 36 e1 35 0d 0f   .(....3..%.6.5..
+
+    Start Time: 1617028151
+    Timeout   : 7200 (sec)
+    Verify return code: 0 (ok)
+    Extended master secret: no
+    Max Early Data: 0
+---
+read R BLOCK
+closed

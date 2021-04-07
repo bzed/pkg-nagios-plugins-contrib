@@ -1,0 +1,8 @@
+verify depth is 6
+depth=2 C = BM, O = QuoVadis Limited, CN = QuoVadis Root CA 2
+verify return:1
+depth=1 C = BM, O = QuoVadis Limited, CN = QuoVadis Global SSL ICA G2
+verify return:1
+depth=0 C = CH, ST = Zuerich, L = Zuerich, O = ETH Zuerich, CN = ethz.ch
+verify return:1
+read:errno=0

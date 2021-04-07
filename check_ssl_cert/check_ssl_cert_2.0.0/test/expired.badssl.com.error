@@ -1,0 +1,12 @@
+verify depth is 6
+depth=2 C = GB, ST = Greater Manchester, L = Salford, O = COMODO CA Limited, CN = COMODO RSA Certification Authority
+verify return:1
+depth=1 C = GB, ST = Greater Manchester, L = Salford, O = COMODO CA Limited, CN = COMODO RSA Domain Validation Secure Server CA
+verify return:1
+depth=0 OU = Domain Control Validated, OU = PositiveSSL Wildcard, CN = *.badssl.com
+verify error:num=10:certificate has expired
+notAfter=Apr 12 23:59:59 2015 GMT
+verify return:1
+depth=0 OU = Domain Control Validated, OU = PositiveSSL Wildcard, CN = *.badssl.com
+notAfter=Apr 12 23:59:59 2015 GMT
+verify return:1

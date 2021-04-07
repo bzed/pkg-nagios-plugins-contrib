@@ -1,0 +1,158 @@
+CONNECTED(00000005)
+---
+Certificate chain
+ 0 s:C = HU, L = Budapest, O = NETLOCK Kft., CN = www.netlock.hu
+   i:C = HU, L = Budapest, O = NetLock Kft., OU = Tan\C3\BAs\C3\ADtv\C3\A1nykiad\C3\B3k (Certification Services), CN = NetLock \C3\9Czleti (Class B) Tan\C3\BAs\C3\ADtv\C3\A1nykiad\C3\B3
+-----BEGIN CERTIFICATE-----
+MIIIqTCCB5GgAwIBAgIOWuHxjwLli5wuzBPT1QgwDQYJKoZIhvcNAQELBQAwgakx
+CzAJBgNVBAYTAkhVMREwDwYDVQQHDAhCdWRhcGVzdDEVMBMGA1UECgwMTmV0TG9j
+ayBLZnQuMTcwNQYDVQQLDC5UYW7DunPDrXR2w6FueWtpYWTDs2sgKENlcnRpZmlj
+YXRpb24gU2VydmljZXMpMTcwNQYDVQQDDC5OZXRMb2NrIMOcemxldGkgKENsYXNz
+IEIpIFRhbsO6c8OtdHbDoW55a2lhZMOzMB4XDTE5MDcxOTEwNDcyMVoXDTIxMDcx
+ODEwNDcyMVowUDELMAkGA1UEBhMCSFUxETAPBgNVBAcMCEJ1ZGFwZXN0MRUwEwYD
+VQQKDAxORVRMT0NLIEtmdC4xFzAVBgNVBAMMDnd3dy5uZXRsb2NrLmh1MIIBIjAN
+BgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuNqxPIEQqO0SfLGImptj4VFIITl6
+YysftATlL211E0rikMMSz8PLP8PXs2xdmsjpRVuwmaTPImZhCZAnu5vvk7EEnIcp
+ylZx9vRPIPQG4HKlT0aaqZUWA6aIgFu8NHrVT3QgR5Nf+Bb0uKl7wx704AYYqfwn
+tuv1fjDTbLxW+cBILx9WYyRQa+EpNDoT8fYybDyVButYtvjtjj6MOCkzGQjjLVlP
+pXhmDj94C/Z0DL36tUOm4HAaTOrHRNysliJlnEfoX2BL4FxaGxLX3ZFvZ6/0/C4O
+nPat7nnGN/d/BWwWshQI/6ICWDErBJv/Q8FxAujguCIbWbdH9oNkVvvyuQIDAQAB
+o4IFJTCCBSEwDAYDVR0TAQH/BAIwADAOBgNVHQ8BAf8EBAMCBaAwEwYDVR0lBAww
+CgYIKwYBBQUHAwEwHQYDVR0OBBYEFNAqtt97Ua5a7JbeIjF82UjuH/VfMB8GA1Ud
+IwQYMBaAFPEnxN5aPTQpuPPqD43+dtI5CM/BMIGVBgNVHSAEgY0wgYowgYcGBmeB
+DAECAjB9MCcGCCsGAQUFBwIBFhtodHRwOi8vd3d3Lm5ldGxvY2suaHUvZG9jcy8w
+UgYIKwYBBQUHAgIwRgxET1YgU1NMIGNlcnRpZmljYXRlLiBUZXJtcyBvZiBzZXJ2
+aWNlIGF0OiBodHRwOi8vd3d3Lm5ldGxvY2suaHUvZG9jcy8wggE+BggrBgEFBQcB
+AQSCATAwggEsMCwGCCsGAQUFBzABhiBodHRwOi8vb2NzcDEubmV0bG9jay5odS9j
+YmNhLmNnaTAsBggrBgEFBQcwAYYgaHR0cDovL29jc3AyLm5ldGxvY2suaHUvY2Jj
+YS5jZ2kwLAYIKwYBBQUHMAGGIGh0dHA6Ly9vY3NwMy5uZXRsb2NrLmh1L2NiY2Eu
+Y2dpMDQGCCsGAQUFBzAChihodHRwOi8vYWlhMS5uZXRsb2NrLmh1L2luZGV4LmNn
+aT9jYT1jYmNhMDQGCCsGAQUFBzAChihodHRwOi8vYWlhMi5uZXRsb2NrLmh1L2lu
+ZGV4LmNnaT9jYT1jYmNhMDQGCCsGAQUFBzAChihodHRwOi8vYWlhMy5uZXRsb2Nr
+Lmh1L2luZGV4LmNnaT9jYT1jYmNhMIGeBgNVHR8EgZYwgZMwL6AtoCuGKWh0dHA6
+Ly9jcmwxLm5ldGxvY2suaHUvaW5kZXguY2dpP2NybD1jYmNhMC+gLaArhilodHRw
+Oi8vY3JsMi5uZXRsb2NrLmh1L2luZGV4LmNnaT9jcmw9Y2JjYTAvoC2gK4YpaHR0
+cDovL2NybDMubmV0bG9jay5odS9pbmRleC5jZ2k/Y3JsPWNiY2Ewga8GA1UdEQSB
+pzCBpIIMKi5uZXRsb2NrLmh1gg0qLm5ldGxvY2submV0ghVtaW5vc2l0ZXR0Lm5l
+dGxvY2suaHWCFm1pbm9zaXRldHQubmV0bG9jay5uZXSCC25ldGxvY2suY29tggpu
+ZXRsb2NrLmh1ggtuZXRsb2NrLm5ldIIPd3d3Lm5ldGxvY2suY29tgg53d3cubmV0
+bG9jay5odYIPd3d3Lm5ldGxvY2submV0MIIBfQYKKwYBBAHWeQIEAgSCAW0EggFp
+AWcAdQBVgdTCFpA2AUrqC5tXPFPwwOQ4eHAlCBcvo6odBxPTDAAAAWwJ2AaqAAAE
+AwBGMEQCIHwqsYfakRWucfrPvRP278UAgc87Y1x0ZCsIQKiECE7zAiBSSZM9YVfP
+KdzlXdo/HfnDOkNFGGgTXy7i3yb+cw65LAB1AG9Tdqwx8DEZ2JkApFEV/3cVHBHZ
+AsEAKQaNsgiaN9kTAAABbAnYCDkAAAQDAEYwRAIgLKtXut/bwSriwp73lwMh6UQC
+USc5qUjEaK+aU3LpYHUCIAeH8G9rqvQn9P6N8MoPIqy+BjKwGEoFObEmBm0eNWKc
+AHcA9lyUL9F3MCIUVBgIMJRWjuNNExkzv98MLyALzE7xZOMAAAFsCdf+dAAABAMA
+SDBGAiEArjXeVvjPSnRHkSOXv24XBwLfOBjQFk2VU8grLQKnk6MCIQDqdRaX4Dcb
+4+aJ6DQCfRMW8+sYhyhotn1s1w84y3PzEDANBgkqhkiG9w0BAQsFAAOCAQEAUwo4
+oS5q/amFLgVZnMMWIwb5jCyIqhhnUkZtOA3+mew+T5tAUjU9eZ5FBpLjBuoii96X
+LwfxNyYCrWWNAvlyCg+OdYWlEm32GOIEpAJ9W3gVGrA7aTix7sb1YsTOxiPUZFq0
+huGHRC8pJmDa81+utGd2Th/2XrBxIm1PPKCk5/uSJ4ktjgTTm4GOd4/ZVKWyyzks
+BAizNMQ44ZpkDFnu7u1C8kvdtZTQ5+aerj37ln/8M2AtPtCu/5R0lfL9TjwHBwya
+ZFLlQnwsJcXoJVo0MBi6vPCldlujGPWgrUIIghax2baRMndIqxbwsvcmEXnZwoGm
+p48TPGEwjUQrxvHBZA==
+-----END CERTIFICATE-----
+ 1 s:C = HU, L = Budapest, O = NetLock Kft., OU = Tan\C3\BAs\C3\ADtv\C3\A1nykiad\C3\B3k (Certification Services), CN = NetLock \C3\9Czleti (Class B) Tan\C3\BAs\C3\ADtv\C3\A1nykiad\C3\B3
+   i:C = HU, L = Budapest, O = NetLock Kft., OU = Tan\C3\BAs\C3\ADtv\C3\A1nykiad\C3\B3k (Certification Services), CN = NetLock Arany (Class Gold) F\C5\91tan\C3\BAs\C3\ADtv\C3\A1ny
+-----BEGIN CERTIFICATE-----
+MIIGHzCCBQegAwIBAgIGSUEs5AAUMA0GCSqGSIb3DQEBCwUAMIGnMQswCQYDVQQG
+EwJIVTERMA8GA1UEBwwIQnVkYXBlc3QxFTATBgNVBAoMDE5ldExvY2sgS2Z0LjE3
+MDUGA1UECwwuVGFuw7pzw610dsOhbnlraWFkw7NrIChDZXJ0aWZpY2F0aW9uIFNl
+cnZpY2VzKTE1MDMGA1UEAwwsTmV0TG9jayBBcmFueSAoQ2xhc3MgR29sZCkgRsWR
+dGFuw7pzw610dsOhbnkwHhcNMDkwNDA4MjMzMDI5WhcNMjQwNjIzMjMzMDI5WjCB
+qTELMAkGA1UEBhMCSFUxETAPBgNVBAcMCEJ1ZGFwZXN0MRUwEwYDVQQKDAxOZXRM
+b2NrIEtmdC4xNzA1BgNVBAsMLlRhbsO6c8OtdHbDoW55a2lhZMOzayAoQ2VydGlm
+aWNhdGlvbiBTZXJ2aWNlcykxNzA1BgNVBAMMLk5ldExvY2sgw5x6bGV0aSAoQ2xh
+c3MgQikgVGFuw7pzw610dsOhbnlraWFkw7MwggEiMA0GCSqGSIb3DQEBAQUAA4IB
+DwAwggEKAoIBAQC/lQ83ZZBdDOEyxXC61KT4Aox3s1/nRMxCfOUvYgWU6wHjDsN1
+/jcYSeJvo3PNvlcbrRoO/X0yIJbbvyDeIeILegaSex5k2sumndMHFGBKSpFvUb4H
+sFRjvQ28/DJFA3dl3u7OD0IK8fqfWuWKiDpFKTV3NjW4lnC8eV00ui3dSwBZ4YJU
+mYr2Mtpdoyz1Vpo7m9izQwUQI5+uvx3aLHUC6UG6jrotC2ykQ0U/wjoIktJ6CkZK
+6z8r/nJ6alRLcPerC46kth+sXiqdxYOV23UC7Tp94D20tjgil2PfSmUcSzW+tOBO
+Qxhds2oamLV3C40fNSKHllMEclqwqCV88QT1AgMApuejggJLMIICRzASBgNVHRMB
+Af8ECDAGAQH/AgEEMA4GA1UdDwEB/wQEAwIBBjAfBgNVHSMEGDAWgBTM+meT8La4
+0KXAHvNT/YxT34PXljAdBgNVHQ4EFgQU8SfE3lo9NCm48+oPjf520jkIz8EwggE+
+BggrBgEFBQcBAQSCATAwggEsMCwGCCsGAQUFBzABhiBodHRwOi8vb2NzcDEubmV0
+bG9jay5odS9nb2xkLmNnaTAsBggrBgEFBQcwAYYgaHR0cDovL29jc3AyLm5ldGxv
+Y2suaHUvZ29sZC5jZ2kwLAYIKwYBBQUHMAGGIGh0dHA6Ly9vY3NwMy5uZXRsb2Nr
+Lmh1L2dvbGQuY2dpMDQGCCsGAQUFBzAChihodHRwOi8vYWlhMS5uZXRsb2NrLmh1
+L2luZGV4LmNnaT9jYT1nb2xkMDQGCCsGAQUFBzAChihodHRwOi8vYWlhMi5uZXRs
+b2NrLmh1L2luZGV4LmNnaT9jYT1nb2xkMDQGCCsGAQUFBzAChihodHRwOi8vYWlh
+My5uZXRsb2NrLmh1L2luZGV4LmNnaT9jYT1nb2xkMIGeBgNVHR8EgZYwgZMwL6At
+oCuGKWh0dHA6Ly9jcmwxLm5ldGxvY2suaHUvaW5kZXguY2dpP2NybD1nb2xkMC+g
+LaArhilodHRwOi8vY3JsMi5uZXRsb2NrLmh1L2luZGV4LmNnaT9jcmw9Z29sZDAv
+oC2gK4YpaHR0cDovL2NybDMubmV0bG9jay5odS9pbmRleC5jZ2k/Y3JsPWdvbGQw
+DQYJKoZIhvcNAQELBQADggEBACHRjMz0lJD7dAEmPiDvjAy+PKMUoQarou7Ig+Vf
+ToCYM9+MO72feRb24re1tYCJTjv3Cu706bsxpGNaccABOuP6LkMZT/6U003Cn+pN
+MNwHscc5r2m4yqixk1mSR1nvFqILWZ67L5ZQsvZZz/oFEOHTFO3x/kLP28YF+zxo
+l8dFUsJvU2Q/gL2NhpO2UmV4QyHgi3u4APEer4yxNUiMb0gZpuJMRw2MI/K1Bqab
+lRvUiwBnr2i/sDeUbjy7Xslsy9suPIx9jpQlP/VA71uSc9O4I0IdGz6Go4yZUEB3
+moyY31GdTkWsqNMdyBhMGUXRrSOtQVJpTpmfF0O7YjYuqKg=
+-----END CERTIFICATE-----
+---
+Server certificate
+subject=C = HU, L = Budapest, O = NETLOCK Kft., CN = www.netlock.hu
+
+issuer=C = HU, L = Budapest, O = NetLock Kft., OU = Tan\C3\BAs\C3\ADtv\C3\A1nykiad\C3\B3k (Certification Services), CN = NetLock \C3\9Czleti (Class B) Tan\C3\BAs\C3\ADtv\C3\A1nykiad\C3\B3
+
+---
+No client certificate CA names sent
+Peer signing digest: SHA256
+Peer signature type: RSA
+Server Temp Key: ECDH, P-256, 256 bits
+---
+SSL handshake has read 4469 bytes and written 438 bytes
+Verification: OK
+---
+New, TLSv1.2, Cipher is ECDHE-RSA-AES128-GCM-SHA256
+Server public key is 2048 bit
+Secure Renegotiation IS supported
+Compression: NONE
+Expansion: NONE
+No ALPN negotiated
+SSL-Session:
+    Protocol  : TLSv1.2
+    Cipher    : ECDHE-RSA-AES128-GCM-SHA256
+    Session-ID: 9691529B9801AE909568105151D76BF7970E2D31CC0C5A856A83FF69193DD8A9
+    Session-ID-ctx: 
+    Master-Key: BE682785CCDCD043A0B7F13792EB100725F93F6CEF24C51891206910799921B820034F38DB5AF27C5416CAF9B4073E5B
+    PSK identity: None
+    PSK identity hint: None
+    SRP username: None
+    TLS session ticket lifetime hint: 300 (seconds)
+    TLS session ticket:
+    0000 - 55 cc 78 f4 5c 22 81 c7-1e 89 aa e9 0a b4 8d 6e   U.x.\".........n
+    0010 - b1 83 1f ae d5 4a cb 53-82 23 1b 71 bc 14 5f fb   .....J.S.#.q.._.
+    0020 - 2a c0 4d 0c 6f 02 1f 7c-11 34 20 a8 4f 7c 0d d1   *.M.o..|.4 .O|..
+    0030 - 5a 2f 1c 4b 69 7a 1c 74-b5 18 77 2a 0f d5 e7 4f   Z/.Kiz.t..w*...O
+    0040 - 53 4f a2 f8 14 4f 37 84-2a 02 c6 56 89 94 e6 c3   SO...O7.*..V....
+    0050 - 91 17 70 0f ba 97 3d 41-50 bf 7d e9 60 8f b5 f4   ..p...=AP.}.`...
+    0060 - eb 3d 85 27 f3 48 78 3b-57 9c 5f 80 96 3b f2 8a   .=.'.Hx;W._..;..
+    0070 - 01 04 95 f6 e4 25 de 3c-17 4f 22 e3 bf 99 cc ea   .....%.<.O".....
+    0080 - 1b 7e 0c 05 d2 c2 ec fa-87 a4 b2 96 6c 8c 8f 61   .~..........l..a
+    0090 - 10 89 45 67 93 5d 80 c5-8c cb c7 3b 1d 3a 4a 15   ..Eg.].....;.:J.
+    00a0 - 17 8a 81 02 a5 6d 68 77-96 e9 0c b5 a6 26 11 cf   .....mhw.....&..
+
+    Start Time: 1617028148
+    Timeout   : 7200 (sec)
+    Verify return code: 0 (ok)
+    Extended master secret: no
+---
+HTTP/1.1 200 OK
+Server: nginx
+Date: Mon, 29 Mar 2021 14:29:09 GMT
+Content-Type: text/html; charset=UTF-8
+Connection: close
+X-Powered-By: PHP/5.6.40
+Link: <https://netlock.hu/wp-json/>; rel="https://api.w.org/"
+Link: <https://netlock.hu/>; rel=shortlink
+Vary: Accept-Encoding
+Referrer-Policy: no-referrer-when-downgrade
+Strict-Transport-Security: max-age=16000000; includeSubDomains; preload;
+X-Frame-Options: SAMEORIGIN
+X-XSS-Protection: 1;mode=block
+X-Content-Type-Options: nosniff
+Expires: Mon, 29 Mar 2021 22:29:09 GMT
+Cache-Control: max-age=28800
+
+closed

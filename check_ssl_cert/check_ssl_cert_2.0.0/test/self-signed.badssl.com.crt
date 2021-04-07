@@ -1,0 +1,89 @@
+CONNECTED(00000005)
+---
+Certificate chain
+ 0 s:C = US, ST = California, L = San Francisco, O = BadSSL, CN = *.badssl.com
+   i:C = US, ST = California, L = San Francisco, O = BadSSL, CN = *.badssl.com
+-----BEGIN CERTIFICATE-----
+MIIDeTCCAmGgAwIBAgIJAPziuikCTox4MA0GCSqGSIb3DQEBCwUAMGIxCzAJBgNV
+BAYTAlVTMRMwEQYDVQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNp
+c2NvMQ8wDQYDVQQKDAZCYWRTU0wxFTATBgNVBAMMDCouYmFkc3NsLmNvbTAeFw0x
+OTEwMDkyMzQxNTJaFw0yMTEwMDgyMzQxNTJaMGIxCzAJBgNVBAYTAlVTMRMwEQYD
+VQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMQ8wDQYDVQQK
+DAZCYWRTU0wxFTATBgNVBAMMDCouYmFkc3NsLmNvbTCCASIwDQYJKoZIhvcNAQEB
+BQADggEPADCCAQoCggEBAMIE7PiM7gTCs9hQ1XBYzJMY61yoaEmwIrX5lZ6xKyx2
+PmzAS2BMTOqytMAPgLaw+XLJhgL5XEFdEyt/ccRLvOmULlA3pmccYYz2QULFRtMW
+hyefdOsKnRFSJiFzbIRMeVXk0WvoBj1IFVKtsyjbqv9u/2CVSndrOfEk0TG23U3A
+xPxTuW1CrbV8/q71FdIzSOciccfCFHpsKOo3St/qbLVytH5aohbcabFXRNsKEqve
+ww9HdFxBIuGa+RuT5q0iBikusbpJHAwnnqP7i/dAcgCskgjZjFeEU4EFy+b+a1SY
+QCeFxxC7c3DvaRhBB0VVfPlkPz0sw6l865MaTIbRyoUCAwEAAaMyMDAwCQYDVR0T
+BAIwADAjBgNVHREEHDAaggwqLmJhZHNzbC5jb22CCmJhZHNzbC5jb20wDQYJKoZI
+hvcNAQELBQADggEBAGlwCdbPxflZfYOaukZGCaxYK6gpincX4Lla4Ui2WdeQxE95
+w7fChXvP3YkE3UYUE7mupZ0eg4ZILr/A0e7JQDsgIu/SRTUE0domCKgPZ8v99k3A
+vka4LpLK51jHJJK7EFgo3ca2nldd97GM0MU41xHFk8qaK1tWJkfrrfcGwDJ4GQPI
+iLlm6i0yHq1Qg1RypAXJy5dTlRXlCLd8ufWhhiwW0W75Va5AEnJuqpQrKwl3KQVe
+wGj67WWRgLfSr+4QG1mNvCZb2CkjZWmxkGPuoP40/y7Yu5OFqxP5tAjj4YixCYTW
+EVA0pmzIzgBg+JIe3PdRy27T0asgQW/F4TY61Yk=
+-----END CERTIFICATE-----
+---
+Server certificate
+subject=C = US, ST = California, L = San Francisco, O = BadSSL, CN = *.badssl.com
+
+issuer=C = US, ST = California, L = San Francisco, O = BadSSL, CN = *.badssl.com
+
+---
+No client certificate CA names sent
+Peer signing digest: SHA512
+Peer signature type: RSA
+Server Temp Key: ECDH, P-256, 256 bits
+---
+SSL handshake has read 1599 bytes and written 450 bytes
+Verification error: self signed certificate
+---
+New, TLSv1.2, Cipher is ECDHE-RSA-AES128-GCM-SHA256
+Server public key is 2048 bit
+Secure Renegotiation IS supported
+Compression: NONE
+Expansion: NONE
+No ALPN negotiated
+SSL-Session:
+    Protocol  : TLSv1.2
+    Cipher    : ECDHE-RSA-AES128-GCM-SHA256
+    Session-ID: C379C8FF1FBFBFF001DAA0E3FAD7B38E7B54C1B7EB37797991C3D738168DD7E2
+    Session-ID-ctx: 
+    Master-Key: 7FCF2F5198B6B149759E926EDFF9CA1702D7B77169958ECE40D46FF5E5AC710F2B9F5632E51C38D3BE28347227BE1B57
+    PSK identity: None
+    PSK identity hint: None
+    SRP username: None
+    TLS session ticket lifetime hint: 300 (seconds)
+    TLS session ticket:
+    0000 - 5b d5 ed df 6b dc 79 68-af a2 3e 33 a2 72 4a fe   [...k.yh..>3.rJ.
+    0010 - c6 aa f7 21 26 d8 6d b9-6b d6 33 22 42 00 78 36   ...!&.m.k.3"B.x6
+    0020 - 50 75 d1 2a b3 00 89 1b-40 7b 25 b1 8e b3 39 ab   Pu.*....@{%...9.
+    0030 - 47 48 58 26 f3 9e 96 1f-78 16 c0 f7 e7 12 4a 8a   GHX&....x.....J.
+    0040 - 43 3d ea 8f da 63 45 ef-e7 4c d0 30 a9 9f bf c4   C=...cE..L.0....
+    0050 - c9 2b 87 e4 e4 3f 67 3d-9f 92 0b 47 72 3c ea f8   .+...?g=...Gr<..
+    0060 - c6 e1 71 1d 1e e6 ac 33-84 41 de 91 59 e1 d3 ac   ..q....3.A..Y...
+    0070 - 34 3e b2 db 95 d5 07 ef-9f a1 95 fa 7c 26 d8 b1   4>..........|&..
+    0080 - a2 9e 53 63 5f f4 09 26-c4 d7 e6 f1 d0 d9 c0 0b   ..Sc_..&........
+    0090 - e4 18 3a 0e e7 fe bf f9-dd 7d a6 fe 2f 15 5d c5   ..:......}../.].
+    00a0 - 1f b0 74 07 62 b2 b5 fe-f2 42 bc 8d 92 73 08 67   ..t.b....B...s.g
+    00b0 - be 80 c3 eb 04 14 6d 12-04 8a 87 17 66 3f 3e 8a   ......m.....f?>.
+    00c0 - cf 8b 25 5d 48 fc e6 15-35 ca d4 02 63 d8 fb 5f   ..%]H...5...c.._
+
+    Start Time: 1617028110
+    Timeout   : 7200 (sec)
+    Verify return code: 18 (self signed certificate)
+    Extended master secret: no
+---
+HTTP/1.1 200 OK
+Server: nginx/1.10.3 (Ubuntu)
+Date: Mon, 29 Mar 2021 14:28:31 GMT
+Content-Type: text/html
+Content-Length: 502
+Last-Modified: Tue, 23 Feb 2021 21:28:41 GMT
+Connection: close
+ETag: "60357389-1f6"
+Cache-Control: no-store
+Accept-Ranges: bytes
+
+closed

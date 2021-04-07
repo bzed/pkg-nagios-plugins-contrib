@@ -1,0 +1,8 @@
+verify depth is 6
+depth=2 C = US, O = DigiCert Inc, OU = www.digicert.com, CN = DigiCert Global Root CA
+verify return:1
+depth=1 C = US, O = DigiCert Inc, CN = DigiCert SHA2 Secure Server CA
+verify return:1
+depth=0 C = US, ST = California, L = Walnut Creek, O = Lucas Garron Torres, CN = *.badssl.com
+verify return:1
+4450598400:error:141A318A:SSL routines:tls_process_ske_dhe:dh key too small:ssl/statem/statem_clnt.c:2157:

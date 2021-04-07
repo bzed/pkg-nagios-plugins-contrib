@@ -1,0 +1,167 @@
+CONNECTED(00000006)
+---
+Certificate chain
+ 0 s:C = US, ST = California, L = San Francisco, O = "Cloudflare, Inc.", CN = cloudflare.com
+   i:C = US, O = "Cloudflare, Inc.", CN = Cloudflare Inc ECC CA-3
+-----BEGIN CERTIFICATE-----
+MIIE4jCCBIigAwIBAgIQAxNFxNrlZDEiw48bosNgejAKBggqhkjOPQQDAjBKMQsw
+CQYDVQQGEwJVUzEZMBcGA1UEChMQQ2xvdWRmbGFyZSwgSW5jLjEgMB4GA1UEAxMX
+Q2xvdWRmbGFyZSBJbmMgRUNDIENBLTMwHhcNMjEwMjEwMDAwMDAwWhcNMjIwMjA5
+MjM1OTU5WjBuMQswCQYDVQQGEwJVUzETMBEGA1UECBMKQ2FsaWZvcm5pYTEWMBQG
+A1UEBxMNU2FuIEZyYW5jaXNjbzEZMBcGA1UEChMQQ2xvdWRmbGFyZSwgSW5jLjEX
+MBUGA1UEAxMOY2xvdWRmbGFyZS5jb20wWTATBgcqhkjOPQIBBggqhkjOPQMBBwNC
+AAQ8eZAJwo4QAMsfQ3sxQiUsfSN2I/6LN47iAnoGrQZOxFF2p3IOyWMd8Oe25nJs
+f+1xOSZboU/Nlr+NK5UXzZnSo4IDKjCCAyYwHwYDVR0jBBgwFoAUpc436uuwdQ6U
+Z4i0RfrZJBCHlh8wHQYDVR0OBBYEFM8Dlv61N8R45k4TdXwE3XmNzTGOMGkGA1Ud
+EQRiMGCCEmNwNC5jbG91ZGZsYXJlLmNvbYIOY2xvdWRmbGFyZS5jb22CEmNwNS5j
+bG91ZGZsYXJlLmNvbYISY3AzLmNsb3VkZmxhcmUuY29tghJjcDIuY2xvdWRmbGFy
+ZS5jb20wDgYDVR0PAQH/BAQDAgeAMB0GA1UdJQQWMBQGCCsGAQUFBwMBBggrBgEF
+BQcDAjB7BgNVHR8EdDByMDegNaAzhjFodHRwOi8vY3JsMy5kaWdpY2VydC5jb20v
+Q2xvdWRmbGFyZUluY0VDQ0NBLTMuY3JsMDegNaAzhjFodHRwOi8vY3JsNC5kaWdp
+Y2VydC5jb20vQ2xvdWRmbGFyZUluY0VDQ0NBLTMuY3JsMD4GA1UdIAQ3MDUwMwYG
+Z4EMAQICMCkwJwYIKwYBBQUHAgEWG2h0dHA6Ly93d3cuZGlnaWNlcnQuY29tL0NQ
+UzB2BggrBgEFBQcBAQRqMGgwJAYIKwYBBQUHMAGGGGh0dHA6Ly9vY3NwLmRpZ2lj
+ZXJ0LmNvbTBABggrBgEFBQcwAoY0aHR0cDovL2NhY2VydHMuZGlnaWNlcnQuY29t
+L0Nsb3VkZmxhcmVJbmNFQ0NDQS0zLmNydDAMBgNVHRMBAf8EAjAAMIIBBQYKKwYB
+BAHWeQIEAgSB9gSB8wDxAHcAKXm+8J45OSHwVnOfY6V35b5XfZxgCvj5TV0mXCVd
+x4QAAAF3jOI2NAAABAMASDBGAiEAsOV2nJ5SSyhIAAzQDVkLOLPx71ZnKBqPUO4Q
+13N8cU4CIQDmVtn+OQOiUo0X27I3Df8U+CNYlp4VqmBCUVBn49qbdgB2ACJFRQdZ
+VSRWlj+hL/H3bYbgIyZjrcBLf13Gg1xu4g8CAAABd4ziNogAAAQDAEcwRQIgDObq
+RnRN2hn+z3Z/pZl8uV/NVRWh91Ides5re6Ke5C8CIQCpeNFqT5iZB+4W0mceBLAu
+tza41Q405HXdhkrjdHQDCTAKBggqhkjOPQQDAgNIADBFAiBTjLzpoZKkfp8YOKvT
+EszfqhPS7PtHvLPe2ICu/V3ArAIhAO3LXsTIO8THpAGZaMpJa31FUFacQ6fxhS5S
+VEYIJKv7
+-----END CERTIFICATE-----
+ 1 s:C = US, O = "Cloudflare, Inc.", CN = Cloudflare Inc ECC CA-3
+   i:C = IE, O = Baltimore, OU = CyberTrust, CN = Baltimore CyberTrust Root
+-----BEGIN CERTIFICATE-----
+MIIDzTCCArWgAwIBAgIQCjeHZF5ftIwiTv0b7RQMPDANBgkqhkiG9w0BAQsFADBa
+MQswCQYDVQQGEwJJRTESMBAGA1UEChMJQmFsdGltb3JlMRMwEQYDVQQLEwpDeWJl
+clRydXN0MSIwIAYDVQQDExlCYWx0aW1vcmUgQ3liZXJUcnVzdCBSb290MB4XDTIw
+MDEyNzEyNDgwOFoXDTI0MTIzMTIzNTk1OVowSjELMAkGA1UEBhMCVVMxGTAXBgNV
+BAoTEENsb3VkZmxhcmUsIEluYy4xIDAeBgNVBAMTF0Nsb3VkZmxhcmUgSW5jIEVD
+QyBDQS0zMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEua1NZpkUC0bsH4HRKlAe
+nQMVLzQSfS2WuIg4m4Vfj7+7Te9hRsTJc9QkT+DuHM5ss1FxL2ruTAUJd9NyYqSb
+16OCAWgwggFkMB0GA1UdDgQWBBSlzjfq67B1DpRniLRF+tkkEIeWHzAfBgNVHSME
+GDAWgBTlnVkwgkdYzKz6CFQ2hns6tQRN8DAOBgNVHQ8BAf8EBAMCAYYwHQYDVR0l
+BBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMBIGA1UdEwEB/wQIMAYBAf8CAQAwNAYI
+KwYBBQUHAQEEKDAmMCQGCCsGAQUFBzABhhhodHRwOi8vb2NzcC5kaWdpY2VydC5j
+b20wOgYDVR0fBDMwMTAvoC2gK4YpaHR0cDovL2NybDMuZGlnaWNlcnQuY29tL09t
+bmlyb290MjAyNS5jcmwwbQYDVR0gBGYwZDA3BglghkgBhv1sAQEwKjAoBggrBgEF
+BQcCARYcaHR0cHM6Ly93d3cuZGlnaWNlcnQuY29tL0NQUzALBglghkgBhv1sAQIw
+CAYGZ4EMAQIBMAgGBmeBDAECAjAIBgZngQwBAgMwDQYJKoZIhvcNAQELBQADggEB
+AAUkHd0bsCrrmNaF4zlNXmtXnYJX/OvoMaJXkGUFvhZEOFp3ArnPEELG4ZKk40Un
++ABHLGioVplTVI+tnkDB0A+21w0LOEhsUCxJkAZbZB2LzEgwLt4I4ptJIsCSDBFe
+lpKU1fwg3FZs5ZKTv3ocwDfjhUkV+ivhdDkYD7fa86JXWGBPzI6UAPxGezQxPk1H
+goE6y/SJXQ7vTQ1unBuCJN0yJV0ReFEQPaA1IwQvZW+cwdFD19Ae8zFnWSfda9J1
+CZMRJCQUzym+5iPDuI9yP+kHyCREU3qzuWFloUwOxkgAyXVjBYdwRVKD05WdRerw
+6DEdfgkfCv4+3ao8XnTSrLE=
+-----END CERTIFICATE-----
+---
+Server certificate
+subject=C = US, ST = California, L = San Francisco, O = "Cloudflare, Inc.", CN = cloudflare.com
+
+issuer=C = US, O = "Cloudflare, Inc.", CN = Cloudflare Inc ECC CA-3
+
+---
+No client certificate CA names sent
+Peer signing digest: SHA256
+Peer signature type: ECDSA
+Server Temp Key: X25519, 253 bits
+---
+SSL handshake has read 2546 bytes and written 396 bytes
+Verification: OK
+---
+New, TLSv1.3, Cipher is TLS_AES_256_GCM_SHA384
+Server public key is 256 bit
+Secure Renegotiation IS NOT supported
+Compression: NONE
+Expansion: NONE
+No ALPN negotiated
+Early data was not sent
+Verify return code: 0 (ok)
+---
+HTTP/1.1 301 Moved Permanently
+Date: Mon, 29 Mar 2021 14:29:34 GMT
+Connection: close
+Cache-Control: max-age=3600
+Expires: Mon, 29 Mar 2021 15:29:34 GMT
+Location: https://www.cloudflare.com/
+cf-request-id: 091ffce8e20000cc5a2aa83000000001
+Expect-CT: max-age=604800, report-uri="https://report-uri.cloudflare.com/cdn-cgi/beacon/expect-ct"
+Set-Cookie: __cf_bm=ed4f7bc4d6d5639eb145627d52db5c51b7ab752d-1617028174-1800-AYB20Max4mp7d6UFFOzRslK06jYcYJiblVG8BQx9LAMQQCd9HVipHCblXQpAWzC0YrcPSSTfUp6pMv4YHPHMQik=; path=/; expires=Mon, 29-Mar-21 14:59:34 GMT; domain=.cloudflare.com; HttpOnly; Secure; SameSite=None
+Report-To: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https:\/\/a.nel.cloudflare.com\/report?s=3YxHqLsVoKKsJUre6Hx9oird233aLETTpOGFG61RGpOrT6x6x8HxbPcnNRW56m7eGRYXu8UqE%2FJAUUCjGjOw9sqlEF%2BZrAK8YW0%2BKizLIg%3D%3D"}]}
+NEL: {"report_to":"cf-nel","max_age":604800}
+Strict-Transport-Security: max-age=15780000; includeSubDomains
+Server: cloudflare
+CF-RAY: 6379ca87cf30cc5a-ZRH
+alt-svc: h3-27=":443"; ma=86400, h3-28=":443"; ma=86400, h3-29=":443"; ma=86400
+
+---
+Post-Handshake New Session Ticket arrived:
+SSL-Session:
+    Protocol  : TLSv1.3
+    Cipher    : TLS_AES_256_GCM_SHA384
+    Session-ID: 3D52BB8C89AC7B6A70F62F722C1A85E8A141070302E57088EC8F1E078C48E634
+    Session-ID-ctx: 
+    Resumption PSK: F816559338160E714A6FCA0ED6AB1B58404F798CD63D9DA1BDE148B58A49BE61632C2144EB3C1D6A789E7C09776D0721
+    PSK identity: None
+    PSK identity hint: None
+    SRP username: None
+    TLS session ticket lifetime hint: 64800 (seconds)
+    TLS session ticket:
+    0000 - 53 c3 ee 99 8e 81 8b c6-9d 9e 1a 40 b1 3f 83 eb   S..........@.?..
+    0010 - 67 ae f1 08 4b 13 16 a5-78 80 f7 15 a1 25 6d c4   g...K...x....%m.
+    0020 - 2b 44 45 87 c6 f9 d7 7e-58 4b 6f 6f 6b e7 a3 b1   +DE....~XKook...
+    0030 - ba da 73 d0 73 ab 40 ed-75 1c 6a 55 9c 87 b9 ec   ..s.s.@.u.jU....
+    0040 - 23 8a a0 b6 78 0a 26 76-49 2f fd 9b 31 9d c6 7b   #...x.&vI/..1..{
+    0050 - 3e 6e f5 9c 6d ae cb c6-b5 78 9a 28 43 47 40 cd   >n..m....x.(CG@.
+    0060 - 48 a3 0d 5f ce 6d c3 b3-e6 f7 d3 33 17 16 e6 a4   H.._.m.....3....
+    0070 - 8a 96 15 b7 62 4b 58 96-9b 42 6e 54 dc 51 fc a9   ....bKX..BnT.Q..
+    0080 - 5a bb 96 4d 57 10 b5 aa-90 84 03 40 e9 ef 89 48   Z..MW......@...H
+    0090 - e4 55 d9 74 81 b0 a8 57-38 ff c9 4d 8a 14 2f 2e   .U.t...W8..M../.
+    00a0 - 9b 35 da fc 40 26 6d ab-c3 b1 09 61 48 f9 5f fb   .5..@&m....aH._.
+    00b0 - 30 4c 0f 6a 40 f0 57 b4-e1 80 2f d9 66 38 a9 88   0L.j@.W.../.f8..
+    00c0 - 26 04 78 68 31 83 75 07-1b 6a 2a d9 89 f2 16 68   &.xh1.u..j*....h
+
+    Start Time: 1617028173
+    Timeout   : 7200 (sec)
+    Verify return code: 0 (ok)
+    Extended master secret: no
+    Max Early Data: 14336
+---
+read R BLOCK
+---
+Post-Handshake New Session Ticket arrived:
+SSL-Session:
+    Protocol  : TLSv1.3
+    Cipher    : TLS_AES_256_GCM_SHA384
+    Session-ID: 08E4AB7D6DFA1A27EC7A36E36ABA39F0137E9492A1F67BE2F0C250D2B4744374
+    Session-ID-ctx: 
+    Resumption PSK: 0CAFC2033BCAF0D4448E097BB7536187C4F95FE751BEBE325E2E0EAFA870A3008A13EA7186BA7684BB5EA12AB32F8E57
+    PSK identity: None
+    PSK identity hint: None
+    SRP username: None
+    TLS session ticket lifetime hint: 64800 (seconds)
+    TLS session ticket:
+    0000 - 53 c3 ee 99 8e 81 8b c6-9d 9e 1a 40 b1 3f 83 eb   S..........@.?..
+    0010 - 21 98 15 f8 a3 2c b2 d5-a4 f7 58 47 22 e7 77 59   !....,....XG".wY
+    0020 - 48 db b1 ed 13 5e 43 11-8b a3 28 44 8d 63 d4 d0   H....^C...(D.c..
+    0030 - ef 9c 50 06 b8 f8 6b ef-14 d2 22 cc 6a 89 19 ee   ..P...k...".j...
+    0040 - f9 d9 db 33 8b e3 4e 5f-7c 97 df 48 35 2e 6a b4   ...3..N_|..H5.j.
+    0050 - 09 ad 13 89 89 41 6a a8-41 e1 a0 a6 1b ee 2b d9   .....Aj.A.....+.
+    0060 - 45 79 e8 b9 d9 21 16 16-cf 21 8c fb 22 ea 92 f7   Ey...!...!.."...
+    0070 - 64 60 f1 cb 99 16 5c d4-99 37 e9 24 2e 8b dd 61   d`....\..7.$...a
+    0080 - 39 46 1a ca 1a 81 0f d3-4b b9 67 38 38 a7 b4 d0   9F......K.g88...
+    0090 - a4 83 99 95 12 c9 f4 50-1c d9 05 17 f0 94 09 ef   .......P........
+    00a0 - bb a1 67 ce 54 6d 73 0e-c8 09 64 3f 90 6e ce 7b   ..g.Tms...d?.n.{
+    00b0 - 7b cc 64 63 1c 5d a2 a8-01 44 21 0f f6 1f 0f 39   {.dc.]...D!....9
+    00c0 - ef 86 f1 5d 8f 55 2f 84-49 fa fe 26 d5 51 ae 3e   ...].U/.I..&.Q.>
+
+    Start Time: 1617028173
+    Timeout   : 7200 (sec)
+    Verify return code: 0 (ok)
+    Extended master secret: no
+    Max Early Data: 14336
+---
+read R BLOCK
