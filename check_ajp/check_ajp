@@ -61,8 +61,8 @@ my $expected = pack 'C5'    # Format template.
     , 0x09                  # Type of packet. 9 = CPong reply.
 ;
 
-$iaddr = inet_aton($app) || xdie("No host given !");
-$paddr = sockaddr_in($port, $iaddr) || xdie("Wrong port !");
+$iaddr = inet_aton($app) or xdie("No host given !");
+$paddr = sockaddr_in($port, $iaddr) or xdie("Wrong port !");
 $proto = getprotobyname 'tcp';
 
 $time1 = time();
@@ -70,10 +70,10 @@ $time1 = time();
 eval {
 	local $SIG{ALRM} = sub { die "alarm\n" };
 	alarm($timeout);
-	socket $sock, PF_INET, SOCK_STREAM, $proto || xdie("socket !");
-	connect $sock, $paddr  || xdie("connect !");
-	syswrite $sock, $ping || xdie("syswrite !");
-	sysread $sock, $pong, 5 || xdie("sysread !");
+	socket $sock, PF_INET, SOCK_STREAM, $proto or xdie("socket !");
+	connect $sock, $paddr or xdie("connect !");
+	syswrite $sock, $ping or xdie("syswrite !");
+	sysread $sock, $pong, 5 or xdie("sysread !");
 	alarm(0);
 }; 
 
