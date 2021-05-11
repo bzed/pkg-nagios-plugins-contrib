@@ -1,10 +1,10 @@
 
- (c) Matteo Corti, ETH Zurich, 2007-2012
+ &copy; Matteo Corti, ETH Zurich, 2007-2012
 
- (c) Matteo Corti, 2007-2021
+ &copy; Matteo Corti, 2007-2021
   see AUTHORS for the complete list of contributors
 
-# check_ssl_cert
+# check\_ssl\_cert
 
 A shell script (that can be used as a Nagios plugin) to check an SSL/TLS connection
 
@@ -41,6 +41,7 @@ Options:
       --dane 311                   verify that a valid DANE-EE(3) SPKI(1) SHA2-256(1) TLSA record exists
       --date path                  path of the date binary to be used
    -d,--debug                      produces debugging output (can be specified more than once)
+      --debug-cert                 stores the retrieved certificates in the current directory
       --dig-bin path               path of the dig binary to be used
       --ecdsa                      signature algorithm selection: force ECDSA certificate
       --element number             checks N cert element from the begining of the chain
@@ -86,6 +87,7 @@ Options:
    -n,--cn name                    pattern to match the CN of the certificate (can be
                                    specified multiple times)
       --nmap-bin path              path of the nmap binary to be used
+      --no-perf                    do not show performance data
       --no-proxy                   ignores the http_proxy and https_proxy environment variables
       --no_ssl2                    disable SSL version 2
       --no_ssl3                    disable SSL version 3
@@ -165,15 +167,15 @@ Report bugs to https://github.com/matteocorti/check_ssl_cert/issues
 
 ## Expect & timeout
 
-check_ssl_cert requires 'expect' or 'timeout' to enable timeouts. If 'expect' or 'timeout' is not
+check\_ssl\_cert requires 'expect' or 'timeout' to enable timeouts. If 'expect' or 'timeout' is not
 present on your system timeouts will be disabled.
 
-See: http://en.wikipedia.org/wiki/Expect and https://man7.org/linux/man-pages/man1/timeout.1.html
+See: [http://en.wikipedia.org/wiki/Expect](http://en.wikipedia.org/wiki/Expect) and [https://man7.org/linux/man-pages/man1/timeout.1.html](https://man7.org/linux/man-pages/man1/timeout.1.html)
 
 
 ## Virtual servers
 
-check_ssl_cert supports the servername TLS extension in ClientHello
+check\_ssl\_cert supports the servername TLS extension in ClientHello
 if the installed openssl version provides it. This is needed if you
 are checking a machine with virtual hosts.
 
@@ -218,4 +220,4 @@ and then submitted to `check_ssl_cert` with the `-r,--rootcert path` option
 
 The timeout is applied to each action involving a download.
 
-Report bugs to https://github.com/matteocorti/check_ssl_cert/issues
+Report bugs to [https://github.com/matteocorti/check_ssl_cert/issues](https://github.com/matteocorti/check_ssl_cert/issues)

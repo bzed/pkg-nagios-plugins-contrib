@@ -1,3 +1,39 @@
+2021-05-07  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert (check_ocsp): Do not store the debugging copy of the certificate in the $TMPDIR
+
+2021-05-06  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert (main): Fixed an error in the parameter validation
+
+2021-05-05  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert (check_attr): do not wait if SSL Labs is giving an error
+
+2021-04-30  Matteo Corti  <matteo@corti.li>
+
+	* Makefile: avoid putting extended attribute files in the archives
+
+2021-04-29  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert (check_attr): Do not remove parenthesis from URI
+
+2021-04-29  Claus-Theodor Riegg (https://github.com/ctriegg-mak)
+
+	* check_ssl_cert: match underscores in subdomains when matching name to wildcard certs
+
+2021-04-28  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert (check_attr): adds and option to remove performance data
+
+2021-04-23  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert (fetch_certificate): Better handling of timeouts
+
+2021-04-12  Matteo Corti  <matteo@corti.li>
+
+	* check_ssl_cert (critical): Fixed the output when the CN is not available
+
 2021-04-07  Matteo Corti  <matteo@corti.li>
 
 	* check_ssl_cert (main): adding -starttls to the renegotiation check if needed

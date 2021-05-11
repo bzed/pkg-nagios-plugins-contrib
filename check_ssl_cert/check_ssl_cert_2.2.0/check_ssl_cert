@@ -19,7 +19,7 @@
 ################################################################################
 # Constants
 
-VERSION=2.0.1
+VERSION=2.2.0
 SHORTNAME="SSL_CERT"
 
 VALID_ATTRIBUTES=",startdate,enddate,subject,issuer,modulus,serial,hash,email,ocsp_uri,fingerprint,"
@@ -86,6 +86,7 @@ usage() {
     echo "      --dane 311                   verify that a valid DANE-EE(3) SPKI(1) SHA2-256(1) TLSA record exists"
     echo "      --date path                  path of the date binary to be used"
     echo "   -d,--debug                      produces debugging output (can be specified more than once)"
+    echo "      --debug-cert                 stores the retrieved certificates in the current directory"
     echo "      --dig-bin path               path of the dig binary to be used"
     echo "      --ecdsa                      signature algorithm selection: force ECDSA certificate"
     echo "      --element number             checks N cert element from the begining of the chain"
@@ -131,6 +132,7 @@ usage() {
     echo "   -n,--cn name                    pattern to match the CN of the certificate (can be"
     echo "                                   specified multiple times)"
     echo "      --nmap-bin path              path of the nmap binary to be used"
+    echo "      --no-perf                    do not show performance data"
     echo "      --no-proxy                   ignores the http_proxy and https_proxy environment variables"
     echo "      --no-ssl2                    disable SSL version 2"
     echo "      --no-ssl3                    disable SSL version 3"
@@ -455,7 +457,11 @@ prepend_critical_message() {
     debuglog "prepend_critical_message: ALL_MSG 1      = ${ALL_MSG}"
 
     if [ -n "${CN}" ] ; then
-        tmp=" ${CN}"
+        if echo "${CN}" | grep -q -F 'unavailable' ; then
+            tmp=" ${SUBJECT_ALTERNATIVE_NAME}"
+        else
+            tmp=" ${CN}"
+        fi
     else
         if [ -n "${HOST_NAME}" ] ; then
             if [ -n "${SNI}" ] ; then
@@ -525,7 +531,11 @@ append_warning_message() {
     debuglog "prepend_warning_message: ALL_MSG 1   = ${ALL_MSG}"
 
     if [ -n "${CN}" ] ; then
-        tmp=" ${CN}"
+        if echo "${CN}" | grep -q -F 'unavailable' ; then
+            tmp=" ${SUBJECT_ALTERNATIVE_NAME}"
+        else
+            tmp=" ${CN}"
+        fi
     else
         if [ -n "${HOST_NAME}" ] ; then
             if [ -n "${SNI}" ] ; then
@@ -899,7 +909,7 @@ check_ocsp() {
         fi
 
         # shellcheck disable=SC2086,SC2016
-        ELEMENT_ISSUER_URIS="$( ${OPENSSL} "${OPENSSL_COMMAND}" ${OPENSSL_PARAMS} -text -noout -in ${CERT_ELEMENT} | grep -F "CA Issuers" | grep -F -i "http" | sed -e "s/^.*CA Issuers - URI://" | tr -d '"!|;$(){}<>`&')"
+        ELEMENT_ISSUER_URIS="$( ${OPENSSL} "${OPENSSL_COMMAND}" ${OPENSSL_PARAMS} -text -noout -in ${CERT_ELEMENT} | grep -F "CA Issuers" | grep -F -i "http" | sed -e "s/^.*CA Issuers - URI://" | tr -d '"!|;${}<>`&')"
 
         if [ -z "${ELEMENT_ISSUER_URIS}" ] ; then
             verboselog "cannot find the CA Issuers in the certificate: disabling OCSP checks on element ${el_number}"
@@ -973,15 +983,15 @@ check_ocsp() {
 
                 debuglog "OCSP: issuer certificate type (3): $(${FILE_BIN} "${ISSUER_CERT_TMP}" | sed 's/.*://' )"
 
-                if [ "${DEBUG}" -ge 1 ] ; then
+                if [ -n "${DEBUG_CERT}" ] ; then
 
                     # remove trailing /
                     FILE_NAME=${ELEMENT_ISSUER_URI%/}
 
                     # remove everything up to the last slash
-                    FILE_NAME="${TMPDIR}/${FILE_NAME##*/}"
+                    FILE_NAME="${FILE_NAME##*/}"
 
-                    debuglog "OCSP: storing a copy of the retrieved issuer certificate to ${FILE_NAME}"
+                    debuglog "OCSP: storing a copy of the retrieved issuer certificate to ${FILE_NAME} for debugging purposes"
 
                     cp "${ISSUER_CERT_TMP}" "${FILE_NAME}"
 
@@ -1433,15 +1443,17 @@ fetch_certificate() {
 
     fi
 
-    if [ "${DEBUG}" -ge 1 ] ; then
-        debuglog "storing a copy of the retrieved certificate in ${HOST_NAME}.crt"
+    if [ -n "${DEBUG_CERT}" ] ; then
+
+        debuglog "storing a copy of the retrieved certificate in ${HOST_NAME}.crt for debugging purposes"
         cp "${CERT}" "${HOST_NAME}.crt"
 
-        debuglog "storing a copy of the OpenSSL errors in ${HOST_NAME}.error"
+        debuglog "storing a copy of the OpenSSL errors in ${HOST_NAME}.error for debugging purposes"
         cp "${ERROR}" "${HOST_NAME}.error"
 
-        debuglog "Return value of the command = ${RET}"
     fi
+
+    debuglog "Return value of the command = ${RET}"
 
     if [ "${RET}" -ne 0 ] ; then
 
@@ -1458,7 +1470,6 @@ fetch_certificate() {
             ERROR="${HOST_ADDR} is not a valid hostname"
             prepend_critical_message "${ERROR}"
             critical "SSL_CERT CRITICAL ${HOST_NAME}: ${ERROR}"
-
 
         elif ascii_grep 'Connection\ refused' "${ERROR}" ; then
 
@@ -1483,6 +1494,12 @@ fetch_certificate() {
         elif ascii_grep 'wrong\ version\ number' "${ERROR}" ; then
 
             prepend_critical_message 'No TLS connection possible'
+
+        elif ascii_grep 'Operation\ timed\ out' "${ERROR}" ; then
+
+            ERROR='OpenSSL timed out'
+            prepend_critical_message "${ERROR}"
+            critical "SSL_CERT CRITICAL ${HOST_NAME}: ${ERROR}"
 
         elif ascii_grep 'write:errno=54' "${ERROR}" ; then
 
@@ -1613,6 +1630,10 @@ parse_command_line_options() {
                 DEBUG=$(( DEBUG + 1 ))
                 shift
                 ;;
+            --debug-cert)
+                DEBUG_CERT=1
+                shift
+                ;;
             -h|--help|-\?)
                 usage
                 ;;
@@ -1655,6 +1676,10 @@ parse_command_line_options() {
                 ;;
             --ignore-tls-renegotiation)
                 IGNORE_TLS_RENEGOTIATION='1'
+                shift
+                ;;
+            --no-perf)
+                NO_PERF=1
                 shift
                 ;;
             --no-proxy)
@@ -2258,6 +2283,18 @@ main() {
         usage "No host specified"
     fi
 
+    # we need the FQDN of an host to check the CN
+    if ! echo "${HOST}" | grep -q '[.]' && [ -z "${FILE}" ] && [ "${HOST}" != 'localhost' ] ; then
+        debuglog "Domain for ${HOST} missing"
+        DOMAIN=$( nslookup "${HOST}" | grep ^Name: | head -n 1 | cut -d. -f2- )
+        if [ -z "${DOMAIN}" ] ; then
+            unknown "Cannot resolve ${HOST}"
+        fi
+        debuglog "Adding domain ${DOMAIN} to ${HOST}"
+        HOST="${HOST}.${DOMAIN}"
+        debuglog "New host: ${HOST}"
+    fi
+
     ################################################################################
     # Ususally SERVERADDR and SERVERNAME both contain the fully qualified domain name
     # (FQDN) or IP address of the host to check
@@ -2450,8 +2487,10 @@ main() {
     if [ -n "${SSL_LAB_WARN_ASSESTMENT}" ] ; then
         convert_grade "${SSL_LAB_WARN_ASSESTMENT}"
         SSL_LAB_WARN_ASSESTMENT_NUMERIC="${NUMERIC_SSL_LAB_GRADE}"
-        if [ "${SSL_LAB_WARN_ASSESTMENT_NUMERIC}" -lt "${SSL_LAB_CRIT_ASSESSMENT_NUMERIC}" ]; then
-            unknown  '--check-ssl-labs-warn must be greater than -L|--check-ssl-labs'
+        if [ -n "${SSL_LAB_CRIT_ASSESSMENT}" ] ; then
+            if [ "${SSL_LAB_WARN_ASSESTMENT_NUMERIC}" -lt "${SSL_LAB_CRIT_ASSESSMENT_NUMERIC}" ]; then
+                unknown  '--check-ssl-labs-warn must be greater than -L|--check-ssl-labs'
+            fi
         fi
     fi
 
@@ -3301,9 +3340,9 @@ main() {
         if echo "${CN}" | grep -q -i "^\\*\\." ; then
 
             # Or the literal with the wildcard
-            debuglog "checking if the common name matches ^$(echo "${CN}" | sed -e 's/[.]/[.]/g' -e 's/[*]/[A-Za-z0-9\-]*/' )\$"
-            if echo "${COMMON_NAME}" | grep -q -i "^$(echo "${CN}" | sed -e 's/[.]/[.]/g' -e 's/[*]/[A-Za-z0-9\-]*/' )\$" ; then
-                debuglog "the common name ${COMMON_NAME} matches ^$(echo "${CN}" | sed -e 's/[.]/[.]/g' -e 's/[*]/[A-Za-z0-9\-]*/' )\$"
+            debuglog "checking if the common name matches ^$(echo "${CN}" | sed -e 's/[.]/[.]/g' -e 's/[*]/[A-Za-z0-9_\-]*/' )\$"
+            if echo "${COMMON_NAME}" | grep -q -i "^$(echo "${CN}" | sed -e 's/[.]/[.]/g' -e 's/[*]/[A-Za-z0-9_\-]*/' )\$" ; then
+                debuglog "the common name ${COMMON_NAME} matches ^$(echo "${CN}" | sed -e 's/[.]/[.]/g' -e 's/[*]/[A-Za-z0-9_\-]*/' )\$"
                 ok="true"
             fi
 
@@ -3350,10 +3389,10 @@ main() {
                         fi
 
                         # Or the literal with the wildcard
-                        debuglog "checking if the common name matches ^$(echo "${alt_name}" | sed -e 's/[.]/[.]/g' -e 's/[*]/[A-Za-z0-9\-]*/' )\$"
+                        debuglog "checking if the common name matches ^$(echo "${alt_name}" | sed -e 's/[.]/[.]/g' -e 's/[*]/[A-Za-z0-9_\-]*/' )\$"
 
-                        if echo "${cn}" | grep -q -i "^$(echo "${alt_name}" | sed -e 's/[.]/[.]/g' -e 's/[*]/[A-Za-z0-9\-]*/' )\$" ; then
-                            debuglog "the common name ${cn} matches ^$(echo "${alt_name}" | sed -e 's/[.]/[.]/g' -e 's/[*]/[A-Za-z0-9\-]*/' )\$"
+                        if echo "${cn}" | grep -q -i "^$(echo "${alt_name}" | sed -e 's/[.]/[.]/g' -e 's/[*]/[A-Za-z0-9_\-]*/' )\$" ; then
+                            debuglog "the common name ${cn} matches ^$(echo "${alt_name}" | sed -e 's/[.]/[.]/g' -e 's/[*]/[A-Za-z0-9_\-]*/' )\$"
                             ok="true"
                         fi
 
@@ -3660,6 +3699,7 @@ main() {
                             SSL_LABS_STATUS_MESSAGE=$(echo "${JSON}" \
                                                           | sed 's/.*"statusMessage":[ ]*"\([^"]*\)".*/\1/')
                             prepend_critical_message "SSL Labs error: ${SSL_LABS_STATUS_MESSAGE}"
+                            break
 
                         else
 
@@ -3876,10 +3916,13 @@ main() {
         fi
     fi
 
-    if [ -n "${TERSE}" ]; then
-        EXTRA_OUTPUT="${PERFORMANCE_DATA}"
-    else
-        EXTRA_OUTPUT="${LONG_OUTPUT}${PERFORMANCE_DATA}"
+    # long output
+    if [ -z "${TERSE}" ] ; then
+       EXTRA_OUTPUT="${LONG_OUTPUT}"
+    fi
+    # performance
+    if [ -z "${NO_PERF}" ] ; then
+        EXTRA_OUTPUT="${EXTRA_OUTPUT}${PERFORMANCE_DATA}"
     fi
 
     debuglog "output parameters: CA_ISSUER_MATCHED     = ${CA_ISSUER_MATCHED}"
