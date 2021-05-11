@@ -1,13 +1,14 @@
-nagios-plugins-contrib (34.20210408) UNRELEASED; urgency=medium
-
-  [ Jan Wagner ]
-  * NOT RELEASED YET
+nagios-plugins-contrib (35.20210511) unstable; urgency=medium
 
   [ Jérôme Charaoui ]
   * [8782116] Fix check_memory plugin not working when default locale is not
     English (Closes: #985294)
 
- -- Jan Wagner <waja@cyconet.org>  Thu, 29 Apr 2021 10:53:48 +0200
+  [ Jan Wagner ]
+  * [34891c5] check_ssl_cert: Update to 2.2.0
+  * [1eaadba] Auto update of debian/control
+
+ -- Jan Wagner <waja@cyconet.org>  Tue, 11 May 2021 22:01:33 +0200
 
 nagios-plugins-contrib (34.20210407+1) unstable; urgency=medium
 
