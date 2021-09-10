@@ -1,9 +1,0 @@
-Homepage: https://github.com/dermoth/misc-code/blob/master/nagios/plugins/check_memory
-Watch: https://raw.github.com/dermoth/misc-code/master/nagios/plugins/check_memory VERSION = '([0-9.]+)';
-Uploaders: Bernd Zeimetz <bzed@debian.org>
-Description: plugin to check for free memory
- This plugin excludes the system cache and buffer, because
- on some system with very stable memory usage it is perfectly
- normal for system cache to fill in all available memory.
-Recommends: libmonitoring-plugin-perl | libnagios-plugin-perl (>= 0.31)
-Version: 1.0.1

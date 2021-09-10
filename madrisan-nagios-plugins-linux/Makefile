@@ -9,6 +9,7 @@ PLUGINS += check_fc
 PLUGINS += check_ifmountfs
 PLUGINS += check_intr
 PLUGINS += check_iowait
+PLUGINS += check_memory
 PLUGINS += check_nbprocs
 PLUGINS += check_network
 PLUGINS += check_network_collisions
@@ -22,7 +23,6 @@ PLUGINS += check_tcpcount
 PLUGINS += check_temperature
 
 PLUGINS_RENAME += check_load
-PLUGINS_RENAME += check_memory
 PLUGINS_RENAME += check_multipath
 PLUGINS_RENAME += check_swap
 PLUGINS_RENAME += check_uptime
