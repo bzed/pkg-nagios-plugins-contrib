@@ -2,7 +2,7 @@ Source: nagios-plugins-contrib
 Section: net
 Priority: optional
 Maintainer: Debian Nagios Maintainer Group <pkg-nagios-devel@lists.alioth.debian.org>
-Uploaders: Bernd Zeimetz <bzed@debian.org>, Jan Wagner <waja@cyconet.org>, Stefan Schoerghofer <amd1212@4md.gr>, Petter Reinholdtsen <pere@hungry.com>, Leo Antunes <leo@costela.net>
+Uploaders: Bernd Zeimetz <bzed@debian.org>, Jan Wagner <waja@cyconet.org>, Stefan Schoerghofer <amd1212@4md.gr>, Petter Reinholdtsen <pere@hungry.com>, Leo Antunes <leo@costela.net>, Peter Palfrader <weasel@debian.org>
 Build-Depends: debhelper (>= 8.0.0),
                dh-autoreconf,
                dh-python,
@@ -219,6 +219,8 @@ Description: Plugins for nagios compatible monitoring systems
    * extras (1): various scripts and extras
      Not a plugin, but a collection of various useful
      event/obsession handlers and similar scripts.
+   * madrisan-nagios-plugins-linux (bbbdc5279cd2569d4c6b5e0ed19d12c082e322ad): Nagios-compatible Plugins for Linux
+     Various binary plugins for monitoring (physical and virtual) Linux hosts with Nagios and Nagios-compatible monitoring systems like Icinga and Naemon.
    * percona-nagios-plugins (1.1.8): Percona Monitoring Plugins (nagios)
      Nagios MySQL Monitoring plugins writting/provided by Percona.
  .
