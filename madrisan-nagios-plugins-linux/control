@@ -3,4 +3,29 @@ Version: bbbdc5279cd2569d4c6b5e0ed19d12c082e322ad
 Homepage: https://github.com/madrisan/nagios-plugins-linux
 Uploaders: Peter Palfrader <weasel@debian.org>
 Description: Nagios-compatible Plugins for Linux
- Various binary plugins for monitoring (physical and virtual) Linux hosts with Nagios and Nagios-compatible monitoring systems like Icinga and Naemon.
+ Various binary plugins for monitoring (physical and virtual) Linux hosts with
+ Nagios and Nagios-compatible monitoring systems like Icinga and Naemon:
+  * check_clock: returns the number of seconds elapsed between
+    the host local time and Nagios time.
+  * check_cpu: checks the CPU (user mode) utilization
+  * check_cpufreq: displays the CPU frequency characteristics.
+  * check_cswch: monitors the total number of context switches across all CPUs.
+  * check_fc: monitors the status of the fiber status ports.
+  * check_ifmountfs: checks whether the given filesystems are mounted.
+  * check_intr: monitors the total number of system interrupts.
+  * check_iowait: checks I/O wait bottlenecks
+  * check_memory: checks the system memory utilization.
+  * check_nbprocs: displays the number of running processes per user.
+  * check_network: displays some network interfaces statistics, including:
+    check_network_collisions, check_network_dropped, check_network_errors, check_network_multicast
+  * check_paging: checks the memory and swap paging.
+  * check_pressure: checks Linux Pressure Stall Information (PSI) data.
+  * check_readonlyfs: checks for readonly filesystems.
+  * check_tcpcount: displays TCP network and socket informations.
+  * check_temperature: monitors the hardware's temperature.
+
+  * check_load: checks the current system load average.
+  * check_multipath: checks the multipath topology status.
+  * check_swap: checks the swap utilization.
+  * check_uptime: checks how long the system has been running.
+  * check_users: displays the number of users that are currently logged on.
