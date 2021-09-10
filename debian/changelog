@@ -1,8 +1,16 @@
-nagios-plugins-contrib (35.20210512) UNRELEASED; urgency=medium
+nagios-plugins-contrib (36.20210910) unstable; urgency=medium
 
-  * NOT RELEASED YET
+  [ Bas Couwenberg ]
+  * [8d4c239] Bump Standards-Version to 4.6.0, no changes.
 
- -- Jan Wagner <waja@cyconet.org>  Wed, 12 May 2021 08:08:37 +0200
+  [ Peter Palfrader ]
+  * [44c2d26] Initial adding of madrisan's nagios-plugins-linux
+  * [464e8f4] update of debian/{control,copyright}
+  * [eadc785] Retire old check_memory in favour of madrisan-nagios-plugins-linux's version
+  * [a9685a4] Add descriptions for madrisan checks
+  * [3324825] madrisan: install symlinks as symlinks
+
+ -- Bernd Zeimetz <bzed@debian.org>  Fri, 10 Sep 2021 15:32:49 +0200
 
 nagios-plugins-contrib (35.20210511) unstable; urgency=medium
 
