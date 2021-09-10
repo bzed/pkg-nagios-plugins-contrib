@@ -1,0 +1,40 @@
+# Object and libray files
+**/*.[ao]
+**/*.l[ao]
+# Shared objects
+*.so
+*.so.*
+*.dylib
+# Files creared by autotools
+.deps
+.libs
+**/*.log
+aclocal.m4
+autom4te.cache
+compile
+compile.scan
+config.cache
+config.guess
+config.h
+config.h.in
+config.hin
+config.hin~
+config.status
+configure
+configure.scan
+libtool
+stamp-h1
+**/Makefile.in
+**/Makefile
+# Build files
+*.spec
+*.tar.bz2
+*.tar.xz
+# Test-build files
+tests-build/pcks
+# Binary files created by make {,check}
+plugins/check_*
+!plugins/check_*.c
+tests/ts*
+!tests/ts*.c
+!tests/ts*.data

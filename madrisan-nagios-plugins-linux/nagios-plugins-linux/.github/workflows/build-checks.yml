@@ -1,0 +1,59 @@
+name: Build check
+
+on:
+  push:
+    paths-ignore:
+      - '**.md'
+  pull_request:
+    types: [assigned, edited, opened, synchronize, reopened]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: ${{ matrix.container }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        container:
+          - 'alpine:3.14'
+          - 'centos:8'
+          - 'debian:buster'
+          - 'fedora:34'
+          - 'ubuntu:21.04'
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - id: install_deps
+        run: |
+          case "${{ matrix.container }}" in
+            alpine*)
+              apk update
+              apk add autoconf automake bzip2 curl-dev file gcc libtool linux-headers make m4 musl-dev tar xz
+            ;;
+            debian*|ubuntu*)
+              export DEBIAN_FRONTEND=noninteractive
+              apt-get update -q
+              apt-get install -q -y --no-install-recommends autoconf automake bzip2 gcc libcurl4-gnutls-dev libtool m4 make pkg-config xz-utils
+            ;;
+            centos*)
+              dnf -y update
+              dnf -y install autoconf automake bzip2 gcc glibc-devel libcurl-devel libtool make m4 xz
+            ;;
+            fedora*)
+              dnf -y update
+              dnf -y install autoconf automake bzip2 gcc glibc-devel libcurl-devel libvarlink-devel libtool make m4 xz
+            ;;
+          esac
+
+      - id: configure
+        run: |
+          autoreconf --install
+          ./configure --enable-debug
+
+      - id: make
+        run: |
+          make
+          make check
+          make distcheck

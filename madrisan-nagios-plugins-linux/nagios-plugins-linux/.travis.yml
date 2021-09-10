@@ -1,0 +1,42 @@
+language: c
+compiler:
+  - gcc
+  - clang
+
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "WqpTr19IWav//MQEQ7RcerdTVhbYt9faBh2QoEZmRLDPm+0RBidw1kvP73Di9pozURqisdB1P5LJ5eVFuocaD2eM+pO4399hHD48QsupDoLxgcJfmeP5YfT7Kmq97vyOs5dV01uopRMTJ9SDD1rt2oia+Ez6B/AeTCEpENb/76Y="
+
+sudo: false
+
+matrix:
+  exclude:
+    - compiler: clang
+      env: COVERITY_SCAN_BRANCH=1
+  # Coverity Scan should only run once and it might fail,
+  # because the number of times its runs is limited per week.
+  # We only check when compiled with gcc.
+  allow_failures:
+    - env: COVERITY_SCAN_BRANCH=1
+
+addons:
+  coverity_scan:
+    project:
+      name: "madrisan/nagios-plugins-linux"
+    notification_email: davide.madrisan@gmail.com
+    # Commands to prepare for build_command
+    build_command_prepend: "autoreconf -f -v -Wall -i -Im4 && ./configure"
+    # This command will be added as an argument to "cov-build" to compile
+    # the project for analisys
+    build_command: "make clean all"
+    branch_pattern: coverity_scan
+
+script:
+  - |
+    if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; then
+      [ -f ./Makefile ] || autoreconf -f -v -Wall -i -Im4 && ./configure
+      make clean all
+      VERBOSE=1 make check
+    fi

@@ -1,0 +1,6 @@
+Watch: https://github.com/madrisan/nagios-plugins-linux/commit/master >commit <[^>]*>([0-9a-f]+)<
+Version: bbbdc5279cd2569d4c6b5e0ed19d12c082e322ad
+Homepage: https://github.com/madrisan/nagios-plugins-linux
+Uploaders: Peter Palfrader <weasel@debian.org>
+Description: Nagios-compatible Plugins for Linux
+ Various binary plugins for monitoring (physical and virtual) Linux hosts with Nagios and Nagios-compatible monitoring systems like Icinga and Naemon.

@@ -1,0 +1,28 @@
+version: "2"
+plugins:
+  duplication:
+    enabled: true
+    config:
+      languages:
+      - c
+  fixme:
+    enabled: true
+    config:
+      strings:
+      - FIXME
+  gnu-complexity:
+    enabled: true
+    config:
+      threshold: 30
+  shellcheck:
+    enabled: true
+exclude_patterns:
+- "**.sample"
+- compile
+- config.sub 
+- depcomp
+- install-sh
+- libtool
+- ltmain.sh
+- m4/
+- packages/
