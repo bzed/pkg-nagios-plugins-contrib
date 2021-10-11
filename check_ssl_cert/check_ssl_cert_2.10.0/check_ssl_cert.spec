@@ -1,4 +1,4 @@
-%define version          2.2.0
+%define version          2.10.0
 %define release          0
 %define sourcename       check_ssl_cert
 %define packagename      nagios-plugins-check_ssl_cert
@@ -42,6 +42,75 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/%{sourcename}.1*
 
 %changelog
+* Mon Oct  11 2021 Matteo Corti <matteo@corti.li> - 2.10.0-0
+- Updated to 2.10.0
+
+* Wed Oct   6 2021 Matteo Corti <matteo@corti.li> - 2.9.1-0
+- Updated to 2.9.1
+
+* Fri Oct   1 2021 Matteo Corti <matteo@corti.li> - 2.9.0-0
+- Updated to 2.9.0
+
+* Wed Sep  29 2021 Matteo Corti <matteo@corti.li> - 2.8.0-0
+- Updated to 2.8.0
+
+* Fri Sep  24 2021 Matteo Corti <matteo@corti.li> - 2.7.0-0
+- Updated to 2.7.0
+
+* Tue Sep  21 2021 Matteo Corti <matteo@corti.li> - 2.6.1-0
+- Updated to 2.6.1
+
+* Fri Sep  17 2021 Matteo Corti <matteo@corti.li> - 2.6.0-0
+- Updated to 2.6.0
+
+* Thu Sep  16 2021 Matteo Corti <matteo@corti.li> - 2.5.2-0
+- Updated to 2.5.2
+
+* Wed Sep  15 2021 Matteo Corti <matteo@corti.li> - 2.5.1-0
+- Updated to 2.5.1
+
+* Wed Sep  15 2021 Matteo Corti <matteo@corti.li> - 2.5.0-0
+- Updated to 2.5.0
+
+* Wed Sep   1 2021 Matteo Corti <matteo@corti.li> - 2.4.3-0
+- Updated to 2.4.3
+
+* Thu Aug  27 2021 Matteo Corti <matteo@corti.li> - 2.4.2-0
+- Updated to 2.4.2
+
+* Thu Aug  19 2021 Matteo Corti <matteo@corti.li> - 2.4.1-0
+- Updated to 2.4.1
+
+* Mon Aug  16 2021 Matteo Corti <matteo@corti.li> - 2.4.0-0
+- Updated to 2.4.0
+
+* Fri Aug  13 2021 Matteo Corti <matteo@corti.li> - 2.3.8-0
+- Updated to 2.3.8
+
+* Fri Jul   9 2021 Matteo Corti <matteo@corti.li> - 2.3.7-0
+- Updated to 2.3.7
+
+* Wed Jun  23 2021 Matteo Corti <matteo@corti.li> - 2.3.6-0
+- Updated to 2.3.6
+
+* Tue Jun  22 2021 Matteo Corti <matteo@corti.li> - 2.3.5-0
+- Updated to 2.3.5
+
+* Fri Jun  18 2021 Matteo Corti <matteo@corti.li> - 2.3.4-0
+- Updated to 2.3.4
+
+* Wed Jun  16 2021 Matteo Corti <matteo@corti.li> - 2.3.3-0
+- Updated to 2.3.3
+
+* Thu Jun   3 2021 Matteo Corti <matteo@corti.li> - 2.3.2-0
+- Updated to 2.3.2
+
+* Fri May  28 2021 Matteo Corti <matteo@corti.li> - 2.3.1-0
+- Updated to 2.3.1
+
+* Fri May  21 2021 Matteo Corti <matteo@corti.li> - 2.3.0-0
+- Updated to 2.3.0
+
 * Fri May   7 2021 Matteo Corti <matteo@corti.li> - 2.2.0-0
 - Updated to 2.2.0
 
@@ -605,4 +674,3 @@ w
 
 * Mon Sep 24 2007 Matteo Corti <matteo.corti@id.ethz.ch> - 1.1.0-0
 - first RPM package
-

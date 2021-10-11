@@ -1,3 +1,44 @@
+2021-10-11 Version  2.10.0: Checks the certificate chain integrity
+                            Does not accept certificates without SANs (use --allow-empty-san to ignore)
+                            Bug fix in the handling of errors while fetching certificates
+                            Allows a check on invalid FQDNs containing an underscore
+2021-10-06 Version   2.9.1: Accepts certificates without subject alternative names
+                            Added an option (--debug-time) to print the elapsed time in the debugging output
+2021-10-01 Version   2.9.0: The --skip-element option can now be specified multiple times and specifies to skip a single
+                            element of the certificate chain
+2021-09-29 Version   2.8.0: Adds a check for acceptable client certificate CAs (--require-client-cert [list])
+                            Supporting certificate expiration after 2038-01-19 on 32 bit systems
+                            Adds an option (--ignore-connection-problem)  to set a custom state in case of connection failures
+                            Adds two options to selectively disable proxy setting for cURL and s_client
+                            (--no-proxy-curl and --no-proxy-s_client)
+2021-09-24 Version   2.7.0: Critical and warning can now be floating point numbers
+2021-09-21 Version   2.6.1: Fixed the output of several messages
+                            Fixed the order of the critical messages
+                            Fixed a problem when checking a local CRL (no STC checks and automatic conversion from DER format)
+                            Fixed a problem with the tests with IPv6
+                            Fixed a problem when checking a local certificate (does not try to connect to localhost to check for renegotiation)
+2021-09-17 Version   2.6.0: Added the --prometheus command line option to generate output for Prometheus/OpenMetrics
+                            Automatically assume localhost if --file is specified
+2021-09-16 Version   2.5.2: Bug fix: fixed the output in case or multiple errors
+2021-09-15 Version   2.5.1: Bug fix: fixed the detection of server internal errors by OCSP checks
+2021-09-15 Version   2.5.0: Added the --ignore-ocsp-errors command line option
+                            Bug fix: fixed the behavior of the --element command line option
+2021-08-31 Version   2.4.3: Fixed the connection to the TLS renegotiation on FreeBSD
+                            Detects old BSD date without -f and computes the date with dconv
+2021-08-27 Version   2.4.2: Fixed the handling of IP addresses
+2021-08-19 Version   2.4.1: Fixed the handling of --file and --cn
+2021-08-16 Version   2.4.0: Support DANE TLSA 312
+2021-08-13 Version   2.3.8: Bug fix: fixed the parsing of the --cn command line option
+                            Bug fix: better validation of the host command line argument
+2021-07-09 Version   2.3.7: Bug fix: performance data is no more shown by critical and warning message when --no-perf is specified
+2021-06-23 Version   2.3.6: Bug fix: follows symbolic links
+2021-06-22 Version   2.3.5: Bug fix: correct parsing of file(1) ou
+2021-06-18 Version   2.3.4: Stop the SSL Labs checks after an error
+2021-06-16 Version   2.3.3: Speedup the offered ciphers check
+2021-06-03 Version   2.3.2: Bug fix: always uses the specifies OpenSSL binary and respects the specified IP version
+2021-05-28 Version   2.3.1: Compatibility fixes for LibreSSL on macOS
+                            Added sanity checks for file write operations
+2021-05-21 Version   2.3.0: Added the --debug-file option
 2021-05-07 Version   2.2.0: Bug fix: --debug does not store any information in $TMPDIR anymore
                             To locally store the retrieved certificates in debug mode the option --debug-cert has to be specified
 2021-05-06 Version   2.1.4: Bug fix in the handling of Qualy's SSL Lab command line options
@@ -27,7 +68,7 @@
                             Supports local PCKS #12 and DER formatted certificates
 2021-02-25 Version 1.140.0: Fixed a bug in the SCT check
 2021-02-24 Version 1.139.0: Fixed a bug in the TLS renegotiation check
-2021-02-24 Version 1.138.0: Checks for TLS renegotiation
+2021-02-24 Version 1.138.0: Checks for TLS renegotiation<
 2021-02-18 Version 1.137.0: Added  the --url option to specify the URL for the HTTP request
 2021-02-16 Version 1.136.0: Fixed the signed certificate timestamps spelling (command line option)
 2021-01-28 Version 1.135.0: Checks for signed certificate timestamps (SCTs)
@@ -244,7 +285,7 @@
 2008-02-25 Version  1.2.1 better error handling
 2008-02-25 Version  1.2.0 general cleanup (POSIX compliance, removed
                           nmap dependency, ...) from Dan Wallis
-2007-08-31 Version 1.1.0  - option to enforce a given email address
+2007-08-31 Version  1.1.0 - option to enforce a given email address
                           - option to enforce a given organization
                           - temporary files cleanup upon exit
 2007-08-15                Bug fix: openssl did not close the connection cleanly

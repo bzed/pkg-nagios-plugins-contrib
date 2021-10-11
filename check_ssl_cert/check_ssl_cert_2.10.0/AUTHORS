@@ -96,7 +96,7 @@ Thanks:
 * Many thanks to Thomas Weißschuh (https://github.com/t-8ch) for the PostgreSQL patch
 * Many thanks to Jonathan Besanceney (https://github.com/jonathan-besanceney) for the proxy patch
 * Many thanks to grizzlydev-sarl (https://github.com/grizzlydev-sarl) for the
-  processing of all the certificate in the chain
+  processing of all the certificate in the chain, the verbose patch and the output cleanup patch
 * Many thanks to Claudio Kuenzler (https://github.com/Napsty) for the chain expiration output fix
 * Many thanks to jf-vf (https://github.com/jf-vf) for the MySQL support patch
 * Many thanks to skanx (https://github.com/skanx) for the --not-issued-by output patch
@@ -115,3 +115,10 @@ Thanks:
 * Many thanks to chornberger-c2c (https://github.com/chornberger-c2c) for the critical and warning output fix
 * Many thanks to Claus-Theodor Riegg (https://github.com/ctriegg-mak) for the domain with underscores fix
 * Many thanks to Ed Sabol (https://github.com/esabol) for the FQDN patch
+* Many thanks to Igor Mironov (https://github.com/mcs6502) for the LibreSSL patch
+* Many thanks to jalbstmeijer (https://github.com/jalbstmeijer) for the OpenSSL and INETPROTO patch
+* Many thanks to Pim Rupert (https://github.com/prupert) for the file(1) patches
+* Many thanks to Alexander Aleksandrovič Klimov (https://github.com/Al2Klimov) for the DANE 312 patch
+* Manu thanks to Jaime Hablutzel (https://github.com/hablutzel1) for the --element fix
+* Many thanks to Bernd Stroessenreuther for the CRL and IPv6 fixes and for the floating point patch
+* Many thanks to Kim Jahn for the conversion typo and underscore fixes (https://github.com/mookie-)
