@@ -18,6 +18,7 @@ my %prereqs = (
     'Net::DNS'                      => 0,
     'Net::IP'                       => 0,
     'Readonly'                      => 0,
+    'Socket'                        => 0,
     'IO::Select'                    => 0,
     'Monitoring::Plugin'            => 0,
     'Monitoring::Plugin::Threshold' => 0,
@@ -30,6 +31,9 @@ if (!$ver || $ver eq '1.03') {
     warn 'Net::DNS is broken please downgrade until fixed. See https://rt.cpan.org/Ticket/Display.html?id=108745';
     $prereqs{'Net::DNS'} = '1.04';
 }
+
+# https://metacpan.org/pod/release/DAGOLDEN/CPAN-Meta-2.142690/lib/CPAN/Meta/Spec.pm#license
+license 'gpl_3';
 
 install_script  'check_rbl';
 
