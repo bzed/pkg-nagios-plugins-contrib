@@ -19,6 +19,8 @@ nagios-plugins-contrib (35.20211203) unstable; urgency=medium
   * [c9622bb] update check_haproxy location
   * [4a61139] Updating check_rbl
   * [f142170] Use timeouts on url requests in our helper.
+  * [26af399] Auto update of debian/control
+  * [cfbbc92] Auto update of debian/copyright
 
  -- Bernd Zeimetz <bzed@debian.org>  Fri, 03 Dec 2021 11:22:58 +0100
 
