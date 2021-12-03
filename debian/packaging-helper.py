@@ -222,7 +222,7 @@ def watch():
             print('WARNING: %s - failed to parse Watch line!' %(plugin,))
             continue
         try:
-            f=url_opener.open(url)
+            f=url_opener.open(url, timeout=2)
             content = f.read().decode('utf-8')
             f.close()
         except IOError:
