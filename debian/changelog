@@ -9,7 +9,8 @@ nagios-plugins-contrib (35.20211203) unstable; urgency=medium
   [ Peter Palfrader ]
   * [44c2d26] Initial adding of madrisan's nagios-plugins-linux
   * [464e8f4] update of debian/{control,copyright}
-  * [eadc785] Retire old check_memory in favour of madrisan-nagios-plugins-linux's version
+  * [eadc785] Retire old check_memory in favour of
+              madrisan-nagios-plugins-linux's version
   * [a9685a4] Add descriptions for madrisan checks
   * [3324825] madrisan: install symlinks as symlinks
 
@@ -21,6 +22,7 @@ nagios-plugins-contrib (35.20211203) unstable; urgency=medium
   * [f142170] Use timeouts on url requests in our helper.
   * [26af399] Auto update of debian/control
   * [cfbbc92] Auto update of debian/copyright
+  * [3b7609a] Override lintian error.
 
  -- Bernd Zeimetz <bzed@debian.org>  Fri, 03 Dec 2021 11:22:58 +0100
 
