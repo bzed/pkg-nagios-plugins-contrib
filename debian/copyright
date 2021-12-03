@@ -296,7 +296,7 @@ https://github.com/disqus/nagios-plugins
 check_haproxy:
 
 The plugin was downloaded from: 
-http://cvs.orion.education.fr/viewvc/viewvc.cgi/nagios-plugins-perl/trunk/plugins/check_haproxy.pl?view=log
+https://github.com/polymorf/check_haproxy/blob/master/check_haproxy.pl
 
   2010 Stéphane Urbanovski <stephane.urbanovski@ac-nancy-metz.fr>
   
@@ -313,7 +313,7 @@ http://cvs.orion.education.fr/viewvc/viewvc.cgi/nagios-plugins-perl/trunk/plugin
 check_haproxy_stats:
 
 The plugin was downloaded from: 
-http://exchange.nagios.org/directory/Plugins/Clustering-and-High-2DAvailability/check_haproxy_stats-2Epl/details
+https://github.com/skyscrapers/monitoring-plugins/blob/master/check_haproxy_stats.pl
 
   Copyright (C) 2012, Giacomo Montagner <giacomo@entirelyunlike.net>
   
