@@ -1,7 +1,7 @@
-diff --git a/check_backuppc/check_backuppc-1.1.0/check_backuppc b/check_backuppc/check_backuppc-1.1.0/check_backuppc
-index d8ea383..c994c20 100755
---- a/check_backuppc/check_backuppc-1.1.0/check_backuppc
-+++ b/check_backuppc/check_backuppc-1.1.0/check_backuppc
+Index: pkg-nagios-plugins-contrib/check_backuppc/check_backuppc-1.1.0/check_backuppc
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_backuppc/check_backuppc-1.1.0/check_backuppc
++++ pkg-nagios-plugins-contrib/check_backuppc/check_backuppc-1.1.0/check_backuppc
 @@ -32,7 +32,28 @@ no utf8;
  
  # Nagios

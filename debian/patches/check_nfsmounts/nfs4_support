@@ -1,6 +1,8 @@
---- a/check_nfsmounts/check_nfsmounts
-+++ b/check_nfsmounts/check_nfsmounts
-@@ -101,7 +101,7 @@
+Index: pkg-nagios-plugins-contrib/check_nfsmounts/check_nfsmounts
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_nfsmounts/check_nfsmounts
++++ pkg-nagios-plugins-contrib/check_nfsmounts/check_nfsmounts
+@@ -101,7 +101,7 @@ if(!open MTAB,"< /etc/mtab") {
  my @dirs=();
  my %mountmodes=();
  while(my $line=<MTAB>) {

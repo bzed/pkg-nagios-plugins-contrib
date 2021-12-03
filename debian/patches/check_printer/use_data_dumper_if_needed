@@ -1,5 +1,7 @@
---- a/check_printer/check_printer
-+++ b/check_printer/check_printer
+Index: pkg-nagios-plugins-contrib/check_printer/check_printer
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_printer/check_printer
++++ pkg-nagios-plugins-contrib/check_printer/check_printer
 @@ -40,7 +40,6 @@ if ($OS =~ m/^\wBSD/){
  	use lib "/usr/local/nagios/libexec";
  }

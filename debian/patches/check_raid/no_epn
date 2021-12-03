@@ -1,5 +1,7 @@
---- a/check_raid/check_raid
-+++ b/check_raid/check_raid
+Index: pkg-nagios-plugins-contrib/check_raid/check_raid
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_raid/check_raid
++++ pkg-nagios-plugins-contrib/check_raid/check_raid
 @@ -1,4 +1,5 @@
  #!/usr/bin/perl
 +# nagios: -epn

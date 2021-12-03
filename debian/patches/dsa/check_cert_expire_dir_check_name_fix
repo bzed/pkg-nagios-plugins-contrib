@@ -1,5 +1,7 @@
---- a/dsa/checks/dsa-check-cert-expire-dir
-+++ b/dsa/checks/dsa-check-cert-expire-dir
+Index: pkg-nagios-plugins-contrib/dsa/checks/dsa-check-cert-expire-dir
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/dsa/checks/dsa-check-cert-expire-dir
++++ pkg-nagios-plugins-contrib/dsa/checks/dsa-check-cert-expire-dir
 @@ -26,9 +26,9 @@
  
  sn="$0"

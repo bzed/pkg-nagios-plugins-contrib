@@ -1,5 +1,7 @@
---- a/check_clamav/check_clamav
-+++ b/check_clamav/check_clamav
+Index: pkg-nagios-plugins-contrib/check_clamav/check_clamav
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_clamav/check_clamav
++++ pkg-nagios-plugins-contrib/check_clamav/check_clamav
 @@ -16,18 +16,18 @@
  #
  ################################################################################

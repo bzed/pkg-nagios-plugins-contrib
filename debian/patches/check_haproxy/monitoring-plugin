@@ -1,6 +1,8 @@
---- a/check_haproxy/check_haproxy
-+++ b/check_haproxy/check_haproxy
-@@ -31,7 +31,28 @@
+Index: pkg-nagios-plugins-contrib/check_haproxy/check_haproxy
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_haproxy/check_haproxy
++++ pkg-nagios-plugins-contrib/check_haproxy/check_haproxy
+@@ -31,7 +31,28 @@ use POSIX qw(setlocale);
  use Time::HiRes qw(time);			# get microtime
  use POSIX qw(mktime);
  
@@ -30,7 +32,7 @@
  
  use LWP::UserAgent;			# http client
  use HTTP::Request;			# used by LWP::UserAgent
-@@ -53,7 +74,7 @@
+@@ -53,7 +74,7 @@ setlocale(LC_MESSAGES, '');
  textdomain('nagios-plugins-perl');
  
  
@@ -39,7 +41,7 @@
  	version => $VERSION,
  	blurb => _gt('Plugin to check HAProxy stats url'),
  	usage => "Usage: %s [ -v|--verbose ]  -u <url> [-t <timeout>] [-U <username>] [-P <password>] [ -c|--critical=<threshold> ] [ -w|--warning=<threshold> ]",
-@@ -319,4 +340,4 @@
+@@ -319,4 +340,4 @@ In F<services.cfg> you just have to add
  
  Stéphane Urbanovski <stephane.urbanovski@ac-nancy-metz.fr>
  

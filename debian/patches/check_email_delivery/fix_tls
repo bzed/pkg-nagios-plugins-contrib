@@ -1,6 +1,8 @@
---- a/check_email_delivery/src/check_smtp_send
-+++ b/check_email_delivery/src/check_smtp_send
-@@ -149,26 +149,16 @@
+Index: pkg-nagios-plugins-contrib/check_email_delivery/src/check_smtp_send
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_email_delivery/src/check_smtp_send
++++ pkg-nagios-plugins-contrib/check_email_delivery/src/check_smtp_send
+@@ -149,26 +149,16 @@ eval {
  	if( $tls and $auth_method ) {
  		$smtp_port = $default_smtp_tls_port unless $smtp_port;
  		$smtp = TLS_auth->new($smtp_server, Timeout=>$timeout, Port=>$smtp_port, User=>$username, Password=>$password, Auth_Method=>$auth_method);
@@ -27,7 +29,7 @@
  		}	
  	}
  	elsif( $auth_method ) {
-@@ -176,8 +166,6 @@
+@@ -176,8 +166,6 @@ eval {
  		$smtp = Net::SMTP_auth->new($smtp_server, Port=>$smtp_port, Timeout=>$timeout,Debug=>$smtp_debug);	
  		if( $smtp ) {
  			$smtp->auth($auth_method, $username, $password);
@@ -36,7 +38,7 @@
  		}			
  	}
  	else {
-@@ -185,8 +173,6 @@
+@@ -185,8 +173,6 @@ eval {
  		$smtp = Net::SMTP->new($smtp_server, Port=>$smtp_port, Timeout=>$timeout,Debug=>$smtp_debug);	
  		if( $smtp && $username ) {
  			$smtp->auth($username, $password);

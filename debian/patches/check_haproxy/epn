@@ -1,5 +1,7 @@
---- a/check_haproxy/check_haproxy
-+++ b/check_haproxy/check_haproxy
+Index: pkg-nagios-plugins-contrib/check_haproxy/check_haproxy
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_haproxy/check_haproxy
++++ pkg-nagios-plugins-contrib/check_haproxy/check_haproxy
 @@ -1,4 +1,5 @@
  #!/usr/bin/perl -w
 +# nagios: -epn

@@ -4,12 +4,12 @@ Date:   Tue Jan 29 16:14:46 2019 +0100
 
     Fixing interpreter
 
-diff --git a/check_haproxy_stats/check_haproxy_stats.pl b/check_haproxy_stats/check_haproxy_stats.pl
-index 9698f78..f776bf6 100644
---- a/check_haproxy_stats/check_haproxy_stats.pl
-+++ b/check_haproxy_stats/check_haproxy_stats.pl
+Index: pkg-nagios-plugins-contrib/check_haproxy_stats/check_haproxy_stats.pl
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_haproxy_stats/check_haproxy_stats.pl
++++ pkg-nagios-plugins-contrib/check_haproxy_stats/check_haproxy_stats.pl
 @@ -1,4 +1,4 @@
--#!/usr/bin/env perl 
+-#!/usr/bin/env perl
 +#!/usr/bin/perl
  # vim: se et ts=4:
  

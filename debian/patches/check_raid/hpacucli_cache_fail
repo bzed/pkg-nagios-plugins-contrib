@@ -1,7 +1,9 @@
 Incorporate chanegs from https://github.com/glensc/nagios-plugin-check_raid/commit/4a6e9fa15fe1f1e940637f048e86dedc607b1596
---- a/check_raid/check_raid
-+++ b/check_raid/check_raid
-@@ -3164,11 +3164,11 @@
+Index: pkg-nagios-plugins-contrib/check_raid/check_raid
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_raid/check_raid
++++ pkg-nagios-plugins-contrib/check_raid/check_raid
+@@ -3164,11 +3164,11 @@ $fatpacked{"App/Monitoring/Plugin/CheckR
    	# print those only if not ok and configured
    	if (($s = $c->{'Cache Status'}) && $s !~ /^(OK|Not Configured)/) {
    		push(@s, "Cache: $s");

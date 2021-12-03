@@ -1,5 +1,7 @@
---- a/check_lm_sensors/src/check_lm_sensors
-+++ b/check_lm_sensors/src/check_lm_sensors
+Index: pkg-nagios-plugins-contrib/check_lm_sensors/src/check_lm_sensors
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_lm_sensors/src/check_lm_sensors
++++ pkg-nagios-plugins-contrib/check_lm_sensors/src/check_lm_sensors
 @@ -1,4 +1,4 @@
 -#!perl
 +#!/usr/bin/perl

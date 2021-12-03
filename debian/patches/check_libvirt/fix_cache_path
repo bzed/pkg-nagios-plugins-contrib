@@ -1,6 +1,8 @@
---- a/check_libvirt/check_libvirt
-+++ b/check_libvirt/check_libvirt
-@@ -56,7 +56,7 @@
+Index: pkg-nagios-plugins-contrib/check_libvirt/check_libvirt
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_libvirt/check_libvirt
++++ pkg-nagios-plugins-contrib/check_libvirt/check_libvirt
+@@ -56,7 +56,7 @@ BEGIN {
  
  $PROGNAME = basename($0);
  $VERSION = '0.1.0';

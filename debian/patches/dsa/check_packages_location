@@ -1,6 +1,8 @@
---- a/dsa/sbin/dsa-update-apt-status
-+++ b/dsa/sbin/dsa-update-apt-status
-@@ -78,7 +78,7 @@ fi
+Index: pkg-nagios-plugins-contrib/dsa/sbin/dsa-update-apt-status
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/dsa/sbin/dsa-update-apt-status
++++ pkg-nagios-plugins-contrib/dsa/sbin/dsa-update-apt-status
+@@ -81,7 +81,7 @@ fi
  tmp=`tempfile`
  trap "rm -f '$tmp'" exit
  #/usr/share/dsa/apt-status-check --noupdate --timeout=600 > "$tmp"

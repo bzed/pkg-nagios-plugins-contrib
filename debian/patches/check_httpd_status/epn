@@ -1,5 +1,7 @@
---- a/check_httpd_status/check_httpd_status
-+++ b/check_httpd_status/check_httpd_status
+Index: pkg-nagios-plugins-contrib/check_httpd_status/check_httpd_status
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_httpd_status/check_httpd_status
++++ pkg-nagios-plugins-contrib/check_httpd_status/check_httpd_status
 @@ -1,4 +1,6 @@
  #!/usr/bin/perl -w
 +# nagios: -epn

@@ -1,6 +1,8 @@
---- a/check_rbl/src/check_rbl.ini
-+++ b/check_rbl/src/check_rbl.ini
-@@ -91,6 +91,40 @@
+Index: pkg-nagios-plugins-contrib/check_rbl/src/check_rbl.ini
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_rbl/src/check_rbl.ini
++++ pkg-nagios-plugins-contrib/check_rbl/src/check_rbl.ini
+@@ -89,6 +89,40 @@ server=singular.ttk.pte.hu
  server=spam.dnsbl.anonmails.de
  server=spambot.bls.digibase.ca
  server=z.mailspike.net

@@ -1,7 +1,7 @@
-diff --git a/check_nfsmounts/check_nfsmounts b/check_nfsmounts/check_nfsmounts
-index fbfb1f8..51ed625 100644
---- a/check_nfsmounts/check_nfsmounts
-+++ b/check_nfsmounts/check_nfsmounts
+Index: pkg-nagios-plugins-contrib/check_nfsmounts/check_nfsmounts
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_nfsmounts/check_nfsmounts
++++ pkg-nagios-plugins-contrib/check_nfsmounts/check_nfsmounts
 @@ -21,14 +21,36 @@
  #    along with this program.  If not, see <http://www.gnu.org/licenses/>. 
  #

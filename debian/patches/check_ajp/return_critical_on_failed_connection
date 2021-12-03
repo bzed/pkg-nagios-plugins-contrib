@@ -1,5 +1,7 @@
---- a/check_ajp/check_ajp
-+++ b/check_ajp/check_ajp
+Index: pkg-nagios-plugins-contrib/check_ajp/check_ajp
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_ajp/check_ajp
++++ pkg-nagios-plugins-contrib/check_ajp/check_ajp
 @@ -7,6 +7,7 @@
  #
  # check_ajp - nagios plugin for jboss monitoring

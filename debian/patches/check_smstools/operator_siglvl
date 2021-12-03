@@ -9,9 +9,11 @@ siglvl at our modem is 31.99 - but still works
  check_smstools/bin/check_smstools | 3 ++-
  1 file changed, 2 insertions(+), 1 deletion(-)
 
---- a/check_smstools/bin/check_smstools
-+++ b/check_smstools/bin/check_smstools
-@@ -191,6 +191,7 @@
+Index: pkg-nagios-plugins-contrib/check_smstools/bin/check_smstools
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_smstools/bin/check_smstools
++++ pkg-nagios-plugins-contrib/check_smstools/bin/check_smstools
+@@ -191,6 +191,7 @@ sub process_statusfile {
  			if ($result{'cmd'} =~ /$operator_command/) {
  				$operator = $result{'answer'};
  				$operator =~ s/0,0,"//g;
@@ -19,7 +21,7 @@ siglvl at our modem is 31.99 - but still works
  			}
  		}
  		# No need to parse the rest of the file, if signal
-@@ -218,7 +219,7 @@
+@@ -218,7 +219,7 @@ sub check_signal {
  		$np->nagios_die("Unable to determine the modem signal strength.");
  	}
  

@@ -1,5 +1,7 @@
---- a/check_webinject/check_webinject
-+++ b/check_webinject/check_webinject
+Index: pkg-nagios-plugins-contrib/check_webinject/check_webinject
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_webinject/check_webinject
++++ pkg-nagios-plugins-contrib/check_webinject/check_webinject
 @@ -1,5 +1,5 @@
  #!/usr/bin/perl
 -# nagios: +epn

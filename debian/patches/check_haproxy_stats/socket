@@ -1,20 +1,22 @@
---- a/check_haproxy_stats/check_haproxy_stats.pl
-+++ b/check_haproxy_stats/check_haproxy_stats.pl
-@@ -57,7 +57,7 @@
-         in list.
+Index: pkg-nagios-plugins-contrib/check_haproxy_stats/check_haproxy_stats.pl
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_haproxy_stats/check_haproxy_stats.pl
++++ pkg-nagios-plugins-contrib/check_haproxy_stats/check_haproxy_stats.pl
+@@ -84,7 +84,7 @@ DESCRIPTION
+         Do not check named proxies. Use comma to separate proxies in list.
  
      -s, --sock, --socket
 -        Use named UNIX socket instead of default (/var/run/haproxy.sock)
 +        Use named UNIX socket instead of default (/run/haproxy/admin.sock)
  
-     -w, --warning
-         Set warning threshold for sessions number to the specified percentage (see -c)
-@@ -114,7 +114,7 @@
+     -U, --url
+         Use HTTP URL instead of socket. The LWP::Simple perl module is used if
+@@ -151,7 +151,7 @@ my @status_names = (qw/OK WARNING CRITIC
  # Defaults
  my $swarn = 80.0;
  my $scrit = 90.0;
 -my $sock  = "/var/run/haproxy.sock";
 +my $sock  = "/run/haproxy/admin.sock";
- my $dump;
- my $proxy;
- my $help;
+ my $url;
+ my $user = '';
+ my $pass = '';

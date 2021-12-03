@@ -1,7 +1,7 @@
-diff --git a/check_smstools/bin/check_smstools b/check_smstools/bin/check_smstools
-index a7a0336..707d289 100755
---- a/check_smstools/bin/check_smstools
-+++ b/check_smstools/bin/check_smstools
+Index: pkg-nagios-plugins-contrib/check_smstools/bin/check_smstools
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_smstools/bin/check_smstools
++++ pkg-nagios-plugins-contrib/check_smstools/bin/check_smstools
 @@ -13,9 +13,31 @@
  
  use strict;

@@ -1,6 +1,8 @@
---- a/check_httpd_status/check_httpd_status
-+++ b/check_httpd_status/check_httpd_status
-@@ -213,7 +213,13 @@
+Index: pkg-nagios-plugins-contrib/check_httpd_status/check_httpd_status
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_httpd_status/check_httpd_status
++++ pkg-nagios-plugins-contrib/check_httpd_status/check_httpd_status
+@@ -213,7 +213,13 @@ $ua->agent($PROGNAME.'-'.$VERSION);
  logD("Web URL : $url");
  
  my $req = HTTP::Request->new( GET => $url );

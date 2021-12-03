@@ -1,6 +1,8 @@
---- a/check_backuppc/src/check_backuppc
-+++ b/check_backuppc/src/check_backuppc
-@@ -171,7 +171,7 @@
+Index: pkg-nagios-plugins-contrib/check_backuppc/src/check_backuppc
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_backuppc/src/check_backuppc
++++ pkg-nagios-plugins-contrib/check_backuppc/src/check_backuppc
+@@ -171,7 +171,7 @@ my @notTooOld;
  
  foreach my $host (@hostsDesired, @hostsExcluded)
  {
@@ -9,7 +11,7 @@
  	{
  		print("BACKUPPC UNKNOWN - Unknown host ($host)\n");
  		exit $ERRORS{'UNKNOWN'};
-@@ -182,8 +182,8 @@
+@@ -182,8 +182,8 @@ foreach my $host (@hostsDesired, @hostsE
  foreach my $host (sort(keys(%Status)))
  {
  	next if $host =~ /^ /;

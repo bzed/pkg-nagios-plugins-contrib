@@ -3,8 +3,10 @@ Description:
  Patches check_email_delivery and check_email_delivery_epn to use debian
  specific paths.
 
---- a/check_email_delivery/src/check_email_delivery
-+++ b/check_email_delivery/src/check_email_delivery
+Index: pkg-nagios-plugins-contrib/check_email_delivery/src/check_email_delivery
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_email_delivery/src/check_email_delivery
++++ pkg-nagios-plugins-contrib/check_email_delivery/src/check_email_delivery
 @@ -63,7 +63,7 @@ my $default_warn = 15;
  my $default_wait = 5;
  my $default_timeout = 60;
@@ -14,8 +16,10 @@ Description:
  my $ok;
  $ok = Getopt::Long::GetOptions(
  	"V|version"=>\$show_version,
---- a/check_email_delivery/src/check_email_delivery_epn
-+++ b/check_email_delivery/src/check_email_delivery_epn
+Index: pkg-nagios-plugins-contrib/check_email_delivery/src/check_email_delivery_epn
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_email_delivery/src/check_email_delivery_epn
++++ pkg-nagios-plugins-contrib/check_email_delivery/src/check_email_delivery_epn
 @@ -61,7 +61,7 @@ my $default_warn = 15;
  my $default_wait = 5;
  my $default_timeout = 60;

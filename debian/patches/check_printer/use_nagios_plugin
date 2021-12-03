@@ -1,7 +1,7 @@
-diff --git a/check_printer/check_printer b/check_printer/check_printer
-index 6d801de..da8e099 100644
---- a/check_printer/check_printer
-+++ b/check_printer/check_printer
+Index: pkg-nagios-plugins-contrib/check_printer/check_printer
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_printer/check_printer
++++ pkg-nagios-plugins-contrib/check_printer/check_printer
 @@ -33,11 +33,27 @@
  use strict;
  use warnings;
@@ -35,4 +35,3 @@ index 6d801de..da8e099 100644
  }
  
  use Getopt::Long;
- use Pod::Usage;

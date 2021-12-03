@@ -1,5 +1,7 @@
---- a/check_cups/check_cups
-+++ b/check_cups/check_cups
+Index: pkg-nagios-plugins-contrib/check_cups/check_cups
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_cups/check_cups
++++ pkg-nagios-plugins-contrib/check_cups/check_cups
 @@ -1,4 +1,5 @@
  #!/usr/bin/perl
 +# nagios: -epn

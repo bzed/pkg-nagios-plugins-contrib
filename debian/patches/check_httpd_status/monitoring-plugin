@@ -1,6 +1,8 @@
---- a/check_httpd_status/check_httpd_status
-+++ b/check_httpd_status/check_httpd_status
-@@ -34,8 +34,28 @@
+Index: pkg-nagios-plugins-contrib/check_httpd_status/check_httpd_status
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_httpd_status/check_httpd_status
++++ pkg-nagios-plugins-contrib/check_httpd_status/check_httpd_status
+@@ -34,8 +34,28 @@ use File::Basename;			# get basename()
  use POSIX qw(setlocale);
  use Locale::gettext;
  
@@ -31,7 +33,7 @@
  use LWP::UserAgent;
  use HTTP::Status; # get status_message()
  use Time::HiRes qw(gettimeofday tv_interval);
-@@ -92,7 +112,7 @@
+@@ -92,7 +112,7 @@ my %TranslationTable = (
  );
  
  
@@ -40,7 +42,7 @@
  	version => $VERSION,
  	blurb => _gt('Apache / Lighthttpd server status monitor for Nagios'),
  	usage => "Usage: %s [ -H <host> [-p <port>] [-t <timeout>] [-w <warn_level> -c <crit_level>] [-V] [-u <url>] [-U user -P pass -r realm]",
-@@ -438,4 +458,4 @@
+@@ -443,4 +463,4 @@ Note :
          Warn if less than 100 workers are available
          Crit if less than 10 workers are available
  EOT

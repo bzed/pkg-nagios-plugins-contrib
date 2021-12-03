@@ -1,6 +1,8 @@
---- a/check_nfsmounts/check_nfsmounts
-+++ b/check_nfsmounts/check_nfsmounts
-@@ -45,6 +45,7 @@
+Index: pkg-nagios-plugins-contrib/check_nfsmounts/check_nfsmounts
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_nfsmounts/check_nfsmounts
++++ pkg-nagios-plugins-contrib/check_nfsmounts/check_nfsmounts
+@@ -45,6 +45,7 @@ BEGIN {
  }
  
  use Time::HiRes qw{time alarm};
@@ -8,7 +10,7 @@
  use Getopt::Long;
  use strict;
  
-@@ -129,7 +130,8 @@
+@@ -129,7 +130,8 @@ foreach $dir (@dirs) {
    if($pid==0) {
      chdir $dir or &bad_mount($dir,$!);
      if($writemode and exists($mountmodes{$dir}->{"rw"})) {

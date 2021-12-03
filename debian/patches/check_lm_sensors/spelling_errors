@@ -1,5 +1,7 @@
---- a/check_lm_sensors/src/check_lm_sensors.pod
-+++ b/check_lm_sensors/src/check_lm_sensors.pod
+Index: pkg-nagios-plugins-contrib/check_lm_sensors/src/check_lm_sensors.pod
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_lm_sensors/src/check_lm_sensors.pod
++++ pkg-nagios-plugins-contrib/check_lm_sensors/src/check_lm_sensors.pod
 @@ -49,7 +49,7 @@ verbosity.
  =head1 EXIT STATUS
  

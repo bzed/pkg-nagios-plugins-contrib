@@ -1,6 +1,8 @@
---- a/check_cups/check_cups
-+++ b/check_cups/check_cups
-@@ -39,13 +39,33 @@
+Index: pkg-nagios-plugins-contrib/check_cups/check_cups
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_cups/check_cups
++++ pkg-nagios-plugins-contrib/check_cups/check_cups
+@@ -39,13 +39,33 @@ use warnings;
  # http://search.cpan.org/~rgarcia/perl-5.6.2/pod/perllexwarn.pod
  no warnings qw( redefine prototype );
  
@@ -35,7 +37,7 @@
  
      use Data::Dumper;
  
-@@ -95,7 +115,7 @@
+@@ -95,7 +115,7 @@ General Public Licence (see http://www.f
  This plugin was written at The Harvard-MIT Data Center
  (http://www.hmdc.harvard.edu) by Steve Huff (<shuff\@hmdc.harvard.edu>).
  LICENSE

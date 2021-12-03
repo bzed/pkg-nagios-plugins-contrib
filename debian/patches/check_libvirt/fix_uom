@@ -13,9 +13,11 @@ Subject: [PATCH] fix uom of check_libvirt
  check_libvirt/check_libvirt | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
---- a/check_libvirt/check_libvirt
-+++ b/check_libvirt/check_libvirt
-@@ -246,7 +246,7 @@
+Index: pkg-nagios-plugins-contrib/check_libvirt/check_libvirt
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_libvirt/check_libvirt
++++ pkg-nagios-plugins-contrib/check_libvirt/check_libvirt
+@@ -246,7 +246,7 @@ eval
  			chop($output);
  			chop($output);
  			$output = $up . "/" . $cnt . " VMs up: " . $output;

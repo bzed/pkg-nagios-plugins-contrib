@@ -1,7 +1,7 @@
-diff --git a/check_snmp_environment/check_snmp_environment.pl b/check_snmp_environment/check_snmp_environment.pl
-index 2be3fc0..6022fcb 100644
---- a/check_snmp_environment/check_snmp_environment.pl
-+++ b/check_snmp_environment/check_snmp_environment.pl
+Index: pkg-nagios-plugins-contrib/check_snmp_environment/check_snmp_environment.pl
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_snmp_environment/check_snmp_environment.pl
++++ pkg-nagios-plugins-contrib/check_snmp_environment/check_snmp_environment.pl
 @@ -1,4 +1,5 @@
  #!/usr/bin/perl
 +# nagios: -epn

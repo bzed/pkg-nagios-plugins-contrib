@@ -1,6 +1,8 @@
---- a/check_printer/check_printer
-+++ b/check_printer/check_printer
-@@ -267,10 +267,10 @@
+Index: pkg-nagios-plugins-contrib/check_printer/check_printer
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_printer/check_printer
++++ pkg-nagios-plugins-contrib/check_printer/check_printer
+@@ -267,10 +267,10 @@ while (my($key, $value) = each(%status))
  if ($debug){
  	print Dumper(\%status);
  	print "\n\n############ ATTENTION ############\n";

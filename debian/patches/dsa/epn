@@ -1,5 +1,7 @@
---- a/dsa/checks/dsa-check-packages
-+++ b/dsa/checks/dsa-check-packages
+Index: pkg-nagios-plugins-contrib/dsa/checks/dsa-check-packages
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/dsa/checks/dsa-check-packages
++++ pkg-nagios-plugins-contrib/dsa/checks/dsa-check-packages
 @@ -1,4 +1,5 @@
  #!/usr/bin/perl
 +# nagios: -epn

@@ -1,5 +1,7 @@
---- a/dsa/sbin/dsa-update-apt-status
-+++ b/dsa/sbin/dsa-update-apt-status
+Index: pkg-nagios-plugins-contrib/dsa/sbin/dsa-update-apt-status
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/dsa/sbin/dsa-update-apt-status
++++ pkg-nagios-plugins-contrib/dsa/sbin/dsa-update-apt-status
 @@ -22,7 +22,7 @@
  # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  
@@ -9,8 +11,10 @@
  STATUS="${STATUSDIR}"/apt
  SLEEP_MAX=$(( 15 * 60 ))
  MAX_AGE=$(( 23 * 60 * 60 ))
---- a/dsa/sbin/dsa-update-unowned-file-status
-+++ b/dsa/sbin/dsa-update-unowned-file-status
+Index: pkg-nagios-plugins-contrib/dsa/sbin/dsa-update-unowned-file-status
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/dsa/sbin/dsa-update-unowned-file-status
++++ pkg-nagios-plugins-contrib/dsa/sbin/dsa-update-unowned-file-status
 @@ -22,7 +22,7 @@
  # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  

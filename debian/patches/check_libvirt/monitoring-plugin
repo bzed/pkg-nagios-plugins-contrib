@@ -1,7 +1,7 @@
-diff --git a/check_libvirt/check_libvirt b/check_libvirt/check_libvirt
-index 2029c9e..618d1ac 100755
---- a/check_libvirt/check_libvirt
-+++ b/check_libvirt/check_libvirt
+Index: pkg-nagios-plugins-contrib/check_libvirt/check_libvirt
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_libvirt/check_libvirt
++++ pkg-nagios-plugins-contrib/check_libvirt/check_libvirt
 @@ -27,11 +27,33 @@
  use strict;
  use warnings;

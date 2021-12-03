@@ -1,7 +1,7 @@
-diff --git a/check_bgpstate/check_bgpstate b/check_bgpstate/check_bgpstate
-index 645d750..6ddf8bf 100644
---- a/check_bgpstate/check_bgpstate
-+++ b/check_bgpstate/check_bgpstate
+Index: pkg-nagios-plugins-contrib/check_bgpstate/check_bgpstate
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_bgpstate/check_bgpstate
++++ pkg-nagios-plugins-contrib/check_bgpstate/check_bgpstate
 @@ -1,4 +1,5 @@
  #!/usr/bin/perl -w
 +# nagios: -epn

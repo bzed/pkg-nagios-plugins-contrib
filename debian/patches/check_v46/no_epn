@@ -1,5 +1,7 @@
---- a/check_v46/check_v46
-+++ b/check_v46/check_v46
+Index: pkg-nagios-plugins-contrib/check_v46/check_v46
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_v46/check_v46
++++ pkg-nagios-plugins-contrib/check_v46/check_v46
 @@ -1,4 +1,6 @@
  #!/usr/bin/perl
 +# nagios: -epn

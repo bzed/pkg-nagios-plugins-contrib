@@ -1,5 +1,7 @@
---- a/percona-nagios-plugins/nagios/bin/pmp-check-mysql-ts-count
-+++ b/percona-nagios-plugins/nagios/bin/pmp-check-mysql-ts-count
+Index: pkg-nagios-plugins-contrib/percona-nagios-plugins/nagios/bin/pmp-check-mysql-ts-count
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/percona-nagios-plugins/nagios/bin/pmp-check-mysql-ts-count
++++ pkg-nagios-plugins-contrib/percona-nagios-plugins/nagios/bin/pmp-check-mysql-ts-count
 @@ -1,4 +1,4 @@
 -#!/bin/sh
 +#!/bin/bash

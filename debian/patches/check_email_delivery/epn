@@ -1,5 +1,7 @@
---- a/check_email_delivery/src/check_email_delivery
-+++ b/check_email_delivery/src/check_email_delivery
+Index: pkg-nagios-plugins-contrib/check_email_delivery/src/check_email_delivery
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_email_delivery/src/check_email_delivery
++++ pkg-nagios-plugins-contrib/check_email_delivery/src/check_email_delivery
 @@ -1,4 +1,6 @@
  #!/usr/bin/perl
 +# nagios: -epn
@@ -7,8 +9,10 @@
  use strict;
  my $VERSION = '0.7.1';
  my $COPYRIGHT = 'Copyright (C) 2005-2011 Jonathan Buhacoff <jonathan@buhacoff.net>';
---- a/check_email_delivery/src/check_imap_quota
-+++ b/check_email_delivery/src/check_imap_quota
+Index: pkg-nagios-plugins-contrib/check_email_delivery/src/check_imap_quota
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_email_delivery/src/check_imap_quota
++++ pkg-nagios-plugins-contrib/check_email_delivery/src/check_imap_quota
 @@ -1,4 +1,6 @@
  #!/usr/bin/perl
 +# nagios: -epn
@@ -16,8 +20,10 @@
  use strict;
  my $VERSION = '0.2';
  my $COPYRIGHT = 'Copyright (C) 2005-2011 Jonathan Buhacoff <jonathan@buhacoff.net>';
---- a/check_email_delivery/src/check_imap_receive
-+++ b/check_email_delivery/src/check_imap_receive
+Index: pkg-nagios-plugins-contrib/check_email_delivery/src/check_imap_receive
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_email_delivery/src/check_imap_receive
++++ pkg-nagios-plugins-contrib/check_email_delivery/src/check_imap_receive
 @@ -1,4 +1,6 @@
  #!/usr/bin/perl
 +# nagios: -epn
@@ -25,8 +31,10 @@
  use strict;
  my $VERSION = '0.7.5';
  my $COPYRIGHT = 'Copyright (C) 2005-2011 Jonathan Buhacoff <jonathan@buhacoff.net>';
---- a/check_email_delivery/src/check_smtp_send
-+++ b/check_email_delivery/src/check_smtp_send
+Index: pkg-nagios-plugins-contrib/check_email_delivery/src/check_smtp_send
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_email_delivery/src/check_smtp_send
++++ pkg-nagios-plugins-contrib/check_email_delivery/src/check_smtp_send
 @@ -1,4 +1,6 @@
  #!/usr/bin/perl
 +# nagios: -epn
@@ -34,8 +42,10 @@
  use strict;
  use POSIX qw(strftime);
  my $VERSION = '0.7.3';
---- a/check_email_delivery/src/imap_ssl_cert
-+++ b/check_email_delivery/src/imap_ssl_cert
+Index: pkg-nagios-plugins-contrib/check_email_delivery/src/imap_ssl_cert
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_email_delivery/src/imap_ssl_cert
++++ pkg-nagios-plugins-contrib/check_email_delivery/src/imap_ssl_cert
 @@ -1,4 +1,6 @@
  #!/usr/bin/perl
 +# nagios: -epn

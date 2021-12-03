@@ -1,6 +1,8 @@
---- a/dsa/checks/dsa-check-running-kernel
-+++ b/dsa/checks/dsa-check-running-kernel
-@@ -132,7 +132,7 @@
+Index: pkg-nagios-plugins-contrib/dsa/checks/dsa-check-running-kernel
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/dsa/checks/dsa-check-running-kernel
++++ pkg-nagios-plugins-contrib/dsa/checks/dsa-check-running-kernel
+@@ -132,7 +132,7 @@ cat_vmlinux() {
  	filter="$3"
  	hdroff="$4"
  
@@ -9,7 +11,7 @@
  		echo "UNKNOWN: filter command '$filter' missing, perhaps install xz-utils, lz4 or lzop?" >&2
  		exit $UNKNOWN
  	fi
-@@ -157,7 +157,11 @@
+@@ -157,7 +157,11 @@ get_image_linux() {
  	cat_vmlinux "$image" "\x00\x00\x00\x02\xff"  "xzcat" -1
  	cat_vmlinux "$image" "\x00\x00\x00\x04\xff"  "xzcat" -1
  	# xz compressed image

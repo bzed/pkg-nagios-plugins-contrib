@@ -7,8 +7,10 @@ Date:   Mon Mar 3 08:11:31 2014 +0300
     1) add check for out of sync sectors (report WARNING for non-zero value)
     2) cosmetic: sort device list while processing
 
---- a/check_drbd/check_drbd
-+++ b/check_drbd/check_drbd
+Index: pkg-nagios-plugins-contrib/check_drbd/check_drbd
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_drbd/check_drbd
++++ pkg-nagios-plugins-contrib/check_drbd/check_drbd
 @@ -12,7 +12,7 @@ use Getopt::Long;
  my $drbd_proc='/proc/drbd';
  my $drbd_devices=0;

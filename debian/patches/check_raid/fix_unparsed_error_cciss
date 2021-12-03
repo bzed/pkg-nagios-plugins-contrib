@@ -1,7 +1,9 @@
 Incorporate changes from https://github.com/glensc/nagios-plugin-check_raid/pull/200/commits/12186c44c51941a16f82d23ee9c5fbd212a2c315
---- a/check_raid/check_raid
-+++ b/check_raid/check_raid
-@@ -1831,6 +1831,8 @@
+Index: pkg-nagios-plugins-contrib/check_raid/check_raid
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/check_raid/check_raid
++++ pkg-nagios-plugins-contrib/check_raid/check_raid
+@@ -1831,6 +1831,8 @@ $fatpacked{"App/Monitoring/Plugin/CheckR
    			my $cache = $c{$cdev}{cache};
    			my %map = (
    				configured => qr/Cache configured: (.+)/,
