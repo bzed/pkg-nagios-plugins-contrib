@@ -1,5 +1,4 @@
-Homepage: http://cvs.orion.education.fr/viewvc/viewvc.cgi/nagios-plugins-perl/trunk/plugins/check_haproxy.pl?view=log
-Watch: http://cvs.orion.education.fr/viewvc/viewvc.cgi/nagios-plugins-perl/trunk/plugins/check_haproxy.pl?view=log <a name="(rev[^"]+)"></a>
+Homepage: https://github.com/polymorf/check_haproxy/blob/master/check_haproxy.pl
 Recommends: liblocale-gettext-perl, liblwp-useragent-determined-perl, libmonitoring-plugin-perl | libnagios-plugin-perl
 Version: rev135
 Uploaders: Jan Wagner <waja@cyconet.org>
