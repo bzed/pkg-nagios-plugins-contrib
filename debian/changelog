@@ -1,4 +1,7 @@
-nagios-plugins-contrib (36.20210910) unstable; urgency=medium
+nagios-plugins-contrib (35.20211203) unstable; urgency=medium
+
+  [ Jan Wagner ]
+  * [144807b] New changelog
 
   [ Bas Couwenberg ]
   * [8d4c239] Bump Standards-Version to 4.6.0, no changes.
@@ -10,7 +13,14 @@ nagios-plugins-contrib (36.20210910) unstable; urgency=medium
   * [a9685a4] Add descriptions for madrisan checks
   * [3324825] madrisan: install symlinks as symlinks
 
- -- Bernd Zeimetz <bzed@debian.org>  Fri, 10 Sep 2021 15:32:49 +0200
+  [ Bernd Zeimetz ]
+  * [72be8a7] Updating changelog
+  * [e63adfa] Updating check_haproxy_stats.
+  * [c9622bb] update check_haproxy location
+  * [4a61139] Updating check_rbl
+  * [f142170] Use timeouts on url requests in our helper.
+
+ -- Bernd Zeimetz <bzed@debian.org>  Fri, 03 Dec 2021 11:22:58 +0100
 
 nagios-plugins-contrib (35.20210511) unstable; urgency=medium
 
