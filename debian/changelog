@@ -1,4 +1,4 @@
-nagios-plugins-contrib (35.20211203) unstable; urgency=medium
+nagios-plugins-contrib (36.20211207) unstable; urgency=medium
 
   [ Jan Wagner ]
   * [144807b] New changelog
@@ -23,8 +23,9 @@ nagios-plugins-contrib (35.20211203) unstable; urgency=medium
   * [26af399] Auto update of debian/control
   * [cfbbc92] Auto update of debian/copyright
   * [3b7609a] Override lintian error.
+  * [3a7e9f4] Refreshing patches
 
- -- Bernd Zeimetz <bzed@debian.org>  Fri, 03 Dec 2021 11:22:58 +0100
+ -- Bernd Zeimetz <bzed@debian.org>  Tue, 07 Dec 2021 15:21:53 +0100
 
 nagios-plugins-contrib (35.20210511) unstable; urgency=medium
 
