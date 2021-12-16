@@ -1,6 +1,6 @@
 Uploaders: Jan Wagner <waja@cyconet.org>
 Recommends: curl, file, openssl
-Suggests: expect
+Suggests: expect, iproute2, dnsutils
 Version: 2.15.0
 Homepage: https://github.com/matteocorti/check_ssl_cert
 Watch: https://github.com/matteocorti/check_ssl_cert/releases check_ssl_cert-([0-9.]+)\.tar\.gz
