@@ -1,4 +1,4 @@
-%define version          2.10.0
+%define version          2.15.0
 %define release          0
 %define sourcename       check_ssl_cert
 %define packagename      nagios-plugins-check_ssl_cert
@@ -42,6 +42,33 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/%{sourcename}.1*
 
 %changelog
+* Wed Dec  15 2021 Matteo Corti <matteo@corti.li> - 2.15.0-0
+- Updated to 2.15.0
+
+* Fri Dec  10 2021 Matteo Corti <matteo@corti.li> - 2.14.0-0
+- Updated to 2.14.0
+
+* Wed Nov  24 2021 Matteo Corti <matteo@corti.li> - 2.13.0-0
+- Updated to 2.13.0
+
+* Tue Nov  16 2021 Matteo Corti <matteo@corti.li> - 2.12.0-0
+- Updated to 2.12.0
+
+* Thu Nov  11 2021 Matteo Corti <matteo@corti.li> - 2.11.0-0
+- Updated to 2.11.0
+
+* Fri Oct  22 2021 Matteo Corti <matteo@corti.li> - 2.10.4-0
+- Updated to 2.10.4
+
+* Thu Oct  21 2021 Matteo Corti <matteo@corti.li> - 2.10.3-0
+- Updated to 2.10.3
+
+* Thu Oct  14 2021 Matteo Corti <matteo@corti.li> - 2.10.2-0
+- Updated to 2.10.2
+
+* Tue Oct  12 2021 Matteo Corti <matteo@corti.li> - 2.10.1-0
+- Updated to 2.10.1
+
 * Mon Oct  11 2021 Matteo Corti <matteo@corti.li> - 2.10.0-0
 - Updated to 2.10.0
 
@@ -557,7 +584,7 @@ w
 - Updated to 1.16.1 (rpm make target)
 
 * Mon Dec 23 2013 Matteo Corti <matteo.corti@id.ethz.ch> - 1.16.0-0
-- Udated to 1.16.0 (force TLS)
+- Updated to 1.16.0 (force TLS)
 
 * Mon Jul 29 2013 Matteo Corti <matteo.corti@id.ethz.ch> - 1.15.0-0
 - Updated to 1.15.0 (force SSL version)
@@ -590,7 +617,7 @@ w
 - updated to 1.12.0 (bug fix release)
 
 * Sat Oct 22 2011 Matteo Corti <matteo.corti@id.ethz.ch> - 1.11.0-0
-- ipdated to 1.10.1 (--altnames option)
+- updated to 1.10.1 (--altnames option)
 
 * Thu Sep  1 2011 Matteo Corti <matteo.corti@id.ethz.ch> - 1.10.0-0
 - applied patch from Sven Nierlein for client certificate authentication

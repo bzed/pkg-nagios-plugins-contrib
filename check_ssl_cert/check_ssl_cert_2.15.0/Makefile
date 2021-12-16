@@ -1,11 +1,10 @@
 PLUGIN=check_ssl_cert
 VERSION=`cat VERSION`
 DIST_DIR=$(PLUGIN)-$(VERSION)
-DIST_FILES=AUTHORS COPYING ChangeLog INSTALL Makefile NEWS README.md VERSION $(PLUGIN) $(PLUGIN).spec COPYRIGHT ${PLUGIN}.1
+DIST_FILES=AUTHORS COPYING ChangeLog INSTALL.md Makefile NEWS README.md VERSION $(PLUGIN) $(PLUGIN).spec COPYRIGHT ${PLUGIN}.1
 YEAR=`date +"%Y"`
-MONTH_YEAR=`date +"%B, %Y"`
-FORMATTED_FILES=test/unit_tests.sh AUTHORS COPYING ChangeLog INSTALL Makefile NEWS README.md VERSION $(PLUGIN) $(PLUGIN).spec COPYRIGHT ${PLUGIN}.1 .github/workflows/* utils/*.sh
-SCRIPTS=check_ssl_cert test/unit_tests.sh utils/prepare_rpm.sh utils/publish_release.sh utils/format_files.sh
+FORMATTED_FILES=test/unit_tests.sh AUTHORS COPYING ChangeLog INSTALL.md Makefile NEWS README.md VERSION $(PLUGIN) $(PLUGIN).spec COPYRIGHT ${PLUGIN}.1 .github/workflows/* utils/*.sh
+SCRIPTS=check_ssl_cert test/*.sh
 
 dist: version_check
 	rm -rf $(DIST_DIR) $(DIST_DIR).tar.gz
@@ -13,8 +12,10 @@ dist: version_check
 	cp -r $(DIST_FILES) $(DIST_DIR)
 # avoid to include extended attribute data files
 # see https://superuser.com/questions/259703/get-mac-tar-to-stop-putting-filenames-in-tar-archives
-	env COPYFILE_DISABLE=1 tar cfz $(DIST_DIR).tar.gz  $(DIST_DIR)
-	env COPYFILE_DISABLE=1 tar cfj $(DIST_DIR).tar.bz2 $(DIST_DIR)
+	export COPY_EXTENDED_ATTRIBUTES_DISABLE=1; \
+	export COPYFILE_DISABLE=1; \
+	tar -c -z -f $(DIST_DIR).tar.gz  $(DIST_DIR) && \
+	tar -c -j -f $(DIST_DIR).tar.bz2 $(DIST_DIR)
 
 install:
 ifndef DESTDIR
@@ -30,16 +31,14 @@ endif
 version_check:
 	grep -q "VERSION\ *=\ *[\'\"]*$(VERSION)" $(PLUGIN)
 	grep -q "^%define\ version\ *$(VERSION)" $(PLUGIN).spec
-	grep -q -- "- $(VERSION)-" $(PLUGIN).spec
+	grep -q -F -- "- $(VERSION)-" $(PLUGIN).spec
 	grep -q "\"$(VERSION)\"" $(PLUGIN).1
-	grep -q "${VERSION}" NEWS
-	grep -q "$(MONTH_YEAR)" $(PLUGIN).1
+	grep -q -F "${VERSION}" NEWS
 	echo "Version check: OK"
 
 # we check for tabs
 # and remove trailing blanks
 formatting_check:
-	! grep -q '\\t' check_ssl_cert test/unit_tests.sh
 	! grep -q '[[:blank:]]$$' $(FORMATTED_FILES)
 
 remove_blanks:
@@ -59,6 +58,7 @@ endif
 
 clean:
 	rm -f *~
+	rm -f *.bak
 	rm -rf rpmroot
 
 distclean: clean
@@ -72,7 +72,9 @@ SHELLCHECK := $(shell command -v shellcheck 2> /dev/null)
 SHUNIT := $(shell command -v shunit2 2> /dev/null || if [ -x /usr/share/shunit2/shunit2 ] ; then echo /usr/share/shunit2/shunit2 ; fi )
 
 distcheck: disttest
-disttest: dist formatting_check copyright_check shellcheck
+disttest: dist formatting_check shellcheck
+	./utils/check_documentation.sh
+	man ./check_ssl_cert.1 > /dev/null
 
 test: disttest
 ifndef SHUNIT
@@ -89,12 +91,6 @@ ifndef SHELLCHECK
 else
 	if shellcheck --help 2>&1 | grep -q -- '-o\ ' ; then shellcheck -o all $(SCRIPTS) ; else shellcheck $(SCRIPTS) ; fi
 endif
-
-copyright_check:
-	grep -q "&copy; Matteo Corti, 2007-$(YEAR)" README.md
-	grep -q "Copyright (c) 2007-$(YEAR) Matteo Corti" COPYRIGHT
-	grep -q "Copyright (c) 2007-$(YEAR) Matteo Corti <matteo@corti.li>" $(PLUGIN)
-	echo "Copyright year check: OK"
 
 rpm: dist
 	mkdir -p rpmroot/SOURCES rpmroot/BUILD

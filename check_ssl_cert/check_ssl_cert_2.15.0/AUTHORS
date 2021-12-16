@@ -81,7 +81,7 @@ Thanks:
 * Many thanks to Mathieu Simon (https://github.com/matsimon) for the IMAPS, POP3S and LDAP patches
 * Many thanks to Nico (https://github.com/nicox) for the SSLlabs patch
 * Many thanks to barakAtSoluto (https://github.com/barakAtSoluto) for the SSLlabs warning patch
-* Many thanks to Valentin Heidelberger (https://github.com/va1entin) for the cURL user agent patch
+* Many thanks to Valentin Heidelberger (https://github.com/va1entin) for the curl user agent patch
 * Many thanks to Tone (https://github.com/anthonyhaussman) for the warning message improvement patch
 * Many thanks to Michael Niewiara (https://github.com/mobitux) for the HTTPS/echo fix
 * Many thanks to Zadkiel (https://github.com/aslafy-z) for the extended regex patch and for the n-elementh check
@@ -113,12 +113,14 @@ Thanks:
 * Many thanks to waja (https://github.com/waja) for the GitHub workflows
 * Many thanks to Tobias Grünewald (https://github.com/tobias-gruenewald) for the client certificate
 * Many thanks to chornberger-c2c (https://github.com/chornberger-c2c) for the critical and warning output fix
-* Many thanks to Claus-Theodor Riegg (https://github.com/ctriegg-mak) for the domain with underscores fix
+* Many thanks to Claus-Theodor Riegg (https://github.com/ctriegg-mak) for the domain with
+  underscores and certificate chain fixes
 * Many thanks to Ed Sabol (https://github.com/esabol) for the FQDN patch
 * Many thanks to Igor Mironov (https://github.com/mcs6502) for the LibreSSL patch
 * Many thanks to jalbstmeijer (https://github.com/jalbstmeijer) for the OpenSSL and INETPROTO patch
 * Many thanks to Pim Rupert (https://github.com/prupert) for the file(1) patches
 * Many thanks to Alexander Aleksandrovič Klimov (https://github.com/Al2Klimov) for the DANE 312 patch
-* Manu thanks to Jaime Hablutzel (https://github.com/hablutzel1) for the --element fix
+* Many thanks to Jaime Hablutzel (https://github.com/hablutzel1) for the --element fix
 * Many thanks to Bernd Stroessenreuther for the CRL and IPv6 fixes and for the floating point patch
 * Many thanks to Kim Jahn for the conversion typo and underscore fixes (https://github.com/mookie-)
+* Many thanks to Bernd Strößenreuther (https://github.com/booboo-at-gluga-de) for the --help patch

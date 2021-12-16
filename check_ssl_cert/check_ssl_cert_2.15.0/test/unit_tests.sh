@@ -3,14 +3,24 @@
 # $SHUNIT2 should be defined as an environment variable before running the tests
 # shellcheck disable=SC2154
 if [ -z "${SHUNIT2}" ]; then
-    cat <<EOF
+
+    SHUNIT2=$( command -v shunit2 )
+
+    if [ -z "${SHUNIT2}" ]; then
+
+        cat <<EOF
 To be able to run the unit test you need a copy of shUnit2
 You can download it from https://github.com/kward/shunit2
 
 Once downloaded please set the SHUNIT2 variable with the location
 of the 'shunit2' script
 EOF
-    exit 1
+        exit 1
+
+    else
+        echo "shunit2 detected: ${SHUNIT2}"
+    fi
+
 fi
 
 if [ ! -x "${SHUNIT2}" ]; then
@@ -164,23 +174,38 @@ oneTimeTearDown() {
 
 testHoursUntilNow() {
     # testing with perl
-    export DATETYPE='PERL'
-    hours_until "$(date)"
-    assertEquals "error computing the missing hours until now" 0 "${HOURS_UNTIL}"
+    if perl -e 'use Date::Parse;' >/dev/null 2>&1 ; then
+        export DATETYPE='PERL'
+        DATE_TMP="$(date)"
+        hours_until "${DATE_TMP}"
+        assertEquals "error computing the missing hours until now" 0 "${HOURS_UNTIL}"
+    else
+        echo "Date::Parse not installed: skipping Perl date computation tests"
+    fi
 }
 
 testHoursUntil5Hours() {
     # testing with perl
-    export DATETYPE='PERL'
-    hours_until "$(perl -e '$x=localtime(time+(5*3600));print $x')"
-    assertEquals "error computing the missing hours until now" 5 "${HOURS_UNTIL}"
+    if perl -e 'use Date::Parse;' >/dev/null 2>&1 ; then
+        export DATETYPE='PERL'
+        DATE_TMP="$(perl -e '$x=localtime(time+(5*3600));print $x')"
+        hours_until "${DATE_TMP}"
+        assertEquals "error computing the missing hours until now" 5 "${HOURS_UNTIL}"
+    else
+        echo "Date::Parse not installed: skipping Perl date computation tests"
+    fi
 }
 
 testHoursUntil42Hours() {
     # testing with perl
-    export DATETYPE='PERL'
-    hours_until "$(perl -e '$x=localtime(time+(42*3600));print $x')"
-    assertEquals "error computing the missing hours until now" 42 "${HOURS_UNTIL}"
+    if perl -e 'use Date::Parse;' >/dev/null 2>&1 ; then
+        export DATETYPE='PERL'
+        DATE_TMP="$(perl -e '$x=localtime(time+(42*3600));print $x')"
+        hours_until "${DATE_TMP}"
+        assertEquals "error computing the missing hours until now" 42 "${HOURS_UNTIL}"
+    else
+        echo "Date::Parse not installed: skipping Perl date computation tests"
+    fi
 }
 
 testOpenSSLVersion1() {
@@ -250,6 +275,10 @@ testDependencies() {
     assertNotNull 'openssl not found' "${PROG}"
 }
 
+testInfo() {
+    ${SCRIPT} --rootcert-file cabundle.crt -H www.github.com --info
+}
+
 testSCT() {
     if [ -z "${OPENSSL}" ]; then
         OPENSSL=$(command -v openssl) # needed by openssl_version
@@ -299,16 +328,16 @@ testGroupedVariablesError() {
 }
 
 testPrometheus() {
-    OUTPUT=$(${SCRIPT} --rootcert-file cabundle.crt -H ethz.ch --prometheus --critical 1000 --warning 1100)
+    OUTPUT=$(${SCRIPT} --rootcert-file cabundle.crt -H github.com --prometheus --critical 1000 --warning 1100)
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_CRITICAL}" "${EXIT_CODE}"
     assertContains "wrong output" "${OUTPUT}" '# HELP cert_valid '
-    assertContains "wrong output" "${OUTPUT}" 'cert_valid_chain_elem{cn="ethz.ch", element=1} 2'
-    assertContains "wrong output" "${OUTPUT}" 'cert_days_chain_elem{cn="ethz.ch", element=1}'
+    assertContains "wrong output" "${OUTPUT}" 'cert_valid_chain_elem{cn="github.com", element=1} 2'
+    assertContains "wrong output" "${OUTPUT}" 'cert_days_chain_elem{cn="github.com", element=1}'
 }
 
-testETHZ() {
-    ${SCRIPT} --rootcert-file cabundle.crt -H ethz.ch --cn ethz.ch --critical 1 --warning 2
+testGitHub() {
+    ${SCRIPT} --rootcert-file cabundle.crt -H github.com --cn github.com --critical 1 --warning 2
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
 }
@@ -325,8 +354,8 @@ testGoDaddy() {
     assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
 }
 
-testETHZCaseInsensitive() {
-    ${SCRIPT} --rootcert-file cabundle.crt -H ethz.ch --cn ETHZ.CH --critical 1 --warning 2
+testGITHUBCaseInsensitive() {
+    ${SCRIPT} --rootcert-file cabundle.crt -H github.com --cn GITHUB.COM --critical 1 --warning 2
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
 }
@@ -378,26 +407,26 @@ testETHZWildCardSubCaseInsensitive() {
 }
 
 testRootIssuer() {
-    ${SCRIPT} --rootcert-file cabundle.crt -H ethz.ch --issuer 'QuoVadis Limited' --critical 1 --warning 2
+    ${SCRIPT} --rootcert-file cabundle.crt -H github.com --issuer 'DigiCert Inc' --critical 1 --warning 2
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
 }
 
 testValidity() {
     # Tests bug #8
-    ${SCRIPT} --rootcert-file cabundle.crt -H www.ethz.ch -w 1000
+    ${SCRIPT} --rootcert-file cabundle.crt -H www.github.com -w 1000
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_WARNING}" "${EXIT_CODE}"
 }
 
 testValidityWithPerl() {
-    ${SCRIPT} --rootcert-file cabundle.crt -H www.ethz.ch -w 1000 --force-perl-date
+    ${SCRIPT} --rootcert-file cabundle.crt -H www.github.com -w 1000 --force-perl-date
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_WARNING}" "${EXIT_CODE}"
 }
 
 testAltNames() {
-    ${SCRIPT} --rootcert-file cabundle.crt -H www.inf.ethz.ch --cn www.inf.ethz.ch --altnames --critical 1 --warning 2
+    ${SCRIPT} --rootcert-file cabundle.crt -H www.github.com --cn www.github.com --altnames --critical 1 --warning 2
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
 }
@@ -423,7 +452,7 @@ testWildcardAltNames2() {
 }
 
 testAltNamesCaseInsensitve() {
-    ${SCRIPT} --rootcert-file cabundle.crt -H www.inf.ethz.ch --cn WWW.INF.ETHZ.CH --altnames --critical 1 --warning 2
+    ${SCRIPT} --rootcert-file cabundle.crt -H www.github.com --cn WWW.GITHUB.COM --altnames --critical 1 --warning 2
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
 }
@@ -436,28 +465,29 @@ testMultipleAltNamesOK() {
 }
 
 testMultipleAltNamesFailOne() {
-    # Test with wiltiple CN's but last one is wrong
-    ${SCRIPT} --rootcert-file cabundle.crt -H inf.ethz.ch -n www.ethz.ch -n wrong.ch --altnames --critical 1 --warning 2
+    # Test with multiple CN's but last one is wrong
+    ${SCRIPT} --rootcert-file cabundle.crt -H github.com -n www.github.com -n wrong.com --altnames --critical 1 --warning 2
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_CRITICAL}" "${EXIT_CODE}"
 }
 
 testMultipleAltNamesFailTwo() {
     # Test with multiple CN's but first one is wrong
-    ${SCRIPT} --rootcert-file cabundle.crt -H inf.ethz.ch -n wrong.ch -n www.ethz.ch --altnames --critical 1 --warning 2
+    ${SCRIPT} --rootcert-file cabundle.crt -H github.com -n wrong.ch -n www.github.com --altnames --critical 1 --warning 2
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_CRITICAL}" "${EXIT_CODE}"
 }
 
-testXMPPHost() {
-    out=$(${SCRIPT} --rootcert-file cabundle.crt -H prosody.xmpp.is --port 5222 --protocol xmpp --xmpphost xmpp.is --critical 1 --warning 2)
-    EXIT_CODE=$?
-    if echo "${out}" | grep -q "s_client' does not support '-xmpphost'"; then
-        assertEquals "wrong exit code" "${NAGIOS_UNKNOWN}" "${EXIT_CODE}"
-    else
-        assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
-    fi
-}
+# not working
+# testXMPPHost() {
+#     out=$(${SCRIPT} --rootcert-file cabundle.crt -H prosody.xmpp.is --port 5222 --protocol xmpp --xmpphost xmpp.is --critical 1 --warning 2)
+#     EXIT_CODE=$?
+#     if echo "${out}" | grep -q "s_client' does not support '-xmpphost'"; then
+#         assertEquals "wrong exit code" "${NAGIOS_UNKNOWN}" "${EXIT_CODE}"
+#     else
+#         assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
+#     fi
+# }
 
 testTimeOut() {
     ${SCRIPT} --rootcert-file cabundle.crt -H gmail.com --protocol imap --port 993 --timeout 1 --critical 1 --warning 2
@@ -502,7 +532,7 @@ testSMTPS() {
     assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
 }
 
-# Disabled as test.rebex.net is currently not workin. Should find another public FTP server with TLS
+# Disabled as test.rebex.net is currently not working. Should find another public FTP server with TLS
 #testFTP() {
 #    ${SCRIPT} --rootcert-file cabundle.crt -H test.rebex.net --protocol ftp --port 21 --timeout 60
 #    EXIT_CODE=$?
@@ -722,14 +752,14 @@ testIPv6() {
 }
 
 testFormatShort() {
-    OUTPUT=$(${SCRIPT} --rootcert-file cabundle.crt -H ethz.ch --cn ethz.ch --critical 1 --warning 2 --format "%SHORTNAME% OK %CN% from '%CA_ISSUER_MATCHED%'" | cut '-d|' -f 1)
+    OUTPUT=$(${SCRIPT} --rootcert-file cabundle.crt -H github.com --cn github.com --critical 1 --warning 2 --format "%SHORTNAME% OK %CN% from '%CA_ISSUER_MATCHED%'" | cut '-d|' -f 1)
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
-    assertEquals "wrong output" "SSL_CERT OK ethz.ch from 'QuoVadis Europe SSL CA G2'" "${OUTPUT}"
+    assertEquals "wrong output" "SSL_CERT OK github.com from 'DigiCert, Inc.'" "${OUTPUT}"
 }
 
 testMoreErrors() {
-    OUTPUT=$(${SCRIPT} --rootcert-file cabundle.crt -H www.ethz.ch -v --email doesnotexist --critical 1000 --warning 1001 | wc -l | sed 's/\ //g')
+    OUTPUT=$(${SCRIPT} --rootcert-file cabundle.crt -H www.github.com -v --email doesnotexist --critical 1000 --warning 1001 | wc -l | sed 's/\ //g')
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
     # we should get three lines: the plugin output and three errors
@@ -737,7 +767,7 @@ testMoreErrors() {
 }
 
 testMoreErrors2() {
-    OUTPUT=$(${SCRIPT} --rootcert-file cabundle.crt -H www.ethz.ch -v --email doesnotexist --warning 1000 --warning 1001 --verbose | wc -l | sed 's/\ //g')
+    OUTPUT=$(${SCRIPT} --rootcert-file cabundle.crt -H www.github.com -v --email doesnotexist --warning 1000 --warning 1001 --verbose | wc -l | sed 's/\ //g')
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
     # we should get three lines: the plugin output and three errors
@@ -838,53 +868,53 @@ testHTTP2() {
 
 testForceHTTP2() {
     if "${OPENSSL}" s_client -help 2>&1 | grep -q -F alpn; then
-        ${SCRIPT} --rootcert-file cabundle.crt -H www.ethz.ch --protocol h2 --critical 1 --warning 2
+        ${SCRIPT} --rootcert-file cabundle.crt -H www.github.com --protocol h2 --critical 1 --warning 2
         EXIT_CODE=$?
         assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
     else
-        echo "Skupping forced HTTP2 test as -alpn is not supported"
+        echo "Skipping forced HTTP2 test as -alpn is not supported"
     fi
 }
 
 testNotLongerValidThan() {
-    ${SCRIPT} --rootcert-file cabundle.crt -H www.ethz.ch --not-valid-longer-than 2 --critical 1 --warning 2
+    ${SCRIPT} --rootcert-file cabundle.crt -H www.github.com --not-valid-longer-than 2 --critical 1 --warning 2
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_CRITICAL}" "${EXIT_CODE}"
 }
 
 testDERCert() {
-    ${SCRIPT} --rootcert-file cabundle.crt -H localhost -f ./der.cer --ignore-sct --critical 1 --warning 2 --allow-empty-san
+    ${SCRIPT} --rootcert-file cabundle.crt -f ./der.cer --ignore-sct --critical 1 --warning 2 --allow-empty-san -s
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
 }
 
 testDERCertSymbolicLink() {
-    ${SCRIPT} --rootcert-file cabundle.crt -H localhost -f ./derlink.cer --ignore-sct --critical 1 --warning 2 --allow-empty-san
+    ${SCRIPT} --rootcert-file cabundle.crt -f ./derlink.cer --ignore-sct --critical 1 --warning 2 --allow-empty-san -s
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
 }
 
 testPKCS12Cert() {
     export PASS=
-    ${SCRIPT} --rootcert-file cabundle.crt -H localhost -f ./client.p12 --ignore-sct --password env:PASS --critical 1 --warning 2 --allow-empty-san
+    ${SCRIPT} --rootcert-file cabundle.crt -f ./client.p12 --ignore-sct --password env:PASS --critical 1 --warning 2 --allow-empty-san -s
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
 }
 
-testCertificsteWithoutCN() {
-    ${SCRIPT} --rootcert-file cabundle.crt -H localhost -n www.uue.org -f ./cert_with_subject_without_cn.crt --force-perl-date --ignore-sig-alg --ignore-sct --critical 1 --warning 2
+testCertificateWithoutCN() {
+    ${SCRIPT} --rootcert-file cabundle.crt -n www.uue.org -f ./cert_with_subject_without_cn.crt --force-perl-date --ignore-sig-alg --ignore-sct --critical 1 --warning 2 --ignore-incomplete-chain --ignore-exp
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
 }
 
 testCertificsteWithEmptySubject() {
-    ${SCRIPT} --rootcert-file cabundle.crt -H localhost -n www.uue.org -f ./cert_with_empty_subject.crt --force-perl-date --ignore-sig-alg --ignore-sct --critical 1 --warning 2
+    ${SCRIPT} --rootcert-file cabundle.crt -n www.uue.org -f ./cert_with_empty_subject.crt --force-perl-date --ignore-sig-alg --ignore-sct --critical 1 --warning 2 --ignore-incomplete-chain
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
 }
 
 testResolveSameName() {
-    ${SCRIPT} --rootcert-file cabundle.crt -H www.ethz.ch --resolve www.ethz.ch --critical 1 --warning 2
+    ${SCRIPT} --rootcert-file cabundle.crt -H www.github.com --resolve www.github.com --critical 1 --warning 2
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
 }
@@ -896,7 +926,7 @@ testResolveDifferentName() {
 }
 
 #testNewQuoVadis() {
-#    ${SCRIPT} --rootcert-file cabundle.crt -H matteo.ethz.ch
+#    ${SCRIPT} --rootcert-file cabundle.crt -H matteo.github.com
 #    EXIT_CODE=$?
 #    assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
 #}
@@ -904,7 +934,8 @@ testResolveDifferentName() {
 testResolveCorrectIP() {
     # dig is needed to resolve the IP address
     if command -v dig >/dev/null; then
-        ${SCRIPT} --rootcert-file cabundle.crt -H ethz.ch --resolve "$(dig +short ethz.ch)" --critical 1 --warning 2
+        RESOLVED_IP="$(dig +short github.com)"
+        ${SCRIPT} --rootcert-file cabundle.crt -H github.com --resolve "${RESOLVED_IP}" --critical 1 --warning 2
         EXIT_CODE=$?
         assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
     else
@@ -915,7 +946,8 @@ testResolveCorrectIP() {
 testResolveWrongIP() {
     # dig is needed to resolve the IP address
     if command -v dig >/dev/null; then
-        ${SCRIPT} --rootcert-file cabundle.crt -H corti.li --resolve "$(dig +short www.google.com)" --critical 1 --warning 2
+        RESOLVED_IP="$(dig +short www.google.com)"
+        ${SCRIPT} --rootcert-file cabundle.crt -H corti.li --resolve "${RESOLVED_IP}" --critical 1 --warning 2
         EXIT_CODE=$?
         assertEquals "wrong exit code" "${NAGIOS_CRITICAL}" "${EXIT_CODE}"
     else
@@ -928,6 +960,8 @@ testCiphersOK() {
     # nmap ssl-enum-ciphers dumps core on CentOS 7 and RHEL 7
     if [ -f /etc/redhat-release ] && grep -q '.*Linux.*release\ 7\.' /etc/redhat-release; then
         echo 'Skipping tests on CentOS and RedHat 7 since nmap is crashing (core dump)'
+    elif [ -f /etc/redhat-release ] && grep -q '.*Linux.*release\ 6\.' /etc/redhat-release; then
+        echo 'Skipping tests on CentOS and RedHat 6 since nmap is not delivering cipher strengths'
     else
 
         # check if nmap is installed
@@ -957,6 +991,8 @@ testCiphersError() {
     # nmap ssl-enum-ciphers dumps core on CentOS 7 and RHEL 7
     if [ -f /etc/redhat-release ] && grep -q '.*Linux.*release\ 7\.' /etc/redhat-release; then
         echo 'Skipping tests on CentOS and RedHat 7 since nmap is crashing (core dump)'
+    elif [ -f /etc/redhat-release ] && grep -q '.*Linux.*release\ 6\.' /etc/redhat-release; then
+        echo 'Skipping tests on CentOS and RedHat 6 since nmap is not delivering cipher strengths'
     else
 
         # check if nmap is installed
@@ -982,9 +1018,9 @@ testCiphersError() {
 
 # SSL Labs (last one as it usually takes a lot of time
 
-testETHZWithSSLLabs() {
-    # we assume www.ethz.ch gets at least a B
-    ${SCRIPT} --rootcert-file cabundle.crt -H ethz.ch --cn ethz.ch --check-ssl-labs B --critical 1 --warning 2
+testGitHubWithSSLLabs() {
+    # we assume www.github.com gets at least a B
+    ${SCRIPT} --rootcert-file cabundle.crt -H github.com --cn github.com --check-ssl-labs B --critical 1 --warning 2
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
 }
@@ -1004,6 +1040,7 @@ testGithubComCRL() {
     create_temporary_test_file '.crl'
     TEMPFILE_CRL=${TEMPFILE}
 
+    echo "${GITHUB_CRL_URI}"
     curl --silent "${GITHUB_CRL_URI}" >"${TEMPFILE_CRL}"
 
     ${SCRIPT} --file "${TEMPFILE_CRL}" --warning 2 --critical 1
@@ -1032,7 +1069,7 @@ testCertExpiringInLessThanOneDay() {
 
     CERT=$(createSelfSignedCertificate 1)
 
-    ${SCRIPT} -f "${CERT}" --warning 1.5 --critical 0.5 --selfsigned --allow-empty-san
+    ${SCRIPT} -f "${CERT}" --warning 1.5 --critical 0.5 --selfsigned --allow-empty-san --ignore-sig-alg
     EXIT_CODE=$?
 
     assertEquals "wrong exit code" "${NAGIOS_WARNING}" "${EXIT_CODE}"
@@ -1041,7 +1078,7 @@ testCertExpiringInLessThanOneDay() {
 
 testAcceptableClientCertCAMissing() {
 
-    ${SCRIPT} -H www.ethz.ch --require-client-cert
+    ${SCRIPT} -H www.github.com --require-client-cert
     EXIT_CODE=$?
 
     assertEquals "wrong exit code" "${NAGIOS_CRITICAL}" "${EXIT_CODE}"
@@ -1082,12 +1119,12 @@ testMaxDateOn32BitSystems() {
     # generate a cert expiring after 2038-01-19
     CERT=$(createSelfSignedCertificate 7000)
 
-    ${SCRIPT} -f "${CERT}" --warning 2 --critical 1 --selfsigned --allow-empty-san
+    ${SCRIPT} -f "${CERT}" --warning 2 --critical 1 --selfsigned --allow-empty-san --ignore-sig-alg
     EXIT_CODE=$?
 
     assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
 
-    ${SCRIPT} -f "${CERT}" --warning 2 --critical 1 --selfsigned --allow-empty-san 2>&1 | grep -q 'invalid\ date'
+    ${SCRIPT} -f "${CERT}" --warning 2 --critical 1 --selfsigned --allow-empty-san --ignore-sig-alg 2>&1 | grep -q 'invalid\ date'
     EXIT_CODE=$?
 
     assertEquals "Invalid date" 1 "${EXIT_CODE}"
@@ -1144,15 +1181,43 @@ testSubdomainWithUnderscore() {
 }
 
 testChainOK() {
-    ${SCRIPT} -f ./fullchain.pem
+    ${SCRIPT} -f ./fullchain.pem --allow-empty-san --ignore-sct --ignore-exp
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
 }
 
 testChainFail() {
-    ${SCRIPT} -f ./incomplete_chain.pem
+    ${SCRIPT} -f ./incomplete_chain.pem --allow-empty-san --ignore-sct --ignore-exp
     EXIT_CODE=$?
     assertEquals "wrong exit code" "${NAGIOS_CRITICAL}" "${EXIT_CODE}"
+}
+
+testChainFailIgnored() {
+    ${SCRIPT} -f ./incomplete_chain.pem --ignore-incomplete-chain --allow-empty-san --ignore-sct --ignore-exp
+    EXIT_CODE=$?
+    assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
+}
+
+testRSA() {
+    if "${OPENSSL}" s_client -help 2>&1 | grep -q -- -sigalgs; then
+        ${SCRIPT} -H github.com --rsa --tls1_2
+        EXIT_CODE=$?
+        assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
+    else
+        echo "Skipping forcing RSA: no OpenSSL support"
+    fi
+}
+
+testOrganizationFail() {
+    ${SCRIPT} -H github.com -o 'SomeOrg'
+    EXIT_CODE=$?
+    assertEquals "wrong exit code" "${NAGIOS_CRITICAL}" "${EXIT_CODE}"
+}
+
+testOrganizationOK() {
+    ${SCRIPT} -H github.com -o 'GitHub,\ Inc.'
+    EXIT_CODE=$?
+    assertEquals "wrong exit code" "${NAGIOS_OK}" "${EXIT_CODE}"
 }
 
 # the script will exit without executing main

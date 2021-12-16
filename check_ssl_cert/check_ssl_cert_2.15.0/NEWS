@@ -1,3 +1,19 @@
+2021-12-15 Version  2.15.0: Error if HTTP/2 is requested but not offered by the server
+                            SSL 2.0 and SSL 3.0 disabled by --all and --all-local
+2021-12-10 Version  2.14.0: Added an option --info to print certificate information
+                            Fixed the IPv6 checks when ipconfig is not available
+                            Fixed a bug causing an unnecessary scan when checking for disallowed protocols
+2021-11-24 Version  2.13.0: Fixed a bug in the processing of error messages
+                            Handling of root certificates in DER format
+2021-11-16 Version  2.12.0: Improved verbose messages
+2021-11-11 Version  2.11.0: Several fixes in the documentation
+                            Works with OpenSSL 3.0.0
+                            Fixes a bug in the processing of certificate issuers containing commas
+2021-10-22 Version  2.10.4: Fixes the organization check
+2021-10-21 Version  2.10.3: Fixes --rsa on systems not supporting PSS
+                            Uses mktemp if available (the workaround is only used if not available for speed reasons)
+2021-10-14 Version  2.10.2: Improved the certificate chain check of local bundles
+2021-10-12 Version  2.10.1: Fixed the certificate chain check
 2021-10-11 Version  2.10.0: Checks the certificate chain integrity
                             Does not accept certificates without SANs (use --allow-empty-san to ignore)
                             Bug fix in the handling of errors while fetching certificates
@@ -9,7 +25,7 @@
 2021-09-29 Version   2.8.0: Adds a check for acceptable client certificate CAs (--require-client-cert [list])
                             Supporting certificate expiration after 2038-01-19 on 32 bit systems
                             Adds an option (--ignore-connection-problem)  to set a custom state in case of connection failures
-                            Adds two options to selectively disable proxy setting for cURL and s_client
+                            Adds two options to selectively disable proxy setting for curl and s_client
                             (--no-proxy-curl and --no-proxy-s_client)
 2021-09-24 Version   2.7.0: Critical and warning can now be floating point numbers
 2021-09-21 Version   2.6.1: Fixed the output of several messages
@@ -53,14 +69,14 @@
                             Short options can be grouped (e.g., -vs -c 10 -w 15)
                             Different verbosity levels can now be specified (-v can be used more than once)
                             Added the --resolve option to specify a custom IP for the checked host
-2021-03-25 Version 1.146.0: Added --all to enable oll the optional checks
+2021-03-25 Version 1.146.0: Added --all to enable all the optional checks
                             Fixed a bug in the processing of client certificate requirements
                             Improved the error handling in case a TLS connection is not possible
 2021-03-15 Version 1.145-0: Fix in the parsing of OpenSSL version
 2021-03-14 Version 1.144.0: Getting rid of the man dependency
 2021-03-12 Version 1.143.0: Better handling of the timeout
                             Checks ciphers with nmap (--check-ciphers and --check-ciphers-warnings)
-                            Checks oll the supplied OCSP URIs
+                            Checks all the supplied OCSP URIs
 2021-03-10 Version 1.142.0: Improved the TLS renegotiation check
                             Added --password to specify a password source for PCKS12 certificates
 2021-03-09 Version 1.141.0: Do not check SCTs if the certificate is self signed
@@ -75,8 +91,8 @@
 2021-01-27 Version 1.134.0: Complete support for Alpine Linux and BusyBox
 2021-01-26 Version 1.133.0: Added the --date option to specify the date binary
                             support for BusyBox date
-2021-01-18 Version 1.132.0: Timeouted subprocesses can now be interrupted
-                            Revokation via CRL can be checked with the --crl option
+2021-01-18 Version 1.132.0: Time-outed sub-processes can now be interrupted
+                            Revocation via CRL can be checked with the --crl option
 			    Better error messages for DH with small keys and handshake failures
 2021-01-15 Version 1.131.0: OCSP check on all the chain elements
 2021-01-14 Version 1.130.0: Retries when SSL Labs has no available slot
@@ -127,7 +143,7 @@
 2019-08-08 Version 1.87.0: LDAPS support
 2019-07-21 Version 1.86.0: Fixed a bug and enabled extended regex search
 2019-06-02 Version 1.85.0: Improved the warnings when using the --file option
-2019-03-28 Version 1.84.0: Added an option to specify the cURL user agent
+2019-03-28 Version 1.84.0: Added an option to specify the curl user agent
 2019-03-01 Version 1.83.0: Spelling corrections
 2019-02-08 Version 1.82.0: Added a check on the readability of the certificate file
 2019-02-01 Version 1.81.0: Added an option to specify a warning level with SSL Labs
@@ -153,7 +169,7 @@
 2018-04-17 Version 1.67.0: Terse output, warning if the specified server name is not found in the certificate and --format option
 2018-04-06 Version 1.66.0: UTF-8 output
 2018-03-29 Version 1.65.0: Bug fix release
-2018-03-28 Version 1.64.0: Remove cURL dependency
+2018-03-28 Version 1.64.0: Remove curl dependency
 2018-03-17 Version 1.63.0: Support for TLS 1.3
 2018-03-06 Version 1.62.0: Support for LibreSSL
 2018-01-19 Version 1.61.0: Fixed a bug handling more than one OCSP host
@@ -234,17 +250,17 @@
                           the certificate download
 2012-07-13 Version 1.14.2 Added the name since or to expiration in the plugin
                           output.
-2012-07-11 Version 1.14.1 FIxed a bug with Perl date computation on some systems
+2012-07-11 Version 1.14.1 Fixed a bug with Perl date computation on some systems
 2012-07-06 Version 1.14.0 The status now includes performance data in days until
-                          expiration (requires perl with Date::Parse).
+                          expiration (requires Perl with Date::Parse).
                           It is now possible to print additional information in
-                          the plugins long output (multiline, Nagios 3 only)
+                          the plugins long output (multi-line, Nagios 3 only)
 2012-04-05 Version 1.13.0 The plugin will now try to fetch the certificate without
                           without TLS extensions in case of error
 2012-04-04 Version 1.12.0 Fixed a bug in the chain verification (hard coded
                           error number)
 2011-10-22 Version 1.11.0 --altname option
-2011-09-01 Version 1.10.0 Applied a patch from Sven Nierlein to authenicate
+2011-09-01 Version 1.10.0 Applied a patch from Sven Nierlein to authenticate
                           using a client certificate
 2011-03-10 Version  1.9.1 Allows HTTP as protocol and fixes -N with wildcards
 2011-01-24 Version  1.9.0 Added an option to specify the openssl executable
@@ -288,5 +304,5 @@
 2007-08-31 Version  1.1.0 - option to enforce a given email address
                           - option to enforce a given organization
                           - temporary files cleanup upon exit
-2007-08-15                Bug fix: openssl did not close the connection cleanly
-2007-08-10                First release (1.0)
+2007-08-15 Version  1.0.1 Bug fix: openssl did not close the connection cleanly
+2007-08-10 Version  1.0.0 First release (1.0)
