@@ -1,3 +1,14 @@
+nagios-plugins-contrib (37.20211217) unstable; urgency=high
+
+  * [44721bb] check_ssl_cert: Update to 2.2.0
+  * [39c799b] check_ssl_cert: Update to 2.15.0
+  * [cca89a8] check_ssl_cert: Add missing suggests
+  * [b3528f1] Fix path for madrisan plugins
+  * [19aff19] check_rbl: Update to 1.6.3
+  * [ccd16ec] Auto update of debian/control
+
+ -- Jan Wagner <waja@cyconet.org>  Fri, 17 Dec 2021 15:47:25 +0100
+
 nagios-plugins-contrib (36.20211207) unstable; urgency=medium
 
   [ Jan Wagner ]
