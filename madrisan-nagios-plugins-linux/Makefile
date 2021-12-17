@@ -39,14 +39,14 @@ install:
 	install -d $(DESTDIR)/usr/lib/nagios
 	for check in $(PLUGINS); do \
 	  if [ -h build-tree/plugins/$${check} ]; then \
-	    ln -s $$(readlink build-tree/plugins/$${check}) ${DESTDIR}/usr/lib/nagios/$${check} || exit 1; \
+	    ln -s $$(readlink build-tree/plugins/$${check}) ${DESTDIR}/usr/lib/nagios/plugins/$${check} || exit 1; \
 	  else \
-	    install -m 755 -o root -g root build-tree/plugins/$${check} ${DESTDIR}/usr/lib/nagios || exit 1; \
+	    install -m 755 -o root -g root build-tree/plugins/$${check} ${DESTDIR}/usr/lib/nagios/plugins || exit 1; \
 	  fi; \
 	done; true
 
 	for check in $(PLUGINS_RENAME); do \
-		install -m 755 -o root -g root build-tree/plugins/$${check} ${DESTDIR}/usr/lib/nagios/check_madrisan_$${check#check_} || exit 1; \
+		install -m 755 -o root -g root build-tree/plugins/$${check} ${DESTDIR}/usr/lib/nagios/plugins/check_madrisan_$${check#check_} || exit 1; \
 	done; true
 
 clean:
