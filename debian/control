@@ -23,7 +23,7 @@ Recommends: libsocket-perl, libmonitoring-plugin-perl | libnagios-plugin-perl, l
 Provides: nagios-plugins-contrib
 Replaces: nagios-plugins-contrib (<< 26)
 Breaks: nagios-plugins-contrib (<< 26)
-Suggests: backuppc, perl-doc, libsys-virt-perl, cciss-vol-status (>= 1.10), mpt-status, smstools (>= 3~), expect, nagios-plugin-check-multi, moreutils, percona-toolkit, python3, python3-pymongo, python3-boto
+Suggests: backuppc, perl-doc, libsys-virt-perl, cciss-vol-status (>= 1.10), mpt-status, smstools (>= 3~), expect, iproute2, dnsutils, nagios-plugin-check-multi, moreutils, percona-toolkit, python3, python3-pymongo, python3-boto
 Enhances: monitoring-plugins, monitoring-plugins-basic, monitoring-plugins-standard
 Description: Plugins for nagios compatible monitoring systems
  This package provides various plugins for Nagios compatible monitoring
@@ -143,7 +143,7 @@ Description: Plugins for nagios compatible monitoring systems
      - Solaris software RAID via metastat
      - Areca SATA RAID Support via cli64/cli32
      - Detecting SCSI devices or hosts with lsscsi
-   * check_rbl (1.6.2): plugin to check if a server is blacklisted
+   * check_rbl (1.6.3): plugin to check if a server is blacklisted
    * check_redis (0.73): Redis Server check plugin
      This plugin checks Redis NoSQL database status variables,
      measures its response time and if specified allows one to set thresholds
@@ -169,7 +169,7 @@ Description: Plugins for nagios compatible monitoring systems
      HOST-RESOURCES-MIB::hrSystemDate.0 used here returns 8 or 11 byte octets.
      SNMP translation needs to be switched off and to be converted the
      received SNMP data into readable strings.
-   * check_ssl_cert (2.2.0): plugin to check the CA and validity of an
+   * check_ssl_cert (2.15.0): plugin to check the CA and validity of an
      X.509 certificate
    * check_uptime (0.521): check_uptime returns uptime of a system
      in text (readable) format as well as in minutes for performance graphing.
