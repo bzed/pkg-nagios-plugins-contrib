@@ -244,7 +244,7 @@ Description: Plugins for nagios compatible monitoring systems
 
 Package: nagios-plugins-contrib
 Architecture: any
-Depends: monitoring-plugins-contrib
+Depends: monitoring-plugins-contrib, ${misc:Depends}
 Description: Transitional package for monitoring-plugins-contrib
  nagios-plugins-contrib was renamed to monitoring-plugins-contrib.
  .
