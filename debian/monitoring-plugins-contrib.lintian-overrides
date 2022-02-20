@@ -1,4 +1,4 @@
 # as mentioned in the description people need to
 # install whats mentioned in recommends.
-monitoring-plugins-contrib: missing-depends-line
+monitoring-plugins-contrib: undeclared-elf-prerequisites
 monitoring-plugins-contrib: ruby-script-but-no-ruby-dep usr/lib/nagios/plugins/check_soas /usr/bin/ruby
