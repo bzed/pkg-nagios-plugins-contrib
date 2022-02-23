@@ -1,0 +1,80 @@
+--- a/check_email_delivery/src/check_email_delivery
++++ b/check_email_delivery/src/check_email_delivery
+@@ -38,6 +38,7 @@
+ my $password = "";
+ my $ssl = "";
+ my $imap_ssl = "";
++my $imap_tls = "";
+ my $mailto = "";
+ my $mailfrom = "";
+ my @header = ();
+@@ -93,6 +94,7 @@
+ 	"imap-mailbox=s"=>\$imap_mailbox,
+ 	"imap-check-interval=i"=>\$imap_interval,"imap-retries=i"=>\$imap_retries,
+ 	"imapssl!"=>\$imap_ssl,
++	"imaptls!"=>\$imap_tls,
+ 	# Time
+ 	"hires"=>\$time_hires,
+ 	);
+@@ -130,6 +132,7 @@
+ 
+ if( $ssl ) {
+ 	$imap_ssl = $ssl if $imap_ssl eq "";
++	$imap_tls = $ssl if $imap_tls eq "";
+ 	$smtp_tls = $ssl if $smtp_tls eq "";
+ }
+ 
+@@ -201,6 +204,7 @@
+ $imap_options .= "-P ".shellquote($imap_password)." " if defined $imap_password and $imap_password ne "";
+ $imap_options .= "--mailbox ".shellquote($imap_mailbox)." " if defined $imap_mailbox and $imap_mailbox ne "";
+ $imap_options .= "--ssl " if defined $imap_ssl and $imap_ssl;
++$imap_options .= "--tls " if defined $imap_tls and $imap_tls;
+ 
+ 
+ # create the report object
+@@ -693,6 +697,11 @@
+ 
+ This argument is shell-escaped; special characters or angle brackets around the address are ok. 
+ 
++=item --imaptls
++=item --noimaptls
++
++Use this to enable or disable TLS/AUTH for the IMAP plugin. 
++
+ =item --smtptls
+ =item --nosmtptls
+ 
+--- a/check_email_delivery/src/check_email_delivery_epn
++++ b/check_email_delivery/src/check_email_delivery_epn
+@@ -36,6 +36,7 @@
+ my $password = "";
+ my $ssl = "";
+ my $imap_ssl = "";
++my $imap_tls = "";
+ my $mailto = "";
+ my $mailfrom = "";
+ my @header = ();
+@@ -91,6 +92,7 @@
+ 	"imap-mailbox=s"=>\$imap_mailbox,
+ 	"imap-check-interval=i"=>\$imap_interval,"imap-retries=i"=>\$imap_retries,
+ 	"imapssl!"=>\$imap_ssl,
++	"imaptls!"=>\$imap_tls,
+ 	# Time
+ 	"hires"=>\$time_hires,
+ 	);
+@@ -128,6 +130,7 @@
+ 
+ if( $ssl ) {
+ 	$imap_ssl = $ssl if $imap_ssl eq "";
++	$imap_tls = $ssl if $imap_tls eq "";
+ 	$smtp_tls = $ssl if $smtp_tls eq "";
+ }
+ 
+@@ -199,6 +202,7 @@
+ $imap_options .= "-P ".shellquote($imap_password)." " if defined $imap_password and $imap_password ne "";
+ $imap_options .= "--mailbox ".shellquote($imap_mailbox)." " if defined $imap_mailbox and $imap_mailbox ne "";
+ $imap_options .= "--ssl " if defined $imap_ssl and $imap_ssl;
++$imap_options .= "--tls " if defined $imap_tls and $imap_tls;
+ 
+ 
+ # create the report object
