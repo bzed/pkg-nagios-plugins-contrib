@@ -21,7 +21,7 @@
 #-------------------------------------------------------------
 #
 #
-# Copyright (C) 2011-2021
+# Copyright (C) 2011-2022
 # Hinnerk Rümenapf, Trond H. Amundsen, Gunther Schlegel, Matija Nalis, 
 # Bernd Zeimetz, Sven Anders, Ben Evans
 #
@@ -78,6 +78,7 @@
 #      0.4.9    Bugfix in  --extraconfig  handling                (thanks to Jeffrey Honig <jeffrey.honig@xandr.com>)  24. MAR 2020
 #      0.4.10   minor code cleanup after bugfix; handle local NVMe drive (thanks to Jeffrey Honig <jeffrey.honig@xandr.com>)  26. JAN 2021
 #      0.4.11   New nvme examples, paser edited                   (thanks to  Paul Garn <paul.garn@hpe.com>)  28. JAN 2021
+#      0.4.12   Recognise and store (some) messages from multipath call (thanks to Philip Morales) 12. APR 2022
 #
 
 
@@ -102,7 +103,7 @@ use vars qw( $NAME $VERSION $AUTHOR $CONTACT $E_OK $E_WARNING $E_CRITICAL
 
 # === Version and similar info ===
 $NAME    = 'check-multipath.pl';
-$VERSION = '0.4.11  28. JAN 2021';
+$VERSION = '0.4.12  12. Apr 2022';
 $AUTHOR  = 'Hinnerk Rümenapf';
 $CONTACT = 'hinnerk [DOT] ruemenapf [AT] uni-hamburg [DOT] de   (or  hinnerk [AT] ruemenapf [DOT] de)';
 
@@ -546,6 +547,24 @@ $SIG{__WARN__} = sub { push @perl_warnings, [@_]; };
 ."`-+- policy='service-time 0' prio=1 status=enabled\n"
 ."  `- 288:4115:1:1  nvme288n1 259:432 active ready running\n",
 
+
+#38. Messages from multipath call, thanks to Philip Morales 
+# added dummy wwid to: "lun-name (xxxx) dm-6 NETAPP  ,LUN C-Mode\n"
+"lun-name (3600a098038303039492b473242384661) dm-6 NETAPP  ,LUN C-Mode\n"
+."size=400G features='3 pg_init_retries 50 retain_attached_hw_handler' hwhandler='1 alua' wp=rw\n"
+."|-+- policy='service-time 0' prio=50 status=active\n"
+."| |- 1:0:1:0 sdb 8:16  active ready running\n"
+."| |- 1:0:2:0 sdd 8:48  active ready running\n"
+."| |- 2:0:2:0 sde 8:64  active ready running\n"
+."| `- 2:0:4:0 sdg 8:96  active ready running\n"
+."`-+- policy='service-time 0' prio=10 status=enabled\n"
+."  |- 1:0:5:0 sdf 8:80  active ready running\n"
+."  |- 1:0:7:0 sdh 8:112 active ready running\n"
+."  |- 2:0:1:0 sdc 8:32  active ready running\n"
+."  `- 2:0:5:0 sdi 8:128 active ready running\n"
+."Apr 08 09:21:04 | multipath device maps are present, but 'multipathd' service is not running\n"
+."Apr 08 09:21:04 | IO failover/failback will not work without 'multipathd' service running\n"
+
     );
 
 
@@ -600,9 +619,9 @@ Usage: $NAME [OPTIONS]
 END_USAGE
 
 # Help text
-$HELP = <<'END_HELP';
+$HELP = <<"END_HELP";
 
-check-multipath.pl - Nagios plugin to check multipath connections
+check-multipath.pl - Nagios plugin to check multipath connections  $VERSION
 see:
  http://exchange.nagios.org/directory/Plugins/Operating-Systems/Linux/check-2Dmultipath-2Epl/details
  http://www.nagios.org/documentation
@@ -648,8 +667,8 @@ OPTIONS:
   -g, --group         Specify perl-regex to identify groups of LUNs with other default-thresholds.
                       Overrides global config for LUNs with LUN lines that math a group regex.
                       In most cases a simple String should be sufficient. NOTE: special regex characters must be escaped!
-                      "<LUN_LINE_REGEX>,<LOW>,<HIGH>[@#,<ADDCHECKS>]:"  for each group with deviant thresholds (see explanation of --addchecks)
-                      e.g.  "IBM,ServeRAID,1,1:HAL,ChpRAID,1,2:"  or "IBM,ServeRAID,1,1@#,p,1,2:HAL,ChpRAID,1,2@#,sh,1,2,si,1,2:"
+                      "<LUN_LINE_REGEX>,<LOW>,<HIGH>[\@#,<ADDCHECKS>]:"  for each group with deviant thresholds (see explanation of --addchecks)
+                      e.g.  "IBM,ServeRAID,1,1:HAL,ChpRAID,1,2:"  or "IBM,ServeRAID,1,1\@#,p,1,2:HAL,ChpRAID,1,2\@#,sh,1,2,si,1,2:"
                       Use command multipath -l to see the LUN lines and to identify groups.
 
   -e, --extraconfig   Specify different low/high thresholds for LUNs.
@@ -702,8 +721,9 @@ NOTE:
   (and also multipath -r, if you intend to use the --reload option) *without* password.
 - Local drives SHOULD NOT be handled by the multipth driver. They SHOULD be excluded in the multipath configuration!
   RTFM; (e.g. add wwid to blacklist in /etc/multipath.conf and reboot)
-- Error messages from multipath call will lead to error messages from the plugin. 
-  In case of 'line not recognised' errors, always check  multipath -l  and  multipath -ll
+- Error messages from multipath call should be reported as WARNING, with 'MP-MSG ' as prefix.
+  Still, some error messages can lead to 'line not recognised' error messages from the plugin. 
+  So, in case of 'line not recognised' errors always check  multipath -l  and  multipath -ll
 
 END_HELP
 
@@ -712,7 +732,7 @@ $LICENSE = <<"END_LICENSE";
 
 $NAME   $VERSION
 
-Copyright (C) 2011-2021 $AUTHOR
+Copyright (C) 2011-2022 $AUTHOR
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
 This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.
@@ -1266,18 +1286,30 @@ sub checkPolicyLine {
 # (output lines)
 #
 sub checkMultipathText {
-    my ($rTextArray) = @_;
+    my ($rTextArray, $rCommonLunData, $rMessages) = @_;
 
     my $state      = "pathDesc";
     my $currentLun = "";
-    my %lunData    = ();
     my $i          = 0;
 
     foreach my $textLine (@$rTextArray) {
 	$i++;
-	#print "$i:\n";
-	if ($state eq 'pathDesc') {                              # initial state: look for path state, new LUN Name, policy
-	     	                                                 # check for path status line
+#	print "$i: '$textLine'\n"; # <<<<<<<<<<<<<<
+
+	# filter log messages from multipath call and store then in an array to be handled later
+	# Apr 08 09:21:04 | IO failover/failback will not work without 'multipathd' service running
+	# Apr 08 09:21:04 | multipath device maps are present, but 'multipathd' service is not running
+	if ($textLine =~ m!^[a-zA-Z]{3}\s+\d{2}\s+(\d{2}|\:)+?\s\|\s(.+)!) {
+	    my $m = $2;
+#	    print ">m> $i  '$m'\n"; # <<<<<<<<<<<<<<
+	    push (@$rMessages, $m);                                   # add to messages array
+	    next;                                                     # skip line
+#	} else {                   # <<<<<<<<<<<<<<<
+#	    print ">m> $i  NOM\n"; # <<<<<<<<<<<<<<<
+	} # if
+
+	if ($state eq 'pathDesc') {                                   # initial state: look for path state, new LUN Name, policy
+	     	                                                      # check for path status line
 		#  |- 3:0:0:1 sdf 8:80  active undef running 
                 ## \_ 3:0:1:1 sde 8:64  [active][undef]
                 ##  _ 3:0:1:1 sde 8:64   active  undef 
@@ -1301,7 +1333,7 @@ sub checkMultipathText {
 		    my $pathName   = $3;
 		    my $ok         = 0;
 		    
-		    my $rLunData   = $lunData{$currentLun};
+		    my $rLunData   = $$rCommonLunData{$currentLun};
 
 		    #print "pathDesc: [$textLine], ";
 		    #print "LUN '$currentLun', path '$pathName', sh='$sh', si='$si'\n";
@@ -1336,10 +1368,10 @@ sub checkMultipathText {
 			} # if
 		    } # if
 		}                                                # check for new LUN name
-		elsif ( checkLunLine ($textLine, \$currentLun, \%lunData) ) {
+		elsif ( checkLunLine ($textLine, \$currentLun, $rCommonLunData) ) {
 		    $state="lunInfo";
 		}                                                # check for new LUN name
-		elsif ( ($currentLun ne "") && checkPolicyLine ($textLine, $currentLun, \%lunData) ) {
+		elsif ( ($currentLun ne "") && checkPolicyLine ($textLine, $currentLun, $rCommonLunData) ) {
 		   ; # SKIP NESTED POLICY 
 		} 
 		elsif ( $textLine =~ m/checker msg is /) {
@@ -1376,10 +1408,10 @@ sub checkMultipathText {
 		    unknown_error ("No current LUN while looking for path policy. Line $i:\'$textLine'")
 		}
 
-                if ( checkPolicyLine ($textLine, $currentLun, \%lunData)) {
+                if ( checkPolicyLine ($textLine, $currentLun, $rCommonLunData)) {
 		    $state = "pathDesc";
 		}                                               # new LUN found
-		elsif ( checkLunLine ($textLine, \$currentLun, \%lunData) ) {
+		elsif ( checkLunLine ($textLine, \$currentLun, $rCommonLunData) ) {
 		    $state = "lunInfo";
 		} else {                                        # error: unknown line format
 		    unknown_error ("Line $i not recognised. Expected path policy or new LUN:\n'$textLine'")
@@ -1390,7 +1422,7 @@ sub checkMultipathText {
 	    } # if
     } # foreach
 
-    return \%lunData
+    return 1;
 } # sub
 
 
@@ -1443,7 +1475,7 @@ sub testAddChecks {
 
 
 # check if multipathd is running
-if ( !$opt{'mdskip'} ) {                                         # check is not disabled
+if ( !$opt{'mdskip'} ) {                                              # check is not disabled
     my $cmd = 'ps -e';
     my $output = qx($cmd);
     #print "####\n$output\n####\n";
@@ -1472,9 +1504,15 @@ if ($opt{'ll'}) {
     $mpListCmd = $MULTIPATH_LIST_LONG;
 }
 
-my @multipathStateText = @{ get_multipath_text( $mpListCmd ) };  # get input data
+my @multipathStateText = @{ get_multipath_text( $mpListCmd ) };       # get input data
 
-my %lunData = %{checkMultipathText ( \@multipathStateText )};   # analyse it
+my %lunData;                                                          # to store LUN data
+my @messages;                                                         # to store log messages from multipath call
+checkMultipathText ( \@multipathStateText, \%lunData, \@messages);    # analyse input, get LUN data
+
+foreach my $m (@messages) {                                           # each log message from call (if any...)
+    report("MP-MSG '$m'", $E_WARNING);                                # report as warning
+} # for
 
 
 # if no LUN found...
