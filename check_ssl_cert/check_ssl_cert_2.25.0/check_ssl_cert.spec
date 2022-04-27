@@ -1,16 +1,19 @@
-%define version          2.15.0
-%define release          0
-%define sourcename       check_ssl_cert
-%define packagename      nagios-plugins-check_ssl_cert
-%define nagiospluginsdir %{_libdir}/nagios/plugins
+%global version          2.25.0
+%global release          0
+%global sourcename       check_ssl_cert
+%global packagename      nagios-plugins-check_ssl_cert
+%global nagiospluginsdir %{_libdir}/nagios/plugins
 
 # No binaries in this package
-%define debug_package %{nil}
+%global debug_package %{nil}
+
+%global completions_dir %( pkg-config --variable=completionsdir bash-completion )
 
 Summary:   A Nagios plugin to check X.509 certificates
 Name:      %{packagename}
 Version:   %{version}
-Obsoletes: check_ssl_cert
+# any version
+Obsoletes: check_ssl_cert <= 100
 Release:   %{release}%{?dist}
 License:   GPLv3+
 Packager:  Matteo Corti <matteo@corti.li>
@@ -19,7 +22,7 @@ BuildRoot: %{_tmppath}/%{packagename}-%{version}-%{release}-root-%(%{__id_u} -n)
 URL:       https://github.com/matteocorti/check_ssl_cert
 Source:    https://github.com/matteocorti/check_ssl_cert/releases/download/v%{version}/check_ssl_cert-%{version}.tar.gz
 
-Requires:  nagios-plugins expect perl(Date::Parse)
+Requires:  nagios-plugins expect perl(Date::Parse) bc
 
 %description
 A shell script (that can be used as a Nagios plugin) to check an SSL/TLS connection
@@ -29,19 +32,61 @@ A shell script (that can be used as a Nagios plugin) to check an SSL/TLS connect
 
 %build
 
+
 %install
+
+%if "%{completions_dir}"
+make DESTDIR=${RPM_BUILD_ROOT}%{nagiospluginsdir} MANDIR=${RPM_BUILD_ROOT}%{_mandir} COMPLETIONDIR=${RPM_BUILD_ROOT}%{completions_dir} install
+%else
 make DESTDIR=${RPM_BUILD_ROOT}%{nagiospluginsdir} MANDIR=${RPM_BUILD_ROOT}%{_mandir} install
+%endif
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root,-)
-%doc AUTHORS ChangeLog NEWS README.md COPYING VERSION COPYRIGHT
+%doc AUTHORS.md ChangeLog NEWS.md README.md COPYING.md VERSION COPYRIGHT.md
 %attr(0755, root, root) %{nagiospluginsdir}/check_ssl_cert
 %{_mandir}/man1/%{sourcename}.1*
+%if "%{completions_dir}"
+%{completions_dir}
+%endif
 
 %changelog
+* Wed Apr  13 2022 Matteo Corti <matteo@corti.li> - 2.25.0-0
+- Updated to 2.25.0
+
+* Wed Apr   6 2022 Matteo Corti <matteo@corti.li> - 2.24.0-0
+- Updated to 2.24.0
+
+* Fri Mar  25 2022 Matteo Corti <matteo@corti.li> - 2.23.0-0
+- Updated to 2.23.0
+
+* Thu Mar  11 2022 Matteo Corti <matteo@corti.li> - 2.22.0-0
+- Updated to 2.22.0
+
+* Sun Feb  20 2022 Matteo Corti <matteo@corti.li> - 2.21.0-0
+- Updated to 2.21.0
+
+* Thu Feb   3 2022 Matteo Corti <matteo@corti.li> - 2.20.0-1
+- Packaged the bash completion script
+
+* Thu Feb   3 2022 Matteo Corti <matteo@corti.li> - 2.20.0-0
+- Updated to 2.20.0
+
+* Thu Jan  13 2022 Matteo Corti <matteo@corti.li> - 2.19.0-0
+- Updated to 2.19.0
+
+* Wed Jan  12 2022 Matteo Corti <matteo@corti.li> - 2.18.0-0
+- Updated to 2.18.0
+
+* Tue Dec  21 2021 Matteo Corti <matteo@corti.li> - 2.17.0-0
+- Updated to 2.17.0
+
+* Mon Dec  20 2021 Matteo Corti <matteo@corti.li> - 2.16.0-0
+- Updated to 2.16.0
+
 * Wed Dec  15 2021 Matteo Corti <matteo@corti.li> - 2.15.0-0
 - Updated to 2.15.0
 
@@ -102,7 +147,7 @@ rm -rf $RPM_BUILD_ROOT
 * Wed Sep   1 2021 Matteo Corti <matteo@corti.li> - 2.4.3-0
 - Updated to 2.4.3
 
-* Thu Aug  27 2021 Matteo Corti <matteo@corti.li> - 2.4.2-0
+* Fri Aug  27 2021 Matteo Corti <matteo@corti.li> - 2.4.2-0
 - Updated to 2.4.2
 
 * Thu Aug  19 2021 Matteo Corti <matteo@corti.li> - 2.4.1-0
@@ -159,7 +204,7 @@ rm -rf $RPM_BUILD_ROOT
 * Wed Apr   7 2021 Matteo Corti <matteo@corti.li> - 2.0.1-0
 - Updated to 2.0.1
 
-* Mon Apr   1 2021 Matteo Corti <matteo@corti.li> - 2.0.0-0
+* Thu Apr   1 2021 Matteo Corti <matteo@corti.li> - 2.0.0-0
 - Updated to 2.0.0
 
 * Mon Mar  29 2021 Matteo Corti <matteo@corti.li> - 1.147.0-0
@@ -393,7 +438,7 @@ w
 * Mon Jul 30 2018 Matteo Corti <matteo@corti.li> - 1.71.0-0
 - Updated to 1.71.0
 
-* Sat Jun 28 2018 Matteo Corti <matteo@corti.li> - 1.70.0-0
+* Thu Jun 28 2018 Matteo Corti <matteo@corti.li> - 1.70.0-0
 - Updated to 1.70.0
 
 * Mon Jun 25 2018 Matteo Corti <matteo@corti.li> - 1.69.0-0

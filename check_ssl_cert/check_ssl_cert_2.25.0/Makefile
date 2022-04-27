@@ -1,21 +1,32 @@
 PLUGIN=check_ssl_cert
 VERSION=`cat VERSION`
 DIST_DIR=$(PLUGIN)-$(VERSION)
-DIST_FILES=AUTHORS COPYING ChangeLog INSTALL.md Makefile NEWS README.md VERSION $(PLUGIN) $(PLUGIN).spec COPYRIGHT ${PLUGIN}.1
-YEAR=`date +"%Y"`
-FORMATTED_FILES=test/unit_tests.sh AUTHORS COPYING ChangeLog INSTALL.md Makefile NEWS README.md VERSION $(PLUGIN) $(PLUGIN).spec COPYRIGHT ${PLUGIN}.1 .github/workflows/* utils/*.sh
-SCRIPTS=check_ssl_cert test/*.sh
 
+# files to be included in the distribution
+DIST_FILES=AUTHORS.md COPYING.md ChangeLog INSTALL.md Makefile NEWS.md README.md VERSION $(PLUGIN) $(PLUGIN).spec COPYRIGHT.md ${PLUGIN}.1 CITATION.cff check_ssl_cert.completion
+
+# this year
+YEAR=`date +"%Y"`
+
+# file to be checked for formatting
+FORMATTED_FILES=test/unit_tests.sh AUTHORS.md COPYING.md ChangeLog INSTALL.md Makefile NEWS.md README.md VERSION $(PLUGIN) $(PLUGIN).spec COPYRIGHT.md ${PLUGIN}.1 .github/workflows/* utils/*.sh check_ssl_cert.completion
+
+# shell scripts (to be checked with ShellCheck)
+SCRIPTS=check_ssl_cert test/*.sh utils/*.sh
+
+XATTRS_OPTION := $(shell if tar --help | grep -q bsdtar ; then echo '--no-xattrs' ; fi )
+
+# builds the relase files
 dist: version_check
 	rm -rf $(DIST_DIR) $(DIST_DIR).tar.gz
 	mkdir $(DIST_DIR)
 	cp -r $(DIST_FILES) $(DIST_DIR)
 # avoid to include extended attribute data files
 # see https://superuser.com/questions/259703/get-mac-tar-to-stop-putting-filenames-in-tar-archives
-	export COPY_EXTENDED_ATTRIBUTES_DISABLE=1; \
-	export COPYFILE_DISABLE=1; \
-	tar -c -z -f $(DIST_DIR).tar.gz  $(DIST_DIR) && \
-	tar -c -j -f $(DIST_DIR).tar.bz2 $(DIST_DIR)
+	export COPY_EXTENDED_ATTRIBUTES_DISABLE=true; \
+	export COPYFILE_DISABLE=true; \
+	tar $(XATTRS_OPTION) -c -z -f $(DIST_DIR).tar.gz  $(DIST_DIR) && \
+	tar $(XATTRS_OPTION) -c -j -f $(DIST_DIR).tar.bz2 $(DIST_DIR)
 
 install:
 ifndef DESTDIR
@@ -27,13 +38,25 @@ else
 	mkdir -p ${MANDIR}/man1
 	install -m 644 ${PLUGIN}.1 ${MANDIR}/man1/
 endif
+ifdef COMPLETIONDIR
+	mkdir -p $(COMPLETIONDIR)
+	install -m 644 check_ssl_cert.completion $(COMPLETIONDIR)/check_ssl_cert
+endif
 
+COMPLETIONS_DIR := $(shell pkg-config --variable=completionsdir bash-completion)
+install_bash_completion:
+ifdef COMPLETIONS_DIR
+	cp check_ssl_cert.completion $(COMPLETIONS_DIR)/check_ssl_cert
+endif
+
+# checks if the verison is updated in all the files
 version_check:
 	grep -q "VERSION\ *=\ *[\'\"]*$(VERSION)" $(PLUGIN)
-	grep -q "^%define\ version\ *$(VERSION)" $(PLUGIN).spec
+	grep -q "^%global\ version\ *$(VERSION)" $(PLUGIN).spec
 	grep -q -F -- "- $(VERSION)-" $(PLUGIN).spec
 	grep -q "\"$(VERSION)\"" $(PLUGIN).1
-	grep -q -F "${VERSION}" NEWS
+	grep -q -F "${VERSION}" NEWS.md
+	grep -q  "^version:\ ${VERSION}" CITATION.cff
 	echo "Version check: OK"
 
 # we check for tabs
@@ -41,10 +64,7 @@ version_check:
 formatting_check:
 	! grep -q '[[:blank:]]$$' $(FORMATTED_FILES)
 
-remove_blanks:
-	./utils/format_files.sh $(FORMATTED_FILES)
-
-SHFMT= := $(shell command -v shfmt 2> /dev/null)
+SHFMT := $(shell command -v shfmt 2> /dev/null)
 format:
 ifndef SHFMT
 	echo "No shfmt installed"
@@ -54,6 +74,7 @@ else
 # -s simplify
 # -i 4 indent with 4 spaces
 	shfmt -p -w -s -i 4 $(SCRIPTS)
+	shfmt -ln bash -w -s -i 4 check_ssl_cert.completion
 endif
 
 clean:
@@ -96,7 +117,5 @@ rpm: dist
 	mkdir -p rpmroot/SOURCES rpmroot/BUILD
 	cp $(DIST_DIR).tar.gz rpmroot/SOURCES
 	rpmbuild --define "_topdir `pwd`/rpmroot" -ba check_ssl_cert.spec
-
-
 
 .PHONY: install clean test rpm distclean check

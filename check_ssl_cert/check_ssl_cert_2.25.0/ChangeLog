@@ -1,3 +1,88 @@
+2022-04-13  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (main): Added a cache for checked hosts (to be used with bash completion)
+        * check_ssl_cert (usage): Fixed the capitalization of the help messages
+
+2022-04-06  Matteo Corti  <matteo@corti.li>
+
+        * test/unit_tests.sh (testIPv6): Corrected the IPv6 tests
+
+        * check_ssl_cert (check_attr): Timeout support for SSL Labs
+        * check_ssl_cert (check_attr): Adding a missing -6 option (if specified) to nmap
+
+2022-03-22  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (main): fixes debugging output on STDERR
+
+2022-03-21  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (main): added missing proxy options for curl and s_client
+
+2022-03-15  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert: status UKNOWN only for plugin-internal problems (see https://nagios-plugins.org/doc/guidelines.html#AEN78)
+
+2022-03-14  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (fetch_certificate): Add the protocol (if defined) to the critical message
+
+2022-03-11  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (check_attr): Display all the unmatched common names
+
+2022-02-28  Peter Newman (https://github.com/peternewman)
+
+        * check_ssl_cert (fetch_certificate): Allow pkcs12 extension for PKCS #12 files
+
+2022-02-22  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (check_attr): display the protocol in the output
+
+2022-02-18  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert.completion (_check_ssl_cert): host completion
+
+2022-02-17  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (check_attr): write the host and the port in the output
+        * check_ssl_cert (usage): list of possible variables for the --format option
+
+2022-02-03  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert.completion (_check_ssl_cert): first version of completion
+
+2022-02-01  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (exec_with_timeout): adding the reason of the timeout to the error message
+        * check_ssl_cert (main): do not set the default timeout if ${TIMEOUT} is already set
+
+2022-01-13  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (check_integer): Added input validation for integers and floats
+        * check_ssl_cert (main): If --file is an URI fetch it with curl
+
+2022-01-12  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert: enable floating point computations
+
+2022-01-10  Matteo Corti  <matteo@corti.li>
+
+        * .github/workflows/test.yml (jobs): Removed Ubuntu 20.10
+        * Makefile (dist): Disable extended attributes support with bsdtar
+
+2021-12-21  Matteo Corti  <matteo@corti.li>
+
+        * Converted several documents to Markdown
+
+2021-12-20  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (check_attr): Fixed a problem with self signed certificates
+        * check_ssl_cert (main): Better --info output by missing fields
+
+2021-12-16  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (parse_command_line_options): Remove the trailing . from FQDNs
+
 2021-12-15  Matteo Corti  <matteo@corti.li>
 
         * check_ssl_cert (fetch_certificate): check if the used protocol was HTTP/2 (if requested)

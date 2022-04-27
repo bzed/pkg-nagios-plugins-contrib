@@ -1,0 +1,448 @@
+.\" Process this file with
+.\" groff -man -Tascii check_ssl_cert.1
+.\"
+.TH "check_ssl_cert" 1 "April, 2022" "2.25.0" "USER COMMANDS"
+.SH NAME
+check_ssl_cert \- checks the validity of X.509 certificates
+.SH SYNOPSIS
+.BR "check_ssl_cert " "-H host [OPTIONS]"
+.br
+.BR "check_ssl_cert " "-f file [OPTIONS]"
+.SH DESCRIPTION
+.B check_ssl_cert
+A shell script (that can be used as a Nagios/Icinga plugin) to check an SSL/TLS connection
+.SH ARGUMENTS
+.TP
+.BR "-f,--file" " file"
+Local file path or URI. With -f you can not only pass a x509 certificate file but also a certificate revocation list (CRL) to check the validity period
+.TP
+.BR "-H,--host" " host"
+server
+.SH OPTIONS
+.TP
+.BR "-A,--noauth"
+Ignore authority warnings (expiration only)
+.TP
+.BR "    --all"
+Enable all the possible optional checks at the maximum level
+.TP
+.BR "    --all-local"
+Enable all the possible optional checks at the maximum level (without SSL-Labs)
+.TP
+.BR "    --allow-empty-san"
+Allow certificates without Subject Alternative Names (SANs)
+.TP
+.BR "-C,--clientcert" " path"
+Use client certificate to authenticate
+.TP
+.BR "-c,--critical" " days"
+Minimum number of days a certificate has to be valid to issue a critical status. Can be a floating point number, e.g., 0.5. Default: 15
+.TP
+.BR "   --check-ciphers" " grade"
+Check the offered ciphers
+.TP
+.BR "   --check-ciphers-warnings"
+Critical if nmap reports a warning for an offered cipher
+.TP
+.BR "   --check-ssl-labs-warn grade"
+SSL Labs grade on which to warn
+.TP
+.BR "   --clientpass" " phrase"
+Set passphrase for client certificate.
+.TP
+.BR "   --crl"
+Check revocation via CRL (requires --rootcert-file)
+.TP
+.BR "   --curl-bin" " path"
+Path of the curl binary to be used
+.TP
+.BR "   --curl-user-agent" " string"
+User agent that curl shall use to obtain the issuer cert
+.TP
+.BR "   --custom-http-header" " string"
+Custom HTTP header sent when getting the cert example: 'X-Check-Ssl-Cert: Foobar=1'
+.TP
+.BR "-d,--debug"
+Produce debugging output (can be specified more than once)
+.TP
+.BR "   --dane"
+Verify that valid DANE records exist (since OpenSSL 1.1.0)
+.TP
+.BR "   --dane 211"
+Verify that a valid DANE-TA(2) SPKI(1) SHA2-256(1) TLSA record exists
+.TP
+.BR "   --dane 301"
+Verify that a valid DANE-EE(3) Cert(0) SHA2-256(1) TLSA record exists
+.TP
+.BR "   --dane 302"
+Verify that a valid DANE-EE(3) Cert(0) SHA2-512(2) TLSA record exists
+.TP
+.BR "   --dane 311"
+Verify that a valid DANE-EE(3) SPKI(1) SHA2-256(1) TLSA record exists
+.TP
+.BR "   --dane 312"
+Verify that a valid DANE-EE(3) SPKI(1) SHA2-512(1) TLSA record exists
+.TP
+.BR "   --date" " path"
+Path of the date binary to be used
+.TP
+.BR "   --debug-cert"
+Store the retrieved certificates in the current directory
+.TP
+.BR "   --debug-file" " file"
+Write the debug messages to file
+.TP
+.BR "   --debug-time"
+Write timing information in the debugging output
+.TP
+.BR "   --dig-bin" " path"
+Path of the dig binary to be used
+.TP
+.BR "-e,--email" " address"
+Pattern to match the email address contained in the certificate
+.TP
+.BR "   --ecdsa"
+Signature algorithm selection: force ECDSA certificate
+.TP
+.BR "   --element" " number"
+Check up to the N cert element from the beginning of the chain
+.TP
+.BR "   --file-bin" " path"
+Path of the file binary to be used
+.TP
+.BR "   --fingerprint" " SHA1"
+Pattern to match the SHA1-Fingerprint
+.TP
+.BR "   --first-element-only"
+Verify just the first cert element, not the whole chain
+.TP
+.BR "   --force-dconv-date"
+Force the usage of dconv for date computations
+.TP
+.BR "   --force-perl-date"
+Force the usage of Perl for date computations
+.TP
+.BR "   --format" " FORMAT"
+Format output template on success, for example: '%SHORTNAME% OK %CN% from %CA_ISSUER_MATCHED%'
+.br
+List of possible variables:
+.br
+- %HOST%
+.br
+- %PORT%
+.br
+- %CA_ISSUER_MATCHED%
+.br
+- %CHECKEDNAMES%
+.br
+- %CN%
+.br
+- %DATE%
+.br
+- %DAYS_VALID%
+.br
+- %DYSPLAY_CN%
+.br
+- %OPENSSL_COMMAND%
+.br
+- %SELFSIGNEDCERT%
+.br
+- %SHORTNAME%
+.br
+- %OCSP_EXPIRES_IN_HOURS%
+.br
+- %SSL_LABS_HOST_GRADE%
+.TP
+.BR "-h,--help,-?"
+This help message
+.TP
+.BR "   --http-use-get"
+Use GET instead of HEAD (default) for the HTTP related checks
+.TP
+.BR "-i,--issuer" " issuer"
+Pattern to match the issuer of the certificate
+.TP
+.BR "  --ignore-altnames"
+Ignore alternative names when matching pattern specified in -n (or the host name)
+.TP
+.BR "  --ignore-connection-problems" " [state]"
+In case of connection problems returns OK or the optional state
+.TP
+.BR "   --ignore-exp"
+Ignore expiration date
+.TP
+.BR "   --ignore-host-cn"
+Do not complain if the CN does not match the host name
+.TP
+.BR "   --ignore-incomplete-chain"
+Do not check chain integrity
+.TP
+.BR "   --ignore-ocsp"
+Do not check revocation with OCSP
+.TP
+.BR "   --ignore-ocsp-errors"
+Continue if the OCSP status cannot be checked
+.TP
+.BR "   --ignore-ocsp-timeout"
+Ignore OCSP result when timeout occurs while checking
+.TP
+.BR "   --ignore-sct"
+Do not check for signed certificate timestamps (SCT)
+.TP
+.BR "   --ignore-sig-alg"
+Do not check if the certificate was signed with SHA1 or MD5
+.TP
+.BR "   --ignore-ssl-labs-cache"
+Force a new check by SSL Labs (see -L)
+.TP
+.BR "   --ignore-tls-renegotiation"
+Ignore the TLS renegotiation check
+.TP
+.BR "   --inetproto protocol"
+Force IP version 4 or 6
+.TP
+.BR "   --info"
+Print certificate information
+.TP
+.BR "     --init-host-cache"
+Initialize the host cache
+.TP
+.BR "   --issuer-cert-cache" " dir"
+Directory where to store issuer certificates cache
+.TP
+.BR "-K,--clientkey" " path"
+Use client certificate key to authenticate
+.TP
+.BR "-L,--check-ssl-labs grade"
+SSL Labs assessment (please check https://www.ssllabs.com/about/terms.html). Critical if the grade is lower than specified.
+.TP
+.BR "   --long-output" " list"
+Append the specified comma separated (no spaces) list of attributes to the plugin output on additional lines.
+Valid attributes are: enddate, startdate, subject, issuer, modulus, serial, hash, email, ocsp_uri and fingerprint. 'all' will include all the available attributes.
+.TP
+.BR "-m,--match" " name"
+Pattern to match the CN or AltName (can be specified multiple times)
+.TP
+.BR "   --nmap-bin" " path"
+Path of the nmap binary to be used
+.TP
+.BR "   --no-perf"
+Do not show performance data
+.TP
+.BR "   --no-proxy"
+Ignore the http_proxy and https_proxy environment variables
+.TP
+.BR "   --no-proxy-curl"
+Ignore the http_proxy and https_proxy environment variables for curl
+.TP
+.BR "   --no-proxy-s_client"
+Ignore the http_proxy and https_proxy environment variables for openssl s_client
+.TP
+.BR "   --no-ssl2"
+Disable SSL version 2
+.TP
+.BR "   --no-ssl3"
+Disable SSL version 3
+.TP
+.BR "   --no-tls1"
+Disable TLS version 1
+.TP
+.BR "   --no-tls1_1"
+Disable TLS version 1.1
+.TP
+.BR "   --no-tls1_3"
+Disable TLS version 1.3
+.TP
+.BR "   --no-tls1_2"
+Disable TLS version 1.2
+.TP
+.BR "   --not-issued-by" " issuer"
+Check that the issuer of the certificate does not match the given pattern
+.TP
+.BR "   --not-valid-longer-than" " days"
+Critical if the certificate validity is longer than the specified period
+.TP
+.BR "-o,--org" " org"
+Pattern to match the organization of the certificate
+.TP
+.BR "   --ocsp-critical" " hours"
+Ninimum number of hours an OCSP response has to be valid to issue a critical status
+.TP
+.BR "    --ocsp-warning" " hours"
+Minimum number of hours an OCSP response has to be valid to issue a warning status
+.TP
+.BR "   --openssl" " path"
+Path of the openssl binary to be used
+.TP
+.BR "-p,--port" " port"
+TCP port
+.TP
+.BR "--precision" " digits"
+Number of decimal places for durations: defaults to 0 if critical or warning are integers, 2 otherwise
+.TP
+.BR "-P,--protocol" " protocol"
+Use the specific protocol: ftp, ftps, http, https (default), h2 (HTTP/2), imap, imaps, irc, ircs, ldap, ldaps, mysql, pop3, pop3s, postgres, sieve, smtp, smtps, xmpp, xmpp-server, ftp, imap, irc, ldap, pop3, postgres, sieve, smtp: switch to TLS using StartTLS.
+.br
+These protocols switch to TLS using StartTLS: ftp, imap, irc, ldap, mysql, pop3, smtp.
+.TP
+.BR "   --password" " source"
+Password source for a local certificate, see the PASS PHRASE ARGUMENTS section openssl(1)
+TP
+.BR "   --prometheus"
+Generate Prometheus/OpenMetrics output
+.TP
+.BR "   --proxy" " proxy"
+Set http_proxy and the s_client -proxy option
+.TP
+.BR "-q,--quiet"
+Do not produce any output
+.TP
+.BR "-r,--rootcert" " cert"
+Root certificate or directory to be used for certificate validation (passed to openssl's -CAfile or -CApath)
+.TP
+.BR "   --require-client-cert" " [list]"
+The server must accept a client certificate. 'list' is an optional comma separated list of expected client certificate CAs
+.TP
+.BR "   --require-no-ssl2"
+Critical if SSL version 2 is offered
+.TP
+.BR "   --require-no-ssl3"
+Critical if SSL version 3 is offered
+.TP
+.BR "   --require-no-tls1"
+Critical if TLS 1 is offered
+.TP
+.BR "   --require-no-tls1_1"
+Critical if TLS 1.1 is offered
+.TP
+.BR "   --require-ocsp-stapling"
+Require OCSP stapling
+.TP
+.BR "   --resolve" " ip"
+Provide a custom IP address for the specified host
+.TP
+.BR "   --rootcert-dir" " dir"
+Root directory to be used for certificate validation (passed to openssl's -CApath)
+overrides option -r,--rootcert
+.TP
+.BR "   --rootcert-file" " cert"
+Root certificate to be used for certificate validation (passed to openssl's -CAfile)
+overrides option -r,--rootcert
+.TP
+.BR "   --rsa"
+Signature algorithm selection: force RSA certificate
+.TP
+.BR "-s,--selfsigned"
+Allow self-signed certificates
+.TP
+.BR "   --serial" " serialnum"
+Pattern to match the serial number
+.TP
+.BR "--skip-element" " number"
+Skip checks on the Nth cert element (can be specified multiple times)
+.TP
+.BR "   --sni" " name"
+Set the TLS SNI (Server Name Indication) extension in the ClientHello message to 'name'
+.TP
+.BR "   --ssl2"
+Force SSL version 2
+.TP
+.BR "   --ssl3"
+Force SSL version 3
+.TP
+.BR "-t,--timeout" " seconds"
+Timeout after the specified time (defaults to 120 seconds)
+.TP
+.BR "   --temp" " dir"
+Directory where to store the temporary files
+.TP
+.BR "   --terse"
+Terse output (also see --verbose)
+.TP
+.BR "   --tls1"
+Force TLS version 1
+.TP
+.BR "   --tls1_1"
+Force TLS version 1.1
+.TP
+.BR "   --tls1_2"
+Force TLS version 1.2
+.TP
+.BR "   --tls1_3"
+Force TLS version 1.3
+.TP
+.BR "-u,--url" " URL"
+HTTP request URL
+.TP
+.BR "-v,--verbose"
+Verbose output (can be specified more than once)
+.TP
+.BR "-V,--version"
+Version
+.TP
+.BR "-w,--warning" " days"
+Minimum number of days a certificate has to be valid to issue a warning status. Might be a floating point number, e.g., 0.5. Default: 20
+.TP
+.BR "   --xmpphost" " name"
+Specify the host for the 'to' attribute of the stream element
+.TP
+.BR "-4"
+Force IPv4
+.TP
+.BR "-6"
+Force IPv6
+.SH DEPRECATED OPTIONS
+.TP
+.BR "   --altnames"
+Match the pattern specified in -n with alternate names too (enabled by default)
+.TP
+.BR "-d,--days" " days"
+Minimum number of days a certificate has to be valid (see --critical and --warning)
+.TP
+.BR "-n,--cn" " name"
+Pattern to match the CN or AltName (can be specified multiple times)
+.TP
+.BR "-N,--host-cn"
+Match CN with the host name (enabled by default)
+.TP
+.BR "--no_ssl2"
+Disable SSLv2 (deprecated use --no-ssl2)
+.TP
+.BR "--no_ssl3"
+Disable SSLv3 (deprecated use --no-ssl3)
+.TP
+.BR "--no_tls1"
+Disable TLSv1 (deprecated use --no-tls1)
+.TP
+.BR "--no_tls1_1"
+Disable TLSv1.1 (deprecated use --no-tls1_1)
+.TP
+.BR "--no_tls1_2"
+Disable TLSv1.1 (deprecated use --no-tls1_2)
+.TP
+.BR "--no_tls1_3"
+Disable TLSv1.1 (deprecated use --no-tls1_3)
+.TP
+.BR "   --ocsp"
+Check revocation via OCSP (enabled by default)
+.TP
+.BR "   --require-san"
+Require the presence of a Subject Alternative Name extension
+.TP
+.BR "-S,--ssl" " version"
+Force SSL version (2,3) (see: --ssl2 or --ssl3)
+
+.SH NOTES
+If the host has multiple certificates and the installed openssl version supports the -servername option it is possible to specify the TLS SNI (Server Name Identificator) with the -N (or --host-cn) option.
+
+.SH "EXIT STATUS"
+check_ssl_cert returns a zero exist status if it finds no errors, 1 for warnings, 2 for a critical errors and 3 for unknown problems
+.SH BUGS
+Please report bugs to:
+https://github.com/matteocorti/check_ssl_cert/issues
+
+.SH "EXAMPLE"
+check_ssl_cert --host github.com --all-local
+
+.SH "SEE ALSO"
+openssl(1), openssl-x509(1)
