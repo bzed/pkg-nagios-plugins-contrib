@@ -1,7 +1,22 @@
+2022-04-28  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (main): Using --script +ssl-enum-ciphers for older versions of nmap
+
+2022-04-26  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (check_ocsp): Updating the timeout when using the timeout option of 'ocsp'
+
+2022-04-25  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (check_ocsp): Better error message in case of OCSP problems
+
 2022-04-13  Matteo Corti  <matteo@corti.li>
 
+        * check_ssl_cert (main): Allows to run with the --init-host-cache option only
+        * check_ssl_cert.completion (_check_ssl_cert): check if the host cache exists
         * check_ssl_cert (main): Added a cache for checked hosts (to be used with bash completion)
         * check_ssl_cert (usage): Fixed the capitalization of the help messages
+        * check_ssl_cert (usage): Usage errors should trigger an unknown status
 
 2022-04-06  Matteo Corti  <matteo@corti.li>
 

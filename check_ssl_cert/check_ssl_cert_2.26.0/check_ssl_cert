@@ -28,7 +28,7 @@
 ################################################################################
 # Constants
 
-VERSION=2.25.0
+VERSION=2.26.0
 SHORTNAME="SSL_CERT"
 
 VALID_ATTRIBUTES=",startdate,enddate,subject,issuer,modulus,serial,hash,email,ocsp_uri,fingerprint,"
@@ -79,10 +79,6 @@ set_variable() {
 # Params
 #   $1 error message (optional)
 usage() {
-
-    if [ -n "$1" ]; then
-        echo "Error: $1" 1>&2
-    fi
 
     echo
     echo "Usage: check_ssl_cert -H host [OPTIONS]"
@@ -1728,6 +1724,9 @@ check_ocsp() {
 
             debuglog "OCSP: host = ${OCSP_HOST}"
 
+            # ocsp has an own timeout option
+            start_time=$(date +%s)
+
             if [ -n "${OCSP_HOST}" ]; then
 
                 # check if -header is supported
@@ -1821,7 +1820,9 @@ check_ocsp() {
 
                         fi
 
-                        prepend_critical_message "OCSP error (-v for details)"
+                        debuglog "${OCSP_RESP}"
+                        OCSP_ERROR_MESSAGE=$( echo "${OCSP_RESP}" | head -n 1 )
+                        prepend_critical_message "OCSP error (${OCSP_ERROR_MESSAGE})"
 
                     fi
 
@@ -1836,6 +1837,12 @@ check_ocsp() {
                 verboselog "Warning: no OCSP host found: disabling OCSP checks"
 
             fi
+
+            # update the timeout
+            debuglog "Timeout before OCSP check: ${TIMEOUT}"
+            end_time=$(date +%s)
+            TIMEOUT=$((TIMEOUT - end_time + start_time))
+            debuglog "Timeout after OCSP check:  ${TIMEOUT}"
 
         done
 
@@ -1895,10 +1902,8 @@ check_cert_end_date() {
         # We always check expired certificates
         debuglog "executing: ${OPENSSL} x509 -noout -checkend 0 on cert element ${el_number} (${element_cn})"
         if ! echo "${1}" | ${OPENSSL} x509 -noout -checkend 0 >/dev/null; then
-            if compare "${ELEM_DAYS_VALID}" "<" 1; then
-                DAYS_AGO='today'
-            elif compare "${ELEM_DAYS_VALID}" "<" 2; then
-                DAYS_AGO='yesterday'
+            if compare "${ELEM_DAYS_VALID}" ">=" 0 && compare "${ELEM_DAYS_VALID}" "<" 1; then
+                DAYS_AGO='less than a day ago'
             else
                 DAYS_AGO="$((-ELEM_DAYS_VALID)) days ago"
             fi
@@ -2602,6 +2607,7 @@ parse_command_line_options() {
             shift
             ;;
         --init-host-cache)
+            INIT_HOST_CACHE=1
             if ! [ -f "${HOST_CACHE}" ]; then
                 debuglog "Initializing host cache"
                 if ! touch "${HOST_CACHE}"; then
@@ -3355,7 +3361,11 @@ main() {
     # Check options: sanity checks
 
     if [ -z "${HOST}" ] && [ -z "${FILE}" ]; then
-        usage "No host specified"
+        if [ -z "${INIT_HOST_CACHE}" ]; then
+            unknown "No host specified"
+        else
+            exit
+        fi
     elif [ -z "${HOST}" ] && [ -n "${FILE}" ]; then
         HOST='localhost'
     fi
@@ -3384,12 +3394,13 @@ main() {
     fi
 
     debuglog "HOST = ${HOST}"
+    info Host "${HOST}"
 
     if [ -r "${HOST_CACHE}" ]; then
         debuglog "Host cache ${HOST_CACHE} is present"
         if ! grep -q "^${HOST}$" "${HOST_CACHE}"; then
             debuglog "Adding ${HOST} to the host cache"
-            echo "${HOST}" >> "${HOST_CACHE}"
+            echo "${HOST}" >>"${HOST_CACHE}"
         else
             debuglog "${HOST} is already cached"
         fi
@@ -4216,9 +4227,11 @@ main() {
             NMAP_INETPROTO='-6'
         fi
 
-        debuglog "Executing ${NMAP_BIN} -Pn -p \"${PORT}\" \"${NMAP_INETPROTO}\" --script ssl-enum-ciphers \"${HOST_ADDR}\" 2>&1 | grep '^|'"
+        # see https://github.com/matteocorti/check_ssl_cert/issues/378
 
-        OFFERED_PROTOCOLS=$(${NMAP_BIN} -Pn -p "${PORT}" "${NMAP_INETPROTO}" --script ssl-enum-ciphers "${HOST_ADDR}" 2>&1 | grep '^|')
+        debuglog "Executing ${NMAP_BIN} -Pn -p \"${PORT}\" \"${NMAP_INETPROTO}\" --script +ssl-enum-ciphers \"${HOST_ADDR}\" 2>&1 | grep '^|'"
+
+        OFFERED_PROTOCOLS=$(${NMAP_BIN} -Pn -p "${PORT}" "${NMAP_INETPROTO}" --script +ssl-enum-ciphers "${HOST_ADDR}" 2>&1 | grep '^|')
 
         debuglog "offered ciphers and protocols:"
         debuglog "${OFFERED_PROTOCOLS}" | sed 's/^|/[DBG] /'
@@ -5418,15 +5431,12 @@ ${WARNING}"
 
         if [ -n "${DAYS_VALID}" ]; then
             # nicer formatting
-            if compare "${DAYS_VALID}" '>=' 2; then
+            if compare "${DAYS_VALID}" '>=' 1; then
                 DAYS_VALID=" (expires in ${DAYS_VALID} days)"
-            elif compare "${DAYS_VALID}" '>=' 1; then
-                DAYS_VALID=" (expires tomorrow)"
             elif compare "${DAYS_VALID}" '>=' 0; then
-                DAYS_VALID=" (expires today)"
+                DAYS_VALID=" (expires in less than a day)"
             elif compare "${DAYS_VALID}" '>=' '-1'; then
-                DAYS_VALID=" (expired yesterday)"
-            else
+                DAYS_VALID=$(( -DAYS_VALID ))
                 DAYS_VALID=" (expired ${DAYS_VALID} days ago)"
             fi
         fi
