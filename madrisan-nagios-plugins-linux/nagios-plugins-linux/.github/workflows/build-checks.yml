@@ -17,10 +17,16 @@ jobs:
       matrix:
         container:
           - 'alpine:3.14'
-          - 'centos:8'
-          - 'debian:buster'
+          - 'alpine:3.15'
+          - 'alpine:3.16'
+          - 'debian:9'
+          - 'debian:10'
+          - 'debian:11'
           - 'fedora:34'
-          - 'ubuntu:21.04'
+          - 'fedora:35'
+          - 'fedora:36'
+          - 'ubuntu:20.04'
+          - 'ubuntu:22.04'
 
     steps:
       - uses: actions/checkout@v2
@@ -36,10 +42,6 @@ jobs:
               export DEBIAN_FRONTEND=noninteractive
               apt-get update -q
               apt-get install -q -y --no-install-recommends autoconf automake bzip2 gcc libcurl4-gnutls-dev libtool m4 make pkg-config xz-utils
-            ;;
-            centos*)
-              dnf -y update
-              dnf -y install autoconf automake bzip2 gcc glibc-devel libcurl-devel libtool make m4 xz
             ;;
             fedora*)
               dnf -y update

@@ -27,12 +27,13 @@
 #include "container_docker.h"
 #include "logging.h"
 #include "messages.h"
+#include "sysfsparser.h"
 #include "xasprintf.h"
 
 #ifndef NPL_TESTING
 
-#define PATH_SYS_CGROUP "/sys/fs/cgroup"
-#define PATH_SYS_DOCKER_MEM PATH_SYS_CGROUP "/memory/docker"
+#define PATH_SYS_CGROUP  PATH_SYS "/fs/cgroup"
+#define PATH_SYS_DOCKER_MEM PATH_SYS_CGROUP  "/memory/docker"
 
 static char *
 get_docker_memory_stat_path ()
@@ -87,7 +88,6 @@ docker_memory_desc_read (struct docker_memory_desc *__restrict memdesc)
   char *line = NULL;
   FILE *fp;
   size_t len = 0;
-  ssize_t chread;
 
   char *syspath = get_docker_memory_stat_path ();
 
@@ -98,7 +98,7 @@ docker_memory_desc_read (struct docker_memory_desc *__restrict memdesc)
     plugin_error (STATE_UNKNOWN, errno, "error opening %s", syspath);
 
   dbg ("parsing the file \"%s\"...\n", syspath);
-  while ((chread = getline (&line, &len, fp)) != -1)
+  while (getline (&line, &len, fp) != -1)
     {
       dbg ("line: %s", line);
 
