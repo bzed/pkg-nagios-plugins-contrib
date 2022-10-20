@@ -2,5 +2,5 @@ Uploaders: Bernd Zeimetz <bzed@debian.org>
 Recommends: libmonitoring-plugin-perl | libnagios-plugin-perl (>= 0.31), libreadonly-perl, libnet-dns-perl, libdata-validate-domain-perl, libdata-validate-ip-perl
 Version: 1.6.3
 Homepage: https://github.com/matteocorti/check_rbl
-Watch: https://github.com/matteocorti/check_rbl/releases check_rbl-([0-9.]+)\.tar\.gz
+Watch: https://github.com/matteocorti/check_rbl/releases >check_rbl-([0-9.]+)<
 Description: plugin to check if a server is blacklisted
