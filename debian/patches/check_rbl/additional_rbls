@@ -1,16 +1,12 @@
-Index: pkg-nagios-plugins-contrib/check_rbl/src/check_rbl.ini
-===================================================================
---- pkg-nagios-plugins-contrib.orig/check_rbl/src/check_rbl.ini
-+++ pkg-nagios-plugins-contrib/check_rbl/src/check_rbl.ini
-@@ -89,6 +89,40 @@ server=singular.ttk.pte.hu
- server=spam.dnsbl.anonmails.de
- server=spambot.bls.digibase.ca
+--- a/check_rbl/src/check_rbl.ini
++++ b/check_rbl/src/check_rbl.ini
+@@ -182,3 +182,28 @@
  server=z.mailspike.net
+ server=zen.spamhaus.org
+ server=zombie.dnsbl.sorbs.net
++; added by debian in random order
 +server=dul.dnsbl.borderware.com
 +server=uribl.swinog.ch
-+server=tor.dan.me.uk
-+server=torexit.dan.me.uk
-+server=combined.rbl.msrbl.net
 +server=rbl.efnetrbl.org
 +server=virbl.dnsbl.bit.nl
 +server=relays.mail-abuse.org
@@ -18,7 +14,6 @@ Index: pkg-nagios-plugins-contrib/check_rbl/src/check_rbl.ini
 +server=blackholes.mail-abuse.org
 +server=dialups.mail-abuse.org
 +server=dul.orca.bc.ca
-+server=blackholes.five-ten-sg.com
 +server=rbl-plus.mail-abuse.org
 +server=rbl.jp
 +server=virus.rbl.jp
@@ -27,19 +22,10 @@ Index: pkg-nagios-plugins-contrib/check_rbl/src/check_rbl.ini
 +server=blackholes.sandes.dk
 +server=blocked.hilli.dk
 +server=cart00ney.surriel.com
-+server=dnsbl.antispam.or.id
 +server=dsbl.dnsbl.net.au
-+server=duinv.aupads.org
 +server=rsbl.aupads.org
 +server=intruders.docs.uu.se
 +server=map.spam-rbl.com
-+server=orvedb.aupads.org
-+server=proxy.bl.gweep.ca
 +server=pss.spambusters.org.ar
-+server=rdts.dnsbl.net.au
-+server=relays.bl.gweep.ca
 +server=relays.bl.kundenserver.de
 +server=spam.olsentech.net
- 
- ; these are rather slow
- ;server=bl.csma.biz

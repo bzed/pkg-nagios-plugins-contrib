@@ -34,6 +34,7 @@ import optparse
 import re
 import os
 import numbers
+import socket
 
 try:
     import pymongo
@@ -122,12 +123,21 @@ def get_server_status(con):
         data = con.admin.command(son.SON([('serverStatus', 1)]))
     return data
 
+def split_host_port(string):
+    if not string.rsplit(':', 1)[-1].isdigit():
+        return (string, None)
+    string = string.rsplit(':', 1)
+    host = string[0]  # 1st index is always host
+    port = int(string[1])
+    return (host, port)
+
 
 def main(argv):
     p = optparse.OptionParser(conflict_handler="resolve", description="This Nagios plugin checks the health of mongodb.")
 
     p.add_option('-H', '--host', action='store', type='string', dest='host', default='127.0.0.1', help='The hostname you want to connect to')
     p.add_option('-h', '--host-to-check', action='store', type='string', dest='host_to_check', default=None, help='The hostname you want to check (if this is different from the host you are connecting)')
+    p.add_option('--rdns-lookup', action='store_true', dest='rdns_lookup', default=False, help='RDNS(PTR) lookup on given host/host-to-check, to convert ip-address to fqdn')
     p.add_option('-P', '--port', action='store', type='int', dest='port', default=27017, help='The port mongodb is running on')
     p.add_option('--port-to-check', action='store', type='int', dest='port_to_check', default=None, help='The port you want to check (if this is different from the port you are connecting)')
     p.add_option('-u', '--user', action='store', type='string', dest='user', default=None, help='The username you want to login as')
@@ -157,10 +167,14 @@ def main(argv):
     p.add_option('-f', '--ssl-cert-file', action='store', type='string', dest='cert_file', default=None, help='Path to PEM encoded key and cert for client authentication')
     p.add_option('-m','--auth-mechanism', action='store', type='choice', dest='auth_mechanism', default=None, help='Auth mechanism used for auth with mongodb',
     choices=['MONGODB-X509','SCRAM-SHA-256','SCRAM-SHA-1'])
+    p.add_option('--disable_retry_writes', dest='retry_writes_disabled', default=False, action='callback', callback=optional_arg(True), help='Disable retryWrites feature')
 
     options, arguments = p.parse_args()
     host = options.host
     host_to_check = options.host_to_check if options.host_to_check else options.host
+    rdns_lookup = options.rdns_lookup
+    if (rdns_lookup):
+      host_to_check = socket.getnameinfo((host_to_check, 0), 0)[0]
     port = options.port
     port_to_check = options.port_to_check if options.port_to_check else options.port
     user = options.user
@@ -188,6 +202,7 @@ def main(argv):
     ssl_ca_cert_file = options.ssl_ca_cert_file
     cert_file = options.cert_file
     auth_mechanism = options.auth_mechanism
+    retry_writes_disabled = options.retry_writes_disabled
 
     if action == 'replica_primary' and replicaset is None:
         return "replicaset must be passed in when using replica_primary check"
@@ -198,8 +213,7 @@ def main(argv):
     # moving the login up here and passing in the connection
     #
     start = time.time()
-    err, con = mongo_connect(host, port, ssl, user, passwd, replicaset, authdb, insecure, ssl_ca_cert_file, cert_file)
-
+    err, con = mongo_connect(host, port, ssl, user, passwd, replicaset, authdb, insecure, ssl_ca_cert_file, cert_file, auth_mechanism, retry_writes_disabled=retry_writes_disabled)
     if err != 0:
         return err
 
@@ -213,9 +227,9 @@ def main(argv):
     if action == "connections":
         return check_connections(con, warning, critical, perf_data)
     elif action == "replication_lag":
-        return check_rep_lag(con, host_to_check, port_to_check, warning, critical, False, perf_data, max_lag, user, passwd)
+        return check_rep_lag(con, host_to_check, port_to_check, rdns_lookup, warning, critical, False, perf_data, max_lag, ssl, user, passwd, replicaset, authdb, insecure, ssl_ca_cert_file, cert_file, auth_mechanism, retry_writes_disabled=retry_writes_disabled)
     elif action == "replication_lag_percent":
-        return check_rep_lag(con, host_to_check, port_to_check, warning, critical, True, perf_data, max_lag, user, passwd, ssl, insecure, ssl_ca_cert_file, cert_file)
+        return check_rep_lag(con, host_to_check, port_to_check, rdns_lookup, warning, critical, True, perf_data, max_lag, ssl, user, passwd, replicaset, authdb, insecure, ssl_ca_cert_file, cert_file, auth_mechanism, retry_writes_disabled=retry_writes_disabled)
     elif action == "replset_state":
         return check_replset_state(con, perf_data, warning, critical)
     elif action == "memory":
@@ -285,7 +299,7 @@ def main(argv):
         return check_connect(host, port, warning, critical, perf_data, user, passwd, conn_time)
 
 
-def mongo_connect(host=None, port=None, ssl=False, user=None, passwd=None, replica=None, authdb="admin", insecure=False, ssl_ca_cert_file=None, ssl_cert=None, auth_mechanism=None):
+def mongo_connect(host=None, port=None, ssl=False, user=None, passwd=None, replica=None, authdb="admin", insecure=False, ssl_ca_cert_file=None, ssl_cert=None, auth_mechanism=None, retry_writes_disabled=False):
     from pymongo.errors import ConnectionFailure
     from pymongo.errors import PyMongoError
     import ssl as SSL
@@ -302,6 +316,9 @@ def mongo_connect(host=None, port=None, ssl=False, user=None, passwd=None, repli
             con_args['ssl_ca_certs'] = ssl_ca_cert_file
         if ssl_cert:
             con_args['ssl_certfile'] = ssl_cert
+
+    if retry_writes_disabled:
+        con_args['retryWrites'] = False
 
     try:
         # ssl connection for pymongo > 2.3
@@ -412,7 +429,7 @@ def check_connections(con, warning, critical, perf_data):
         return exit_with_general_critical(e)
 
 
-def check_rep_lag(con, host, port, warning, critical, percent, perf_data, max_lag, user, passwd, ssl=None, insecure=None, ssl_ca_cert_file=None, cert_file=None):
+def check_rep_lag(con, host, port, rdns_lookup, warning, critical, percent, perf_data, max_lag, ssl=False, user=None, passwd=None, replicaset=None, authdb="admin", insecure=None, ssl_ca_cert_file=None, cert_file=None, auth_mechanism=None, retry_writes_disabled=False):
     # Get mongo to tell us replica set member name when connecting locally
     if "127.0.0.1" == host:
         if not "me" in list(con.admin.command("ismaster","1").keys()):
@@ -439,7 +456,6 @@ def check_rep_lag(con, host, port, warning, critical, percent, perf_data, max_la
             if ((e.code == None and str(e).find('failed: not running with --replSet"')) or (e.code == 76 and str(e).find('not running with --replSet"'))):
                 print("UNKNOWN - Not running with replSet")
                 return 3
-
         serverVersion = tuple(con.server_info()['version'].split('.'))
         if serverVersion >= tuple("2.0.0".split(".")):
             #
@@ -459,7 +475,15 @@ def check_rep_lag(con, host, port, warning, critical, percent, perf_data, max_la
             for member in rs_status["members"]:
                 if member["stateStr"] == "PRIMARY":
                     primary_node = member
-                if member.get('name') == "{0}:{1}".format(host, port):
+
+                # if rdns_lookup is true then lookup both values back to their rdns value so we can compare hostname vs fqdn
+                if rdns_lookup:
+                    member_host, member_port = split_host_port(member.get('name'))
+                    member_host = "{0}:{1}".format(socket.getnameinfo((member_host, 0), 0)[0], member_port)
+                    if member_host == "{0}:{1}".format(socket.getnameinfo((host, 0), 0)[0], port):
+                        host_node = member
+                # Exact match
+                elif member.get('name') == "{0}:{1}".format(host, port):
                     host_node = member
 
             # Check if we're in the middle of an election and don't have a primary
@@ -489,7 +513,7 @@ def check_rep_lag(con, host, port, warning, critical, percent, perf_data, max_la
                             data = data + member['name'] + " lag=%d;" % replicationLag
                             maximal_lag = max(maximal_lag, replicationLag)
                     if percent:
-                        err, con = mongo_connect(primary_node['name'].split(':')[0], int(primary_node['name'].split(':')[1]), False, user, passwd)
+                        err, con = mongo_connect(split_host_port(primary_node['name'])[0], int(split_host_port(primary_node['name'])[1]), ssl, user, passwd, replicaset, authdb, insecure, ssl_ca_cert_file, cert_file, auth_mechanism, retry_writes_disabled=retry_writes_disabled)
                         if err != 0:
                             return err
                         primary_timediff = replication_get_time_diff(con)
@@ -521,7 +545,7 @@ def check_rep_lag(con, host, port, warning, critical, percent, perf_data, max_la
                 lag = float(optime_lag.seconds + optime_lag.days * 24 * 3600)
 
             if percent:
-                err, con = mongo_connect(primary_node['name'].split(':')[0], int(primary_node['name'].split(':')[1]), ssl, user, passwd, None, None, insecure, ssl_ca_cert_file, cert_file)
+                err, con = mongo_connect(split_host_port(primary_node['name'])[0], int(split_host_port(primary_node['name'])[1]), ssl, user, passwd, replicaset, authdb, insecure, ssl_ca_cert_file, cert_file, auth_mechanism, retry_writes_disabled=retry_writes_disabled)
                 if err != 0:
                     return err
                 primary_timediff = replication_get_time_diff(con)
@@ -565,7 +589,7 @@ def check_rep_lag(con, host, port, warning, critical, percent, perf_data, max_la
             optime_lag = abs(primary_node[1] - host_node["optimeDate"])
             lag = optime_lag.seconds
             if percent:
-                err, con = mongo_connect(primary_node['name'].split(':')[0], int(primary_node['name'].split(':')[1]))
+                err, con = mongo_connect(split_host_port(primary_node['name'])[0], int(split_host_port(primary_node['name'])[1]), ssl, user, passwd, replicaset, authdb, insecure, ssl_ca_cert_file, cert_file, auth_mechanism, retry_writes_disabled=retry_writes_disabled)
                 if err != 0:
                     return err
                 primary_timediff = replication_get_time_diff(con)
