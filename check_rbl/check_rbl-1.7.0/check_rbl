@@ -12,6 +12,7 @@ package main;
 # Copyright (c) 2009-2021 Matteo Corti <matteo@corti.li>
 # Copyright (c) 2009 ETH Zurich.
 # Copyright (c) 2010 Elan Ruusamae <glen@delfi.ee>.
+# Copyright (c) 2022 Claudio Kuenzler <ck@claudiokuenzler.com>.
 #
 # This module is free software; you can redistribute it and/or modify it
 # under the terms of GNU general public license (gpl) version 3.
@@ -20,8 +21,9 @@ package main;
 use strict;
 use warnings;
 
-our $VERSION = '1.6.3';
+our $VERSION = '1.7.0';
 
+use Capture::Tiny qw(capture);
 use Data::Validate::Domain qw(is_hostname);
 use Data::Validate::IP qw(is_ipv4 is_ipv6);
 use IO::Select;
@@ -131,16 +133,34 @@ sub init_dns_resolver {
 
     my $retries = shift;
 
-    my $res = Net::DNS::Resolver->new();
-    if ( $res->can('force_v4') ) {
-        $res->force_v4(1);
+    my $resolver = Net::DNS::Resolver->new();
+    if ( $resolver->can('force_v4') ) {
+        $resolver->force_v4(1);
     }
 
     if ($retries) {
-        $res->retry($retries);
+        $resolver->retry($retries);
     }
 
-    return $res;
+    if ( defined $options->nameserver ) {
+
+# If the nameserver is invalid Net::DNS::Resover prints an error message on STDERR: we want to suppress it
+# see: https://stackoverflow.com/questions/73270724/how-to-handle-errors-while-setting-the-name-server-with-netdns
+
+        my ( $stdout, $stderr, @servers ) =
+          capture { $resolver->nameservers( $options->nameserver ); };
+
+        if ( @servers == 0 ) {
+            $plugin->nagios_exit( Monitoring::Plugin->CRITICAL,
+                'Invalid nameserver ' . $options->nameserver );
+        }
+
+    }
+
+    my @nameservers = $resolver->nameservers();
+    debug("Using DNS Resolver: @nameservers");
+
+    return $resolver;
 }
 
 ##############################################################################
@@ -233,13 +253,13 @@ sub mdns {
                 delete $addrs{$sock};
                 $sel->remove($sock);
 
-                my $ans = $res->bgread($sock);
+                my $answer = $res->bgread($sock);
 
                 my $host;
 
-                if ($ans) {
+                if ($answer) {
 
-                    foreach my $rr ( $ans->answer ) {
+                    foreach my $rr ( $answer->answer ) {
 
                         debug('Processing answer');
 
@@ -389,7 +409,7 @@ sub run {
     $options = Monitoring::Plugin::Getopt->new(
         usage   => 'Usage: %s [OPTIONS]',
         version => $VERSION,
-        url     => 'http://matteocorti.github.io/check_rbl/',
+        url     => 'https://github.com/matteocorti/check_rbl',
         blurb   => 'Check SMTP black- or white- listing status',
     );
 
@@ -416,7 +436,7 @@ sub run {
 
     $options->arg(
         spec     => 'server|s=s@',
-        help     => 'RBL server',
+        help     => 'RBL server (may be repeated)',
         required => 1,
     );
 
@@ -435,7 +455,7 @@ sub run {
 
     $options->arg(
         spec     => 'retry|r=i',
-        help     => 'Number of times to try a DNS query (default is 4) ',
+        help     => 'Number of times to try a DNS query (default is 4)',
         required => 0,
         default  => $DEFAULT_RETRIES,
     );
@@ -468,6 +488,13 @@ sub run {
         default  => $DEFAULT_APPEND_STRING,
     );
 
+    $options->arg(
+        spec => 'nameserver|n=s',
+        help =>
+'Use this nameserver IP as DNS resolver (only one server is supported)',
+        required => 0,
+    );
+
     $options->getopts();
 
     ###############
@@ -485,8 +512,8 @@ sub run {
             'host or url has to be set' );
     }
 
-    # if present remove the trailing dot from the FQDN
-    # see https://serverfault.com/questions/803033/should-i-append-a-dot-at-the-end-of-my-dns-urls
+# if present remove the trailing dot from the FQDN
+# see https://serverfault.com/questions/803033/should-i-append-a-dot-at-the-end-of-my-dns-urls
     my $host = $options->host;
     if ( defined $host ) {
         $host =~ s/[.]$//mxs;
