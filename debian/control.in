@@ -10,8 +10,8 @@ Build-Depends: debhelper (>= 8.0.0),
                quilt (>= 0.46-7),
                #AUTO_UPDATE_Build-Depends#
 Standards-Version: 4.6.1
-Vcs-Git: https://salsa.debian.org/nagios-team/pkg-nagios-plugins-contrib.git
-Vcs-Browser: https://salsa.debian.org/nagios-team/pkg-nagios-plugins-contrib
+Vcs-Git: https://salsa.debian.org/nagios-team/nagios-plugins-contrib.git
+Vcs-Browser: https://salsa.debian.org/nagios-team/nagios-plugins-contrib
 Rules-Requires-Root: binary-targets
 
 Package: monitoring-plugins-contrib
