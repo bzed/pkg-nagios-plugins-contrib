@@ -47,6 +47,10 @@ AM_LDFLAGS = $(LIBPROCPS_LIBS)
 test_programs = \
 	tslibcontainer_docker_count \
 	tslibcontainer_docker_memory \
+	tslibfiles_age \
+	tslibfiles_filecount \
+	tslibfiles_hiddenfile \
+	tslibfiles_size \
 	tslibkernelver \
 	tslibmeminfo_conversions \
 	tslibmeminfo_interface \
@@ -54,7 +58,9 @@ test_programs = \
 	tslibmessages \
 	tslibperfdata \
 	tslibpressure \
-	tsliburlencode
+	tsliburlencode \
+	tslibxstrton_agetoint64 \
+	tslibxstrton_sizetoint64
 if !HAVE_LIBPROCPS
 test_programs += \
 	tslibvminfo
@@ -82,19 +88,25 @@ TSLIBS_LDFLAGS = -module -avoid-version \
 
 tslibcontainer_docker_count_SOURCES = $(test_utils) tslibcontainer_docker_count.c
 tslibcontainer_docker_count_LDADD = $(LDADDS)
-
 tslibcontainer_docker_memory_SOURCES = $(test_utils) tslibcontainer_docker_memory.c
 tslibcontainer_docker_memory_LDADD = $(LDADDS)
+
+tslibfiles_age_SOURCES = $(test_utils) tslibfiles_age.c
+tslibfiles_age_LDADD = $(LDADDS)
+tslibfiles_filecount_SOURCES = $(test_utils) tslibfiles_filecount.c
+tslibfiles_filecount_LDADD = $(LDADDS)
+tslibfiles_hiddenfile_SOURCES = $(test_utils) tslibfiles_hiddenfile.c
+tslibfiles_hiddenfile_LDADD = $(LDADDS)
+tslibfiles_size_SOURCES = $(test_utils) tslibfiles_size.c
+tslibfiles_size_LDADD = $(LDADDS)
 
 tslibkernelver_SOURCES = $(test_utils) tslibkernelver.c
 tslibkernelver_LDADD = $(LDADDS)
 
 tslibmeminfo_conversions_SOURCES = $(test_utils) tslibmeminfo_conversions.c
 tslibmeminfo_conversions_LDADD = $(LDADDS)
-
 tslibmeminfo_interface_SOURCES = $(test_utils) tslibmeminfo_interface.c
 tslibmeminfo_interface_LDADD = $(LDADDS)
-
 tslibmeminfo_procparser_SOURCES = $(test_utils) tslibmeminfo_procparser.c
 tslibmeminfo_procparser_LDADD = $(LDADDS)
 
@@ -110,6 +122,11 @@ tslibpressure_LDADD = $(LDADDS)
 tsliburlencode_SOURCES = $(test_utils) tsliburlencode.c
 tsliburlencode_LDADD = $(LDADDS)
 
+tslibxstrton_agetoint64_SOURCES = $(test_utils) tslibxstrton_agetoint64.c
+tslibxstrton_agetoint64_LDADD = $(LDADDS)
+tslibxstrton_sizetoint64_SOURCES = $(test_utils) tslibxstrton_sizetoint64.c
+tslibxstrton_sizetoint64_LDADD = $(LDADDS)
+
 tslibvminfo_SOURCES = $(test_utils) tslibvminfo.c
 tslibvminfo_LDADD = $(LDADDS)
 
@@ -124,7 +141,6 @@ tsintr_LDADD = $(LDADDS)
 
 tsload_normalize_SOURCES = $(test_utils) tsload_normalize.c
 tsload_normalize_LDADD = $(LDADDS)
-
 tsload_thresholds_SOURCES = $(test_utils) tsload_thresholds.c
 tsload_thresholds_LDADD = $(LDADDS)
 

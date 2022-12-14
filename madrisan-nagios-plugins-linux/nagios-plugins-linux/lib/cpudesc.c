@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 /*
  * License: GPLv3+
- * Copyright (c) 2014-2015 Davide Madrisan <davide.madrisan@gmail.com>
+ * Copyright (c) 2014-2015,2022 Davide Madrisan <davide.madrisan@gmail.com>
  *
  * A library for checking the CPU features
  *
@@ -40,7 +40,7 @@
 
 #define PATH_PROC_CPUINFO	"/proc/cpuinfo"
 
-#define PATH_SYS_SYSTEM		"/sys/devices/system"
+#define PATH_SYS_SYSTEM		PATH_SYS "/devices/system"
 #define PATH_SYS_CPU		PATH_SYS_SYSTEM "/cpu"
 
 bool
@@ -101,7 +101,7 @@ cpu_desc_new (struct cpu_desc **cpudesc)
   return 0;
 }
 
-/* Fill the cpu_desc structure pointed with the values found in the 
+/* Fill the cpu_desc structure pointed with the values found in the
  * proc and sysfs filesystems  */
 
 void
@@ -167,7 +167,7 @@ cpu_desc_read (struct cpu_desc *cpudesc)
         cpudesc->mode |= MODE_32BIT | MODE_64BIT;  /* s390x */
       if (strstr (buf, " sun4v ") || strstr (buf, " sun4u "))
         cpudesc->mode |= MODE_32BIT | MODE_64BIT;  /* sparc64 */
-  
+
       free (buf);
     }
 

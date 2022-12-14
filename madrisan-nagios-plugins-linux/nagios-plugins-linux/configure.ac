@@ -49,7 +49,7 @@ m4_ifndef([LT_INIT], [
 # 'AC_PROG_CC_C99' unfortunately requires autoconf 2.60+
 #AC_PROG_CC_C99
 AM_PROG_CC_C_O
-AC_PROG_CC_STDC
+AC_PROG_CC
 
 if test "$cross_compiling" = no; then
   if test "x$ac_cv_prog_cc_c99" = "xno" || test "x$ac_cv_prog_cc_c99" = "x"; then
@@ -202,7 +202,7 @@ case "$cc_cv_attribute_noreturn" in
   ;;
 esac
 
-dnl Check whether the compiler supports the 
+dnl Check whether the compiler supports the
 dnl    __attribute__((__format__ (__printf__, x,y))) feature
 ac_cc_attribute_format_printf=
 ac_save_CFLAGS="$CFLAGS"
@@ -226,7 +226,6 @@ AC_DEFINE_UNQUOTED(
   [Define this if the compiler supports the format printf attribute])
 
 dnl Checks for header files
-AC_HEADER_STDC
 AC_HEADER_STDBOOL
 AC_CHECK_HEADERS([ \
   arpa/inet.h \
@@ -362,18 +361,18 @@ AM_CONDITIONAL(HAVE_LIBVARLINK, [test "$have_libvarlink" = "yes"])
 dnl Check for the procps newlib
 have_libprocps=no
 AC_ARG_ENABLE([libprocps],
-  AS_HELP_STRING([--enable-libprocps], [enable optional LIBPROCPS support]),
+  AS_HELP_STRING([--enable-libprocps], [enable optional LIBPROCPS >= 4.0.0 support]),
     [enable_libprocps=$enableval],[enable_libprocps=no])
 AS_IF([test "x$enable_libprocps" = "xyes"], [
   PKG_CHECK_EXISTS([libprocps],
-    [PKG_CHECK_MODULES(LIBPROCPS, [libprocps >= 3.3.11],
-      [AC_DEFINE(HAVE_LIBPROCPS, 1, [Define if libprocps is available])
+    [PKG_CHECK_MODULES(LIBPROCPS, [libprocps >= 4.0.0],
+      [AC_DEFINE(HAVE_LIBPROCPS, 1, [Define if libprocps >= 4.0.0 is available])
        have_libprocps=yes],
-      AC_MSG_ERROR([*** libprocps version >= 3.3.11 not found]))])
+      AC_MSG_ERROR([*** libprocps version >= 4.0.0 not found]))])
   AC_SUBST(LIBPROCPS_LIBS)
   AC_SUBST(LIBPROCPS_CFLAGS)
   AS_IF([test "x$have_libprocps" = "xno" -a "x$enable_libprocps" = "xyes"],
-        [AC_MSG_ERROR([*** LIBPROCPS support requested, but libraries not found])])
+        [AC_MSG_ERROR([*** LIBPROCPS >= 4.0.0 support requested, but libraries not found])])
 ])
 AM_CONDITIONAL(HAVE_LIBPROCPS, [test "$have_libprocps" = "yes"])
 

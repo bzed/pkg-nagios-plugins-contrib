@@ -1,25 +1,21 @@
-<a href='https://ko-fi.com/K3K57TH3' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://az743702.vo.msecnd.net/cdn/kofi2.png?v=0' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
-<a href='http://amzn.eu/8axPDQ1'><img height='36' src='http://png-1.findicons.com/files/icons/2229/social_media_mini/48/amazon.png' border='0' alt='Wish List at Amazon.fr' /></a>
-
-# Nagios-compatible Plugins for Linux
+![Nagios-compatible Plugins for Linux](nagios-plugins-linux-logo-128.png) Nagios-compatible Plugins for Linux&nbsp;
+------------------
+#### A suite of Nagios-compatible Plugins for monitoring Linux hosts.
 
 ![Release Status](https://img.shields.io/badge/status-stable-brightgreen.svg)
-[![License](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](https://spdx.org/licenses/GPL-3.0.html)
-[![Download Latest Release](https://img.shields.io/badge/download-latest--tarball-blue.svg)](https://github.com/madrisan/nagios-plugins-linux/releases/download/v29/nagios-plugins-linux-29.tar.xz)
-[![Say Thanks!](https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg)](https://saythanks.io/to/davide.madrisan@gmail.com)
+[![License](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](https://spdx.org/licenses/GPL-3.0-only.html)
+[![Download Latest Release](https://img.shields.io/badge/download-latest--tarball-blue.svg)](https://github.com/madrisan/nagios-plugins-linux/releases/download/v30/nagios-plugins-linux-30.tar.xz)
+[![Say Thanks!](https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg)](https://saythanks.io/to/madrisan)
 
 [![Build Status](https://travis-ci.org/madrisan/nagios-plugins-linux.svg?branch=master)](https://travis-ci.org/madrisan/nagios-plugins-linux)
 [![Coverity Scan Build Status](https://img.shields.io/coverity/scan/3779.svg)](https://scan.coverity.com/projects/madrisan-nagios-plugins-linux)
 [![Total Alerts](https://img.shields.io/lgtm/alerts/g/madrisan/nagios-plugins-linux.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/madrisan/nagios-plugins-linux/alerts/)
 [![Language Grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/madrisan/nagios-plugins-linux.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/madrisan/nagios-plugins-linux/context:cpp)
 
----------------
+<a href='https://ko-fi.com/K3K57TH3' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://az743702.vo.msecnd.net/cdn/kofi2.png?v=0' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+<a href='http://amzn.eu/8axPDQ1'><img height='36' src='http://png-1.findicons.com/files/icons/2229/social_media_mini/48/amazon.png' border='0' alt='Wish List at Amazon.fr' /></a>
 
-![alt tag](nagios-plugins-linux-logo-256.png)
-
-## About
-
-This package contains several binary plugins for monitoring (physical and virtual) Linux hosts with [Nagios](http://www.nagios.org/) and Nagios-compatible monitoring systems like [Icinga](https://icinga.com/learn/) and [Naemon](https://www.naemon.org/).
+*This package contains several binary plugins for monitoring (physical and virtual) Linux hosts with [Nagios](http://www.nagios.org/) and Nagios-compatible monitoring systems like [Icinga](https://icinga.com/learn/) and [Naemon](https://www.naemon.org/).*
 
 Here is the list of the available plugins:
 
@@ -29,6 +25,7 @@ Here is the list of the available plugins:
 * **check_cswch** - checks the total number of context switches across all CPUs
 * **check_docker** - checks the number of running docker containers (:warning: *alpha*, requires *libcurl* version 7.40.0+)
 * **check_fc** - monitors the status of the fiber status ports
+* **check_filecount** - checks the number of files found in one or more directories :new:
 * **check_ifmountfs** - checks whether the given filesystems are mounted
 * **check_intr** - monitors the total number of system interrupts
 * **check_iowait** - monitors the I/O wait bottlenecks
@@ -93,10 +90,11 @@ to get a static code analysis report (for developers only).
 
 _Note_: you can also pass the _experimental_ option `--enable-libprocps` to
 `configure` for getting the informations about memory and swap usage through
-the API of the library `libprocps.so.5`
+the API of the library `libproc-2.so`
 ([procps newlib](https://gitlab.com/procps-ng/procps/tree/newlib)).
-This library is still under active development and no stable version has
-been released yet. 
+This library, as stated in the official notes, is probably not ready for the
+main path of most distributions, but its first version (v4.0.0) has been
+released on 22 March 2022 as a sort of release preview.
 
 ## Supported Platforms and Linux distributions
 
@@ -109,38 +107,36 @@ This package is known to compile with:
 * gcc 4.4 (RHEL6 / CentOS 6),
 * gcc 4.8 (RHEL7 / CentOS 7),
 * gcc 3.x, 5.1, 5.3, 6.3, 7, 8, 9, 10, 11 (openmamba GNU/Linux, Debian 8+, Fedora 25+),
-* clang 3.7, 3.8, 4.9, 5, 6, 7, 8, 10, 11, 12 (openmamba GNU/Linux, Fedora 25+),
+* clang 3.7, 3.8, 4.9, 5, 6, 7, 8, 10, 11, 12, 13 (openmamba GNU/Linux, Fedora 25+),
 
 List of the Linux kernels that have been successfully tested:
 * 2.6.18, 2.6.32,
 * 3.10, 3.14, 3.18,
 * 4.2, 4.4, 4,9, 4.14, 4.15, 4.16, 4.19
-* 5.6, 5.7, 5.8, 5.12
+* 5.6, 5.7, 5.8, 5.12-5.16
 
 The Nagios Plugins Linux are regularly tested on
  * Alpine Linux (musl libc),
- * Debian, CentOS, Fedora, Gentoo, and Ubuntu (GNU C Library (glibc)).
+ * Debian, Fedora, Gentoo, and Ubuntu (GNU C Library (glibc)).
 
-## Alpine, CentOS/RHEL, Debian, and Fedora Packages
+## Alpine, CentOS Stream, Debian, and Fedora Packages
 
 The `.apk`, `.rpm` and `.deb` packages for Alpine, CentOS/RHEL, Debian, and Fedora can be built using the following commands
 
-Command            | Distribution
------------------- | ------------
-Alpine 3.14        | `make -C packages alpine-3.14`
-Alpine 3.13        | `make -C packages alpine-3.13`
-Alpine 3.12        | `make -C packages alpine-3.12`
-CentOS 5           | `make -C packages centos-5`
-CentOS 6           | `make -C packages centos-6`
-CentOS 7           | `make -C packages centos-7`
-CentOS 8           | `make -C packages centos-8`
-Debian 8 (Jessie)  | `make -C packages debian-jessie`
-Debian 9 (Stretch) | `make -C packages debian-stretch`
-Debian 10 (Buster) | `make -C packages debian-buster`
-Fedora 32          | `make -C packages fedora-32`
-Fedora 33          | `make -C packages fedora-33`
-Fedora 34          | `make -C packages fedora-34`
-Fedora Rawhide     | `make -C packages fedora-rawhide`
+Command              | Distribution
+-------------------- | ------------
+Alpine 3.13          | `make -C packages alpine-3.13`
+Alpine 3.14          | `make -C packages alpine-3.14`
+Alpine 3.15          | `make -C packages alpine-3.15`
+CentOS Stream 8      | `make -C packages centos-stream-8`
+CentOS Stream 9      | `make -C packages centos-stream-9`
+Debian 9 (Stretch)   | `make -C packages debian-stretch`
+Debian 10 (Buster)   | `make -C packages debian-buster`
+Debian 11 (Bullseye) | `make -C packages debian-bullseye`
+Fedora 34            | `make -C packages fedora-34`
+Fedora 35            | `make -C packages fedora-35`
+Fedora 36            | `make -C packages fedora-36`
+Fedora Rawhide       | `make -C packages fedora-rawhide`
 
 in the root source folder.
 The building process requires the _Docker_ software containerization platform running on your system, and an internet connection to download the Docker images of the operating systems you want to build the packages for.
