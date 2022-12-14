@@ -1,4 +1,4 @@
-%global version          2.27.0
+%global version          2.57.0
 %global release          0
 %global sourcename       check_ssl_cert
 %global packagename      nagios-plugins-check_ssl_cert
@@ -22,7 +22,7 @@ BuildRoot: %{_tmppath}/%{packagename}-%{version}-%{release}-root-%(%{__id_u} -n)
 URL:       https://github.com/matteocorti/check_ssl_cert
 Source:    https://github.com/matteocorti/check_ssl_cert/releases/download/v%{version}/check_ssl_cert-%{version}.tar.gz
 
-Requires:  nagios-plugins expect perl(Date::Parse) bc
+Requires:  nagios-plugins expect perl(Date::Parse) bc curl openssl file
 
 %description
 A shell script (that can be used as a Nagios plugin) to check an SSL/TLS connection
@@ -54,6 +54,97 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Sun Dec   4 2022 Matteo Corti <matteo@corti.li> - 2.57.0-0
+- Updated to 2.57.0
+
+* Wed Nov  30 2022 Matteo Corti <matteo@corti.li> - 2.56.0-0
+- Updated to 2.56.0
+
+* Fri Nov  25 2022 Matteo Corti <matteo@corti.li> - 2.55.0-0
+- Updated to 2.55.0
+
+* Thu Oct  20 2022 Matteo Corti <matteo@corti.li> - 2.54.0-0
+- Updated to 2.54.0
+
+* Wed Oct  19 2022 Matteo Corti <matteo@corti.li> - 2.53.0-0
+- Updated to 2.53.0
+
+* Thu Oct   6 2022 Matteo Corti <matteo@corti.li> - 2.52.0-0
+- Updated to 2.52.0
+
+* Thu Oct   6 2022 Matteo Corti <matteo@corti.li> - 2.51.0-0
+- Updated to 2.51.0
+
+* Thu Oct   6 2022 Matteo Corti <matteo@corti.li> - 2.50.0-0
+- Updated to 2.50.0
+
+* Tue Sep  27 2022 Matteo Corti <matteo@corti.li> - 2.49.0-0
+- Updated to 2.49.0
+
+* Sat Sep  24 2022 Matteo Corti <matteo@corti.li> - 2.48.0-0
+- Updated to 2.48.0
+
+* Fri Sep  23 2022 Matteo Corti <matteo@corti.li> - 2.47.0-0
+- Updated to 2.47.0
+
+* Tue Sep  20 2022 Matteo Corti <matteo@corti.li> - 2.46.0-0
+- Updated to 2.46.0
+
+* Mon Sep  19 2022 Matteo Corti <matteo@corti.li> - 2.45.0-0
+- Updated to 2.45.0
+
+* Tue Sep  13 2022 Matteo Corti <matteo@corti.li> - 2.44.0-0
+- Updated to 2.44.0
+
+* Fri Sep   9 2022 Matteo Corti <matteo@corti.li> - 2.43.0-0
+- Updated to 2.43.0
+
+* Tue Sep   6 2022 Matteo Corti <matteo@corti.li> - 2.42.0-0
+- Updated to 2.42.0
+
+* Thu Sep   1 2022 Matteo Corti <matteo@corti.li> - 2.41.0-0
+- Updated to 2.41.0
+
+* Wed Aug  24 2022 Matteo Corti <matteo@corti.li> - 2.40.0-0
+- Updated to 2.40.0
+
+* Wed Aug  24 2022 Matteo Corti <matteo@corti.li> - 2.39.0-0
+- Updated to 2.39.0
+
+* Tue Aug  23 2022 Matteo Corti <matteo@corti.li> - 2.38.0-0
+- Updated to 2.38.0
+
+* Wed Aug  17 2022 Matteo Corti <matteo@corti.li> - 2.37.0-0
+- Updated to 2.37.0
+- Added dependencies to curl, openssl and file
+
+* Tue Jul  26 2022 Matteo Corti <matteo@corti.li> - 2.36.0-0
+- Updated to 2.36.0
+
+* Fri Jul  15 2022 Matteo Corti <matteo@corti.li> - 2.35.0-0
+- Updated to 2.35.0
+
+* Wed Jul   6 2022 Matteo Corti <matteo@corti.li> - 2.34.0-0
+- Updated to 2.34.0
+
+* Fri Jul   1 2022 Matteo Corti <matteo@corti.li> - 2.33.0-0
+- Updated to 2.33.0
+
+* Fri Jun  17 2022 Matteo Corti <matteo@corti.li> - 2.32.0-0
+- Updated to 2.32.0
+
+* Sat Jun  11 2022 Matteo Corti <matteo@corti.li> - 2.31.0-0
+- Updated to 2.31.0
+
+* Wed Jun   1 2022 Matteo Corti <matteo@corti.li> - 2.30.0-0
+- Updated to 2.30.0
+
+* Wed May  25 2022 Matteo Corti <matteo@corti.li> - 2.29.0-0
+- Updated to 2.29.0
+
+* Wed May   4 2022 Matteo Corti <matteo@corti.li> - 2.28.0-0
+- Updated to 2.28.0
+
 * Thu Apr  28 2022 Matteo Corti <matteo@corti.li> - 2.27.0-0
 - Updated to 2.27.0
 
@@ -69,7 +160,7 @@ rm -rf $RPM_BUILD_ROOT
 * Fri Mar  25 2022 Matteo Corti <matteo@corti.li> - 2.23.0-0
 - Updated to 2.23.0
 
-* Thu Mar  11 2022 Matteo Corti <matteo@corti.li> - 2.22.0-0
+* Fri Mar  11 2022 Matteo Corti <matteo@corti.li> - 2.22.0-0
 - Updated to 2.22.0
 
 * Sun Feb  20 2022 Matteo Corti <matteo@corti.li> - 2.21.0-0

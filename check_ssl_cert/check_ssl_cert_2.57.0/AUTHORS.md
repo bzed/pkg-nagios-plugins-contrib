@@ -3,7 +3,7 @@
 Maintainer: [Matteo Corti](https://github.com/matteocorti) <[matteo@corti.li](mailto:matteo@.corti.li)>
 
 * Many thanks to Kenny McCormack for his help on comp.unix.shell on how to implement a timeout
-* Many thanks to Dan Wallis for several patches and fixes (see the Changelog)
+* Many thanks to Dan Wallis for several patches and fixes (see the [Changelog](Changelog))
 * Many thanks to Tuomas Haarala for the ```-P``` option patch to check TLS certs using other protocols
 * Many thanks to Marcus Rejås for the ```-N``` and ```-n``` patches
 * Many thanks to Marc Fournier for
@@ -55,7 +55,7 @@ Maintainer: [Matteo Corti](https://github.com/matteocorti) <[matteo@corti.li](ma
 * Many thanks to Kosta Velikov for the ```grep``` patch
 * Many thanks to Vojtech Horky for the [OpenSSL](https://www.openssl.org) 1.1 patch
 * Many thanks to [Nicolas Lafont](https://github.com/ManicoW) for the Common Name fix
-* Many thanks to [d7415](https://github.com/d7415 for the ```-help``` patch
+* Many thanks to [d7415](https://github.com/d7415) for the ```-help``` patch
 * Many thanks to [Łukasz Wąsikowski](https://github.com/IdahoPL) for the [curl](https://curl.se) and date display patches
 * Many thanks to [booboo-at-gluga-de](https://github.com/booboo-at-gluga-de) for the CRL patch
 * Many thanks to [Georg](https://github.com/gbotti) for the fingerprint patch
@@ -100,12 +100,13 @@ Maintainer: [Matteo Corti](https://github.com/matteocorti) <[matteo@corti.li](ma
 * Many thanks to [skanx](https://github.com/skanx) for the ```--not-issued-by``` output patch
 * Many thanks to [Zadkiel](https://github.com/aslafy-z) for
   * the ```--version``` patch and
-  *  the ```--skip-element``` patch
+  * the ```--skip-element``` patch
 * Many thanks to [Marcel Burkhalter](https://github.com/explorer69) for the custom HTTP header patch.
 * Many thanks to [Peter Newman](https://github.com/peternewman) for
   * the timeout documentation patch and
   * the issuers patch
   * the PCKS12 extension patch
+  * the spelling fixes and checks
   * and several other fixes
 * Many thanks to [cbiedl](https://github.com/cbiedl) for the proxy patch
 * Many thanks to [Robin Schneider](https://github.com/ypid-geberit) for the ```--long-output``` patch
@@ -136,3 +137,11 @@ Maintainer: [Matteo Corti](https://github.com/matteocorti) <[matteo@corti.li](ma
 * Many thanks to [Kim Jahn](https://github.com/mookie-) for
   * the conversion typo and
   * the underscore fixes
+* Many thanks to [Naveen](https://github.com/naveensrinivasan) for the GitHub actions permissions fix
+* Many thanks to [Varac](https://github.com/varac) for the Prometheus fix
+* Many thanks to [PSSGCSim](https://github.com/PSSGCSim) for the Prometheus fix
+* Many thanks to [Dick Visser](https://github.com/dnmvisser) for the user agent fix
+* Many thanks to [claudioth](https://github.com/claudioth) for the Perl date computation fix
+* Many thanks to [Lukas Tribus](https://github.com/lukastribus) for the Python 3 patch
+* Many thanks to [Peter](https://github.com/Peter2121) for the FreeBSD jail patch
+* Many thanks to [Marcel Burkhalter](https://github.com/marcel-burkhalter) for the path check

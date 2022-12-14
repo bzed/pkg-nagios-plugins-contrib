@@ -1,3 +1,195 @@
+2022-11-30  Marcel Burkhalter <marcel.burkhalter@weareplanet.com>
+
+        * check_ssl_cert (main): Add command line argument to set the PATH variable
+
+2022-11-30  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (check_ocsp): ignoring OCSP errors if specified from the command line
+
+2022-10-24  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (get_tds_certificate): Adding the timeout check on the TDS checks
+
+2022-10-18  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (main): Print the $PATH in debug mode
+
+2022-10-06  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert: additional chain checks (no root attributes and handling of double certificates
+        * check_ssl_cert (check_attr): fixed a bug in the chain checks
+
+2022-09-27  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (main): if nmap is not found the plugin continues
+        * check_ssl_cert (parse_command_line_options): fixing an infinite loop (not shifting the command line arguments)
+
+2022-09-24  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (add_unrequired_header): Fixing #413
+
+2022-09-23  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (check_attr): use only integers for the certificate max duration of 13 months
+        * check_ssl_cert (main): read options from a configuration file
+
+2022-09-20  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (check_attr): checking the maximum validity only for files or HTTPS
+        * check_ssl_cert (check_attr): added --maximum-validity to force the maximum validity check
+
+2022-09-19  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (check_attr): checking the maximum certificate validity
+
+2022-09-15  Matteo Corti  <matteo@corti.li>
+
+        * test/unit_tests.sh: removed stray \ from regexes
+        * check_ssl_cert: removed stray \ from regexes
+
+2022-09-13  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert: added --grep-bin to specify the grep binary to be used
+
+2022-09-11  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (usage): default port in the help text
+
+2022-09-09  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (check_security_header): added --debug-headers to store the HTTP headers in the headers.txt file
+
+2022-09-08  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (main): curl ignores TLS problems while retrieving headers
+        * check_ssl_cert (main): curl uses --resolve if specified when retrieving HTTP headers
+
+2022-09-07  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (parse_command_line_options): added an optional path for the X-Frame-Options header retrieval
+
+2022-09-06  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (main): Added --require-x-frame-options to check for the X-Frame-Options header
+        * check_ssl_cert (main): Disallowing --require-hsts and --require-x-frame-options if no HTTPS is used
+        * check_ssl_cert (extract_cert_attribute): Fixed a bug when parsing certificates without purpose
+
+2022-09-02  Matteo Corti  <matteo@corti.li>
+
+        * Makefile (CITATION.cff): rebuild if a new version was specified
+        * check_ssl_cert (main): disabling nmap checks if a proxy is specified
+
+2022-09-01  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (main): follow redirects when checking HSTS
+        * check_ssl_cert (main): Add verbose message for HSTS
+
+2022-08-31  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (fetch_certificate): parsing 'excessive message size' errors
+
+2022-08-25  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (extract_cert_attribute): Parse UTF-8 attributes (e.g., Location, ...)
+
+2022-08-24  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (main): nmap is now always required
+        * check_ssl_cert (main): new formatting option %SIGALGO%
+        * check_ssl_cert (main): new command line argument --default-format
+        * check_ssl_cert (extract_cert_attribute): fixed the parsing of the signature algorithm
+
+2022-08-23  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (main): Fixed the handling of --ignore-connection-state
+
+2022-08-17  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (main): Check for HSTS
+
+2022-07-26  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (usage): New option --user-agent to specify the user agent used by curl and by OpenSSL for HTTPS connections
+
+2022-07-22  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (exec_with_timeout): Better error output by timeouts
+
+2022-07-15  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (fetch_certificate): Fetching 'no route to host' errors
+
+2022-07-06  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (main): if x509 -ext is not supported no info on the cert purpose is extracted
+
+2022-07-04  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (main): Add shell version to the debug info
+
+2022-07-01  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (main): DNSSEC checks
+
+2022-06-29  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (check_attr): some more informational output
+
+2022-06-21  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (fetch_certificate): Better error message if the certificate file is not readable
+
+2022-06-17  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (main): Added checks for the certificate purpose
+
+2022-06-15  Matteo Corti  <matteo@corti.li>
+
+        * test/unit_tests.sh (setUp): test completion time estimation
+
+2022-06-14  Matteo Corti  <matteo@corti.li>
+
+        * test/unit_tests.sh (setUp): printing the test number
+
+        * check_ssl_cert (main): fixed a problem with the caching of IPv6 hosts
+
+2022-06-11  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert: fixed a problem with Prometheus output
+
+2022-06-03  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (main): X.509 version printed with --info
+
+2022-06-01  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (check_cert_end_date): Applied patch for the missing quotes to the prometheus output
+
+2022-05-27  Matteo Corti  <matteo@corti.li>
+
+        * test/unit_tests.sh: Added the possibility to set the debug mode for all the tests
+
+2022-05-26  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (main): added default ports for XMPP
+
+2022-05-25  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (parse_command_line_options): Support for DTLS
+        * check_ssl_cert (parse_command_line_options): Check if two protocols are specified at the same time
+
+2022-05-10  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert.completion (_check_ssl_cert): added the missing --check-ssl-labs option
+
+2022-05-05  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (main): using nmap instead of netcat
+
+2022-05-04  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (main): Using netcat to check connections
+
 2022-04-28  Matteo Corti  <matteo@corti.li>
 
         * check_ssl_cert (main): Using --script +ssl-enum-ciphers for older versions of nmap
@@ -35,7 +227,7 @@
 
 2022-03-15  Matteo Corti  <matteo@corti.li>
 
-        * check_ssl_cert: status UKNOWN only for plugin-internal problems (see https://nagios-plugins.org/doc/guidelines.html#AEN78)
+        * check_ssl_cert: status UNKNOWN only for plugin-internal problems (see https://nagios-plugins.org/doc/guidelines.html#AEN78)
 
 2022-03-14  Matteo Corti  <matteo@corti.li>
 
@@ -114,11 +306,11 @@
 
 2021-12-05 Bernd Stroessenreuther <booboo@gluga.de>
 
-	* check_ssl_cert: improve readability of --help by wrapping some very long lines
+        * check_ssl_cert: improve readability of --help by wrapping some very long lines
 
 2021-12-03  Matteo Corti  <corti@ubuntu-2110>
 
-	* check_ssl_cert (main): IPv6 checks fixed if ipconfig is not available
+        * check_ssl_cert (main): IPv6 checks fixed if ipconfig is not available
 
 2021-11-26  Matteo Corti  <matteo@corti.li>
 
@@ -136,8 +328,8 @@
 
 2021-11-11  Matteo Corti  <matteo@corti.li>
 
-	* check_ssl_cert (main): Fixed a problem with newlines in variable on some systems (e.g., Fedora)
-    * check_ssl_cert (fetch_certificate): Fixed a problem with OpenSSL 3.0.0 and debug mode with certain servers
+        * check_ssl_cert (main): Fixed a problem with newlines in variable on some systems (e.g., Fedora)
+        * check_ssl_cert (fetch_certificate): Fixed a problem with OpenSSL 3.0.0 and debug mode with certain servers
 
 2021-11-11  Matteo Corti  <matteo@corti.li>
 
@@ -145,8 +337,8 @@
 
 2021-11-09  Matteo Corti  <matteo@corti.li>
 
-	* check_ssl_cert (fetch_certificate): Parsing of OpenSSL 3 messages
-	* check_ssl_cert (fetch_certificate): Ignoring legacy renegotiation if --ignore-tls-renegotiation was specified
+        * check_ssl_cert (fetch_certificate): Parsing of OpenSSL 3 messages
+        * check_ssl_cert (fetch_certificate): Ignoring legacy renegotiation if --ignore-tls-renegotiation was specified
 
 2021-10-25  Matteo Corti  <matteo@corti.li>
 

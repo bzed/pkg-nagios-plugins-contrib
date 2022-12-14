@@ -1,7 +1,7 @@
 .\" Process this file with
 .\" groff -man -Tascii check_ssl_cert.1
 .\"
-.TH "check_ssl_cert" 1 "April, 2022" "2.27.0" "USER COMMANDS"
+.TH "check_ssl_cert" 1 "December, 2022" "2.57.0" "USER COMMANDS"
 .SH NAME
 check_ssl_cert \- checks the validity of X.509 certificates
 .SH SYNOPSIS
@@ -14,7 +14,7 @@ A shell script (that can be used as a Nagios/Icinga plugin) to check an SSL/TLS 
 .SH ARGUMENTS
 .TP
 .BR "-f,--file" " file"
-Local file path or URI. With -f you can not only pass a x509 certificate file but also a certificate revocation list (CRL) to check the validity period
+Local file path or URI. With -f you can not only pass a x509 certificate file but also a certificate revocation list (CRL) to check the validity period or a Java KeyStore file
 .TP
 .BR "-H,--host" " host"
 server
@@ -38,11 +38,17 @@ Use client certificate to authenticate
 .BR "-c,--critical" " days"
 Minimum number of days a certificate has to be valid to issue a critical status. Can be a floating point number, e.g., 0.5. Default: 15
 .TP
+.BR "   --check-chain"
+The certificate chain cannot contain double or root certificates
+.TP
 .BR "   --check-ciphers" " grade"
 Check the offered ciphers
 .TP
 .BR "   --check-ciphers-warnings"
 Critical if nmap reports a warning for an offered cipher
+.TP
+.BR "   --check-http-headers"
+Check the HTTP headers for best practices
 .TP
 .BR "   --check-ssl-labs-warn grade"
 SSL Labs grade on which to warn
@@ -50,20 +56,17 @@ SSL Labs grade on which to warn
 .BR "   --clientpass" " phrase"
 Set passphrase for client certificate.
 .TP
+.BR "   --configuration" " file"
+Read options from the specified file
+.TP
 .BR "   --crl"
 Check revocation via CRL (requires --rootcert-file)
 .TP
 .BR "   --curl-bin" " path"
 Path of the curl binary to be used
 .TP
-.BR "   --curl-user-agent" " string"
-User agent that curl shall use to obtain the issuer cert
-.TP
 .BR "   --custom-http-header" " string"
 Custom HTTP header sent when getting the cert example: 'X-Check-Ssl-Cert: Foobar=1'
-.TP
-.BR "-d,--debug"
-Produce debugging output (can be specified more than once)
 .TP
 .BR "   --dane"
 Verify that valid DANE records exist (since OpenSSL 1.1.0)
@@ -86,17 +89,35 @@ Verify that a valid DANE-EE(3) SPKI(1) SHA2-512(1) TLSA record exists
 .BR "   --date" " path"
 Path of the date binary to be used
 .TP
+.BR "-d,--debug"
+Produce debugging output (can be specified more than once)
+.TP
 .BR "   --debug-cert"
 Store the retrieved certificates in the current directory
 .TP
 .BR "   --debug-file" " file"
 Write the debug messages to file
 .TP
+.BR "   --debug-headers"
+Store the retrieved HTLM headers in the headers.txt file
+.TP
 .BR "   --debug-time"
 Write timing information in the debugging output
 .TP
+.BR "   --default-format"
+Print the default output format and exit
+.TP
 .BR "   --dig-bin" " path"
 Path of the dig binary to be used
+.TP
+.BR "   --dtls"
+Use the DTLS protocol
+.TP
+.BR "   --dtls1"
+Use the DTLS protocol 1.0
+.TP
+.BR "   --dtls1_2"
+Use the DTLS protocol 1.2
 .TP
 .BR "-e,--email" " address"
 Pattern to match the email address contained in the certificate
@@ -127,10 +148,6 @@ Format output template on success, for example: '%SHORTNAME% OK %CN% from %CA_IS
 .br
 List of possible variables:
 .br
-- %HOST%
-.br
-- %PORT%
-.br
 - %CA_ISSUER_MATCHED%
 .br
 - %CHECKEDNAMES%
@@ -143,18 +160,32 @@ List of possible variables:
 .br
 - %DYSPLAY_CN%
 .br
+- %HOST%
+.br
+- %OCSP_EXPIRES_IN_HOURS%
+.br
 - %OPENSSL_COMMAND%
+.br
+- %PORT%
 .br
 - %SELFSIGNEDCERT%
 .br
 - %SHORTNAME%
 .br
-- %OCSP_EXPIRES_IN_HOURS%
+- %SIGALGO%
 .br
 - %SSL_LABS_HOST_GRADE%
+.br
+See --default-format for the default
+.TP
+.BR "   --grep-bin" " path"
+Path of the grep binary to be used
 .TP
 .BR "-h,--help,-?"
 This help message
+.TP
+.BR "   --http-headers-path" " path"
+The path to be used to fetch HTTP headers
 .TP
 .BR "   --http-use-get"
 Use GET instead of HEAD (default) for the HTTP related checks
@@ -176,6 +207,9 @@ Do not complain if the CN does not match the host name
 .TP
 .BR "   --ignore-incomplete-chain"
 Do not check chain integrity
+.TP
+.BR "   --ignore-maximum-validity"
+Ignore the certificate maximum validity
 .TP
 .BR "   --ignore-ocsp"
 Do not check revocation with OCSP
@@ -204,11 +238,14 @@ Force IP version 4 or 6
 .BR "   --info"
 Print certificate information
 .TP
-.BR "     --init-host-cache"
+.BR "   --init-host-cache"
 Initialize the host cache
 .TP
 .BR "   --issuer-cert-cache" " dir"
 Directory where to store issuer certificates cache
+.TP
+.BR "   --jks-alias" " alias"
+Alias name of the Java KeyStore entry (requires --file)
 .TP
 .BR "-K,--clientkey" " path"
 Use client certificate key to authenticate
@@ -222,6 +259,9 @@ Valid attributes are: enddate, startdate, subject, issuer, modulus, serial, hash
 .TP
 .BR "-m,--match" " name"
 Pattern to match the CN or AltName (can be specified multiple times)
+.TP
+.BR "   --maximum-validity" " [days]"
+The maximum validity of the certificate must not exceed 'days' (default 397). This check is automatic for HTTPS
 .TP
 .BR "   --nmap-bin" " path"
 Path of the nmap binary to be used
@@ -266,7 +306,7 @@ Critical if the certificate validity is longer than the specified period
 Pattern to match the organization of the certificate
 .TP
 .BR "   --ocsp-critical" " hours"
-Ninimum number of hours an OCSP response has to be valid to issue a critical status
+Minimum number of hours an OCSP response has to be valid to issue a critical status
 .TP
 .BR "    --ocsp-warning" " hours"
 Minimum number of hours an OCSP response has to be valid to issue a warning status
@@ -275,24 +315,30 @@ Minimum number of hours an OCSP response has to be valid to issue a warning stat
 Path of the openssl binary to be used
 .TP
 .BR "-p,--port" " port"
-TCP port
+TCP port (default 443)
 .TP
 .BR "--precision" " digits"
 Number of decimal places for durations: defaults to 0 if critical or warning are integers, 2 otherwise
 .TP
 .BR "-P,--protocol" " protocol"
-Use the specific protocol: ftp, ftps, http, https (default), h2 (HTTP/2), imap, imaps, irc, ircs, ldap, ldaps, mysql, pop3, pop3s, postgres, sieve, smtp, smtps, xmpp, xmpp-server, ftp, imap, irc, ldap, pop3, postgres, sieve, smtp: switch to TLS using StartTLS.
-.br
+Use the specific protocol: dns, ftp, ftps, http, https (default), h2 (HTTP/2), imap, imaps, irc, ircs, ldap, ldaps, mysql, pop3, pop3s, postgres, sieve, smtp, smtps, tds, xmpp, xmpp-server, ftp, imap, irc, ldap, pop3, postgres, sieve, smtp: switch to TLS using StartTLS.
+.BR
 These protocols switch to TLS using StartTLS: ftp, imap, irc, ldap, mysql, pop3, smtp.
+.TP
+.BR "   --path" " path"
+Set the PATH variable to 'path'
 .TP
 .BR "   --password" " source"
 Password source for a local certificate, see the PASS PHRASE ARGUMENTS section openssl(1)
-TP
+.TP
 .BR "   --prometheus"
 Generate Prometheus/OpenMetrics output
 .TP
 .BR "   --proxy" " proxy"
 Set http_proxy and the s_client -proxy option
+.TP
+.BR "   --python-bin" " path"
+Path of the python binary to be used
 .TP
 .BR "-q,--quiet"
 Do not produce any output
@@ -302,6 +348,15 @@ Root certificate or directory to be used for certificate validation (passed to o
 .TP
 .BR "   --require-client-cert" " [list]"
 The server must accept a client certificate. 'list' is an optional comma separated list of expected client certificate CAs
+.TP
+.BR "   --require-dnssec"
+Require DNSSEC
+.TP
+.BR "   --require-http-header" " header"
+Require the specified HTTP header (e.g., X-Frame-Options)
+.TP
+.BR "   --require-no-http-header" " header"
+Require the absence of the specified HTTP header (e.g., X-Powered-By)
 .TP
 .BR "   --require-no-ssl2"
 Critical if SSL version 2 is offered
@@ -317,6 +372,24 @@ Critical if TLS 1.1 is offered
 .TP
 .BR "   --require-ocsp-stapling"
 Require OCSP stapling
+.TP
+.BR "    --require-purpose" " usage"
+Require the specified key usage (can be specified more then once)
+.TP
+.BR "    --require-purpose-critical"
+The key usage must be critical
+.TP
+.BR "    --require-security-header" " header"
+Require the specified HTTP security header (e.g., X-Frame-Options)
+.TP
+.BR "    --require-security-headers"
+Require all the HTTP security headers:
+  Content-Security-Policy
+  Permissions-Policy
+  Referrer-Policy
+  strict-transport-security
+  X-Content-Type-Options
+  X-Frame-Options
 .TP
 .BR "   --resolve" " ip"
 Provide a custom IP address for the specified host
@@ -374,6 +447,9 @@ Force TLS version 1.3
 .BR "-u,--url" " URL"
 HTTP request URL
 .TP
+.BR "   --user-agent" " string"
+User agent that shall be used for HTTPS connections
+.TP
 .BR "-v,--verbose"
 Verbose output (can be specified more than once)
 .TP
@@ -396,41 +472,64 @@ Force IPv6
 .BR "   --altnames"
 Match the pattern specified in -n with alternate names too (enabled by default)
 .TP
-.BR "-d,--days" " days"
-Minimum number of days a certificate has to be valid (see --critical and --warning)
-.TP
 .BR "-n,--cn" " name"
 Pattern to match the CN or AltName (can be specified multiple times)
+.TP
+.BR "   --curl-user-agent" " string"
+User agent that curl shall use to obtain the issuer cert
+.TP
+.BR "-d,--days" " days"
+Minimum number of days a certificate has to be valid (see --critical and --warning)
 .TP
 .BR "-N,--host-cn"
 Match CN with the host name (enabled by default)
 .TP
-.BR "--no_ssl2"
+.BR "   --no_ssl2"
 Disable SSLv2 (deprecated use --no-ssl2)
 .TP
-.BR "--no_ssl3"
+.BR "   --no_ssl3"
 Disable SSLv3 (deprecated use --no-ssl3)
 .TP
-.BR "--no_tls1"
+.BR "    --no_tls1"
 Disable TLSv1 (deprecated use --no-tls1)
 .TP
-.BR "--no_tls1_1"
+.BR "   --no_tls1_1"
 Disable TLSv1.1 (deprecated use --no-tls1_1)
 .TP
-.BR "--no_tls1_2"
+.BR "   --no_tls1_2"
 Disable TLSv1.1 (deprecated use --no-tls1_2)
 .TP
-.BR "--no_tls1_3"
+.BR "   --no_tls1_3"
 Disable TLSv1.1 (deprecated use --no-tls1_3)
 .TP
 .BR "   --ocsp"
 Check revocation via OCSP (enabled by default)
 .TP
+.BR "   --require-hsts"
+Require HTTP Strict Transport Security (deprecated use --require-security-header strict-transport-security)
+.TP
+.BR "    --require-security-headers-path" " path"
+the path to be used to fetch HTTP security headers
+.TP
 .BR "   --require-san"
 Require the presence of a Subject Alternative Name extension
 .TP
+.BR "   --require-x-frame-options [path]"
+Require the presence of the X-Frame-Options HTTP header. 'path' is the optional path to be used in the URL to check for the header (deprecated use --require-security-header X-Frame-Options and --require-security-headers-path path)
+.TP
 .BR "-S,--ssl" " version"
 Force SSL version (2,3) (see: --ssl2 or --ssl3)
+
+.SH CONFIGURATION
+
+Command line options can be specified in a configuration file (${HOME}/.check_ssl_certrc). For example
+
+  $ cat ${HOME}/.check_ssl_certrc
+  --verbose
+  --critical 20
+  --warning 40
+
+Options specified in the configuration file are read before processing the arguments and can be overridden.
 
 .SH NOTES
 If the host has multiple certificates and the installed openssl version supports the -servername option it is possible to specify the TLS SNI (Server Name Identificator) with the -N (or --host-cn) option.
