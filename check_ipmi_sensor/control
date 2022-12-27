@@ -1,5 +1,5 @@
 Recommends: freeipmi-tools, libipc-run-perl
-Version: 3.13
+Version: 3.14
 Uploaders: Bernd Zeimetz <bzed@debian.org>
 Homepage: http://www.thomas-krenn.com/en/oss/ipmi-plugin.html
 Description: IPMI Sensor Monitoring Plugin

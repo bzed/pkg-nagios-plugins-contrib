@@ -35,7 +35,7 @@ use Getopt::Long qw(:config no_ignore_case);
 use IPC::Run qw( run ); #interact with processes
 ################################################################################
 # set text variables
-our $check_ipmi_sensor_version = "3.13";
+our $check_ipmi_sensor_version = "3.14";
 
 sub get_version{
 	return <<EOT;
@@ -53,9 +53,9 @@ check_ipmi_sensor -H <hostname>
   [-O <FreeIPMI options>] [-b] [-T <sensor type(s)>] [-ST <SEL sensor type(s)>]
   [-x <sensor id>] [-xT <sensor type(s)>] [-xST <SEL sensor type(s)]
   [-i <sensor id>] [-o zenoss] [-D <protocol LAN version>] [-h] [-V]
-  [-fc <num_fans>] [--fru] [--nosel] [--selonly] [--seltail <count>]
-  [-sx|--selexclude <sel exclude file>] [-xx|--sexclude <exclude file>]
-  [-us|--unify-sensors <unify file>] [--nosudo [--nothresholds]
+  [-fc <num_fans>] [--fru] [--assettag] [--board] [--nosel] [--selonly] 
+  [--seltail <count>] [-sx|--selexclude <sel exclude file>] 
+  [-xx|--sexclude <exclude file>] [-us|--unify-sensors <unify file>] [--nosudo [--nothresholds]
   [--noentityabsent] [-s <ipmi-sensor output file>] [-h] [-V]
   [-v|-vv|-vvv]
 EOT
@@ -91,6 +91,10 @@ sub get_help{
        additional options for FreeIPMI. Useful for RHEL/CentOS 5.* with
        FreeIPMI 0.5.1 (this elder FreeIPMI version does not support config
        files).
+  [--seloptions <FreeIPMI SEL options>]
+       additional options for FreeIPMI SEL command. Useful for passing extra
+       options to the ipmi-sel call, e.g. --assume-system-event-records:
+       --seloptions '--assume-system-event-records'
   [-b]
        backward compatibility mode for FreeIPMI 0.5.* (this omits the FreeIPMI
        caching options --quiet-cache and --sdr-cache-recreate)
@@ -150,6 +154,18 @@ sub get_help{
        print the product serial number if it is available in the IPMI FRU data.
        For this purpose the tool 'ipmi-fru' is used. E.g.:
          IPMI Status: OK (9000096781)
+  [--assettag]
+       --fru is mandatory
+       print the assettag if it is available in the IPMI FRU data.
+         IPMI Status: OK (9000096781)
+         Asset Tag: 20200220
+  [--board]
+       --fru is mandatory
+       print additional motherboard informations if it is available in the IPMI FRU data.
+         IPMI Status: OK (9000096781)
+         Board Manufacturer: Supermicro
+         Board Product Name: X10DRW-iT
+         Board Serial Number: AB123456
   [--nosel]
        turn off system event log checking via ipmi-sel. If there are
        unintentional entries in SEL, use 'ipmi-sel --clear' or the -sx or -xST
@@ -328,6 +344,7 @@ sub get_sel{
 	my $verbosity = shift;
 	my @sel_sensor_types = @{(shift)};
 	my @exclude_sel_sensor_types = @{(shift)};
+	my @sel_options = @{(shift)};
 	my $sel;
 	if(-e '/usr/sbin/ipmi-sel'){
 		$sel = '/usr/sbin/ipmi-sel';
@@ -344,7 +361,12 @@ sub get_sel{
 	}
 	push @selcmd, '--output-event-state', '--interpret-oem-data', '--entity-sensor-names';
 	push @selcmd, '--sensor-types=' . join(',', @sel_sensor_types);
-	push @selcmd, '--exclude-sensor-types=' . join(',', @exclude_sel_sensor_types);
+	if(@exclude_sel_sensor_types){
+		push @selcmd, '--exclude-sensor-types=' . join(',', @exclude_sel_sensor_types);
+	}
+	if(@sel_options){
+		push @selcmd, @sel_options;
+	}
 	my $seloutput;
 	my $returncode;
 	run \@selcmd, '>&', \$seloutput;
@@ -372,7 +394,10 @@ sub parse_sel{
 	my $sel_xfile = shift;
 	my $sel_sensor_types = shift;
 	my $exclude_sel_sensor_types = shift;
-	my @seloutput = get_sel($selcmd, $verbosity, $sel_sensor_types, $exclude_sel_sensor_types);
+	my $sel_options = shift;
+	my @seloutput = get_sel($selcmd, $verbosity, $sel_sensor_types, $exclude_sel_sensor_types, $sel_options);
+	# Remove unknown SEL records as they break output, in verbose mode these unknown records are kept as debug output
+	@seloutput = grep(!/Unknown SEL Record Type:/, @seloutput);
 	@seloutput = map { [ map { s/^\s*//; s/\s*$//; $_; } split(m/\|/, $_) ] } @seloutput;
 	my $header = shift(@seloutput);
 
@@ -538,7 +563,7 @@ MAIN: {
 	my @ARGV_SAVE = @ARGV;#keep args for verbose output
 	my ($show_help, $show_version);
 	my ($ipmi_host, $ipmi_user, $ipmi_password, $ipmi_privilege_level, $ipmi_config_file, $ipmi_outformat);
-	my (@freeipmi_options, $freeipmi_compat);
+	my (@freeipmi_options, $freeipmi_compat, @sel_options);
 	my (@ipmi_sensor_types, @ipmi_exclude_sensor_types, @ipmi_xlist, @ipmi_ilist);
 	my (@ipmi_version);
 	my $ipmi_sensors = 0;#states to use ipmi-sensors instead of ipmimonitoring
@@ -550,7 +575,7 @@ MAIN: {
 	my @exclude_sel_sensor_types;
 	my $sel_issues_present = 0;
 	my $simulate = '';
-	my ($use_fru, $no_sel, $sel_only, $sel_tail, $no_sudo, $use_thresholds, $no_thresholds, $sel_xfile, $s_xfile, $s_ufile, $no_entity_absent);
+	my ($use_fru, $use_asset, $use_board, $no_sel, $sel_only, $sel_tail, $no_sudo, $use_thresholds, $no_thresholds, $sel_xfile, $s_xfile, $s_ufile, $no_entity_absent);
 
 	#read in command line arguments and init hash variables with the given values from argv
 	if ( !( GetOptions(
@@ -560,12 +585,15 @@ MAIN: {
 		'P|password=s'  	=> \$ipmi_password,
 		'L|privilege-level=s'	=> \$ipmi_privilege_level,
 		'O|options=s'		=> \@freeipmi_options,
+		'seloptions=s'		=> \@sel_options,
 		'b|compat'			=> \$freeipmi_compat,
 		'T|sensor-types=s'	=> \@ipmi_sensor_types,
 		'xT|exclude-sensor-types=s'	=> \@ipmi_exclude_sensor_types,
 		'ST|sel-sensor-types=s'	=> \@sel_sensor_types,
 		'xST|exclude-sel-sensor-types=s'	=> \@exclude_sel_sensor_types,
 		'fru'				=> \$use_fru,
+		'assettag'			=> \$use_asset,
+		'board'				=> \$use_board,
 		'nosel'				=> \$no_sel,
 		'selonly'			=> \$sel_only,
 		'seltail=s'			=> \$sel_tail,
@@ -642,6 +670,7 @@ MAIN: {
 	@ipmi_sensor_types = split(/,/, join(',', @ipmi_sensor_types));
 	@ipmi_exclude_sensor_types = split(/,/, join(',', @ipmi_exclude_sensor_types));
 	@sel_sensor_types = split(/,/, join(',', @sel_sensor_types));
+	@sel_options = split(/,/, join(',', @sel_options));
 	@exclude_sel_sensor_types = split(/,/, join(',', @exclude_sel_sensor_types));
 	@ipmi_xlist = split(/,/, join(',', @ipmi_xlist));
 	@ipmi_ilist = split(/,/, join(',', @ipmi_ilist));
@@ -657,7 +686,10 @@ MAIN: {
 	}
     # If -xST has not been set, set this array to empty.
 	if(!@exclude_sel_sensor_types){
-		@exclude_sel_sensor_types = ('');
+		@exclude_sel_sensor_types = ();
+	}
+	if(!@sel_options){
+		@sel_options = ();
 	}
 
 	# Define basic ipmi command
@@ -777,7 +809,7 @@ MAIN: {
 	}
 	my $seloutput;
 	if(!$no_sel){
-		$seloutput = parse_sel(\@selcmd, $verbosity, $sel_xfile, \@sel_sensor_types, \@exclude_sel_sensor_types);
+		$seloutput = parse_sel(\@selcmd, $verbosity, $sel_xfile, \@sel_sensor_types, \@exclude_sel_sensor_types, \@sel_options);
 	}
 	my $dcmioutput;
 	$dcmioutput = parse_dcmi(\@dcmicmd, $verbosity);
@@ -809,7 +841,9 @@ MAIN: {
 		print "$ipmioutput\n";
 		print "-> Execution of $IPMICOMMAND failed with return code $returncode.\n";
 		print "-> $IPMICOMMAND was executed with the following parameters:\n";
-		print "   ", join(' ', @getstatus), "\n";
+		my $getstatusoutput = join(' ', @getstatus);
+		$getstatusoutput =~ s/$ipmi_password/[HIDDEN]/;
+		print "   ", $getstatusoutput, "\n";
 		exit(3);
 	}
 	else{
@@ -821,7 +855,9 @@ MAIN: {
 			print "-> Your server seems to be powered off.";
 			print " (Execution of FreeIPMI returned an empty output or only 1 header row!)\n";
 			print "-> $IPMICOMMAND was executed with the following parameters:\n";
-			print "   ", join(' ', @getstatus), "\n";
+			my $getstatusoutput = join(' ', @getstatus);
+			$getstatusoutput =~ s/$ipmi_password/[HIDDEN]/;
+			print "   ", $getstatusoutput, "\n";
 			exit(3);
 		}
 		#print desired filter types
@@ -1012,14 +1048,44 @@ MAIN: {
 				}
 			}
 		}
-		#check for the FRU serial number
+		#check for the FRU serial number, asset tag and board information
 		my @server_serial;
 		my $serial_number;
+		my @server_asset;
+		my $asset_tag;
+		my @server_board;
+		my $board_manufacturer;
+		my $board_product;
+		my $board_serial;
 		if( $use_fru ){
 			@server_serial = grep(/Product Serial Number/,@fruoutput);
 			if(@server_serial){
-				$server_serial[0] =~ m/(\d+)/;
+				$server_serial[0] =~ m/\:\s+(.*)$/;
 				$serial_number = $1;
+			}
+			if ( $use_asset ){
+				@server_asset = grep(/Product Asset Tag/,@fruoutput);
+				if(@server_asset){
+					$server_asset[0] =~ m/\:\s+(.*)$/;
+					$asset_tag = $1;
+				}
+			}
+			if ( $use_board ){
+				@server_board = grep(/Board/,@fruoutput);
+				foreach ( @server_board) {
+					if ( $_ =~ /Board Manufacturer/ ){
+						$_ =~ m/Board Manufacturer\:\s+(.*)/;
+						$board_manufacturer = $1;
+					}
+					if ( $_ =~ /Board Product Name/ ){
+						$_ =~ m/Board Product Name\:\s+(.*)/;
+						$board_product = $1;
+					}
+					if ( $_ =~ /Board Serial Number/ ){
+						$_ =~ m/Board Serial Number\:\s+(.*)/;
+						$board_serial = $1;
+					}
+				}
 			}
 		}
 		if(defined($dcmioutput) && $dcmioutput ne ''){
@@ -1048,6 +1114,20 @@ MAIN: {
 		}
 		if( $use_fru && defined($serial_number)){
 			print " ($serial_number)";
+			if ($use_asset && defined($asset_tag)){
+				print "\nAsset Tag: $asset_tag";
+			}
+			if ( $use_board ){
+				if (defined($board_manufacturer)){
+					print "\nBoard Manufacturer: $board_manufacturer";
+				}
+				if (defined($board_product)){
+					print "\nBoard Product: $board_product";
+				}
+				if (defined($board_serial)){
+					print "\nBoard Serial: $board_serial";
+				}
+			}
 		}
 		print " | ", $perf if $perf ne '';
 		print "\n";
