@@ -9,7 +9,7 @@ Build-Depends: debhelper (>= 8.0.0),
                python3:any, python3-debian:native,
                quilt (>= 0.46-7),
                autotools-dev, flex, libmemcached-dev [!hurd-i386], pkg-config
-Standards-Version: 4.6.1
+Standards-Version: 4.6.2
 Vcs-Git: https://salsa.debian.org/nagios-team/nagios-plugins-contrib.git
 Vcs-Browser: https://salsa.debian.org/nagios-team/nagios-plugins-contrib
 Rules-Requires-Root: binary-targets
@@ -95,7 +95,7 @@ Description: Plugins for nagios compatible monitoring systems
      outside its normal parameters.
    * check_httpd_status (rev204): plugin checking Apache or lighttpd
      server-status page (using mod_status)
-   * check_ipmi_sensor (3.13): IPMI Sensor Monitoring Plugin
+   * check_ipmi_sensor (3.14): IPMI Sensor Monitoring Plugin
      Plugin to monitor the hardware status (fan speed, temperaturs,
      voltages, power usage, ...) of a server using IPMI.
    * check_libs_ng (0.1.0): plugin to report processes using outdated libraries
@@ -170,7 +170,7 @@ Description: Plugins for nagios compatible monitoring systems
      HOST-RESOURCES-MIB::hrSystemDate.0 used here returns 8 or 11 byte octets.
      SNMP translation needs to be switched off and to be converted the
      received SNMP data into readable strings.
-   * check_ssl_cert (2.27.0): plugin to check the CA and validity of an
+   * check_ssl_cert (2.57.0): plugin to check the CA and validity of an
      X.509 certificate
    * check_uptime (0.521): check_uptime returns uptime of a system
      in text (readable) format as well as in minutes for performance graphing.
