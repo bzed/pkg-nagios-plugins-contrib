@@ -1,0 +1,22 @@
+Index: pkg-nagios-plugins-contrib/dsa/checks/dsa-check-running-kernel
+===================================================================
+--- pkg-nagios-plugins-contrib.orig/dsa/checks/dsa-check-running-kernel
++++ pkg-nagios-plugins-contrib/dsa/checks/dsa-check-running-kernel
+@@ -133,7 +133,7 @@
+ 	hdroff="$4"
+ 
+ 	if ! which ${filter%% *} >/dev/null; then
+-		echo "UNKNOWN: filter command '$filter' missing, perhaps install xz-utils, lz4 or lzop?" >&2
++		echo "UNKNOWN: filter command '$filter' missing, perhaps install xz-utils, lz4, lzop, zstd?" >&2
+ 		exit $UNKNOWN
+ 	fi
+ 
+@@ -162,6 +162,8 @@
+ 	cat_vmlinux "$image" "\x02\x21\x4c\x18"  "lz4 -dc"  0
+ 	# lzo compressed image
+ 	cat_vmlinux "$image" "\x89\x4c\x5a\x4f\x00\x0d\x0a\x1a"  "lzop -dc"  0
++	# zstd compressed image
++	cat_vmlinux "$image" "\x28\xb5\x2f\xfd"  "zstd -dc"  0
+ 
+ 	echo "ERROR: Unable to extract kernel image." 2>&1
+ 	exit 1
