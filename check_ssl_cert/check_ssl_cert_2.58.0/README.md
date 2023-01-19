@@ -1,7 +1,7 @@
 # check\_ssl\_cert
 
  &copy; Matteo Corti, ETH Zurich, 2007-2012.
- &copy; Matteo Corti, 2007-2022.
+ &copy; Matteo Corti, 2007-2023.
 
  see [AUTHORS.md](AUTHORS.md) for the complete list of contributors
 
@@ -122,6 +122,8 @@ Options:
       --ignore-connection-problems [state] In case of connection problems
                                    returns OK or the optional state
       --ignore-exp                 Ignore expiration date
+      --ignore-http-headers        Ignore checks on HTTP headers with --all
+                                   and --all-local
       --ignore-host-cn             Do not complain if the CN does not match
                                    the host name
       --ignore-incomplete-chain    Do not check chain integrity
@@ -234,6 +236,9 @@ Options:
                                    certificate validation
       --rsa                        Signature algorithm selection: force RSA
                                    certificate
+      --security-level number      Set the security level to specified value
+                                   See SSL_CTX_set_security_level(3) for a
+                                   description of what each level means
    -s,--selfsigned                 Allow self-signed certificates
       --serial serialnum           Pattern to match the serial number
       --skip-element number        Skip checks on the Nth cert element (can
@@ -319,6 +324,7 @@ Deprecated options:
                                    (see: --ssl2 or --ssl3)
 
 Report bugs to https://github.com/matteocorti/check_ssl_cert/issues
+
 ```
 
 ## Configuration
