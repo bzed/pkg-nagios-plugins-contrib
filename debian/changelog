@@ -1,3 +1,9 @@
+nagios-plugins-contrib (38.20230125) UNRELEASED; urgency=medium
+
+  * 
+
+ -- Jan Wagner <waja@cyconet.org>  Tue, 24 Jan 2023 14:17:24 +0000
+
 nagios-plugins-contrib (38.20230124) unstable; urgency=medium
 
   [ Jan Wagner ]
