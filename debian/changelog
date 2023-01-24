@@ -1,4 +1,4 @@
-nagios-plugins-contrib (37.20230124) unstable; urgency=medium
+nagios-plugins-contrib (38.20230124) unstable; urgency=medium
 
   [ Jan Wagner ]
   * [1a0c089] Add missing ${misc:Depends} to Depends for nagios-plugins-contrib
