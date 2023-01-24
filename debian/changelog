@@ -1,8 +1,56 @@
-nagios-plugins-contrib (37.20211218) UNRELEASED; urgency=medium
+nagios-plugins-contrib (37.20230124) unstable; urgency=medium
 
-  * NOT RELEASED YET
+  [ Jan Wagner ]
+  * [1a0c089] Add missing ${misc:Depends} to Depends for nagios-plugins-contrib
+  * [561aca4] Update renamed lintian tag names in lintian overrides.
+  * [3b0a9df] check_email_delivery: Add --imaptls option by adding
+    d/p/check_email_delivery/add_imap_tls
+  * [3e195b1] check_ssl_cert: Update to 2.25.0
+  * [54c7d3e] check_multipath: Update to 0.4.12
+  * [6b70721] check_ssl_cert: Update to 2.26.0
+  * [7f92189] check_ssl_cert: Update to 2.27.0
+  * [cb9c950] check_email_delivery: Remove --imaptls option by dropping
+    d/p/check_email_delivery/add_imap_tls
 
- -- Jan Wagner <waja@cyconet.org>  Fri, 17 Dec 2021 16:19:17 +0100
+  [ Bas Couwenberg ]
+  * [fe29789] Bump Standards-Version to 4.6.1, no changes.
+
+  [ Jan Wagner ]
+  * [a3478bc] Update control informations
+  * [b73c1d2] check_mongodb: Update to latest version
+  * [49eb1d4] check_rbl: Update to 1.7.0, also updating default rbl server
+  * [f8eb092] d/p/check_rbl/additional_rbls: Refresh patch
+
+  [ Bas Couwenberg ]
+  * [cf88820] Add Rules-Requires-Root to control file.
+
+  [ Jan Wagner ]
+  * [36e4818] d/control: Drop 'pkg-' from Vcs-Headers
+
+  [ Peter Palfrader ]
+  * [dab3cb2] Update madrisan-nagios-plugins-linux to
+    ab90cb4e266e43fd6267369ae60100c9a9b13070 (2022-07-27)
+  * [7723017] make check_hpasm build not require automake-1.15
+
+  [ Jan Wagner ]
+  * [013199b] check_ssl_cert: Add missing bc as recommend
+  * [8b49bc1] d/control.in: Drop 'pkg-' from Vcs-Headers
+  * [42c937a] Update control informations
+  * [6eaab1d] Adding d/.gitlab-ci.yml and enable samlsa CI builds
+  * [66b679a] check_ssl_cert: Update to 2.57.0
+  * [4077e56] check_ipmi_sensor: Update to 3.14
+  * [51706b4] Update standards version to 4.6.2, no changes needed.
+
+  [ Joop Boonen ]
+  * [81024a4] Adding d/p/dsa/check_running_kernel_jammy_fix
+
+  [ Jan Wagner ]
+  * [7206c6d] check_ssl_cert: Update to 2.58.0 (Closes: #995374, #995372)
+  * [9d59f0b] Adding check_printer_health
+  * [7e5441c] Auto update of debian/control
+  * [36c198a] Auto update of debian/copyright
+
+ -- Jan Wagner <waja@cyconet.org>  Tue, 24 Jan 2023 13:16:09 +0000
 
 nagios-plugins-contrib (37.20211217) unstable; urgency=high
 
