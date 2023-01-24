@@ -1,0 +1,12 @@
+* 2022-12-14 1.1.0.2
+  remove trailing nul from JetDirect prtMarkerSuppliesDescription
+* 2020-03-02 1.1.0.1
+  bugfix in Konica Minolta, Printermib
+* 2019-09-06 1.1
+  use vendor mibs for Lexmark printers
+* 2018-03-29 1.0.1.1
+  convert spanish characters to ascii
+* 2017-11-08 1.0.1
+  output empty/full instead of percent
+* 2017-08-01 1.0
+  initial release

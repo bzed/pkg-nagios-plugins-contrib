@@ -1,0 +1,7 @@
+Homepage: http://labs.consol.de/lang/en/nagios/check_printer_health/
+Watch: http://labs.consol.de/lang/en/nagios/check_printer_health/ check_printer_health-([0-9.]+)\.tar\.gz
+Uploaders: Jan Wagner <waja@cyconet.org>
+Description: plugin which checks the health of snmp-enabled printers
+Build-Depends: autotools-dev
+Recommends: snmp
+Version: 1.1.0.2
