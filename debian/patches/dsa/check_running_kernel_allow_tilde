@@ -1,0 +1,11 @@
+--- a/dsa/checks/dsa-check-running-kernel
++++ b/dsa/checks/dsa-check-running-kernel
+@@ -207,7 +207,7 @@
+ 			if [ -x /usr/bin/lsb_release ] ; then
+ 				vendor=$(lsb_release -i -s)
+ 				if [ -n "$vendor" ] && [ "xDebian" != "x$vendor" ] ; then
+-					on_disk_version=$( echo $on_disk_version|sed -e "s/ ($vendor [[:alnum:]\.-]\+ [[:alnum:]\.-]\+)//")
++					on_disk_version=$( echo $on_disk_version|sed -e "s/ ($vendor [[:alnum:]\.~-]\+ [[:alnum:]\.~-]\+)//")
+ 				fi
+ 			fi
+ 			[ -z "$on_disk_version" ] || continue

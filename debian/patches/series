@@ -46,6 +46,7 @@ dsa/check_packages-inifile
 dsa/epn
 dsa/check_packages_,_fix
 dsa/check_running_kernel_jammy_fix
+dsa/check_running_kernel_allow_tilde
 check_cups/ParseDateDelta
 check_printer/epn
 check_nfsmounts/nfs4_support
