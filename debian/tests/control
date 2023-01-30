@@ -22,7 +22,7 @@ Depends: apache2, liblocale-gettext-perl, libmonitoring-plugin-perl | libnagios-
 Test-Command: /usr/lib/nagios/plugins/check_httpd_status -H localhost
 Restrictions: needs-root, allow-stderr, isolation-container
 
-Depends: ca-certificates, openssl, curl, file, bc, @
+Depends: ca-certificates, openssl, curl, file, bc, host, @
 Test-Command: /usr/lib/nagios/plugins/check_ssl_cert -H www.debian.org
 
 Depends: libmonitoring-plugin-perl | libnagios-plugin-perl, @
