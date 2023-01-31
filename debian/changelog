@@ -1,3 +1,9 @@
+nagios-plugins-contrib (39.20230132) UNRELEASED; urgency=medium
+
+  *  
+
+ -- Jan Wagner <waja@cyconet.org>  Tue, 31 Jan 2023 14:35:09 +0000
+
 nagios-plugins-contrib (39.20230131) unstable; urgency=medium
 
   * [a2b0410] check_ssl_cert: Adding bc to autotest Depends (Closes: #1029926)
