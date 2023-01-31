@@ -1,8 +1,15 @@
-nagios-plugins-contrib (38.20230125) UNRELEASED; urgency=medium
+nagios-plugins-contrib (39.20230131) unstable; urgency=medium
 
-  * 
+  * [a2b0410] check_ssl_cert: Adding bc to autotest Depends (Closes: #1029926)
+  * [1e64cf9] Auto update of debian/tests/control
+  * [6e04074] Fix ruby-script-but-no-ruby-dep lintian override
+  * [13658fe] check_ssl_cert: Adding dns-utils to autotest Depends
+  * [aff127e] Auto update of debian/tests/control
+  * [cbd464a] Adding d/p/dsa/check_running_kernel_allow_tilde, which allows
+    tilde in version string
+  * [6fd6a70] One more lintain override fix
 
- -- Jan Wagner <waja@cyconet.org>  Tue, 24 Jan 2023 14:17:24 +0000
+ -- Jan Wagner <waja@cyconet.org>  Tue, 31 Jan 2023 14:25:41 +0000
 
 nagios-plugins-contrib (38.20230124) unstable; urgency=medium
 
