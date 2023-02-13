@@ -12,6 +12,7 @@ check_drbd/fix_for_oos_and_cosmetic
 check_email_delivery/epn
 check_email_delivery/paths
 check_email_delivery/fix_tls
+check_email_delivery/add_imap_tls
 check_haproxy/epn
 check_haproxy/monitoring-plugin
 check_haproxy_stats/interpreter
