@@ -1,5 +1,5 @@
 Uploaders: Bernd Zeimetz <bzed@debian.org>
-Recommends: libmonitoring-plugin-perl | libnagios-plugin-perl (>= 0.31), libreadonly-perl, libnet-dns-perl, libdata-validate-domain-perl, libdata-validate-ip-perl
+Recommends: libmonitoring-plugin-perl | libnagios-plugin-perl (>= 0.31), libreadonly-perl, libnet-dns-perl, libdata-validate-domain-perl, libdata-validate-ip-perl, libcapture-tiny-perl
 Version: 1.7.0
 Homepage: https://github.com/matteocorti/check_rbl
 Watch: https://github.com/matteocorti/check_rbl/releases >check_rbl-([0-9.]+)<
