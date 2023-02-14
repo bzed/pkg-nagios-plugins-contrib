@@ -1,3 +1,9 @@
+nagios-plugins-contrib (40.20230215) UNRELEASED; urgency=medium
+
+  *
+
+ -- Jan Wagner <waja@cyconet.org>  Tue, 14 Feb 2023 12:46:24 +0000
+
 nagios-plugins-contrib (40.20230214) unstable; urgency=high
 
   * [930984a] check_rbl: Adding libcapture-tiny-perl as Recommand
