@@ -1,3 +1,9 @@
+nagios-plugins-contrib (41.20230225) UNRELEASED; urgency=medium
+
+  * 
+
+ -- Jan Wagner <waja@cyconet.org>  Fri, 24 Feb 2023 13:37:45 +0000
+
 nagios-plugins-contrib (41.20230224) unstable; urgency=medium
 
   * [0bac675] check_ssl_cert: Update to 2.60.0
