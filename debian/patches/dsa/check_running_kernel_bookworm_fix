@@ -1,0 +1,11 @@
+--- a/dsa/checks/dsa-check-running-kernel
++++ b/dsa/checks/dsa-check-running-kernel
+@@ -203,7 +203,7 @@
+ 			exit $UNKNOWN
+ 		fi
+ 		if [ "${on_disk/vmlinu}" != "$on_disk" ]; then
+-			on_disk_version="`get_image_linux "$on_disk" | $STRINGS | grep 'Linux version' | head -n1`"
++			on_disk_version="`get_image_linux "$on_disk" | $STRINGS | grep 'Linux version' | tail -n1`"
+ 			if [ -x /usr/bin/lsb_release ] ; then
+ 				vendor=$(lsb_release -i -s)
+ 				if [ -n "$vendor" ] && [ "xDebian" != "x$vendor" ] ; then
