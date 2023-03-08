@@ -1,8 +1,9 @@
-nagios-plugins-contrib (41.20230225) UNRELEASED; urgency=medium
+nagios-plugins-contrib (42.20230308) unstable; urgency=high
 
-  * 
+  * [4ab7834] Adding d/p/dsa/check_running_kernel_bookworm_fix
+    (Closes: #1029720)
 
- -- Jan Wagner <waja@cyconet.org>  Fri, 24 Feb 2023 13:37:45 +0000
+ -- Jan Wagner <waja@cyconet.org>  Wed, 08 Mar 2023 10:28:49 +0000
 
 nagios-plugins-contrib (41.20230224) unstable; urgency=medium
 
