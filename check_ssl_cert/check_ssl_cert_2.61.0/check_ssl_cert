@@ -31,7 +31,7 @@
 ################################################################################
 # Constants
 
-VERSION=2.60.0
+VERSION=2.61.0
 SHORTNAME="SSL_CERT"
 
 VALID_ATTRIBUTES=",startdate,enddate,subject,issuer,modulus,serial,hash,email,ocsp_uri,fingerprint,"
@@ -2556,7 +2556,7 @@ fetch_certificate() {
                 unknown "Error converting ${FILE}: ${CONVERSION_ERROR_TMP}"
             fi
 
-        elif [ -n "${JKSALIAS}" ] && "${FILE_BIN}" -L -b "${FILE}" | grep -q -E 'KeyStore|data'; then
+        elif [ -n "${JKSALIAS}" ] && "${FILE_BIN}" -L -b "${FILE}" | "${GREP_BIN}" -q -E 'KeyStore|data'; then
 
             debuglog 'converting JKS to PEM'
 
@@ -3486,7 +3486,7 @@ parse_command_line_options() {
             ;;
         --security-level)
             check_option_argument '--security-level' "$2"
-            if ! echo "$2" | grep -q '^[0-5]$' ; then
+            if ! echo "$2" | "${GREP_BIN}" -q '^[0-5]$' ; then
                 unknown 'Invalid secuirity level'
             fi
             SECURITY_LEVEL="-cipher DEFAULT@SECLEVEL=$2"
@@ -3874,7 +3874,7 @@ main() {
     ##############################################################################
     # we need grep from the beginning (will fix later if --grep-bin is specified)
     if [ -z "${GREP_BIN}" ]; then
-        GREP_BIN='grep'
+        GREP_BIN=$(command -v grep)
     fi
 
     # Default values
@@ -3953,6 +3953,10 @@ main() {
     fi
 
     parse_command_line_options "$@"
+
+    if ! [ -x "${GREP_BIN}" ] ; then
+        unknown "${GREP_BIN} in not executable"
+    fi
 
     if [ "${DEBUG}" -ge 1 ]; then
 
@@ -4077,7 +4081,7 @@ main() {
 
         debuglog "grep: ${GREP_BIN}"
         GREP_VERSION=$(${GREP_BIN} --version 2>&1)
-        if echo "${GREP_VERSION}" | grep -q BusyBox ; then
+        if echo "${GREP_VERSION}" | "${GREP_BIN}" -q BusyBox ; then
             # BusyBox grep does not have a -version option
             GREP_VERSION=$( echo "${GREP_VERSION}" | sed -e 's/.*BusyBox/BusyBox/' -e 's/\. Usage.*//' )
         fi
@@ -4301,7 +4305,7 @@ main() {
         PYTHON_BIN="${PROG}"
 
         # check Python major version
-        if "${PYTHON_BIN}" --version 2>&1 | grep -q '^Python 2'; then
+        if "${PYTHON_BIN}" --version 2>&1 | "${GREP_BIN}" -q '^Python 2'; then
             unknown "Python 2 is not supported"
         fi
 
@@ -4623,7 +4627,8 @@ main() {
             [ -n "${NO_PSS}" ]; then
             # see https://github.com/matteocorti/check_ssl_cert/issues/164#issuecomment-540623344
             # see https://github.com/matteocorti/check_ssl_cert/issues/167
-            SSL_AU="RSA+SHA512:RSA+SHA256:RSA+SHA384:RSA+SHA224:RSA+SHA1"
+            # see https://github.com/matteocorti/check_ssl_cert/issues/446
+            SSL_AU="RSA+SHA512:RSA+SHA256:RSA+SHA384:RSA+SHA224:RSA+SHA1:RSA-PSS+SHA256"
         else
             # see https://github.com/matteocorti/check_ssl_cert/issues/164#issuecomment-540623344
             SSL_AU="RSA-PSS+SHA512:RSA-PSS+SHA384:RSA-PSS+SHA256:RSA+SHA512:RSA+SHA256:RSA+SHA384:RSA+SHA224:RSA+SHA1"
@@ -5673,7 +5678,7 @@ EOF
         # 2 s:C = US, O = DigiCert Inc, OU = www.digicert.com, CN = DigiCert Global Root CA
         #   i:C = US, O = DigiCert Inc, OU = www.digicert.com, CN = DigiCert Global Root CA
 
-        matches=$(grep '^ [0-9 ] [si]:' "${CERT}" | tail -n 2 | sed 's/^[ 0-9]* [si]://' | uniq -c | wc -l)
+        matches=$("${GREP_BIN}" '^ [0-9 ] [si]:' "${CERT}" | tail -n 2 | sed 's/^[ 0-9]* [si]://' | uniq -c | wc -l)
 
         if [ "${matches}" -eq 1 ]; then
             debuglog "The root certificate is present in the chain"
@@ -6103,7 +6108,7 @@ EOF
                 MESSAGE_TMP=$(echo "${critical}" | sed 's/^[^:]*:[^:]*://')
 
                 # check if the warning is overridden by another certificate for the same CN
-                if echo "${CN_OK}" | grep -q "${CN_TMP}"; then
+                if echo "${CN_OK}" | "${GREP_BIN}" -q "${CN_TMP}"; then
                     verboselog "Both a valid and an expired certificate were found"
                     if [ -n "${CHECK_CHAIN}" ]; then
                         prepend_critical_message "Both a valid and an expired certificate were found"
@@ -6126,7 +6131,7 @@ INPUT
                 MESSAGE_TMP=$(echo "${warning}" | sed 's/^[^:]*:[^:]*://')
 
                 # check if the warning is overridden by another certificate for the same CN
-                if echo "${CN_OK}" | grep -q "${CN_TMP}"; then
+                if echo "${CN_OK}" | "${GREP_BIN}" -q "${CN_TMP}"; then
                     verboselog "Both a valid and an expired certificate were found"
                     if [ -n "${CHECK_CHAIN}" ]; then
                         prepend_critical_message "Both a valid and an expired certificate were found"
