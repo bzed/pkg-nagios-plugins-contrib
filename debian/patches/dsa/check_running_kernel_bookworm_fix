@@ -9,3 +9,12 @@
  			if [ -x /usr/bin/lsb_release ] ; then
  				vendor=$(lsb_release -i -s)
  				if [ -n "$vendor" ] && [ "xDebian" != "x$vendor" ] ; then
+@@ -211,7 +211,7 @@
+ 				fi
+ 			fi
+ 			[ -z "$on_disk_version" ] || continue
+-			on_disk_version="`cat "$on_disk" | $STRINGS | grep 'Linux version' | head -n1`"
++			on_disk_version="`cat "$on_disk" | $STRINGS | grep 'Linux version' | tail -n1`"
+ 			[ -z "$on_disk_version" ] || continue
+ 
+ 			echo "UNKNOWN: Failed to get a version string from image $on_disk"
