@@ -1,9 +1,11 @@
 
  &copy; Matteo Corti, ETH Zurich, 2009-2012
 
- &copy; Matteo Corti, 2009-2021
+ &copy; Matteo Corti, 2009-2023
 
   see AUTHORS for the complete list of contributors
+
+![](https://img.shields.io/github/v/release/matteocorti/check_rbl@)&nbsp;![](https://img.shields.io/github/downloads/matteocorti/check_rbl/latest/total)&nbsp;![](https://img.shields.io/github/downloads/matteocorti/check_rbl/total)&nbsp;![](https://img.shields.io/github/license/matteocorti/check_rbl)&nbsp;![](https://img.shields.io/github/stars/matteocorti/check_rbl)&nbsp;![](https://img.shields.io/github/forks/matteocorti/check_rbl)
 
 # check\_rbl
 

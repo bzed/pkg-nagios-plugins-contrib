@@ -1,4 +1,4 @@
-%define version          1.7.0
+%define version          1.7.1
 %define release          0
 %define sourcename       check_rbl
 %define packagename      nagios-plugins-check-rbl
@@ -9,7 +9,7 @@
 
 Summary:   check_rbl is a Nagios plugin to check if an SMTP server is blacklisted
 Name:      %{packagename}
-Obsoletes: check_rbl
+Obsoletes: check_rbl <= 100
 Version:   %{version}
 Release:   %{release}%{?dist}
 License:   GPLv3+
@@ -22,7 +22,7 @@ Source:    https://github.com/matteocorti/check_rbl/releases/download/v%{version
 # Fedora build requirement (not needed for EPEL{4,5})
 BuildRequires: perl(ExtUtils::MakeMaker)
 
-Requires:  nagios-plugins
+Requires: perl-Module-Install perl-Readonly perl-Monitoring-Plugin perl-Test-Simple perl-Perl-Critic rpm-build perl-Net-DNS perl-Net-IP perl-Data-Validate-IP perl-App-cpanminus perl-Capture-Tiny
 
 %description
 check_rbl is a Nagios plugin to check if an SMTP server is blacklisted
@@ -54,6 +54,12 @@ rm -rf %{buildroot}
 %{_mandir}/man1/%{sourcename}.1*
 
 %changelog
+* Mon Apr 10 2023 Matteo Corti <matteo@corti.li> - 1.7.1-0
+- Update to 1.7.1
+
+* Mon Aug  8 2022 Matteo Corti <matteo@corti.li> - 1.7.0-1
+- Updated the package dependencies
+
 * Sun Aug  7 2022 Matteo Corti <matteo@corti.li> - 1.7.0-0
 - Update to 1.7.0
 

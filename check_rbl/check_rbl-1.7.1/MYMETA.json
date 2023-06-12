@@ -32,6 +32,7 @@
       },
       "runtime" : {
          "requires" : {
+            "Capture::Tiny" : "0",
             "Data::Validate::Domain" : "0.12",
             "Data::Validate::IP" : "0",
             "English" : "0",
@@ -47,6 +48,6 @@
       }
    },
    "release_status" : "stable",
-   "version" : "1.6.2",
+   "version" : "1.7.0",
    "x_serialization_backend" : "JSON::PP version 4.07"
 }

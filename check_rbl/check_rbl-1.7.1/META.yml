@@ -16,6 +16,7 @@ no_index:
     - inc
     - t
 requires:
+  Capture::Tiny: 0
   Data::Validate::Domain: 0.12
   Data::Validate::IP: 0
   English: 0
@@ -27,4 +28,4 @@ requires:
   Net::IP: 0
   Readonly: 0
   Socket: 0
-version: 1.6.2
+version: 1.7.0
