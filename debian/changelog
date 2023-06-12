@@ -1,3 +1,9 @@
+nagios-plugins-contrib (43.20230613) UNRELEASED; urgency=medium
+
+  * 
+
+ -- Jan Wagner <waja@cyconet.org>  Mon, 12 Jun 2023 21:11:14 +0200
+
 nagios-plugins-contrib (43.20230612) unstable; urgency=medium
 
   * [fa7b90c] check_ssl_cert: Remove leftovers from 2.58.0
