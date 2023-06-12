@@ -145,7 +145,7 @@ Description: Plugins for nagios compatible monitoring systems
      - Solaris software RAID via metastat
      - Areca SATA RAID Support via cli64/cli32
      - Detecting SCSI devices or hosts with lsscsi
-   * check_rbl (1.7.0): plugin to check if a server is blacklisted
+   * check_rbl (1.7.1): plugin to check if a server is blacklisted
    * check_redis (0.73): Redis Server check plugin
      This plugin checks Redis NoSQL database status variables,
      measures its response time and if specified allows one to set thresholds
@@ -171,7 +171,7 @@ Description: Plugins for nagios compatible monitoring systems
      HOST-RESOURCES-MIB::hrSystemDate.0 used here returns 8 or 11 byte octets.
      SNMP translation needs to be switched off and to be converted the
      received SNMP data into readable strings.
-   * check_ssl_cert (2.60.0): plugin to check the CA and validity of an
+   * check_ssl_cert (2.70.0): plugin to check the CA and validity of an
      X.509 certificate
    * check_uptime (0.521): check_uptime returns uptime of a system
      in text (readable) format as well as in minutes for performance graphing.
