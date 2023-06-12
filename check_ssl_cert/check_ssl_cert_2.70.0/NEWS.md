@@ -1,5 +1,30 @@
 # News
 
+* 2023-05-20 Version 2.70.0
+  * Added an option to skip the test to see if the host can be resolved
+  * Added an option to resolve an host using DNS over HTTP
+  * Added the Icigna2 configuration file
+* 2023-05-12 Version 2.69.0
+  * Added an option to skip the test to see if the host can be resolved
+  * Added an option to resolve an host using DNS over HTTP
+* 2023-04-28 Version 2.68.0
+  * Fixes the protocol used by nmap if the host is resolved with /etc/hosts
+  * Do not convert a CRL if already in the correct format
+  * Removed a PCRE grep expression (non-standard)
+* 2023-04-24 Version 2.67.0
+  * Considers /etc/hosts for the existence checks
+* 2023-04-21 Version 2.66.0
+  * Fixed a problem with decimal critical or warning values and expired certificates
+* 2023-04-21 Version 2.65.0
+  * Fixed CRL output format parsing
+* 2023-04-07 Version 2.64.0
+  * Fixed the resolution of hosts with IPv6 addresses only
+* 2023-04-05 Version 2.63.0
+  * Command line option to ignore SSL Labs errors (```-ignore-ssl-labs-errors```)
+  * Better checks for non-resolvable hosts
+* 2023-03-16 Version 2.62.0
+  * Fixed the output in case of timeout
+  * Fixed the ciphers with ```--rsa```
 * 2023-03-09 Version 2.61.0
   * Fixed the algorithms used by ```--rsa```
 * 2023-02-15 Version 2.60.0

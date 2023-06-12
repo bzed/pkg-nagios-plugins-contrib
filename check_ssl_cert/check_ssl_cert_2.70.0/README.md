@@ -1,6 +1,6 @@
 # check\_ssl\_cert
 
- &copy; Matteo Corti, ETH Zurich, 2007-2012.  
+ &copy; Matteo Corti, ETH Zurich, 2007-2012.
  &copy; Matteo Corti, 2007-2023.
 
  see [AUTHORS.md](AUTHORS.md) for the complete list of contributors
@@ -11,7 +11,6 @@
 A POSIX shell script (that can be used as a Nagios/Icinga plugin) to check an SSL/TLS connection and certificate
 
 ## Usage
-
 ```text
 
 Usage: check_ssl_cert -H host [OPTIONS]
@@ -77,6 +76,7 @@ Options:
       --debug-time                 Write timing information in the
                                    debugging output
       --dig-bin path               Path of the dig binary to be used
+      --do-not-resolve             Do not check if the host can be resolved
       --dtls                       Use the DTLS protocol
       --dtls1                      Use the DTLS protocol 1.0
       --dtls1_2                    Use the DTLS protocol 1.2
@@ -141,6 +141,8 @@ Options:
       --ignore-sig-alg             Do not check if the certificate was signed
                                    with SHA1 or MD5
       --ignore-ssl-labs-cache      Force a new check by SSL Labs (see -L)
+      --ignore-ssl-labs-errors     Ignore errors if SSL Labs is not
+                                   accessible or times out
       --ignore-tls-renegotiation   Ignore the TLS renegotiation check
       --inetproto protocol         Force IP version 4 or 6
       --info                       Print certificate information
@@ -231,6 +233,8 @@ Options:
       --require-purpose usage      Require the specified key usage (can be
                                    specified more then once)
       --require-purpose-critical   The key usage must be critical
+      --resolve-over-http [server] Resolve the host over HTTP using Google or
+                                   the specified server
       --resolve ip                 Provide a custom IP address for the
                                    specified host
       --rootcert-dir path          Root directory to be used for certificate
@@ -327,7 +331,6 @@ Deprecated options:
                                    (see: --ssl2 or --ssl3)
 
 Report bugs to https://github.com/matteocorti/check_ssl_cert/issues
-
 ```
 
 ## Configuration

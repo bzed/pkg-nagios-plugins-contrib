@@ -31,7 +31,7 @@
 ################################################################################
 # Constants
 
-VERSION=2.61.0
+VERSION=2.70.0
 SHORTNAME="SSL_CERT"
 
 VALID_ATTRIBUTES=",startdate,enddate,subject,issuer,modulus,serial,hash,email,ocsp_uri,fingerprint,"
@@ -106,6 +106,8 @@ fetch_http_headers() {
 
     if [ -z "${CACHED_HEADERS}" ]; then
 
+        TIMEOUT_REASON='Fetching HTTP headers'
+
         debuglog "Fetching headers"
 
         create_temporary_file
@@ -140,6 +142,8 @@ fetch_http_headers() {
         if [ -n "${DEBUG_HEADERS}" ]; then
             cp "${CACHED_HEADERS}" headers.txt
         fi
+
+        unset TIMEOUT_REASON
 
     fi
 
@@ -270,6 +274,7 @@ usage() {
     echo "      --debug-time                 Write timing information in the"
     echo "                                   debugging output"
     echo "      --dig-bin path               Path of the dig binary to be used"
+    echo "      --do-not-resolve             Do not check if the host can be resolved"
     echo "      --dtls                       Use the DTLS protocol"
     echo "      --dtls1                      Use the DTLS protocol 1.0"
     echo "      --dtls1_2                    Use the DTLS protocol 1.2"
@@ -339,6 +344,8 @@ usage() {
     echo "      --ignore-sig-alg             Do not check if the certificate was signed"
     echo "                                   with SHA1 or MD5"
     echo "      --ignore-ssl-labs-cache      Force a new check by SSL Labs (see -L)"
+    echo "      --ignore-ssl-labs-errors     Ignore errors if SSL Labs is not"
+    echo "                                   accessible or times out"
     echo "      --ignore-tls-renegotiation   Ignore the TLS renegotiation check"
     echo "      --inetproto protocol         Force IP version 4 or 6"
     echo "      --info                       Print certificate information"
@@ -438,6 +445,8 @@ usage() {
     echo "      --require-purpose usage      Require the specified key usage (can be"
     echo "                                   specified more then once)"
     echo "      --require-purpose-critical   The key usage must be critical"
+    echo "      --resolve-over-http [server] Resolve the host over HTTP using Google or"
+    echo "                                   the specified server"
     echo "      --resolve ip                 Provide a custom IP address for the"
     echo "                                   specified host"
     echo "      --rootcert-dir path          Root directory to be used for certificate"
@@ -1309,6 +1318,7 @@ unknown() {
 #  $1 the left hand value
 #  $2 the comparison operator
 #  $3 the right hand value
+#  $4 scale: total number of decimal digits after the decimal point
 # Returns the boolean result of the comparison
 compare() {
 
@@ -1316,9 +1326,17 @@ compare() {
     op=$2
     rhv=$3
 
-    debuglog "Executing comparison '${lhv} ${op} ${rhv}'"
+    if [ -n "$4" ]; then
+        # custom scale
+        local_scale=$4
+    else
+        # default scale
+        local_scale="${SCALE}"
+    fi
 
-    comparison="$(echo "${lhv} ${op} ${rhv}" | "${BCBIN}")"
+    debuglog "Executing comparison '${lhv} ${op} ${rhv}' (precision ${local_scale})"
+
+    comparison="$(echo "scale=${local_scale};${lhv} ${op} ${rhv}" | "${BCBIN}")"
     debuglog "  bc result = ${comparison}"
 
     [ 1 -eq "${comparison}" ]
@@ -1556,12 +1574,27 @@ extract_cert_attribute() {
         ;;
     crl_uri)
         echo "${cert_content}" | "${OPENSSL}" x509 -noout -text |
-            "${GREP_BIN}" -F -A 4 'X509v3 CRL Distribution Points' |
-            "${GREP_BIN}" -F URI |
-            sed 's/^.*URI://'
+            "${GREP_BIN}" -A 4 'X509v3 CRL Distribution Points' |
+            "${GREP_BIN}" 'URI:' |
+            sed 's/.*URI://' |
+            head -n 1
         ;;
     version)
         echo "${cert_content}" | "${OPENSSL}" x509 -noout -text | "${GREP_BIN}" Version | head -n 1 | sed 's/.*Version: //'
+        ;;
+
+    pub_key_algo)
+
+        # The Signature Algorithm refers to the signature of the certificate created by the issuer
+        # The Public Key Algorithm refers to the public key inside the certificate
+        #
+        #  see https://security.stackexchange.com/questions/141661/whats-the-difference-between-public-key-algorithm-and-signature-algorithm-i
+
+        ALGORITHM=$(echo "${cert_content}" | "${OPENSSL}" "${OPENSSL_COMMAND}" -noout ${OPENSSL_PARAMS} -text | "${GREP_BIN}" -m 1 -F 'Public Key Algorithm' | sed -e 's/.*: //')
+
+        PUBLIC_KEY=$(echo "${cert_content}" | "${OPENSSL}" "${OPENSSL_COMMAND}" -noout ${OPENSSL_PARAMS} -text | "${GREP_BIN}" -m 1 -F 'Signature' | sed 's/.*: //')
+
+        echo "${ALGORITHM} ${PUBLIC_KEY}"
         ;;
 
     sig_algo)
@@ -1571,7 +1604,7 @@ extract_cert_attribute() {
         #
         #  see https://security.stackexchange.com/questions/141661/whats-the-difference-between-public-key-algorithm-and-signature-algorithm-i
 
-        ALGORITHM=$(echo "${cert_content}" | "${OPENSSL}" "${OPENSSL_COMMAND}" -noout ${OPENSSL_PARAMS} -text | "${GREP_BIN}" -m 1 -F 'Public Key Algorithm' | sed -e 's/.*: //')
+        ALGORITHM=$(echo "${cert_content}" | "${OPENSSL}" "${OPENSSL_COMMAND}" -noout ${OPENSSL_PARAMS} -text | "${GREP_BIN}" -m 1 -F 'Signature Algorithm' | sed -e 's/.*: //')
 
         PUBLIC_KEY=$(echo "${cert_content}" | "${OPENSSL}" "${OPENSSL_COMMAND}" -noout ${OPENSSL_PARAMS} -text | "${GREP_BIN}" -m 1 -F 'Public-Key' | sed 's/.*: //')
 
@@ -1745,6 +1778,8 @@ EOT
     else
 
         debuglog "$(printf '%s\n' eval "${command}")"
+        debuglog "  output: ${OUTFILE}"
+        debuglog "  error:  ${ERRFILE}"
 
         eval "${command}" >"${OUTFILE}" 2>"${ERRFILE}"
         RET=$?
@@ -1811,18 +1846,29 @@ check_crl() {
 
         debuglog "Certificate revocation list available (${CRL_URI})."
 
-        debuglog "CRL: fetching CRL ${CRL_URI} to ${CRL_TMP_DER}"
+        debuglog "CRL: fetching CRL ${CRL_URI} to ${CRL_TMP}"
 
         TIMEOUT_REASON="fetching CRL"
         if [ -n "${HTTP_USER_AGENT}" ]; then
-            exec_with_timeout "${CURL_BIN} ${CURL_PROXY} ${CURL_PROXY_ARGUMENT} ${INETPROTO} --silent --user-agent '${HTTP_USER_AGENT}' --location \\\"${CRL_URI}\\\" > ${CRL_TMP_DER}"
+            exec_with_timeout "${CURL_BIN} ${CURL_PROXY} ${CURL_PROXY_ARGUMENT} ${INETPROTO} --silent --user-agent '${HTTP_USER_AGENT}' --location \\\"${CRL_URI}\\\" > ${CRL_TMP}"
         else
-            exec_with_timeout "${CURL_BIN} ${CURL_PROXY} ${CURL_PROXY_ARGUMENT} ${INETPROTO} --silent --location \\\"${CRL_URI}\\\" > ${CRL_TMP_DER}"
+            exec_with_timeout "${CURL_BIN} ${CURL_PROXY} ${CURL_PROXY_ARGUMENT} ${INETPROTO} --silent --location \\\"${CRL_URI}\\\" > ${CRL_TMP}"
         fi
+        unset TIMEOUT_REASON
 
-        # convert DER to
-        debuglog "Converting ${CRL_TMP_DER} (DER) to ${CRL_TMP_PEM} (PEM)"
-        "${OPENSSL}" crl -inform DER -in "${CRL_TMP_DER}" -outform PEM -out "${CRL_TMP_PEM}"
+
+        if "${FILE_BIN}" -L -b "${CRL_TMP}" | "${GREP_BIN}" -E -q '(data|Certificate)'; then
+
+            # convert DER to PEM
+            debuglog "Converting ${CRL_TMP} (DER) to ${CRL_TMP_PEM} (PEM)"
+            "${OPENSSL}" crl -inform DER -in "${CRL_TMP}" -outform PEM -out "${CRL_TMP_PEM}"
+
+        else
+
+            # file already in PEM format
+            CRL_TMP_PEM="${CRL_TMP}"
+
+        fi
 
         # combine the certificate and the CRL
         debuglog "Combining the certificate, the CRL and the root cert"
@@ -1937,6 +1983,7 @@ check_ocsp() {
                 else
                     exec_with_timeout "${CURL_BIN} ${CURL_PROXY} ${CURL_PROXY_ARGUMENT} ${INETPROTO} --silent --location \\\"${ELEMENT_ISSUER_URI}\\\" > ${ISSUER_CERT_TMP}"
                 fi
+                unset TIMEOUT_REASON
 
                 TYPE_TMP="$(${FILE_BIN} -L -b "${ISSUER_CERT_TMP}" | sed 's/.*://')"
                 debuglog "OCSP: issuer certificate type (1): ${TYPE_TMP}"
@@ -2225,6 +2272,8 @@ check_cert_end_date() {
             if compare "${ELEM_DAYS_VALID}" ">=" 0 && compare "${ELEM_DAYS_VALID}" "<" 1; then
                 DAYS_AGO='less than a day ago'
             else
+                # remove decimals
+                ELEM_DAYS_VALID=$( echo "${ELEM_DAYS_VALID}" | sed -e 's/[.].*//' )
                 DAYS_AGO="$((-ELEM_DAYS_VALID)) days ago"
             fi
             debuglog "CRITICAL: certificate element ${el_number} (${element_cn}) is expired (was valid until ${ELEM_END_DATE}, ${DAYS_AGO})"
@@ -2615,6 +2664,8 @@ fetch_certificate() {
 
         fi
 
+        unset TIMEOUT_REASON
+
         debuglog "storing the certificate to ${CERT}"
         TYPE_TMP="$(${FILE_BIN} -L -b "${CERT}" | sed 's/.*://')"
         debuglog "certificate type (2): ${TYPE_TMP}"
@@ -3000,12 +3051,21 @@ parse_command_line_options() {
         --debug-time)
             # start time
             DEBUG_TIME=$(date +%s)
+            # --debug-time does not make any sense without -d
+            if [ "${DEBUG}" -le 1 ] ; then
+                DEBUG=1
+            fi
             shift
             ;;
 
         --default-format)
             echo "${DEFAULT_FORMAT}"
             exit
+            ;;
+
+        --do-not-resolve)
+            DO_NOT_RESOLVE=1
+            shift
             ;;
 
         # DTLS
@@ -3079,6 +3139,10 @@ parse_command_line_options() {
             ;;
         --ignore-ssl-labs-cache)
             IGNORE_SSL_LABS_CACHE="&startNew=on"
+            shift
+            ;;
+        --ignore-ssl-labs-errors)
+            IGNORE_SSL_LABS_ERRORS=1
             shift
             ;;
         --ignore-tls-renegotiation)
@@ -3721,6 +3785,7 @@ $2"
 
         ##############################
         # Variable number of arguments
+
         --dane)
 
             if [ -n "${DANE}" ]; then
@@ -3766,6 +3831,27 @@ $2"
             fi
 
             ;;
+
+        --resolve-over-http)
+
+            # dns.google.com: we use the IP in case DNS is not directly reachable
+            RESOLVE_OVER_HTTP=8.8.8.8
+
+            # check the second optional parameter if it exist
+            if [ $# -gt 1 ]; then
+                # shellcheck disable=SC2295
+                if [ "${2%${2#?}}"x = '-x' ]; then
+                    shift
+                else
+                    RESOLVE_OVER_HTTP=$2
+                    shift 2
+                fi
+            else
+                shift
+            fi
+
+            ;;
+
         --require-client-cert)
 
             REQUIRE_CLIENT_CERT=1
@@ -3836,6 +3922,7 @@ $2"
             shift
             break
             ;;
+
         -*)
             # we try to check for grouped variables
             OPTION="${1}"
@@ -4156,22 +4243,299 @@ main() {
         fi
     fi
 
-    # we need the FQDN of an host to check the CN
-    debuglog "Adding the domain if missing"
-    # - the domain does not contain a .
-    # - we are not checking a file
-    # - we are not checking localhost
-    # - we are not checking an IPv6 address (which does not have dots
-    if ! echo "${HOST}" | "${GREP_BIN}" -q '[.]' && [ -z "${FILE}" ] && [ "${HOST}" != 'localhost' ] && ! echo "${HOST}" | "${GREP_BIN}" -q -F ':'; then
-        debuglog "Domain for ${HOST} missing"
-        DOMAIN=$(nslookup "${HOST}" | "${GREP_BIN}" ^Name: | head -n 1 | cut -d. -f2-)
-        if [ -z "${DOMAIN}" ]; then
-            critical "Cannot resolve ${HOST}"
+    ##############################################################################
+    # curl
+
+    if [ -z "${CURL_BIN}" ]; then
+        if [ -n "${SSL_LAB_CRIT_ASSESSMENT}" ] ||
+            [ -n "${OCSP}" ] ||
+            [ -n "${CRL}" ] ||
+            [ -n "${IGNORE_CONNECTION_STATE}" ] ||
+            [ -n "${FILE_URI}" ]; then
+            debuglog "curl binary needed. SSL Labs = ${SSL_LAB_CRIT_ASSESSMENT}, OCSP = ${OCSP}, CURL = ${CRL}, IGNORE_CONNECTION_STATE=${IGNORE_CONNECTION_STATE}, FILE_URI=${FILE_URI}"
+            debuglog "curl binary not specified"
+
+            check_required_prog curl
+            CURL_BIN=${PROG}
+
+            debuglog "curl available: ${CURL_BIN}"
+            CURL_BIN_VERSION_TMP="$(${CURL_BIN} --version)"
+            debuglog "${CURL_BIN_VERSION_TMP}"
+
+        else
+            debuglog "curl binary not needed. SSL Labs = ${SSL_LAB_CRIT_ASSESSMENT}, OCSP = ${OCSP}"
         fi
-        debuglog "Adding domain ${DOMAIN} to ${HOST}"
-        HOST="${HOST}.${DOMAIN}"
-        debuglog "New host: ${HOST}"
+    else
+        # we check if the provided binary actually works
+        check_required_prog "${CURL_BIN}"
     fi
+
+    ##############################################################################
+    # OpenSSL
+    if [ -n "${OPENSSL}" ]; then
+        if [ ! -x "${OPENSSL}" ]; then
+            unknown "${OPENSSL} is not an executable"
+        fi
+    else
+        OPENSSL='openssl'
+    fi
+    check_required_prog "${OPENSSL}"
+    OPENSSL=${PROG}
+
+    ##############################################################################
+    # custom grep
+    if [ -z "${GREP_BIN}" ]; then
+        GREP_BIN='grep'
+    fi
+    check_required_prog "${GREP_BIN}"
+    GREP_BIN=${PROG}
+
+    ##############################################################################
+    # OpenSSL options
+    if [ -n "${REQUIRE_PURPOSE}" ] || [ -n "${REQUIRE_PURPOSE_CRITICAL}" ]; then
+        require_x509_option "-ext" " (required for certificate purpose)"
+    fi
+
+    ################################################################################
+    # Check if openssl s_client supports the -proxy option
+    #
+
+    SCLIENT_PROXY=
+    SCLIENT_PROXY_ARGUMENT=
+    CURL_PROXY=
+    CURL_PROXY_ARGUMENT=
+    if [ -n "${http_proxy}" ] || [ -n "${HTTP_PROXY}" ]; then
+
+        debuglog "\$http_proxy is set: configuring the proxy settings"
+
+        if [ -n "${http_proxy}" ]; then
+            HTTP_PROXY="${http_proxy}"
+        fi
+
+        if [ -z "${https_proxy}" ]; then
+            # try to set https_proxy
+            https_proxy="${http_proxy}"
+        fi
+
+        if [ -z "${HTTPS_PROXY}" ]; then
+            # try to set HTTPS_proxy
+            HTTPS_PROXY="${HTTP_PROXY}"
+        fi
+
+        if [ -n "${CURL_BIN}" ] && ${CURL_BIN} --manual 2>&1 | "${GREP_BIN}" -F -q -- --proxy; then
+            debuglog "Adding --proxy ${HTTP_PROXY} to the curl options"
+            CURL_PROXY="--proxy"
+            CURL_PROXY_ARGUMENT="${HTTP_PROXY}"
+        fi
+
+        if ${OPENSSL} s_client -help 2>&1 | "${GREP_BIN}" -F -q -- -proxy || ${OPENSSL} s_client not_a_real_option 2>&1 | "${GREP_BIN}" -F -q -- -proxy; then
+            SCLIENT_PROXY="-proxy"
+            SCLIENT_PROXY_ARGUMENT="$(echo "${HTTP_PROXY}" | sed 's/.*:\/\///' | sed 's/\/$//')"
+
+            debuglog "Adding -proxy ${SCLIENT_PROXY_ARGUMENT} to the s_client options"
+
+        else
+
+            verboselog "'${OPENSSL} s_client' does not support '-proxy': HTTP_PROXY could be ignored"
+
+        fi
+
+    fi
+
+    if [ -n "${NO_PROXY_CURL}" ]; then
+        CURL_PROXY=''
+        CURL_PROXY_ARGUMENT=''
+    fi
+
+    if [ -n "${NO_PROXY_S_CLIENT}" ]; then
+        SCLIENT_PROXY=''
+        SCLIENT_PROXY_ARGUMENT=''
+    fi
+
+    debuglog "Proxy settings (after):"
+    debuglog "  http_proxy  = ${http_proxy}"
+    debuglog "  https_proxy = ${https_proxy}"
+    debuglog "  HTTP_PROXY  = ${HTTP_PROXY}"
+    debuglog "  HTTPS_PROXY = ${HTTPS_PROXY}"
+    debuglog "  s_client    = ${SCLIENT_PROXY} ${SCLIENT_PROXY_ARGUMENT}"
+    debuglog "  curl        = ${CURL_PROXY} ${CURL_PROXY_ARGUMENT}"
+
+    # nmap doesn't work properly behind a proxy.
+    #
+    # See e.g.,
+    # https://subscription.packtpub.com/book/networking-and-servers/9781786467454/2/ch02lvl1sec37/scanning-through-proxies
+    # https://security.stackexchange.com/questions/120708/nmap-through-proxy
+    #
+    if [ -n "${http_proxy}" ] ||
+        [ -n "${https_proxy}" ] ||
+        [ -n "${HTTP_PROXY}" ] ||
+        [ -n "${HTTPS_PROXY}" ] ||
+        [ -n "${SCLIENT_PROXY}" ] ||
+        [ -n "${CURL_PROXY}" ]; then
+        DISABLE_NMAP=1
+        debuglog "A proxy is specified: nmap disabled"
+        verboselog "A proxy is specified: nmap checks disabled"
+    fi
+
+
+    # Expect (optional)
+    EXPECT="$(command -v expect 2>/dev/null)"
+    test -x "${EXPECT}" || EXPECT=""
+    if [ -z "${EXPECT}" ]; then
+        verboselog "expect not available" 2
+    else
+        verboselog "expect available (${EXPECT})" 2
+    fi
+
+    # Timeout (optional)
+    TIMEOUT_BIN="$(command -v timeout 2>/dev/null)"
+    test -x "${TIMEOUT_BIN}" || TIMEOUT_BIN=""
+    if [ -z "${TIMEOUT_BIN}" ]; then
+        verboselog "timeout not available" 2
+    else
+
+        verboselog "timeout available (${TIMEOUT_BIN})" 2
+    fi
+
+    if [ -z "${TIMEOUT_BIN}" ] && [ -z "${EXPECT}" ]; then
+        verboselog "disabling timeouts" 2
+    fi
+
+    ##############################################################################
+    # Check if the host can be resolved
+
+    if [ -n "${DO_NOT_RESOLVE}" ] && [ -n "${RESOLVE_OVER_HTTP}" ] ; then
+        unknown "--do-not-resolve and --resolve-over-http cannot be specified at the same time"
+    fi
+
+    if [ -z "${DO_NOT_RESOLVE}" ] ; then
+
+        if [ -z "${RESOLVE_OVER_HTTP}" ] ; then
+
+            ETC_HOSTS=
+            debuglog "Checking if the host is listed in /etc/hosts"
+            if "${GREP_BIN}" -q "[[:blank:]]${HOST}[[:blank:]]*$" /etc/hosts ; then
+
+                debuglog "Host listed in /etc/hosts"
+                if [ "${INETPROTO}" = '-4' ] ; then
+                    if grep -q "^[0-9.]*[[:blank:]]*${HOST}" /etc/hosts ; then
+                        ETC_HOSTS=4
+                    fi
+                elif [ "${INETPROTO}" = '-6' ] ; then
+                    if grep -q "^[a-fA-F:0-9]*[[:blank:]]*${HOST}" /etc/hosts ; then
+                        ETC_HOSTS=6
+                        NMAP_INETPROTO=-6
+                    fi
+                elif  grep -q "^[0-9.]*[[:blank:]]*${HOST}" /etc/hosts ; then
+                    ETC_HOSTS=4
+                else
+                    ETC_HOSTS=6
+                    NMAP_INETPROTO=-6
+                fi
+
+            fi
+
+            # if the host was not listed in /etc/hosts we check if there is a DNS record
+
+            if [ -z "${ETC_HOSTS}" ] ; then
+
+                debuglog "Host not found in /etc/hosts: checking DNS"
+
+                # we need the FQDN of an host to check the CN
+                # - the domain does not contain a .
+                # - we are not checking a file
+                # - we are not checking localhost
+                # - we are not checking an IPv6 address (which does not have dots)
+
+                RESOLVE_ERROR=
+
+                if ! echo "${HOST}" | "${GREP_BIN}" -q '[.]' &&
+                        [ -z "${FILE}" ] &&
+                        [ "${HOST}" != 'localhost' ] &&
+                        ! echo "${HOST}" | "${GREP_BIN}" -q -F ':'; then
+
+                    debuglog "Domain for ${HOST} missing"
+                    DOMAIN=$(nslookup "${HOST}" | "${GREP_BIN}" ^Name: | head -n 1 | cut -d. -f2-)
+                    if [ -z "${DOMAIN}" ]; then
+                        RESOLVE_ERROR="Cannot resolve ${HOST}"
+                    else
+                        debuglog "Adding domain ${DOMAIN} to ${HOST}"
+                        HOST="${HOST}.${DOMAIN}"
+                        debuglog "New host: ${HOST}"
+                    fi
+
+                fi
+
+                if [ -z "${RESOLVE_ERROR}" ] ; then
+
+                    # we do not check if localhost can be resolved since on some macOS installations
+                    # host localhost will issue an error (Host localhost not found: 3(NXDOMAIN))
+                    if ! echo "${HOST}" | grep -q ':' &&
+                            echo "${HOST}" | grep -q '[a-z]' &&
+                            [ "${HOST}" != 'localhost' ] ; then
+
+                        # we have an host name and not an IP address
+
+                        debuglog "Checking if the host (${HOST}) exists"
+                        if [ "${INETPROTO}" = '-4' ] ; then
+                            if ! host -t a "${HOST}" | grep -q 'has address' ; then
+                                RESOLVE_ERROR="Cannot resolve ${HOST} (no A record)"
+                            fi
+                        elif [ "${INETPROTO}" = '-6' ] ; then
+                            if ! host -t aaaa "${HOST}" | grep -q 'has IPv6 address' ; then
+                                RESOLVE_ERROR="Cannot resolve ${HOST} (no AAAA record)"
+                            fi
+                        else
+                            if ! host "${HOST}" | grep -q 'has .*address' ; then
+                                RESOLVE_ERROR="Cannot resolve ${HOST}"
+                            fi
+                        fi
+                    fi
+
+                fi
+
+                if [ -n "${RESOLVE_ERROR}" ] ; then
+
+                    debuglog "${RESOLVE_ERROR}"
+                    critical "${SHORTNAME} CRITICAL: ${RESOLVE_ERROR}"
+
+                fi
+
+            fi
+
+        else
+
+            # from https://superuser.com/questions/1400035/how-to-do-nslookup-or-dns-resolution-using-http-proxy
+            # How to do NSLOOKUP or DNS-resolution using HTTP-PROXY?
+
+            debuglog "Resolving using DNS over HTTP"
+
+            create_temporary_file
+            DNS_OVER_HTTP=${TEMPFILE}
+
+            TIMEOUT_REASON="Resolving over HTTP with ${RESOLVE_OVER_HTTP}"
+            exec_with_timeout "${CURL_BIN} ${CURL_PROXY} ${CURL_PROXY_ARGUMENT} ${INETPROTO} --silent --user-agent '${HTTP_USER_AGENT}' -H 'Content-Type: application/dns-json' https://${RESOLVE_OVER_HTTP}/resolve?name=${HOST}\\&type=A" "${DNS_OVER_HTTP}"
+
+            if [ "${DEBUG}" -ge 1 ]; then
+                jq < "${DNS_OVER_HTTP}" | sed 's/^/[DBG]   /' 1>&2
+            fi
+
+            if grep -q '"Status":0' "${DNS_OVER_HTTP}" ; then
+                debuglog "Reolved via HTTP"
+            else
+                critical "${SHORTNAME} CRITICAL: Cannot resolve ${HOST} over HTTP using ${RESOLVE_OVER_HTTP}"
+            fi
+
+        fi
+
+    else
+
+        debuglog "Skipping the check to see if the host can be resolved"
+
+    fi
+
+    ##############################################################################
+    # End of the "resolve" check
 
     # we do quick check if the argument seems an IPv6 address (no validity check)
     if echo "${HOST}" | "${GREP_BIN}" -q "^[0-9a-fA-F:]*$"; then
@@ -4288,14 +4652,6 @@ main() {
     FILE_BIN=${PROG}
 
     ##############################################################################
-    # custom grep
-    if [ -z "${GREP_BIN}" ]; then
-        GREP_BIN='grep'
-    fi
-    check_required_prog "${GREP_BIN}"
-    GREP_BIN=${PROG}
-
-    ##############################################################################
     # Python is needed for TDS
     if [ -n "${PROTOCOL}" ] && [ "${PROTOCOL}" = 'tds' ]; then
         if [ -z "${PYTHON_BIN}" ]; then
@@ -4309,24 +4665,6 @@ main() {
             unknown "Python 2 is not supported"
         fi
 
-    fi
-
-    ##############################################################################
-    # OpenSSL
-    if [ -n "${OPENSSL}" ]; then
-        if [ ! -x "${OPENSSL}" ]; then
-            unknown "${OPENSSL} is not an executable"
-        fi
-    else
-        OPENSSL='openssl'
-    fi
-    check_required_prog "${OPENSSL}"
-    OPENSSL=${PROG}
-
-    ##############################################################################
-    # OpenSSL options
-    if [ -n "${REQUIRE_PURPOSE}" ] || [ -n "${REQUIRE_PURPOSE_CRITICAL}" ]; then
-        require_x509_option "-ext" " (required for certificate purpose)"
     fi
 
     ##############################################################################
@@ -4434,31 +4772,6 @@ main() {
         debuglog "${FILE} is an URI with an authority"
     fi
 
-    # curl
-    if [ -z "${CURL_BIN}" ]; then
-        if [ -n "${SSL_LAB_CRIT_ASSESSMENT}" ] ||
-            [ -n "${OCSP}" ] ||
-            [ -n "${CRL}" ] ||
-            [ -n "${IGNORE_CONNECTION_STATE}" ] ||
-            [ -n "${FILE_URI}" ]; then
-            debuglog "curl binary needed. SSL Labs = ${SSL_LAB_CRIT_ASSESSMENT}, OCSP = ${OCSP}, CURL = ${CRL}, IGNORE_CONNECTION_STATE=${IGNORE_CONNECTION_STATE}, FILE_URI=${FILE_URI}"
-            debuglog "curl binary not specified"
-
-            check_required_prog curl
-            CURL_BIN=${PROG}
-
-            debuglog "curl available: ${CURL_BIN}"
-            CURL_BIN_VERSION_TMP="$(${CURL_BIN} --version)"
-            debuglog "${CURL_BIN_VERSION_TMP}"
-
-        else
-            debuglog "curl binary not needed. SSL Labs = ${SSL_LAB_CRIT_ASSESSMENT}, OCSP = ${OCSP}"
-        fi
-    else
-        # we check if the provided binary actually works
-        check_required_prog "${CURL_BIN}"
-    fi
-
     if [ -n "${FILE}" ]; then
 
         if [ -n "${FILE_URI}" ]; then
@@ -4475,6 +4788,7 @@ main() {
             else
                 exec_with_timeout "${CURL_BIN} ${CURL_PROXY} ${CURL_PROXY_ARGUMENT} ${INETPROTO} --silent --location \\\"${FILE_URI}\\\" > ${FILE}"
             fi
+            unset TIMEOUT_REASON
 
             if [ ! -r "${FILE}" ]; then
                 critical "Cannot fetch ${FILE_URI}"
@@ -4531,8 +4845,8 @@ main() {
     if [ -n "${CRITICAL_DAYS}" ] && [ -n "${WARNING_DAYS}" ] && [ -n "${CRITICAL_SECONDS}" ] && [ -n "${WARNING_SECONDS}" ]; then
 
         # When comparing, always use values in seconds, because values in days might be floating point numbers
-        if compare "${WARNING_SECONDS}" '<=' "${CRITICAL_SECONDS}"; then
-            unknown "--warning (${WARNING_DAYS}) is less than or equal to --critical (${CRITICAL_DAYS})"
+        if compare "${WARNING_SECONDS}" '<' "${CRITICAL_SECONDS}"; then
+            unknown "--warning (${WARNING_DAYS}) is less than --critical (${CRITICAL_DAYS})"
         fi
 
     fi
@@ -4628,7 +4942,7 @@ main() {
             # see https://github.com/matteocorti/check_ssl_cert/issues/164#issuecomment-540623344
             # see https://github.com/matteocorti/check_ssl_cert/issues/167
             # see https://github.com/matteocorti/check_ssl_cert/issues/446
-            SSL_AU="RSA+SHA512:RSA+SHA256:RSA+SHA384:RSA+SHA224:RSA+SHA1:RSA-PSS+SHA256"
+            SSL_AU="RSA+SHA512:RSA+SHA256:RSA+SHA384:RSA+SHA224:RSA+SHA1:RSA-PSS+SHA256:RSA-PSS+SHA512:RSA-PSS+SHA384"
         else
             # see https://github.com/matteocorti/check_ssl_cert/issues/164#issuecomment-540623344
             SSL_AU="RSA-PSS+SHA512:RSA-PSS+SHA384:RSA-PSS+SHA256:RSA+SHA512:RSA+SHA256:RSA+SHA384:RSA+SHA224:RSA+SHA1"
@@ -4689,39 +5003,24 @@ main() {
         NMAP_HOST_ADDR=$(echo "${NMAP_HOST_ADDR}" | sed -e 's/^\[//' -e 's/\]$//')
     fi
 
-    # check if the host has an IPv6 address only (as nmap is not able to resolve without the -6 switch)
-    debuglog "Checking IPs: host ${HOST_ADDR}"
-    if echo "${HOST_ADDR}" | "${GREP_BIN}" -q '[a-z]' && ! host "${HOST_ADDR}" | "${GREP_BIN}" -F -q ' has address '; then
-        debuglog "the host does not have an IPv4 address. Trying nmap with -6 to force IPv6 for an IPv6-only host"
-        NMAP_INETPROTO='-6'
-    fi
+    if [ -z "${ETC_HOSTS}" ] && [ "${ETC_HOSTS}" != '-4' ] ; then
 
-    if echo "${NMAP_HOST_ADDR}" | "${GREP_BIN}" -q ':'; then
-        debuglog "host specified as an IPv6 address: forcing IPv6 with nmap"
-        NMAP_INETPROTO='-6'
-    fi
+        # check if the host has an IPv6 address only (as nmap is not able to resolve without the -6 switch)
+        debuglog "Checking IPs: host ${HOST_ADDR}"
+        if echo "${HOST_ADDR}" | "${GREP_BIN}" -q '[a-z]' && ! host "${HOST_ADDR}" | "${GREP_BIN}" -F -q ' has address '; then
+            debuglog "the host does not have an IPv4 address. Trying nmap with -6 to force IPv6 for an IPv6-only host"
+            NMAP_INETPROTO='-6'
+        fi
 
-    # Expect (optional)
-    EXPECT="$(command -v expect 2>/dev/null)"
-    test -x "${EXPECT}" || EXPECT=""
-    if [ -z "${EXPECT}" ]; then
-        verboselog "expect not available" 2
-    else
-        verboselog "expect available (${EXPECT})" 2
-    fi
+        if echo "${NMAP_HOST_ADDR}" | "${GREP_BIN}" -q ':'; then
+            debuglog "host specified as an IPv6 address: forcing IPv6 with nmap"
+            NMAP_INETPROTO='-6'
+        fi
 
-    # Timeout (optional)
-    TIMEOUT_BIN="$(command -v timeout 2>/dev/null)"
-    test -x "${TIMEOUT_BIN}" || TIMEOUT_BIN=""
-    if [ -z "${TIMEOUT_BIN}" ]; then
-        verboselog "timeout not available" 2
     else
 
-        verboselog "timeout available (${TIMEOUT_BIN})" 2
-    fi
+        debuglog "Hosts resolved to an IPv4 address with /etc/hosts"
 
-    if [ -z "${TIMEOUT_BIN}" ] && [ -z "${EXPECT}" ]; then
-        verboselog "disabling timeouts" 2
     fi
 
     PERL="$(command -v perl 2>/dev/null)"
@@ -4884,84 +5183,6 @@ main() {
         unset https_proxy
         unset HTTP_PROXY
         unset HTTPS_PROXY
-    fi
-
-    ################################################################################
-    # Check if openssl s_client supports the -proxy option
-    #
-    SCLIENT_PROXY=
-    SCLIENT_PROXY_ARGUMENT=
-    CURL_PROXY=
-    CURL_PROXY_ARGUMENT=
-    if [ -n "${http_proxy}" ] || [ -n "${HTTP_PROXY}" ]; then
-
-        if [ -n "${http_proxy}" ]; then
-            HTTP_PROXY="${http_proxy}"
-        fi
-
-        if [ -z "${https_proxy}" ]; then
-            # try to set https_proxy
-            https_proxy="${http_proxy}"
-        fi
-
-        if [ -z "${HTTPS_PROXY}" ]; then
-            # try to set HTTPS_proxy
-            HTTPS_PROXY="${HTTP_PROXY}"
-        fi
-
-        if [ -n "${CURL_BIN}" ] && ${CURL_BIN} --manual | "${GREP_BIN}" -F -q -- --proxy; then
-            debuglog "Adding --proxy ${HTTP_PROXY} to the curl options"
-            CURL_PROXY="--proxy"
-            CURL_PROXY_ARGUMENT="${HTTP_PROXY}"
-        fi
-
-        if ${OPENSSL} s_client -help 2>&1 | "${GREP_BIN}" -F -q -- -proxy || ${OPENSSL} s_client not_a_real_option 2>&1 | "${GREP_BIN}" -F -q -- -proxy; then
-            SCLIENT_PROXY="-proxy"
-            SCLIENT_PROXY_ARGUMENT="$(echo "${HTTP_PROXY}" | sed 's/.*:\/\///' | sed 's/\/$//')"
-
-            debuglog "Adding -proxy ${SCLIENT_PROXY_ARGUMENT} to the s_client options"
-
-        else
-
-            verboselog "'${OPENSSL} s_client' does not support '-proxy': HTTP_PROXY could be ignored"
-
-        fi
-
-    fi
-
-    if [ -n "${NO_PROXY_CURL}" ]; then
-        CURL_PROXY=''
-        CURL_PROXY_ARGUMENT=''
-    fi
-
-    if [ -n "${NO_PROXY_S_CLIENT}" ]; then
-        SCLIENT_PROXY=''
-        SCLIENT_PROXY_ARGUMENT=''
-    fi
-
-    debuglog "Proxy settings (after):"
-    debuglog "  http_proxy  = ${http_proxy}"
-    debuglog "  https_proxy = ${https_proxy}"
-    debuglog "  HTTP_PROXY  = ${HTTP_PROXY}"
-    debuglog "  HTTPS_PROXY = ${HTTPS_PROXY}"
-    debuglog "  s_client    = ${SCLIENT_PROXY} ${SCLIENT_PROXY_ARGUMENT}"
-    debuglog "  curl        = ${CURL_PROXY} ${CURL_PROXY_ARGUMENT}"
-
-    # nmap doesn't work properly behind a proxy.
-    #
-    # See e.g.,
-    # https://subscription.packtpub.com/book/networking-and-servers/9781786467454/2/ch02lvl1sec37/scanning-through-proxies
-    # https://security.stackexchange.com/questions/120708/nmap-through-proxy
-    #
-    if [ -n "${http_proxy}" ] ||
-        [ -n "${https_proxy}" ] ||
-        [ -n "${HTTP_PROXY}" ] ||
-        [ -n "${HTTPS_PROXY}" ] ||
-        [ -n "${SCLIENT_PROXY}" ] ||
-        [ -n "${CURL_PROXY}" ]; then
-        DISABLE_NMAP=1
-        debuglog "A proxy is specified: nmap disabled"
-        verboselog "A proxy is specified: nmap checks disabled"
     fi
 
     ################################################################################
@@ -5266,7 +5487,17 @@ main() {
 
             debuglog "Executing: '${NMAP_BIN} ${NMAP_INETPROTO} --unprivileged -Pn -p ${PORT} ${NMAP_HOST_ADDR}'"
 
-            if ! ${NMAP_BIN} "${NMAP_INETPROTO}" --unprivileged -Pn -p "${PORT}" "${NMAP_HOST_ADDR}" 2>&1 | "${GREP_BIN}" -q "${PORT}.*open"; then
+            NMAP_OUTPUT=$( ${NMAP_BIN} "${NMAP_INETPROTO}" --unprivileged -Pn -p "${PORT}" "${NMAP_HOST_ADDR}" 2>&1 )
+
+            if [ "${DEBUG}" -ge 1 ]; then
+                echo "${NMAP_OUTPUT}" | sed -e 's/^/[DBG]   //'
+            fi
+            debuglog "${GREP_BIN} -q \"${PORT}.*open\""
+            if [ "${DEBUG}" -ge 1 ]; then
+                echo "${NMAP_OUTPUT}" | "${GREP_BIN}" -q "${PORT}.*open" | sed -e 's/^/[DBG]   //'
+            fi
+
+            if ! echo "${NMAP_OUTPUT}" | "${GREP_BIN}" -q "${PORT}.*open"; then
 
                 if [ -n "${IGNORE_CONNECTION_STATE}" ]; then
 
@@ -5315,7 +5546,7 @@ main() {
     ERROR=${TEMPFILE}
 
     create_temporary_file
-    CRL_TMP_DER=${TEMPFILE}
+    CRL_TMP=${TEMPFILE}
     create_temporary_file
     CRL_TMP_PEM=${TEMPFILE}
     create_temporary_file
@@ -5421,6 +5652,7 @@ main() {
                 RET=$?
                 ;;
             esac
+            unset TIMEOUT_REASON
 
             if [ "${RET}" -eq 1 ]; then
 
@@ -5720,6 +5952,9 @@ EOF
 
     fi
 
+    PUB_KEY_ALGORITHM="$(extract_cert_attribute 'pub_key_algo' "${CERT}" | sed 's/.*: //')"
+    info "Public key algorithm" "${PUB_KEY_ALGORITHM}"
+
     SIGNATURE_ALGORITHM="$(extract_cert_attribute 'sig_algo' "${CERT}" | sed 's/.*: //')"
     info "Signature algorithm" "${SIGNATURE_ALGORITHM}"
 
@@ -5734,7 +5969,7 @@ EOF
         debuglog "FINGERPRINT= ${FINGERPRINT}"
         debuglog "OCSP_URI   = ${OCSP_URI}"
         debuglog "ISSUER_URI = ${ISSUER_URI}"
-        debuglog "${SIGNATURE_ALGORITHM}"
+        debuglog "${PUB_KEY_ALGORITHM}"
     fi
 
     if [ -n "${ISSUER_URI}" ]; then
@@ -5747,7 +5982,7 @@ EOF
     ISSUER_INFO="$(echo ${ISSUERS})"
     info "Issuers" "${ISSUER_INFO}"
 
-    if echo "${SIGNATURE_ALGORITHM}" | "${GREP_BIN}" -F -q "sha1"; then
+    if echo "${PUB_KEY_ALGORITHM}" | "${GREP_BIN}" -F -q "sha1"; then
 
         if [ -n "${NOSIGALG}" ]; then
 
@@ -5761,7 +5996,7 @@ EOF
 
     fi
 
-    if echo "${SIGNATURE_ALGORITHM}" | "${GREP_BIN}" -F -qi "md5"; then
+    if echo "${PUB_KEY_ALGORITHM}" | "${GREP_BIN}" -F -qi "md5"; then
 
         if [ -n "${NOSIGALG}" ]; then
 
@@ -6170,6 +6405,7 @@ INPUT
             # -Pn is needed even if we specify a port
             TIMEOUT_REASON="checking ciphers"
             exec_with_timeout "${NMAP_BIN} --unprivileged -Pn --script +ssl-enum-ciphers ${NMAP_INETPROTO} ${HOST_ADDR} -p ${PORT}" "${NMAP_OUT}" "${NMAP_ERR}"
+            unset TIMEOUT_REASON
 
             if [ "${DEBUG}" -ge 1 ]; then
                 debuglog 'nmap output:'
@@ -6262,6 +6498,8 @@ ${WARNING}"
     # Check SSL Labs
     if [ -n "${SSL_LAB_CRIT_ASSESSMENT}" ]; then
 
+        TIMEOUT_REASON='SSL Lab assesstment'
+
         create_temporary_file
         JSON=${TEMPFILE}
         debuglog "Storing the SSL Labs JSON output to ${JSON}"
@@ -6283,6 +6521,10 @@ ${WARNING}"
             debuglog "curl return code = ${CURL_RETURN_CODE}"
 
             if [ "${CURL_RETURN_CODE}" -ne 0 ]; then
+
+                if [ -n "${IGNORE_SSL_LABS_ERRORS}" ] ; then
+                    break
+                fi
 
                 debuglog "curl returned ${CURL_RETURN_CODE}: ${CURL_BIN} ${CURL_PROXY} ${CURL_PROXY_ARGUMENT} ${INETPROTO} --silent \"https://api.ssllabs.com/api/v2/analyze?host=${HOST_NAME}${IGNORE_SSL_LABS_CACHE}\""
 
@@ -6309,6 +6551,11 @@ ${WARNING}"
 
                 case "${SSL_LABS_HOST_STATUS}" in
                 'ERROR')
+
+                    if [ -n "${IGNORE_SSL_LABS_ERRORS}" ] ; then
+                        break
+                    fi
+
                     SSL_LABS_STATUS_MESSAGE=$(sed 's/.*"statusMessage":[ ]*"\([^"]*\)".*/\1/' "${JSON}")
                     prepend_critical_message "Error checking SSL Labs: ${SSL_LABS_STATUS_MESSAGE}"
                     break
@@ -6317,6 +6564,11 @@ ${WARNING}"
                     if ! "${GREP_BIN}" -F -q "grade" "${JSON}"; then
 
                         # Something went wrong
+
+                        if [ -n "${IGNORE_SSL_LABS_ERRORS}" ] ; then
+                            break
+                        fi
+
                         SSL_LABS_STATUS_MESSAGE=$(sed 's/.*"statusMessage":[ ]*"\([^"]*\)".*/\1/' "${JSON}")
                         prepend_critical_message "SSL Labs error: ${SSL_LABS_STATUS_MESSAGE}"
                         break
@@ -6365,6 +6617,11 @@ ${WARNING}"
                     ;;
                 *)
                     # Try to extract a message
+
+                    if [ -n "${IGNORE_SSL_LABS_ERRORS}" ] ; then
+                        break
+                    fi
+
                     SSL_LABS_ERROR_MESSAGE=$(sed 's/.*"message":[ ]*"\([^"]*\)".*/\1/' "${JSON}")
 
                     if [ -z "${SSL_LABS_ERROR_MESSAGE}" ]; then
@@ -6383,6 +6640,8 @@ ${WARNING}"
             exec_with_timeout "sleep ${WAIT_TIME}"
 
         done
+
+        unset TIMEOUT_REASON
 
     fi
 
@@ -6666,7 +6925,7 @@ ${WARNING}"
             PROTOCOL_TMP="$(var_for_sed PROTOCOL "${PROTOCOL}")"
             SELFSIGNEDCERT_TMP="$(var_for_sed SELFSIGNEDCERT "${SELFSIGNEDCERT}")"
             SHORTNAME_TMP="$(var_for_sed SHORTNAME "${SHORTNAME}")"
-            SIGALGO_TMP="$(var_for_sed SIGALGO "${SIGNATURE_ALGORITHM}")"
+            SIGALGO_TMP="$(var_for_sed SIGALGO "${PUB_KEY_ALGORITHM}")"
             SSL_LABS_HOST_GRADE_TMP="$(var_for_sed SSL_LABS_HOST_GRADE "${SSL_LABS_HOST_GRADE}")"
 
             echo "${FORMAT}${EXTRA_OUTPUT}" | sed \

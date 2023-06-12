@@ -1,3 +1,45 @@
+2023-05-23  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert: Fixed the initialization order of OPENSSL and GREP_BIN because of the proxy check
+
+2023-05-14  Matteo Corti  <matteo@corti.li>
+
+        * Added check_ssl_cert_icinga2.conf to the documentation check and distribution files. Added some missing options
+
+2023-04-25  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (main): Fixes the protocol used by nmap if the host is resolved with /etc/hosts
+        * check_ssl_cert (check_crl): Do not convert a CRL if already in the correct format
+        * check_ssl_cert (extract_cert_attribute): Removed a PCRE grep expression (non-standard)
+
+2023-04-24  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (main): Considers /etc/hosts for the existence checks
+
+2023-04-21  Matteo Corti  <matteo@corti.li>
+
+        * test/unit_tests.sh (testFloatingPointThresholdsExpired): Added a test for decimal critical or warning values
+          and expired certificates
+        * check_ssl_cert (extract_cert_attribute): Fix CRL output format parsing
+        * check_ssl_cert (compare): Fixed a problem with decimal critical or warning values and expired certificates
+
+2023-04-07  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (main): Fixed the resolution of hosts with IPv6 addresses only
+
+2023-04-05  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert (main): Better (earlier) check for non-existing hosts
+
+2023-04-03  Matteo Corti  <matteo@corti.li>
+
+        * test/integration_tests.sh (testWrongHostIgnore): Ignore expiration on wrong.host.badssl.com
+
+2023-03-16  Matteo Corti  <matteo@corti.li>
+
+        * check_ssl_cert: unset TIMEOUT_REASON after the the context it should be used
+        * check_ssl_cert: added some more TIMEOUT_REASON messages
+
 2023-03-09  Matteo Corti  <matteo@corti.li>
 
         * check_ssl_cert (main): Fixed the RSA algorithms

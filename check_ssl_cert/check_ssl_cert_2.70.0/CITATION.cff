@@ -14,6 +14,9 @@ authors:
 - family-names: "Miśkiewicz"
   given-names: "Arkadiusz"
   website: https://github.com/arekm
+- family-names: "Byrne"
+  given-names: "Ben"
+  website: https://github.com/benbyr
 - family-names: "Strößenreuther"
   given-names: "Bernd"
   website: https://github.com/booboo-at-gluga-de
@@ -173,6 +176,9 @@ authors:
 - family-names: "Grünewald"
   given-names: "Tobias"
   website: https://github.com/tobias-gruenewald
+- family-names: "Geißler"
+  given-names: "Tom"
+  website: https://github.com/d7031
 - name: Tone
   website: https://github.com/anthonyhaussman
 - family-names: "Haarala"
@@ -248,8 +254,8 @@ authors:
   given-names: "Дилян"
   website: https://github.com/dilyanpalauzov
 title: "check_ssl_cert"
-version: 2.61.0
-date-released: 2023-03-09
+version: 2.70.0
+date-released: 2023-05-20
 url: "https://github.com/matteocorti/check_ssl_cert"
 repository-code: "https://github.com/matteocorti/check_ssl_cert"
 keywords:
