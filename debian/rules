@@ -35,7 +35,7 @@ debian/tests/control: debian/packaging-helper.py $(TESTS_FILES)
 
 
 %:
-	dh $@ --with quilt,python3
+	dh $@ --with quilt
 
 
 watch:
