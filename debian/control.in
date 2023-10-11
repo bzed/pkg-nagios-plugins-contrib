@@ -6,6 +6,7 @@ Uploaders: #AUTO_UPDATE_Uploaders#
 Build-Depends: debhelper (>= 8.0.0),
                dh-autoreconf,
                dh-python,
+               dh-sequence-python3,
                python3:any, python3-debian:native,
                quilt (>= 0.46-7),
                #AUTO_UPDATE_Build-Depends#
