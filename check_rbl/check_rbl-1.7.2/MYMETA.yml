@@ -7,7 +7,7 @@ build_requires:
 configure_requires:
   ExtUtils::MakeMaker: '0'
 dynamic_config: 0
-generated_by: 'Module::Install version 1.19, CPAN::Meta::Converter version 2.150010'
+generated_by: 'Module::Install version 1.21, CPAN::Meta::Converter version 2.150010'
 license: gpl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -30,5 +30,5 @@ requires:
   Net::IP: '0'
   Readonly: '0'
   Socket: '0'
-version: 1.7.0
+version: 1.7.2
 x_serialization_backend: 'CPAN::Meta::YAML version 0.018'

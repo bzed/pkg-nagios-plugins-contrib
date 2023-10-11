@@ -4,7 +4,7 @@
       "unknown"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Module::Install version 1.19, CPAN::Meta::Converter version 2.150010",
+   "generated_by" : "Module::Install version 1.21, CPAN::Meta::Converter version 2.150010",
    "license" : [
       "gpl_3"
    ],
@@ -48,6 +48,6 @@
       }
    },
    "release_status" : "stable",
-   "version" : "1.7.0",
+   "version" : "1.7.2",
    "x_serialization_backend" : "JSON::PP version 4.07"
 }
