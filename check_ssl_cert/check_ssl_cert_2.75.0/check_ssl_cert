@@ -2,14 +2,12 @@
 #
 # check_ssl_cert
 
-# Checks an X.509 certificate:
-# - checks if the server is running and delivers a valid certificate
-# - checks if the CA matches a given pattern
-# - checks the validity
+# Checks an X.509 certificate
+# see https://github.com/matteocorti/check_ssl_cert
 #
 # See the INSTALL.md file for installation instructions
 #
-# Copyright (c) 2007-2012 ETH Zurich.
+# Copyright (c) 2007-2012 ETH Zurich <matteo.corti@ethz.ch>
 # Copyright (c) 2007-2023 Matteo Corti <matteo@corti.li>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -25,13 +23,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# TODO
-# - timeout for the python script
-
 ################################################################################
 # Constants
 
-VERSION=2.70.0
+VERSION=2.75.0
 SHORTNAME="SSL_CERT"
 
 VALID_ATTRIBUTES=",startdate,enddate,subject,issuer,modulus,serial,hash,email,ocsp_uri,fingerprint,"
@@ -62,7 +57,7 @@ STATUS_WARNING=1
 TEMPFILE=""
 WARNING_MSG=""
 
-DEFAULT_FORMAT="%SHORTNAME% OK - %HOST%:%PORT%, %PROTOCOL%, %OPENSSL_COMMAND% %SELFSIGNEDCERT%certificate %DISPLAY_CN%%CHECKEDNAMES%from '%CA_ISSUER_MATCHED%' valid until %DATE%%DAYS_VALID%%OCSP_EXPIRES_IN_HOURS%%SSL_LABS_HOST_GRADE%"
+DEFAULT_FORMAT="%SHORTNAME% %STATUS% - %HOST%:%PORT%, %PROTOCOL%, %OPENSSL_COMMAND% %SELFSIGNEDCERT%certificate %DISPLAY_CN%%CHECKEDNAMES%from '%CA_ISSUER_MATCHED%' valid until %DATE%%DAYS_VALID%%OCSP_EXPIRES_IN_HOURS%%SSL_LABS_HOST_GRADE%"
 
 # if --critical or --warning are floating point then switch to floating point output, otherwise integer
 
@@ -71,6 +66,64 @@ SCALE=""
 
 ################################################################################
 # Functions
+
+
+# substituted the variables defined by the --format command line option
+format_template() {
+
+    string=$1
+
+    debuglog "output parameters: STATUS                = ${STATUS}"
+    debuglog "output parameters: CA_ISSUER_MATCHED     = ${CA_ISSUER_MATCHED}"
+    debuglog "output parameters: CHECKEDNAMES          = ${CHECKEDNAMES}"
+    debuglog "output parameters: CN                    = ${CN}"
+    debuglog "output parameters: DATE                  = ${DATE}"
+    debuglog "output parameters: DAYS_VALID            = ${DAYS_VALID}"
+    debuglog "output parameters: DYSPLAY_CN            = ${DISPLAY_CN}"
+    debuglog "output parameters: OPENSSL_COMMAND       = ${OPENSSL_COMMAND}"
+    debuglog "output parameters: SELFSIGNEDCERT        = ${SELFSIGNEDCERT}"
+    debuglog "output parameters: SHORTNAME             = ${SHORTNAME}"
+    debuglog "output parameters: OCSP_EXPIRES_IN_HOURS = ${OCSP_EXPIRES_IN_HOURS}"
+    debuglog "output parameters: SSL_LABS_HOST_GRADE   = ${SSL_LABS_HOST_GRADE}"
+    debuglog "output parameters: PROTOCOL              = ${PROTOCOL}"
+
+    STATUS_TMP="$(var_for_sed STATUS "${STATUS}")"
+    CA_ISSUER_MATCHED_TMP="$(var_for_sed CA_ISSUER_MATCHED "${CA_ISSUER_MATCHED}")"
+    CHECKEDNAMES_TMP="$(var_for_sed CHECKEDNAMES "${CHECKEDNAMES}")"
+    CN_TMP="$(var_for_sed CN "${CN}")"
+    DATE_TMP="$(var_for_sed DATE "${DATE}")"
+    DAYS_VALID_TMP="$(var_for_sed DAYS_VALID "${DAYS_VALID}")"
+    DISPLAY_CN_TMP="$(var_for_sed DISPLAY_CN "${DISPLAY_CN}")"
+    HOST_TMP="$(var_for_sed HOST "${HOST}")"
+    OCSP_EXPIRES_IN_HOURS_TMP="$(var_for_sed OCSP_EXPIRES_IN_HOURS "${OCSP_EXPIRES_IN_HOURS}")"
+    OPENSSL_COMMAND_TMP="$(var_for_sed OPENSSL_COMMAND "${OPENSSL_COMMAND}")"
+    PORT_TMP="$(var_for_sed PORT "${PORT}")"
+    PROTOCOL_TMP="$(var_for_sed PROTOCOL "${PROTOCOL}")"
+    SELFSIGNEDCERT_TMP="$(var_for_sed SELFSIGNEDCERT "${SELFSIGNEDCERT}")"
+    SHORTNAME_TMP="$(var_for_sed SHORTNAME "${SHORTNAME}")"
+    SIGALGO_TMP="$(var_for_sed SIGALGO "${PUB_KEY_ALGORITHM}")"
+    SSL_LABS_HOST_GRADE_TMP="$(var_for_sed SSL_LABS_HOST_GRADE "${SSL_LABS_HOST_GRADE}")"
+
+    echo "${string}" |
+        sed \
+            -e "${STATUS_TMP}" \
+            -e "${CA_ISSUER_MATCHED_TMP}" \
+            -e "${CHECKEDNAMES_TMP}" \
+            -e "${CN_TMP}" \
+            -e "${DATE_TMP}" \
+            -e "${DAYS_VALID_TMP}" \
+            -e "${DISPLAY_CN_TMP}" \
+            -e "${HOST_TMP}" \
+            -e "${OCSP_EXPIRES_IN_HOURS_TMP}" \
+            -e "${OPENSSL_COMMAND_TMP}" \
+            -e "${PORT_TMP}" \
+            -e "${PROTOCOL_TMP}" \
+            -e "${SELFSIGNEDCERT_TMP}" \
+            -e "${SHORTNAME_TMP}" \
+            -e "${SIGALGO_TMP}" \
+            -e "${SSL_LABS_HOST_GRADE_TMP}"
+
+}
 
 ################################################################################
 # Add the specified header to the list of required HTTP headers
@@ -592,7 +645,7 @@ debuglog() {
     # debuglog is also called during the --debug-file sanity checks: we have
     # to check if the file exists
     if [ -n "${DEBUG_FILE}" ] && [ -e "${DEBUG_FILE}" ] && ! [ -d "${DEBUG_FILE}" ] && [ -w "${DEBUG_FILE}" ]; then
-        if [ -n "${ELAPSED}" ]; then
+        if [ -n "${DEBUG_TIME}" ]; then
             echo "+${ELAPSED}s ${1}" >>"${DEBUG_FILE}"
         else
             echo "${1}" >>"${DEBUG_FILE}"
@@ -1033,8 +1086,8 @@ prepend_critical_message() {
             fi
         fi
     fi
-    if [ -n "${PROTOCOL}" ]; then
-        tmp="${tmp}:${PROTOCOL}"
+    if [ -n "${PORT}" ]; then
+        tmp="${tmp}:${PORT}"
     fi
 
     MSG="${SHORTNAME} CRITICAL${tmp}: ${1}${LONG_OUTPUT}"
@@ -1232,6 +1285,9 @@ append_warning_message() {
                 tmp=" ${HOST_NAME}"
             fi
         fi
+    fi
+    if [ -n "${PORT}" ]; then
+        tmp="${tmp}:${PORT}"
     fi
 
     MSG="${SHORTNAME} WARN${tmp}: ${1}${LONG_OUTPUT}"
@@ -1660,7 +1716,24 @@ extract_cert_attribute() {
 # Returns 1 if timed out 0 otherwise
 exec_with_timeout() {
 
-    time=${TIMEOUT}
+    NOW=$(date +%s)
+    ELAPSED=$((NOW - START_TIME))
+    CURRENT_TIMEOUT=$(( TIMEOUT - ELAPSED))
+
+    debuglog "exec_with_timeout: TIMEOUT=${TIMEOUT}, CURRENT_TIMEOUT=${CURRENT_TIMEOUT}, ELAPSED=${ELAPSED}"
+
+    if [ -n "${TIMEOUT_REASON}" ]; then
+        if ! echo "${TIMEOUT_REASON}" | "${GREP_BIN}" -q '^ '; then
+            # add a blank before the reason in parenthesis
+            TIMEOUT_REASON=" (${TIMEOUT_REASON})"
+        fi
+    fi
+
+    if [ "${CURRENT_TIMEOUT}" -lt 1 ]; then
+        # the timeout is already reached (before executing the command)
+        prepend_critical_message "Timeout after ${ELAPSED} seconds"
+        critical "${SHORTNAME} CRITICAL: Timeout after ${ELAPSED} seconds${TIMEOUT_REASON}"
+    fi
 
     # start the command in a subshell to avoid problem with pipes
     # (spawn accepts one command)
@@ -1676,27 +1749,16 @@ exec_with_timeout() {
     fi
 
     debuglog "exec_with_timeout $1 $2 $3"
-    debuglog "  TIMEOUT_REASON = ${TIMEOUT_REASON}"
 
-    if [ -n "${TIMEOUT_REASON}" ]; then
-        if ! echo "${TIMEOUT_REASON}" | "${GREP_BIN}" -q '^ '; then
-            # add a blank before the reason in parenthesis
-            TIMEOUT_REASON=" (${TIMEOUT_REASON})"
-        fi
-    fi
-
-    start_time=$(date +%s)
-
-    debuglog "executing with timeout (${time}s): $1"
-    debuglog "  start time = ${start_time}"
+    debuglog "executing with timeout (${CURRENT_TIMEOUT}s): $1"
 
     if [ -n "${TIMEOUT_BIN}" ]; then
 
-        debuglog "$(printf '%s %s %s\n' "${TIMEOUT_BIN}" "${time}" "${command}")"
+        debuglog "$(printf '%s %s %s\n' "${TIMEOUT_BIN}" "${CURRENT_TIMEOUT}" "${command}")"
 
         # We execute timeout in the background so that it can be relay a signal to 'timeout'
         # https://unix.stackexchange.com/questions/57667/why-cant-i-kill-a-timeout-called-from-a-bash-script-with-a-keystroke/57692#57692
-        eval "${TIMEOUT_BIN} ${time} ${command} &" >"${OUTFILE}" 2>"${ERRFILE}"
+        eval "${TIMEOUT_BIN} ${CURRENT_TIMEOUT} ${command} &" >"${OUTFILE}" 2>"${ERRFILE}"
         TIMEOUT_PID=$!
         wait "${TIMEOUT_PID}" >/dev/null 2>&1
         RET=$?
@@ -1706,8 +1768,8 @@ exec_with_timeout() {
 
         # because of the execution in the background we get a 137 for a timeout
         if [ "${RET}" -eq 137 ] || [ "${RET}" -eq 124 ]; then
-            prepend_critical_message "Timeout after ${time} seconds"
-            critical "${SHORTNAME} CRITICAL: Timeout after ${time} seconds${TIMEOUT_REASON}"
+            prepend_critical_message "Timeout after ${ELAPSED} seconds"
+            critical "${SHORTNAME} CRITICAL: Timeout after ${ELAPSED} seconds${TIMEOUT_REASON}"
         elif [ "${RET}" -eq 125 ]; then
             prepend_critical_message "execution of ${command} failed"
         elif [ "${RET}" -eq 126 ]; then
@@ -1715,12 +1777,6 @@ exec_with_timeout() {
         elif [ "${RET}" -eq 127 ]; then
             prepend_critical_message "${command} cannot be found"
         fi
-
-        end_time=$(date +%s)
-        TIMEOUT=$((TIMEOUT - end_time + start_time))
-        debuglog "  end time = ${end_time}"
-        debuglog "  new timeout = ${TIMEOUT}"
-        if [ "${TIMEOUT}" -lt 1 ]; then TIMEOUT=1; fi
 
         return "${RET}"
 
@@ -1734,7 +1790,7 @@ exec_with_timeout() {
         set_variable EXPECT_SCRIPT <<EOT
 
 set echo \"-noecho\"
-set timeout ${time}
+set timeout ${CURRENT_TIMEOUT}
 
 # spawn the process
 spawn -noecho sh -c { ${command} > ${OUTFILE} 2> ${ERRFILE} }
@@ -1763,15 +1819,9 @@ EOT
         debuglog "expect returned ${RET}"
 
         if [ "${RET}" -eq "${TIMEOUT_ERROR_CODE}" ]; then
-            prepend_critical_message "Timeout after ${time} seconds"
-            critical "${SHORTNAME} CRITICAL: Timeout after ${time} seconds${TIMEOUT_REASON}"
+            prepend_critical_message "Timeout after ${ELAPSED} seconds"
+            critical "${SHORTNAME} CRITICAL: Timeout after ${ELAPSED} seconds${TIMEOUT_REASON}"
         fi
-
-        end_time=$(date +%s)
-        TIMEOUT=$((TIMEOUT - end_time + start_time))
-        debuglog "  end time = ${end_time}"
-        debuglog "  new timeout = ${TIMEOUT}"
-        if [ "${TIMEOUT}" -lt 1 ]; then TIMEOUT=1; fi
 
         return "${RET}"
 
@@ -1783,14 +1833,6 @@ EOT
 
         eval "${command}" >"${OUTFILE}" 2>"${ERRFILE}"
         RET=$?
-
-        end_time=$(date +%s)
-
-        # we deduce the command duration from the total specified timeout
-        TIMEOUT=$((TIMEOUT - end_time + start_time))
-        debuglog "  end time = ${end_time}"
-        debuglog "  new timeout = ${TIMEOUT}"
-        if [ "${TIMEOUT}" -lt 1 ]; then TIMEOUT=1; fi
 
         return "${RET}"
 
@@ -2086,8 +2128,6 @@ check_ocsp() {
             debuglog "OCSP: host = ${OCSP_HOST}"
 
             # ocsp has an own timeout option
-            start_time=$(date +%s)
-
             if [ -n "${OCSP_HOST}" ]; then
 
                 # check if -header is supported
@@ -2116,24 +2156,44 @@ check_ocsp() {
                     fi
 
                     if [ -n "${HTTP_PROXY:-}" ]; then
+
                         OCSP_PROXY_ARGUMENT="$(echo "${HTTP_PROXY}" | sed 's/.*:\/\///' | sed 's/\/$//')"
 
+                        debuglog "OCSP_PROXY_ARGUMENT = ${OCSP_PROXY_ARGUMENT}"
+
+                        OPENSSL_VERSION_SHORT=${OPENSSL_VERSION%%.*}
+                        debuglog "OpenSSL major version = ${OPENSSL_VERSION_SHORT}"
+
                         if [ -n "${KEYVALUE}" ]; then
-                            debuglog "executing ${OPENSSL} ocsp -timeout \"${TIMEOUT}\" -no_nonce -issuer ${ISSUER_CERT} -cert ${CERT_ELEMENT} -host \"${OCSP_PROXY_ARGUMENT}\" -path ${OCSP_URI} -header HOST=${OCSP_HOST}"
-                            OCSP_RESP="$(${OPENSSL} ocsp -timeout "${TIMEOUT}" -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT_ELEMENT}" -host "${OCSP_PROXY_ARGUMENT}" -path "${OCSP_URI}" -header HOST="${OCSP_HOST}" 2>&1)"
+
+                            if [ "${OPENSSL_VERSION_SHORT}" -ge 3 ];then
+                                debuglog "executing (1) ${OPENSSL} ocsp -timeout \"${CURRENT_TIMEOUT}\" -no_nonce -issuer ${ISSUER_CERT} -cert ${CERT_ELEMENT}  ${OCSP_HEADER} -header HOST=${OCSP_HOST} -proxy ${http_proxy} -url ${OCSP_URI}"
+                                OCSP_RESP="$(${OPENSSL} ocsp -timeout "${CURRENT_TIMEOUT}" -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT_ELEMENT}" -header "HOST=${OCSP_HOST}" -proxy "${http_proxy}" -url "${OCSP_URI}" 2>&1)"
+                            else
+                                debuglog "executing (2) ${OPENSSL} ocsp -timeout \"${CURRENT_TIMEOUT}\" -no_nonce -issuer ${ISSUER_CERT} -cert ${CERT_ELEMENT}  ${OCSP_HEADER} -header HOST=${OCSP_HOST} -host ${OCSP_PROXY_ARGUMENT} -path ${OCSP_URI}"
+                                OCSP_RESP="$(${OPENSSL} ocsp -timeout "${CURRENT_TIMEOUT}" -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT_ELEMENT}" -header "HOST=${OCSP_HOST}" -host "${OCSP_PROXY_ARGUMENT}" -path "${OCSP_URI}" 2>&1)"
+                            fi
+
                         else
-                            debuglog "executing ${OPENSSL} ocsp -timeout \"${TIMEOUT}\" -no_nonce -issuer ${ISSUER_CERT} -cert ${CERT_ELEMENT} -host \"${OCSP_PROXY_ARGUMENT}\" -path ${OCSP_URI} -header HOST ${OCSP_HOST}"
-                            OCSP_RESP="$(${OPENSSL} ocsp -timeout "${TIMEOUT}" -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT_ELEMENT}" -host "${OCSP_PROXY_ARGUMENT}" -path "${OCSP_URI}" -header HOST "${OCSP_HOST}" 2>&1)"
+
+                            if [ "${OPENSSL_VERSION_SHORT}" -ge 3 ];then
+                                debuglog "executing (3) ${OPENSSL} ocsp -timeout \"${CURRENT_TIMEOUT}\" -no_nonce -issuer ${ISSUER_CERT} -cert ${CERT_ELEMENT} ${OCSP_HEADER} -header HOST ${OCSP_HOST} -host ${OCSP_PROXY_ARGUMENT} -path ${OCSP_URI}"
+                                OCSP_RESP="$(${OPENSSL} ocsp -timeout "${CURRENT_TIMEOUT}" -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT_ELEMENT}" -header HOST "${OCSP_HOST}" -host "${OCSP_PROXY_ARGUMENT}" -path "${OCSP_URI}" 2>&1)"
+                            else
+                                debuglog "executing (4) ${OPENSSL} ocsp -timeout \"${CURRENT_TIMEOUT}\" -no_nonce -issuer ${ISSUER_CERT} -cert ${CERT_ELEMENT} ${OCSP_HEADER} -header HOST ${OCSP_HOST} -host ${OCSP_PROXY_ARGUMENT} -path ${OCSP_URI}"
+                                OCSP_RESP="$(${OPENSSL} ocsp -timeout "${CURRENT_TIMEOUT}" -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT_ELEMENT}" -header HOST "${OCSP_HOST}" -host "${OCSP_PROXY_ARGUMENT}" -path "${OCSP_URI}" 2>&1)"
+                            fi
+
                         fi
 
                     else
 
                         if [ -n "${KEYVALUE}" ]; then
-                            debuglog "executing ${OPENSSL} ocsp -timeout \"${TIMEOUT}\" -no_nonce -issuer ${ISSUER_CERT} -cert ${CERT_ELEMENT}  -url ${OCSP_URI} ${OCSP_HEADER} -header HOST=${OCSP_HOST}"
-                            OCSP_RESP="$(${OPENSSL} ocsp -timeout "${TIMEOUT}" -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT_ELEMENT}" -url "${OCSP_URI}" -header "HOST=${OCSP_HOST}" 2>&1)"
+                            debuglog "executing (5) ${OPENSSL} ocsp -timeout \"${CURRENT_TIMEOUT}\" -no_nonce -issuer ${ISSUER_CERT} -cert ${CERT_ELEMENT}  -url ${OCSP_URI} ${OCSP_HEADER} -header HOST=${OCSP_HOST}"
+                            OCSP_RESP="$(${OPENSSL} ocsp -timeout "${CURRENT_TIMEOUT}" -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT_ELEMENT}" -url "${OCSP_URI}" -header "HOST=${OCSP_HOST}" 2>&1)"
                         else
-                            debuglog "executing ${OPENSSL} ocsp -timeout \"${TIMEOUT}\" -no_nonce -issuer ${ISSUER_CERT} -cert ${CERT_ELEMENT}  -url ${OCSP_URI} ${OCSP_HEADER} -header HOST ${OCSP_HOST}"
-                            OCSP_RESP="$(${OPENSSL} ocsp -timeout "${TIMEOUT}" -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT_ELEMENT}" -url "${OCSP_URI}" -header HOST "${OCSP_HOST}" 2>&1)"
+                            debuglog "executing (6) ${OPENSSL} ocsp -timeout \"${CURRENT_TIMEOUT}\" -no_nonce -issuer ${ISSUER_CERT} -cert ${CERT_ELEMENT}  -url ${OCSP_URI} ${OCSP_HEADER} -header HOST ${OCSP_HOST}"
+                            OCSP_RESP="$(${OPENSSL} ocsp -timeout "${CURRENT_TIMEOUT}" -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT_ELEMENT}" -url "${OCSP_URI}" -header HOST "${OCSP_HOST}" 2>&1)"
                         fi
 
                     fi
@@ -2161,22 +2221,22 @@ check_ocsp() {
 
                         if [ -n "${HTTP_PROXY:-}" ]; then
 
-                            debuglog "executing ${OPENSSL} ocsp -timeout \"${TIMEOUT}\" -no_nonce -issuer \"${ISSUER_CERT}\" -cert \"${CERT_ELEMENT}]\" -host \"${HTTP_PROXY#*://}\" -path \"${OCSP_URI}\" \"${OCSP_HEADER}\" 2>&1"
+                            debuglog "executing ${OPENSSL} ocsp -timeout \"${CURRENT_TIMEOUT}\" -no_nonce -issuer \"${ISSUER_CERT}\" -cert \"${CERT_ELEMENT}]\" -host \"${HTTP_PROXY#*://}\" -path \"${OCSP_URI}\" \"${OCSP_HEADER}\" 2>&1"
 
                             if [ -n "${OCSP_HEADER}" ]; then
-                                OCSP_RESP="$(${OPENSSL} ocsp -timeout "${TIMEOUT}" -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT_ELEMENT}" -host "${HTTP_PROXY#*://}" -path "${OCSP_URI}" "${OCSP_HEADER}" 2>&1)"
+                                OCSP_RESP="$(${OPENSSL} ocsp -timeout "${CURRENT_TIMEOUT}" -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT_ELEMENT}" -host "${HTTP_PROXY#*://}" -path "${OCSP_URI}" "${OCSP_HEADER}" 2>&1)"
                             else
-                                OCSP_RESP="$(${OPENSSL} ocsp -timeout "${TIMEOUT}" -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT_ELEMENT}" -host "${HTTP_PROXY#*://}" -path "${OCSP_URI}" 2>&1)"
+                                OCSP_RESP="$(${OPENSSL} ocsp -timeout "${CURRENT_TIMEOUT}" -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT_ELEMENT}" -host "${HTTP_PROXY#*://}" -path "${OCSP_URI}" 2>&1)"
                             fi
 
                         else
 
-                            debuglog "executing ${OPENSSL} ocsp -timeout \"${TIMEOUT}\" -no_nonce -issuer \"${ISSUER_CERT}\" -cert \"${CERT_ELEMENT}\" -url \"${OCSP_URI}\" \"${OCSP_HEADER}\" 2>&1"
+                            debuglog "executing ${OPENSSL} ocsp -timeout \"${CURRENT_TIMEOUT}\" -no_nonce -issuer \"${ISSUER_CERT}\" -cert \"${CERT_ELEMENT}\" -url \"${OCSP_URI}\" \"${OCSP_HEADER}\" 2>&1"
 
                             if [ -n "${OCSP_HEADER}" ]; then
-                                OCSP_RESP="$(${OPENSSL} ocsp -timeout "${TIMEOUT}" -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT_ELEMENT}" -url "${OCSP_URI}" "${OCSP_HEADER}" 2>&1)"
+                                OCSP_RESP="$(${OPENSSL} ocsp -timeout "${CURRENT_TIMEOUT}" -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT_ELEMENT}" -url "${OCSP_URI}" "${OCSP_HEADER}" 2>&1)"
                             else
-                                OCSP_RESP="$(${OPENSSL} ocsp -timeout "${TIMEOUT}" -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT_ELEMENT}" -url "${OCSP_URI}" 2>&1)"
+                                OCSP_RESP="$(${OPENSSL} ocsp -timeout "${CURRENT_TIMEOUT}" -no_nonce -issuer "${ISSUER_CERT}" -cert "${CERT_ELEMENT}" -url "${OCSP_URI}" 2>&1)"
                             fi
 
                         fi
@@ -2202,12 +2262,6 @@ check_ocsp() {
                 verboselog "Warning: no OCSP host found: disabling OCSP checks"
 
             fi
-
-            # update the timeout
-            debuglog "Timeout before OCSP check: ${TIMEOUT}"
-            end_time=$(date +%s)
-            TIMEOUT=$((TIMEOUT - end_time + start_time))
-            debuglog "Timeout after OCSP check:  ${TIMEOUT}"
 
         done
 
@@ -2743,7 +2797,11 @@ fetch_certificate() {
     if [ "${RET}" -ne 0 ]; then
 
         MESSAGE_TMP="$(sed 's/^/SSL error: /' "${ERROR}")"
-        debuglog "${MESSAGE_TMP}"
+
+        if [ "${DEBUG}" -gt 0 ]; then
+            debuglog "MESSAGE_TMP="
+            echo "${MESSAGE_TMP}" | sed 's/^/[DBG]   /'
+        fi
 
         # s_client could verify the server certificate because the server requires a client certificate
         if ascii_grep '^Client Certificate Types' "${CERT}"; then
@@ -2755,6 +2813,13 @@ fetch_certificate() {
             ascii_grep 'connect[ ]argument[ ]or[ ]target[ ]parameter[ ]malformed[ ]or[ ]ambiguous' "${ERROR}"; then
 
             ERROR="${HOST_ADDR} is not a valid hostname"
+            prepend_critical_message "${ERROR}"
+            critical "SSL_CERT CRITICAL ${HOST_NAME}${protocol_tmp}: ${ERROR}"
+
+        elif ascii_grep '500 Unable to connect' "${ERROR}"; then
+
+            # tinyproxy delivers a different error message: harmonize
+            ERROR="Cannot connect to ${HOST} on port ${PORT}"
             prepend_critical_message "${ERROR}"
             critical "SSL_CERT CRITICAL ${HOST_NAME}${protocol_tmp}: ${ERROR}"
 
@@ -3958,6 +4023,8 @@ $2"
 ################################################################################
 main() {
 
+    START_TIME=$(date +%s)
+
     ##############################################################################
     # we need grep from the beginning (will fix later if --grep-bin is specified)
     if [ -z "${GREP_BIN}" ]; then
@@ -4373,6 +4440,7 @@ main() {
         [ -n "${SCLIENT_PROXY}" ] ||
         [ -n "${CURL_PROXY}" ]; then
         DISABLE_NMAP=1
+        USING_A_PROXY=1
         debuglog "A proxy is specified: nmap disabled"
         verboselog "A proxy is specified: nmap checks disabled"
     fi
@@ -4408,15 +4476,22 @@ main() {
         unknown "--do-not-resolve and --resolve-over-http cannot be specified at the same time"
     fi
 
-    if [ -z "${DO_NOT_RESOLVE}" ] ; then
+    # we check only if
+    # --do-not-resolve was not specified
+    # --resolve was not specified (as the IP is supplied on the command line)
+    if [ -z "${DO_NOT_RESOLVE}" ] && [ -z "${RESOLVE}" ] ; then
 
         if [ -z "${RESOLVE_OVER_HTTP}" ] ; then
 
             ETC_HOSTS=
             debuglog "Checking if the host is listed in /etc/hosts"
+
             if "${GREP_BIN}" -q "[[:blank:]]${HOST}[[:blank:]]*$" /etc/hosts ; then
 
-                debuglog "Host listed in /etc/hosts"
+                debuglog "Host listed in /etc/hosts as"
+                etc_hosts_entry=$( "${GREP_BIN}" "[[:blank:]]${HOST}[[:blank:]]*$" /etc/hosts )
+                debuglog "${etc_hosts_entry}"
+
                 if [ "${INETPROTO}" = '-4' ] ; then
                     if grep -q "^[0-9.]*[[:blank:]]*${HOST}" /etc/hosts ; then
                         ETC_HOSTS=4
@@ -4426,9 +4501,9 @@ main() {
                         ETC_HOSTS=6
                         NMAP_INETPROTO=-6
                     fi
-                elif  grep -q "^[0-9.]*[[:blank:]]*${HOST}" /etc/hosts ; then
+                elif grep -q "^[0-9.]*[[:blank:]]*${HOST}" /etc/hosts ; then
                     ETC_HOSTS=4
-                else
+                elif grep -q "^[a-fA-F:0-9]*[[:blank:]]*${HOST}" /etc/hosts ; then
                     ETC_HOSTS=6
                     NMAP_INETPROTO=-6
                 fi
@@ -5160,12 +5235,7 @@ main() {
         fi
     fi
 
-    if [ -n "${PROXY}" ] &&
-        {
-            [ -n "${NO_PROXY}" ] ||
-                [ -n "${NO_PROXY_CURL}" ] ||
-                [ -n "${NO_PROXY_S_CLIENT}" ]
-        }; then
+    if [ -n "${PROXY}" ] && [ -n "${NO_PROXY}" ] ; then
         unknown "Only one of --proxy or --no_proxy can be specified"
     fi
 
@@ -5490,11 +5560,11 @@ main() {
             NMAP_OUTPUT=$( ${NMAP_BIN} "${NMAP_INETPROTO}" --unprivileged -Pn -p "${PORT}" "${NMAP_HOST_ADDR}" 2>&1 )
 
             if [ "${DEBUG}" -ge 1 ]; then
-                echo "${NMAP_OUTPUT}" | sed -e 's/^/[DBG]   //'
+                echo "${NMAP_OUTPUT}" | sed -e 's/^/[DBG]   /'
             fi
             debuglog "${GREP_BIN} -q \"${PORT}.*open\""
             if [ "${DEBUG}" -ge 1 ]; then
-                echo "${NMAP_OUTPUT}" | "${GREP_BIN}" -q "${PORT}.*open" | sed -e 's/^/[DBG]   //'
+                echo "${NMAP_OUTPUT}" | "${GREP_BIN}" -q "${PORT}.*open" | sed -e 's/^/[DBG]   /'
             fi
 
             if ! echo "${NMAP_OUTPUT}" | "${GREP_BIN}" -q "${PORT}.*open"; then
@@ -6388,8 +6458,12 @@ INPUT
 
         if [ -n "${DISABLE_NMAP}" ]; then
 
-            verboselog "Using a proxy: cannot check ciphers"
-            debuglog "Using a proxy: cannot check ciphers"
+            if [ -n "${USING_A_PROXY}" ]; then
+                prepend_critical_message "Cannot check ciphers when using a proxy"
+            else
+                verboselog "nmap disabled: cannot check ciphers"
+                debuglog "nmap disabled: cannot check ciphers"
+            fi
 
         else
 
@@ -6897,53 +6971,12 @@ ${WARNING}"
             PROTOCOL='https'
         fi
 
-        debuglog "output parameters: CA_ISSUER_MATCHED     = ${CA_ISSUER_MATCHED}"
-        debuglog "output parameters: CHECKEDNAMES          = ${CHECKEDNAMES}"
-        debuglog "output parameters: CN                    = ${CN}"
-        debuglog "output parameters: DATE                  = ${DATE}"
-        debuglog "output parameters: DAYS_VALID            = ${DAYS_VALID}"
-        debuglog "output parameters: DYSPLAY_CN            = ${DISPLAY_CN}"
-        debuglog "output parameters: OPENSSL_COMMAND       = ${OPENSSL_COMMAND}"
-        debuglog "output parameters: SELFSIGNEDCERT        = ${SELFSIGNEDCERT}"
-        debuglog "output parameters: SHORTNAME             = ${SHORTNAME}"
-        debuglog "output parameters: OCSP_EXPIRES_IN_HOURS = ${OCSP_EXPIRES_IN_HOURS}"
-        debuglog "output parameters: SSL_LABS_HOST_GRADE   = ${SSL_LABS_HOST_GRADE}"
-        debuglog "output parameters: PROTOCOL              = ${PROTOCOL}"
+        STATUS=OK
+        FORMAT=$( format_template "${FORMAT}" )
 
         if [ -z "${PROMETHEUS}" ]; then
 
-            CA_ISSUER_MATCHED_TMP="$(var_for_sed CA_ISSUER_MATCHED "${CA_ISSUER_MATCHED}")"
-            CHECKEDNAMES_TMP="$(var_for_sed CHECKEDNAMES "${CHECKEDNAMES}")"
-            CN_TMP="$(var_for_sed CN "${CN}")"
-            DATE_TMP="$(var_for_sed DATE "${DATE}")"
-            DAYS_VALID_TMP="$(var_for_sed DAYS_VALID "${DAYS_VALID}")"
-            DISPLAY_CN_TMP="$(var_for_sed DISPLAY_CN "${DISPLAY_CN}")"
-            HOST_TMP="$(var_for_sed HOST "${HOST}")"
-            OCSP_EXPIRES_IN_HOURS_TMP="$(var_for_sed OCSP_EXPIRES_IN_HOURS "${OCSP_EXPIRES_IN_HOURS}")"
-            OPENSSL_COMMAND_TMP="$(var_for_sed OPENSSL_COMMAND "${OPENSSL_COMMAND}")"
-            PORT_TMP="$(var_for_sed PORT "${PORT}")"
-            PROTOCOL_TMP="$(var_for_sed PROTOCOL "${PROTOCOL}")"
-            SELFSIGNEDCERT_TMP="$(var_for_sed SELFSIGNEDCERT "${SELFSIGNEDCERT}")"
-            SHORTNAME_TMP="$(var_for_sed SHORTNAME "${SHORTNAME}")"
-            SIGALGO_TMP="$(var_for_sed SIGALGO "${PUB_KEY_ALGORITHM}")"
-            SSL_LABS_HOST_GRADE_TMP="$(var_for_sed SSL_LABS_HOST_GRADE "${SSL_LABS_HOST_GRADE}")"
-
-            echo "${FORMAT}${EXTRA_OUTPUT}" | sed \
-                -e "${CA_ISSUER_MATCHED_TMP}" \
-                -e "${CHECKEDNAMES_TMP}" \
-                -e "${CN_TMP}" \
-                -e "${DATE_TMP}" \
-                -e "${DAYS_VALID_TMP}" \
-                -e "${DISPLAY_CN_TMP}" \
-                -e "${HOST_TMP}" \
-                -e "${OCSP_EXPIRES_IN_HOURS_TMP}" \
-                -e "${OPENSSL_COMMAND_TMP}" \
-                -e "${PORT_TMP}" \
-                -e "${PROTOCOL_TMP}" \
-                -e "${SELFSIGNEDCERT_TMP}" \
-                -e "${SHORTNAME_TMP}" \
-                -e "${SIGALGO_TMP}" \
-                -e "${SSL_LABS_HOST_GRADE_TMP}"
+            echo "${FORMAT}${EXTRA_OUTPUT}"
 
         else
 

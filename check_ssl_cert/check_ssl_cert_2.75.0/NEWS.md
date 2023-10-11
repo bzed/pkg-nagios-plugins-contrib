@@ -1,5 +1,15 @@
 # News
 
+* 2023-09-27 Version 2.75.0
+  * Fixed an issue with the timeout
+* 2023-09-13 Version 2.74.0
+  * Fixed an issue in the ```/etc/hosts``` parsing
+* 2023-08-26 Version 2.73.0
+  * Fixed a bug with ocsp checks using a proxy and OpenSSL 1.X
+* 2023-07-28 Version 2.72.0
+  * Fixed a bug if the host cannot be resolved and ```--resolve``` is specified
+* 2023-07-19 Version 2.71.0
+  * Display the port number in the critical and warning output
 * 2023-05-20 Version 2.70.0
   * Added an option to skip the test to see if the host can be resolved
   * Added an option to resolve an host using DNS over HTTP
