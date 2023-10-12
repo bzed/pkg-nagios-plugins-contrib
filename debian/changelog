@@ -1,8 +1,19 @@
-nagios-plugins-contrib (43.20230613) UNRELEASED; urgency=medium
+nagios-plugins-contrib (44.20231012) unstable; urgency=medium
 
-  * 
+  [ Bas Couwenberg ]
+  * [d946fdc] Explicitly enable test-build-twice job.
+  * [dd09b9b] Use dh-sequence-python3.
+  * [5d9ea4f] Use dh-sequence-python3.
 
- -- Jan Wagner <waja@cyconet.org>  Mon, 12 Jun 2023 21:11:14 +0200
+  [ Manfred Stock ]
+  * [8f92032] check-running-kernel: Extend fix for on-disk version detection
+    on Bookworm (Closes: #1033791)
+
+  [ Jan Wagner ]
+  * [5b3e344] check_rbl: Update to 1.7.2
+  * [4c4024d] check_ssl_cert: Update to 2.75.0
+
+ -- Jan Wagner <waja@cyconet.org>  Thu, 12 Oct 2023 14:46:56 +0000
 
 nagios-plugins-contrib (43.20230612) unstable; urgency=medium
 
